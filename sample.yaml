@@ -1,0 +1,26 @@
+##
+##  sample.yaml -- Speechflow Sample Audio Processing Graphs
+##
+
+#  capture audio from microphone to file
+capture-microphone: |
+     device(device: "wasapi:VoiceMeeter Output", mode: "r") |
+     file(path: "capture.pcm", mode: "w", type: "audio")
+
+#  generate audio file with narration of text file
+generate-narration: |
+     file(path: argv.0, mode: "r", type: "audio") |
+     deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM)   |
+     file(path: argv.1, mode: "w", type: "text")
+
+#  pass-through audio from microphone to speaker and in parallel record it to file
+microphone-to-speaker: |
+     device(device: "wasapi:VoiceMeeter Output", mode: "r") | {
+         file(path: "capture.pcm", mode: "w", type: "audio"),
+         device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
+     }
+
+sample: |
+     device(device: "wasapi:Voicemeeter Out B1", mode: "r") |
+     file(path: "capture.pcm", mode: "w", type: "audio")
+

@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+		"outDir":                  "../dst",
+        "target":                  "es2022",
+        "module":                  "node18",
+        "moduleResolution":        "node16",
+        "useDefineForClassFields": true,
+        "composite":               false,
+        "strict":                  true,
+        "jsx":                     "preserve",
+        "resolveJsonModule":       true,
+        "isolatedModules":         true,
+        "esModuleInterop":         true,
+        "lib":                     [ "es2022" ],
+        "skipLibCheck":            true,
+        "noEmit":                  false,
+        "types":                   [ "node" ],
+        "rootDir":                 "../src"
+    },
+    "include": [
+        "../src/**/*.ts"
+    ]
+}

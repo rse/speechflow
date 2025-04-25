@@ -1,0 +1,208 @@
+/*
+**  SpeechFlow - Speech Processing Flow Graph
+**  Copyright (c) 2024-2025 Dr. Ralf S. Engelschall <rse@engelschall.com>
+**  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
+*/
+
+import Stream                 from "node:stream"
+
+import CLIio                  from "cli-io"
+import yargs                  from "yargs"
+import jsYAML                 from "js-yaml"
+import FlowLink               from "flowlink"
+import objectPath             from "object-path"
+
+import SpeechFlowNode         from "./speechflow-node"
+import SpeechFlowNodeDevice   from "./speechflow-node-device"
+import SpeechFlowNodeFile     from "./speechflow-node-file"
+import SpeechFlowNodeDeepgram from "./speechflow-node-deepgram"
+import pkg                    from "../package.json"
+
+let cli: CLIio | null = null
+;(async () => {
+    /*  parse command-line arguments  */
+    const args = await yargs()
+        /* eslint @stylistic/indent: off */
+        .usage(
+            "Usage: $0 " +
+            "[-h|--help] " +
+            "[-V|--version] " +
+            "[-v|--verbose <level>] " +
+            "[-e|--expression <expression>] " +
+            "[-f|--expression-file <expression-file>] " +
+            "[-c|--config <config-file>]")
+        .help("h").alias("h", "help").default("h", false)
+            .describe("h", "show usage help")
+        .boolean("V").alias("V", "version").default("V", false)
+            .describe("V", "show program version information")
+        .string("v").nargs("v", 1).alias("v", "log-level").default("v", "warning")
+            .describe("v", "level for verbose logging ('none', 'error', 'warning', 'info', 'debug')")
+        .string("e").nargs("e", 1).alias("e", "expression").default("e", "")
+            .describe("e", "FlowLink expression")
+        .string("f").nargs("f", 1).alias("f", "expression-file").default("f", "")
+            .describe("f", "FlowLink expression file")
+        .string("c").nargs("c", 1).alias("c", "config-file").default("c", "")
+            .describe("c", "configuration file")
+        .version(false)
+        .strict()
+        .showHelpOnFail(true)
+        .demand(0)
+        .parse(process.argv.slice(2))
+
+    /*  short-circuit version request  */
+    if (args.version) {
+        process.stderr.write(`${pkg.name} ${pkg.version} <${pkg.homepage}>\n`)
+        process.stderr.write(`${pkg.description}\n`)
+        process.stderr.write(`Copyright (c) 2024 ${pkg.author.name} <${pkg.author.url}>\n`)
+        process.stderr.write(`Licensed under ${pkg.license} <http://spdx.org/licenses/${pkg.license}.html>\n`)
+        process.exit(0)
+    }
+
+    /*  establish CLI environment  */
+    cli = new CLIio({
+        encoding:  "utf8",
+        logLevel:  args.logLevel,
+        logTime:   false,
+        logPrefix: pkg.name
+    })
+
+    /*  read configuration  */
+    let config = ""
+    let n = 0
+    if (typeof args.expression     === "string" && args.expression     !== "") n++
+    if (typeof args.expressionFile === "string" && args.expressionFile !== "") n++
+    if (typeof args.configFile     === "string" && args.configFile     !== "") n++
+    if (n !== 1)
+        throw new Error("cannot use more than one FlowLink specification source (either option -e, -f or -c)")
+    if (typeof args.expression === "string" && args.expression !== "")
+        config = args.expression
+    else if (typeof args.expressionFile === "string" && args.expressionFile !== "")
+        config = await cli.input(args.expressionFile, { encoding: "utf8" })
+    else if (typeof args.configFile === "string" && args.configFile !== "") {
+        const m = args.configFile.match(/^(.+?)@(.+)$/)
+        if (m === null)
+            throw new Error("invalid configuration file specification (expected \"<id>@<file>\")")
+        const [ , id, file ] = m
+        const yaml = await cli.input(file, { encoding: "utf8" })
+        const obj: any = jsYAML.load(yaml)
+        if (obj[id] === undefined)
+            throw new Error(`no such identifier "${id}" found in configuration file`)
+        config = obj[id] as string
+    }
+
+    /*  configuration of nodes  */
+    const nodes: { [ id: string ]: typeof SpeechFlowNode } = {
+        "device":   SpeechFlowNodeDevice,
+        "file":     SpeechFlowNodeFile,
+        "deepgram": SpeechFlowNodeDeepgram
+    }
+
+    /*  parse configuration into node graph  */
+    const flowlink = new FlowLink<SpeechFlowNode>({
+        trace: (msg: string) => {
+            cli!.log("debug", msg)
+        }
+    })
+    let nodenum = 1
+    const variables = { argv: args._, env: process.env }
+    const graphNodes = new Set<SpeechFlowNode>()
+    flowlink.evaluate(config, {
+        resolveVariable (id: string) {
+            if (!objectPath.has(variables, id))
+                throw new Error(`failed to resolve variable "${id}"`)
+            const value = objectPath.get(variables, id)
+            cli!.log("info", `resolve variable: "${id}" -> "${value}"`)
+            return value
+        },
+        createNode (id: string, opts: { [ id: string ]: any }, args: any[]) {
+            if (nodes[id] === undefined)
+                throw new Error(`unknown SpeechFlow node "${id}"`)
+            const node = new nodes[id](`${id}[${nodenum++}]`, opts, args)
+            graphNodes.add(node)
+            const params = Object.keys(node.params)
+                .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
+            cli!.log("info", `created SpeechFlow node "${node.id}" (${params})`)
+            return node
+        },
+        connectNode (node1: SpeechFlowNode, node2: SpeechFlowNode) {
+            cli!.log("info", `connect SpeechFlow node "${node1.id}" to node "${node2.id}"`)
+            node1.connect(node2)
+        }
+    })
+
+    /*  utility function for walking graph nodes  */
+    /*
+    const walkAndRun = async (nodes: SpeechFlowNode[], cb: (node: SpeechFlowNode) => Promise<any>) => {
+        for (const node of nodes) {
+            await cb(node)
+            walkAndRun(Array.from(node.connectionsOut), cb)
+        }
+    }
+    */
+
+    /*  graph processing: PASS 1: activate and sanity check nodes  */
+    for (const node of graphNodes) {
+        /*  connect node events  */
+        node.on("log", (level: string, msg: string, data?: any) => {
+            let str = `${node.id}: ${msg}`
+            if (data !== undefined)
+                str += ` (${JSON.stringify(data)})`
+            cli!.log(level, str)
+        })
+
+        /*  open node  */
+        cli!.log("info", `opening node "${node.id}"`)
+        await node.open().catch((err: Error) => {
+            cli!.log("error", `${node.id}: ${err.message}`)
+            throw new Error(`failed to open node "${node.id}"`)
+        })
+
+        /*  determine connections  */
+        const connectionsIn  = Array.from(node.connectionsIn)
+        const connectionsOut = Array.from(node.connectionsOut)
+
+        /*  ensure necessary incoming links  */
+        if (node.input !== "none" && connectionsIn.length === 0)
+            throw new Error(`node "${node.id}" requires input but has no input nodes connected`)
+
+        /*  prune unnecessary incoming links  */
+        if (node.input === "none" && connectionsIn.length > 0)
+            connectionsIn.forEach((other) => { other.disconnect(node) })
+
+        /*  ensure necessary outgoing links  */
+        if (node.output !== "none" && connectionsOut.length === 0)
+            throw new Error(`node "${node.id}" requires output but has no output nodes connected`)
+
+        /*  prune unnecessary outgoing links  */
+        if (node.output === "none" && connectionsOut.length > 0)
+            connectionsOut.forEach((other) => { node.disconnect(other) })
+    }
+
+    /*  graph processing: PASS 2: activate streams  */
+    for (const node of graphNodes) {
+        if (node.stream === null)
+            throw new Error(`stream of outgoing node "${node.id}" still not initialized`)
+        for (const other of Array.from(node.connectionsOut)) {
+            if (other.stream === null)
+                throw new Error(`stream of incoming node "${other.id}" still not initialized`)
+            if (node.output !== other.input)
+                throw new Error(`${node.output} output node "${node.id}" cannot be " +
+                    "connected to ${other.input} input node "${other.id}" (payloud is incompatible)`)
+            cli!.log("info", `connecting stream of node "${node.id}" to stream of node "${other.id}"`)
+            node.stream.pipe(other.stream as Stream.Writable)
+        }
+    }
+
+    /*  catch CTRL-C  */
+    process.on("SIGINT", () => {
+        cli!.log("error", "process interrupted (SIGINT) -- terminating")
+        process.exit(1)
+    })
+})().catch((err: Error) => {
+    if (cli !== null)
+        cli.log("error", err.message)
+    else
+        process.stderr.write(`${pkg.name}: ERROR: ${err.message}\n`)
+    process.exit(1)
+})
+
