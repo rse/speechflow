@@ -65,6 +65,10 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
     }
 
     async close () {
+        if (this.stream !== null) {
+            this.stream.destroy()
+            this.stream = null
+        }
         if (this.translator !== null)
             this.translator = null
     }

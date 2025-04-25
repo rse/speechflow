@@ -37,8 +37,10 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             throw new Error(`invalid file mode "${this.params.mode}"`)
     }
     async close () {
-        if (this.stream !== null && this.params.path !== "-")
+        if (this.stream !== null && this.params.path !== "-") {
             this.stream.destroy()
+            this.stream = null
+        }
     }
 }
 

@@ -92,6 +92,10 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         })
     }
     async close () {
+        if (this.stream !== null) {
+            this.stream.destroy()
+            this.stream = null
+        }
         if (this.dg !== null)
             this.dg.requestClose()
     }
