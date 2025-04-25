@@ -77,7 +77,10 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         this.stream = new Stream.Duplex({
             write (chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void) {
                 const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
-                dg.send(data)
+                if (data.byteLength === 0)
+                    queue.emit("text", "")
+                else
+                    dg.send(data)
                 callback()
             },
             read (size: number) {

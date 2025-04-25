@@ -16,6 +16,7 @@ import SpeechFlowNode         from "./speechflow-node"
 import SpeechFlowNodeDevice   from "./speechflow-node-device"
 import SpeechFlowNodeFile     from "./speechflow-node-file"
 import SpeechFlowNodeDeepgram from "./speechflow-node-deepgram"
+import SpeechFlowNodeDeepL    from "./speechflow-node-deepl"
 import pkg                    from "../package.json"
 
 let cli: CLIio | null = null
@@ -113,9 +114,9 @@ let cli: CLIio | null = null
     const nodes: { [ id: string ]: typeof SpeechFlowNode } = {
         "device":   SpeechFlowNodeDevice,
         "file":     SpeechFlowNodeFile,
-        "deepgram": SpeechFlowNodeDeepgram
+        "deepgram": SpeechFlowNodeDeepgram,
+        "deepl":    SpeechFlowNodeDeepL
         /* "whisper":    SpeechFlowNodeWhisper, */
-        /* "deepl":      SpeechFlowNodeDeepL, */
         /* "elevenlabs": SpeechFlowNodeElevenLabs */
         /* "websocket":  SpeechFlowNodeWebsocket */
     }
