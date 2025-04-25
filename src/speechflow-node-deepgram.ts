@@ -15,7 +15,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         super(id, opts, args)
         this.configure({
             key:      { type: "string" },
-            model:    { type: "string", val: "nova-2", pos: 0 },
+            model:    { type: "string", val: "nova-2", pos: 0 }, /* FIXME: nova-3 multiligual */
             version:  { type: "string", val: "latest", pos: 1 },
             language: { type: "string", val: "de",     pos: 2 }
         })
@@ -40,7 +40,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             sample_rate:      this.config.audioSampleRate,
             encoding:         "linear16",
             multichannel:     false,
-            // endpointing:      false,
+            // endpointing:      false,  /* FIXME: ? */
             interim_results:  false,
             smart_format:     true,
             punctuate:        true,
@@ -90,6 +90,6 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
     }
     async close () {
         if (this.dg !== null)
-            this.dg.finish()
+            this.dg.requestClose()
     }
 }

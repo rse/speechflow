@@ -30,7 +30,9 @@ let cli: CLIio | null = null
             "[-v|--verbose <level>] " +
             "[-e|--expression <expression>] " +
             "[-f|--expression-file <expression-file>] " +
-            "[-c|--config <config-file>]")
+            "[-c|--config <key>@<yaml-config-file>] " +
+            "[<argument> [...]]"
+        )
         .help("h").alias("h", "help").default("h", false)
             .describe("h", "show usage help")
         .boolean("V").alias("V", "version").default("V", false)
@@ -42,7 +44,7 @@ let cli: CLIio | null = null
         .string("f").nargs("f", 1).alias("f", "expression-file").default("f", "")
             .describe("f", "FlowLink expression file")
         .string("c").nargs("c", 1).alias("c", "config-file").default("c", "")
-            .describe("c", "configuration file")
+            .describe("c", "configuration in format <id>@<file>")
         .version(false)
         .strict()
         .showHelpOnFail(true)
@@ -53,7 +55,7 @@ let cli: CLIio | null = null
     if (args.version) {
         process.stderr.write(`${pkg.name} ${pkg.version} <${pkg.homepage}>\n`)
         process.stderr.write(`${pkg.description}\n`)
-        process.stderr.write(`Copyright (c) 2024 ${pkg.author.name} <${pkg.author.url}>\n`)
+        process.stderr.write(`Copyright (c) 2024-2025 ${pkg.author.name} <${pkg.author.url}>\n`)
         process.stderr.write(`Licensed under ${pkg.license} <http://spdx.org/licenses/${pkg.license}.html>\n`)
         process.exit(0)
     }
@@ -62,18 +64,35 @@ let cli: CLIio | null = null
     cli = new CLIio({
         encoding:  "utf8",
         logLevel:  args.logLevel,
-        logTime:   false,
+        logTime:   true,
         logPrefix: pkg.name
     })
 
-    /*  read configuration  */
-    let config = ""
+    /*  handle uncaught exceptions  */
+    process.on("uncaughtException", async (err: Error) => {
+        cli!.log("warning", `process crashed with a fatal error: ${err} ${err.stack}`)
+        process.exit(1)
+    })
+
+    /*  handle unhandled promise rejections  */
+    process.on("unhandledRejection", async (reason, promise) => {
+        if (reason instanceof Error)
+            cli!.log("error", `promise rejection not handled: ${reason.message}: ${reason.stack}`)
+        else
+            cli!.log("error", `promise rejection not handled: ${reason}`)
+        process.exit(1)
+    })
+
+    /*  sanity check usage  */
     let n = 0
     if (typeof args.expression     === "string" && args.expression     !== "") n++
     if (typeof args.expressionFile === "string" && args.expressionFile !== "") n++
     if (typeof args.configFile     === "string" && args.configFile     !== "") n++
     if (n !== 1)
         throw new Error("cannot use more than one FlowLink specification source (either option -e, -f or -c)")
+
+    /*  read configuration  */
+    let config = ""
     if (typeof args.expression === "string" && args.expression !== "")
         config = args.expression
     else if (typeof args.expressionFile === "string" && args.expressionFile !== "")
@@ -81,13 +100,13 @@ let cli: CLIio | null = null
     else if (typeof args.configFile === "string" && args.configFile !== "") {
         const m = args.configFile.match(/^(.+?)@(.+)$/)
         if (m === null)
-            throw new Error("invalid configuration file specification (expected \"<id>@<file>\")")
-        const [ , id, file ] = m
+            throw new Error("invalid configuration file specification (expected \"<key>@<yaml-config-file>\")")
+        const [ , key, file ] = m
         const yaml = await cli.input(file, { encoding: "utf8" })
         const obj: any = jsYAML.load(yaml)
-        if (obj[id] === undefined)
-            throw new Error(`no such identifier "${id}" found in configuration file`)
-        config = obj[id] as string
+        if (obj[key] === undefined)
+            throw new Error(`no such key "${key}" found in configuration file`)
+        config = obj[key] as string
     }
 
     /*  configuration of nodes  */
@@ -95,6 +114,10 @@ let cli: CLIio | null = null
         "device":   SpeechFlowNodeDevice,
         "file":     SpeechFlowNodeFile,
         "deepgram": SpeechFlowNodeDeepgram
+        /* "whisper":    SpeechFlowNodeWhisper, */
+        /* "deepl":      SpeechFlowNodeDeepL, */
+        /* "elevenlabs": SpeechFlowNodeElevenLabs */
+        /* "websocket":  SpeechFlowNodeWebsocket */
     }
 
     /*  parse configuration into node graph  */
@@ -130,21 +153,11 @@ let cli: CLIio | null = null
         }
     })
 
-    /*  utility function for walking graph nodes  */
-    /*
-    const walkAndRun = async (nodes: SpeechFlowNode[], cb: (node: SpeechFlowNode) => Promise<any>) => {
-        for (const node of nodes) {
-            await cb(node)
-            walkAndRun(Array.from(node.connectionsOut), cb)
-        }
-    }
-    */
-
     /*  graph processing: PASS 1: activate and sanity check nodes  */
     for (const node of graphNodes) {
         /*  connect node events  */
         node.on("log", (level: string, msg: string, data?: any) => {
-            let str = `${node.id}: ${msg}`
+            let str = `[${node.id}]: ${msg}`
             if (data !== undefined)
                 str += ` (${JSON.stringify(data)})`
             cli!.log(level, str)
@@ -153,7 +166,7 @@ let cli: CLIio | null = null
         /*  open node  */
         cli!.log("info", `opening node "${node.id}"`)
         await node.open().catch((err: Error) => {
-            cli!.log("error", `${node.id}: ${err.message}`)
+            cli!.log("error", `[${node.id}]: ${err.message}`)
             throw new Error(`failed to open node "${node.id}"`)
         })
 
@@ -187,16 +200,34 @@ let cli: CLIio | null = null
                 throw new Error(`stream of incoming node "${other.id}" still not initialized`)
             if (node.output !== other.input)
                 throw new Error(`${node.output} output node "${node.id}" cannot be " +
-                    "connected to ${other.input} input node "${other.id}" (payloud is incompatible)`)
+                    "connected to ${other.input} input node "${other.id}" (payload is incompatible)`)
             cli!.log("info", `connecting stream of node "${node.id}" to stream of node "${other.id}"`)
             node.stream.pipe(other.stream as Stream.Writable)
         }
     }
 
-    /*  catch CTRL-C  */
-    process.on("SIGINT", () => {
-        cli!.log("error", "process interrupted (SIGINT) -- terminating")
+    /*  gracefully shutdown process  */
+    let shuttingDown = false
+    const shutdown = async (signal: string) => {
+        if (shuttingDown)
+            return
+        shuttingDown = true
+        cli!.log("warning", `received signal ${signal} -- shutting down service`)
+        for (const node of graphNodes) {
+            cli!.log("info", `closing node "${node.id}"`)
+            const connectionsIn  = Array.from(node.connectionsIn)
+            const connectionsOut = Array.from(node.connectionsOut)
+            connectionsIn.forEach((other) => { other.disconnect(node) })
+            connectionsOut.forEach((other) => { node.disconnect(other) })
+            await node.close()
+        }
         process.exit(1)
+    }
+    process.on("SIGINT", () => {
+        shutdown("SIGINT")
+    })
+    process.on("SIGTERM", () => {
+        shutdown("SIGTERM")
     })
 })().catch((err: Error) => {
     if (cli !== null)
