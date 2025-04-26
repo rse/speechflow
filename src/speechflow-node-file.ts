@@ -5,6 +5,7 @@
 */
 
 import fs               from "node:fs"
+import Stream           from "node:stream"
 import SpeechFlowNode   from "./speechflow-node"
 
 export default class SpeechFlowNodeDevice extends SpeechFlowNode {
@@ -37,8 +38,15 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             throw new Error(`invalid file mode "${this.params.mode}"`)
     }
     async close () {
-        if (this.stream !== null && this.params.path !== "-") {
-            this.stream.destroy()
+        if (this.stream !== null) {
+            await new Promise<void>((resolve) => {
+                if (this.stream instanceof Stream.Writable)
+                    this.stream.end(() => resolve)
+                else
+                    resolve()
+            })
+            if (this.params.path !== "-")
+                this.stream.destroy()
             this.stream = null
         }
     }
