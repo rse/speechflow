@@ -4,39 +4,46 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/*  standard dependencies  */
 import Stream                        from "node:stream"
 
+/*  external dependencies  */
 import FFmpeg                        from "@rse/ffmpeg"
 import { Converter as FFmpegStream } from "ffmpeg-stream"
 
+/*  internal dependencies  */
 import SpeechFlowNode                from "./speechflow-node"
 
 export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
+    /*  internal state  */
+    private ffmpegBinary = FFmpeg.supported ? FFmpeg.binary : "ffmpeg"
     private ffmpeg: FFmpegStream | null = null
 
+    /*  construct node  */
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
 
+        /*  declare node input/output format  */
         this.input  = "audio"
         this.output = "audio"
 
+        /*  declare node configuration parameters  */
         this.configure({
             src: { type: "string", pos: 0, val: "pcm", match: /^(?:pcm|wav|mp3|opus)$/ },
             dst: { type: "string", pos: 1, val: "wav", match: /^(?:pcm|wav|mp3|opus)$/ }
         })
-
-        if (!FFmpeg.supported)
-            throw new Error("this node requires FFmpeg and this is not available on your platform")
     }
 
+    /*  open node  */
     async open () {
         /*  sanity check situation  */
         if (this.params.src === this.params.dst)
-            throw new Error("source and destination formats should be not the same")
+            throw new Error("source and destination formats should not be the same")
 
         /*  instantiate FFmpeg sub-process  */
-        this.ffmpeg = new FFmpegStream(FFmpeg.binary)
+        this.ffmpeg = new FFmpegStream(this.ffmpegBinary)
         const streamInput = this.ffmpeg.createInputStream({
+            /*  FFmpeg input options  */
             "fflags":          "nobuffer",
             "flags":           "low_delay",
             "probesize":       32,
@@ -57,6 +64,7 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
             } : {})
         })
         const streamOutput = this.ffmpeg.createOutputStream({
+            /*  FFmpeg output options  */
             "flush_packets":   1,
             ...(this.params.dst === "pcm" ? {
                 "c:a":         "pcm_s16le",
@@ -86,7 +94,9 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
         })
     }
 
+    /*  close node  */
     async close () {
+        /*  close duplex stream  */
         if (this.stream !== null) {
             await new Promise<void>((resolve) => {
                 if (this.stream instanceof Stream.Duplex)
@@ -97,6 +107,8 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
             this.stream.destroy()
             this.stream = null
         }
+
+        /*  shutdown FFmpeg  */
         if (this.ffmpeg !== null) {
             this.ffmpeg.kill()
             this.ffmpeg = null
