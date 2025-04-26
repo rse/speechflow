@@ -62,17 +62,9 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
         this.ffmpeg.run()
 
         /*  establish a duplex stream and connect it to FFmpeg  */
-        this.stream = new Stream.Duplex({
-            write (chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void) {
-                streamInput.write(chunk, (err) => {
-                    if (err) callback(err)
-                    else callback()
-                })
-            },
-            read (size: number) {
-                const data = streamOutput.read(size)
-                this.push(data)
-            }
+        this.stream = Stream.Duplex.from({
+            readable: streamOutput,
+            writable: streamInput
         })
     }
 
