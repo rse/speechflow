@@ -141,6 +141,20 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **device**  | 0         | *none*   | `/^(.+?):(.+)$/`   |
   | **mode**    | 1         | "rw"     | `/^(?:r\|w\|rw)$/` |
 
+- Node: **ffmpeg**<br/>
+  Purpose: **FFmpeg audio format conversion**<br/>
+  Example: `ffmpeg(src: "pcm", dst: "mp3")`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement        |
+  | ----------- | --------- | -------- | ------------------ |
+  | **src**     | 0         | "pcm"    | `/^(?:pcm\|mp3)$/` |
+  | **dst**     | 1         | "mp3"    | `/^(?:pcm\|mp3)$/` |
+
 - Node: **deepgram**<br/>
   Purpose: **Deepgram Speech-to-Text conversion**<br/>
   Example: `deepgram(language: "de")`<br/>

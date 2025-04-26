@@ -16,6 +16,7 @@ import SpeechFlowNode           from "./speechflow-node"
 import SpeechFlowNodeFile       from "./speechflow-node-file"
 import SpeechFlowNodeDevice     from "./speechflow-node-device"
 import SpeechFlowNodeWebsocket  from "./speechflow-node-websocket"
+import SpeechFlowNodeFFmpeg     from "./speechflow-node-ffmpeg"
 import SpeechFlowNodeDeepgram   from "./speechflow-node-deepgram"
 import SpeechFlowNodeDeepL      from "./speechflow-node-deepl"
 import SpeechFlowNodeElevenLabs from "./speechflow-node-elevenlabs"
@@ -119,6 +120,7 @@ let cli: CLIio | null = null
         "file":       SpeechFlowNodeFile,
         "device":     SpeechFlowNodeDevice,
         "websocket":  SpeechFlowNodeWebsocket,
+        "ffmpeg":     SpeechFlowNodeFFmpeg,
         "deepgram":   SpeechFlowNodeDeepgram,
         "deepl":      SpeechFlowNodeDeepL,
         "elevenlabs": SpeechFlowNodeElevenLabs,

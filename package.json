@@ -35,7 +35,7 @@
         "@opensumi/reconnecting-websocket": "4.4.0",
         "get-stream":                       "9.0.1",
         "ollama":                           "0.5.15",
-        "@rse/ffmpeg":                      "1.4.1",
+        "@rse/ffmpeg":                      "1.4.2",
         "ffmpeg-stream":                    "1.0.0"
     },
     "devDependencies": {

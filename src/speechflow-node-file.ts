@@ -41,7 +41,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         if (this.stream !== null) {
             await new Promise<void>((resolve) => {
                 if (this.stream instanceof Stream.Writable)
-                    this.stream.end(() => resolve)
+                    this.stream.end(() => { resolve() })
                 else
                     resolve()
             })
