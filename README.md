@@ -18,6 +18,18 @@ About
 flow graph of speech processing modules. This way it allows to perform
 various speech processing tasks in a flexible way.
 
+Processing Nodes
+----------------
+
+Currently **SpeechFlow** provides the following processing nodes:
+
+- **file**: File and StdIO source/sink (input: text/audio, output: text/audio).
+- **websocket**: WebSocket source/sink (input: text/audio, output: text/audio).
+- **device**: Microphone/speaker device source/sink (input: audio, output: audio).
+- **deepgram**: Deepgram Speech-to-Text conversion (input: audio, output: text).
+- **deepl**: DeepL Text-to-Text translation (input: text, output: text).
+- **elevenlabs**: ElevenLabs Text-to-Speech conversion (input: text, output: audio).
+
 Copyright & License
 -------------------
 
