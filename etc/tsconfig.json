@@ -1,9 +1,9 @@
 {
     "compilerOptions": {
 		"outDir":                  "../dst",
-        "target":                  "es2022",
-        "module":                  "node18",
-        "moduleResolution":        "node16",
+        "target":                  "es2024",
+        "module":                  "nodenext",
+        "moduleResolution":        "nodenext",
         "useDefineForClassFields": true,
         "composite":               false,
         "strict":                  true,
