@@ -33,7 +33,12 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             declares just its sub-interface NodeJS.{Readable,Writable,Duplex}Stream,
             so it is correct to cast it back to Stream.{Readable,Writable,Duplex}  */
         /*  FIXME: the underlying PortAudio outputs verbose/debugging messages  */
-        if (device.maxInputChannels > 0 && device.maxOutputChannels > 0) {
+        if (this.params.mode === "rw") {
+            /*  input/output device  */
+            if (device.maxInputChannels === 0)
+                throw new Error(`device "${device.id}" does not have any input channels (required by read/write mode)`)
+            if (device.maxOutputChannels === 0)
+                throw new Error(`device "${device.id}" does not have any output channels (required by read/write mode)`)
             this.log("info", `resolved "${this.params.device}" to duplex device "${device.id}"`)
             this.input  = "audio"
             this.output = "audio"
@@ -53,7 +58,10 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             })
             this.stream = this.io as unknown as Stream.Duplex
         }
-        else if (device.maxInputChannels > 0 && device.maxOutputChannels === 0) {
+        else if (this.params.mode === "r") {
+            /*  input device  */
+            if (device.maxInputChannels === 0)
+                throw new Error(`device "${device.id}" does not have any input channels (required by read mode)`)
             this.log("info", `resolved "${this.params.device}" to input device "${device.id}"`)
             this.input  = "none"
             this.output = "audio"
@@ -67,7 +75,10 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             })
             this.stream = this.io as unknown as Stream.Readable
         }
-        else if (device.maxInputChannels === 0 && device.maxOutputChannels > 0) {
+        else if (this.params.mode === "w") {
+            /*  output device  */
+            if (device.maxOutputChannels === 0)
+                throw new Error(`device "${device.id}" does not have any output channels (required by write mode)`)
             this.log("info", `resolved "${this.params.device}" to output device "${device.id}"`)
             this.input  = "audio"
             this.output = "none"
