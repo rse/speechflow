@@ -99,6 +99,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         this.io.on("error", (err) => {
             this.emit("error", err)
         })
+        this.io.start()
     }
     async close () {
         if (this.io !== null)
