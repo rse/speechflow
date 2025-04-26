@@ -28,7 +28,11 @@
         "get-stream":                       "6.0.1",
         "speex-resampler":                  "3.0.1",
         "pcm-convert":                      "1.6.5",
-        "object-path":                      "0.11.8"
+        "object-path":                      "0.11.8",
+        "ws":                               "8.18.1",
+        "bufferutil":                       "4.0.9",
+        "utf-8-validate":                   "6.0.5",
+        "@opensumi/reconnecting-websocket": "4.4.0"
     },
     "devDependencies": {
         "eslint":                           "9.25.1",
@@ -48,6 +52,7 @@
         "@types/yargs":                     "17.0.33",
         "@types/js-yaml":                   "4.0.9",
         "@types/object-path":               "0.11.4",
+        "@types/ws":                        "8.18.1",
 
         "ts-node":                          "10.9.2",
         "stmux":                            "1.8.10",
