@@ -19,6 +19,7 @@ import SpeechFlowNodeWebsocket  from "./speechflow-node-websocket"
 import SpeechFlowNodeDeepgram   from "./speechflow-node-deepgram"
 import SpeechFlowNodeDeepL      from "./speechflow-node-deepl"
 import SpeechFlowNodeElevenLabs from "./speechflow-node-elevenlabs"
+import SpeechFlowNodeOllama     from "./speechflow-node-ollama"
 
 import pkg                      from "../package.json"
 
@@ -120,7 +121,8 @@ let cli: CLIio | null = null
         "websocket":  SpeechFlowNodeWebsocket,
         "deepgram":   SpeechFlowNodeDeepgram,
         "deepl":      SpeechFlowNodeDeepL,
-        "elevenlabs": SpeechFlowNodeElevenLabs
+        "elevenlabs": SpeechFlowNodeElevenLabs,
+        "ollama":     SpeechFlowNodeOllama
     }
 
     /*  parse configuration into node graph  */
@@ -202,8 +204,8 @@ let cli: CLIio | null = null
             if (other.stream === null)
                 throw new Error(`stream of incoming node "${other.id}" still not initialized`)
             if (node.output !== other.input)
-                throw new Error(`${node.output} output node "${node.id}" cannot be " +
-                    "connected to ${other.input} input node "${other.id}" (payload is incompatible)`)
+                throw new Error(`${node.output} output node "${node.id}" cannot be ` +
+                    `connected to ${other.input} input node "${other.id}" (payload is incompatible)`)
             cli!.log("info", `connecting stream of node "${node.id}" to stream of node "${other.id}"`)
             node.stream.pipe(other.stream as Stream.Writable)
         }

@@ -174,6 +174,21 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **src**      | 0         | "de"     | `/^(?:de\|en-US)$/` |
   | **dst**      | 1         | "en-US"  | `/^(?:de\|en-US)$/` |
 
+- Node: **ollama**<br/>
+  Purpose: **Ollama Text-to-Text translation**<br/>
+  Example: `deepl(src: "de", dst: "en")`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **url**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?:\d+$/` |
+  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
+  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+
 - Node: **elevenlabs**<br/>
   Purpose: **ElevenLabs Text-to-Speech conversion**<br/>
   Example: `elevenlabs(language: "en")`<br/>
