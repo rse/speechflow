@@ -14,7 +14,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
         this.configure({
-            key:      { type: "string" },
+            key:      { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPGRAM },
             model:    { type: "string", val: "nova-2", pos: 0 }, /* FIXME: nova-3 multiligual */
             version:  { type: "string", val: "latest", pos: 1 },
             language: { type: "string", val: "de",     pos: 2 }
