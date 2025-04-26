@@ -32,7 +32,7 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
     async open () {
         /*  sanity check situation  */
         if (this.params.src === this.params.dst)
-            throw new Error("source and destination formats cannot be the same")
+            throw new Error("source and destination formats should be not the same")
 
         /*  instantiate FFmpeg sub-process  */
         this.ffmpeg = new FFmpegStream(FFmpeg.binary)
