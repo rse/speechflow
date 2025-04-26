@@ -32,6 +32,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             Notice: "naudion" actually implements Stream.{Readable,Writable,Duplex}, but
             declares just its sub-interface NodeJS.{Readable,Writable,Duplex}Stream,
             so it is correct to cast it back to Stream.{Readable,Writable,Duplex}  */
+        /*  FIXME: the underlying PortAudio outputs verbose/debugging messages  */
         if (device.maxInputChannels > 0 && device.maxOutputChannels > 0) {
             this.log("info", `resolved "${this.params.device}" to duplex device "${device.id}"`)
             this.input  = "audio"
