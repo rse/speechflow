@@ -17,13 +17,12 @@ export default class SpeechFlowUtil {
         if (!api)
             throw new Error(`invalid audio device type "${type}"`)
         const devices = PortAudio.getDevices()
-        console.log(devices)
         const device = devices.find((device) => {
             return (
                 (   (   mode === "r"   && device.maxInputChannels  > 0)
                     || (mode === "w"   && device.maxOutputChannels > 0)
                     || (mode === "rw"  && device.maxInputChannels  > 0 && device.maxOutputChannels > 0)
-                    || (mode === "any" && (device.maxInputChannels  > 0 || device.maxOutputChannels > 0)))
+                    || (mode === "any" && (device.maxInputChannels > 0 || device.maxOutputChannels > 0)))
                 && device.name.match(name)
                 && device.hostAPIName === api.name
             )
