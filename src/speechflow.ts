@@ -122,6 +122,7 @@ let cli: CLIio | null = null
         "deepl":      SpeechFlowNodeDeepL,
         "elevenlabs": SpeechFlowNodeElevenLabs
         /* "whisper":    SpeechFlowNodeWhisper, */
+        /* "ffmpeg":     SpeechFlowNodeFFmpeg, */
     }
 
     /*  parse configuration into node graph  */
