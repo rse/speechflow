@@ -4,22 +4,23 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-import Stream                  from "node:stream"
+import Stream                   from "node:stream"
 
-import CLIio                   from "cli-io"
-import yargs                   from "yargs"
-import jsYAML                  from "js-yaml"
-import FlowLink                from "flowlink"
-import objectPath              from "object-path"
+import CLIio                    from "cli-io"
+import yargs                    from "yargs"
+import jsYAML                   from "js-yaml"
+import FlowLink                 from "flowlink"
+import objectPath               from "object-path"
 
-import SpeechFlowNode          from "./speechflow-node"
-import SpeechFlowNodeDevice    from "./speechflow-node-device"
-import SpeechFlowNodeFile      from "./speechflow-node-file"
-import SpeechFlowNodeDeepgram  from "./speechflow-node-deepgram"
-import SpeechFlowNodeDeepL     from "./speechflow-node-deepl"
-import SpeechFlowNodeWebsocket from "./speechflow-node-websocket"
+import SpeechFlowNode           from "./speechflow-node"
+import SpeechFlowNodeFile       from "./speechflow-node-file"
+import SpeechFlowNodeDevice     from "./speechflow-node-device"
+import SpeechFlowNodeWebsocket  from "./speechflow-node-websocket"
+import SpeechFlowNodeDeepgram   from "./speechflow-node-deepgram"
+import SpeechFlowNodeDeepL      from "./speechflow-node-deepl"
+import SpeechFlowNodeElevenLabs from "./speechflow-node-elevenlabs"
 
-import pkg                     from "../package.json"
+import pkg                      from "../package.json"
 
 let cli: CLIio | null = null
 ;(async () => {
@@ -114,13 +115,13 @@ let cli: CLIio | null = null
 
     /*  configuration of nodes  */
     const nodes: { [ id: string ]: typeof SpeechFlowNode } = {
-        "device":     SpeechFlowNodeDevice,
         "file":       SpeechFlowNodeFile,
+        "device":     SpeechFlowNodeDevice,
+        "websocket":  SpeechFlowNodeWebsocket,
         "deepgram":   SpeechFlowNodeDeepgram,
         "deepl":      SpeechFlowNodeDeepL,
-        "websocket":  SpeechFlowNodeWebsocket
+        "elevenlabs": SpeechFlowNodeElevenLabs
         /* "whisper":    SpeechFlowNodeWhisper, */
-        /* "elevenlabs": SpeechFlowNodeElevenLabs */
     }
 
     /*  parse configuration into node graph  */
