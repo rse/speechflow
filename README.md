@@ -152,8 +152,8 @@ Currently **SpeechFlow** provides the following processing nodes:
 
   | Parameter   | Position  | Default  | Requirement        |
   | ----------- | --------- | -------- | ------------------ |
-  | **src**     | 0         | "pcm"    | `/^(?:pcm\|mp3)$/` |
-  | **dst**     | 1         | "mp3"    | `/^(?:pcm\|mp3)$/` |
+  | **src**     | 0         | "pcm"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
+  | **dst**     | 1         | "wav"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
 
 - Node: **deepgram**<br/>
   Purpose: **Deepgram Speech-to-Text conversion**<br/>

@@ -21,8 +21,8 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
         this.output = "audio"
 
         this.configure({
-            src: { type: "string", pos: 0, val: "pcm", match: /^(?:pcm|mp3)$/ },
-            dst: { type: "string", pos: 1, val: "mp3", match: /^(?:pcm|mp3)$/ }
+            src: { type: "string", pos: 0, val: "pcm", match: /^(?:pcm|wav|mp3|opus)$/ },
+            dst: { type: "string", pos: 1, val: "wav", match: /^(?:pcm|wav|mp3|opus)$/ }
         })
 
         if (!FFmpeg.supported)
@@ -37,27 +37,45 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
         /*  instantiate FFmpeg sub-process  */
         this.ffmpeg = new FFmpegStream(FFmpeg.binary)
         const streamInput = this.ffmpeg.createInputStream({
+            "fflags":       "nobuffer",
+            "flags":        "low_delay",
+            "probesize":    32,
+            "analyzeduration": 0,
             ...(this.params.src === "pcm" ? {
-                f: "s16le",
-                ar: this.config.audioSampleRate,
-                ac: this.config.audioChannels,
+                "f":        "s16le",
+                "ar":       this.config.audioSampleRate,
+                "ac":       this.config.audioChannels
+            } : {}),
+            ...(this.params.src === "wav" ? {
+                "f":        "wav"
             } : {}),
             ...(this.params.src === "mp3" ? {
-                f: "mp3"
+                "f":        "mp3"
+            } : {}),
+            ...(this.params.src === "opus" ? {
+                "f":        "opus"
             } : {})
         })
         const streamOutput = this.ffmpeg.createOutputStream({
             ...(this.params.dst === "pcm" ? {
-                f: "s16le",
-                acodec: "pcm_s16le",
-                ar: this.config.audioSampleRate,
-                ac: this.config.audioChannels,
+                "c:a":      "pcm_s16le",
+                "ar":       this.config.audioSampleRate,
+                "ac":       this.config.audioChannels,
+                "f":        "s16le",
+            } : {}),
+            ...(this.params.dst === "wav" ? {
+                "f":        "wav"
             } : {}),
             ...(this.params.dst === "mp3" ? {
-                f: "mp3",
-                acodec: "libmp3lame",
-                "b:a": "192k"
-            } : {})
+                "c:a":      "libmp3lame",
+                "b:a":      "192k",
+                "f":        "mp3"
+            } : {}),
+            ...(this.params.dst === "opus" ? {
+                "acodec":   "libopus",
+                "f":        "opus"
+            } : {}),
+            "flush_packets": 1
         })
         this.ffmpeg.run()
 
