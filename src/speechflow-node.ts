@@ -49,7 +49,7 @@ export default class SpeechFlowNode extends Events.EventEmitter {
                     throw new Error(`invalid value of option "${name}" (has to match ${spec[name].match})`)
                 this.params[name] = this.args[spec[name].pos!]
             }
-            else if ("val" in spec[name])
+            else if ("val" in spec[name] && spec[name].val !== undefined)
                 this.params[name] = spec[name].val
             else
                 throw new Error(`required parameter "${name}" not given`)
