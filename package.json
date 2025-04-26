@@ -32,7 +32,8 @@
         "ws":                               "8.18.1",
         "bufferutil":                       "4.0.9",
         "utf-8-validate":                   "6.0.5",
-        "@opensumi/reconnecting-websocket": "4.4.0"
+        "@opensumi/reconnecting-websocket": "4.4.0",
+        "get-stream":                       "9.0.1"
     },
     "devDependencies": {
         "eslint":                           "9.25.1",
