@@ -37,45 +37,45 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
         /*  instantiate FFmpeg sub-process  */
         this.ffmpeg = new FFmpegStream(FFmpeg.binary)
         const streamInput = this.ffmpeg.createInputStream({
-            "fflags":       "nobuffer",
-            "flags":        "low_delay",
-            "probesize":    32,
+            "fflags":          "nobuffer",
+            "flags":           "low_delay",
+            "probesize":       32,
             "analyzeduration": 0,
             ...(this.params.src === "pcm" ? {
-                "f":        "s16le",
-                "ar":       this.config.audioSampleRate,
-                "ac":       this.config.audioChannels
+                "f":           "s16le",
+                "ar":          this.config.audioSampleRate,
+                "ac":          this.config.audioChannels
             } : {}),
             ...(this.params.src === "wav" ? {
-                "f":        "wav"
+                "f":           "wav"
             } : {}),
             ...(this.params.src === "mp3" ? {
-                "f":        "mp3"
+                "f":           "mp3"
             } : {}),
             ...(this.params.src === "opus" ? {
-                "f":        "opus"
+                "f":           "opus"
             } : {})
         })
         const streamOutput = this.ffmpeg.createOutputStream({
+            "flush_packets":   1,
             ...(this.params.dst === "pcm" ? {
-                "c:a":      "pcm_s16le",
-                "ar":       this.config.audioSampleRate,
-                "ac":       this.config.audioChannels,
-                "f":        "s16le",
+                "c:a":         "pcm_s16le",
+                "ar":          this.config.audioSampleRate,
+                "ac":          this.config.audioChannels,
+                "f":           "s16le",
             } : {}),
             ...(this.params.dst === "wav" ? {
-                "f":        "wav"
+                "f":           "wav"
             } : {}),
             ...(this.params.dst === "mp3" ? {
-                "c:a":      "libmp3lame",
-                "b:a":      "192k",
-                "f":        "mp3"
+                "c:a":         "libmp3lame",
+                "b:a":         "192k",
+                "f":           "mp3"
             } : {}),
             ...(this.params.dst === "opus" ? {
-                "acodec":   "libopus",
-                "f":        "opus"
-            } : {}),
-            "flush_packets": 1
+                "acodec":      "libopus",
+                "f":           "opus"
+            } : {})
         })
         this.ffmpeg.run()
 
