@@ -34,7 +34,9 @@
         "utf-8-validate":                   "6.0.5",
         "@opensumi/reconnecting-websocket": "4.4.0",
         "get-stream":                       "9.0.1",
-        "ollama":                           "0.5.15"
+        "ollama":                           "0.5.15",
+        "@rse/ffmpeg":                      "1.4.1",
+        "ffmpeg-stream":                    "1.0.0"
     },
     "devDependencies": {
         "eslint":                           "9.25.1",

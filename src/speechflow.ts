@@ -19,7 +19,7 @@ import SpeechFlowNodeWebsocket  from "./speechflow-node-websocket"
 import SpeechFlowNodeDeepgram   from "./speechflow-node-deepgram"
 import SpeechFlowNodeDeepL      from "./speechflow-node-deepl"
 import SpeechFlowNodeElevenLabs from "./speechflow-node-elevenlabs"
-import SpeechFlowNodeOllama     from "./speechflow-node-ollama"
+import SpeechFlowNodeGemma      from "./speechflow-node-gemma"
 
 import pkg                      from "../package.json"
 
@@ -122,7 +122,7 @@ let cli: CLIio | null = null
         "deepgram":   SpeechFlowNodeDeepgram,
         "deepl":      SpeechFlowNodeDeepL,
         "elevenlabs": SpeechFlowNodeElevenLabs,
-        "ollama":     SpeechFlowNodeOllama
+        "gemma":      SpeechFlowNodeGemma
     }
 
     /*  parse configuration into node graph  */

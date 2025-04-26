@@ -174,9 +174,10 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **src**      | 0         | "de"     | `/^(?:de\|en-US)$/` |
   | **dst**      | 1         | "en-US"  | `/^(?:de\|en-US)$/` |
 
-- Node: **ollama**<br/>
-  Purpose: **Ollama Text-to-Text translation**<br/>
-  Example: `deepl(src: "de", dst: "en")`<br/>
+- Node: **gemma**<br/>
+  Purpose: **Google Gemma Text-to-Text translation**<br/>
+  Example: `gemma(src: "de", dst: "en")`<br/>
+  Notice; this node requires the Ollama API!
 
   | Port    | Payload     |
   | ------- | ----------- |
