@@ -158,7 +158,7 @@ let cli: CLIio | null = null
         }
     })
 
-    /*  graph processing: PASS 1: activate and sanity check nodes  */
+    /*  graph processing: PASS 1: open and connect nodes  */
     for (const node of graphNodes) {
         /*  connect node events  */
         node.on("log", (level: string, msg: string, data?: any) => {
@@ -196,10 +196,10 @@ let cli: CLIio | null = null
             connectionsOut.forEach((other) => { node.disconnect(other) })
     }
 
-    /*  graph processing: PASS 2: activate streams  */
+    /*  graph processing: PASS 2: connect node streams  */
     for (const node of graphNodes) {
         if (node.stream === null)
-            throw new Error(`stream of outgoing node "${node.id}" still not initialized`)
+            throw new Error(`stream of node "${node.id}" still not initialized`)
         for (const other of Array.from(node.connectionsOut)) {
             if (other.stream === null)
                 throw new Error(`stream of incoming node "${other.id}" still not initialized`)
@@ -207,7 +207,13 @@ let cli: CLIio | null = null
                 throw new Error(`${node.output} output node "${node.id}" cannot be ` +
                     `connected to ${other.input} input node "${other.id}" (payload is incompatible)`)
             cli!.log("info", `connecting stream of node "${node.id}" to stream of node "${other.id}"`)
-            node.stream.pipe(other.stream as Stream.Writable)
+            if (!( node.stream instanceof Stream.Readable
+                || node.stream instanceof Stream.Duplex  ))
+                throw new Error(`stream of output node "${node.id}" is neither of Readable nor Duplex type`)
+            if (!( other.stream instanceof Stream.Writable
+                || other.stream instanceof Stream.Duplex  ))
+                throw new Error(`stream of input node "${other.id}" is neither of Writable nor Duplex type`)
+            node.stream.pipe(other.stream)
         }
     }
 
@@ -218,12 +224,42 @@ let cli: CLIio | null = null
             return
         shuttingDown = true
         cli!.log("warning", `received signal ${signal} -- shutting down service`)
+
+        /*  graph processing: PASS 1: disconnect node streams  */
         for (const node of graphNodes) {
-            cli!.log("info", `closing node "${node.id}"`)
+            if (node.stream === null) {
+                cli!.log("warning", `stream of node "${node.id}" no longer initialized`)
+                continue
+            }
+            for (const other of Array.from(node.connectionsOut)) {
+                if (other.stream === null) {
+                    cli!.log("warning", `stream of incoming node "${other.id}" no longer initialized`)
+                    continue
+                }
+                cli!.log("info", `disconnecting stream of node "${node.id}" from stream of node "${other.id}"`)
+                if (!( node.stream instanceof Stream.Readable
+                    || node.stream instanceof Stream.Duplex  )) {
+                    cli!.log("warning", `stream of output node "${node.id}" is neither of Readable nor Duplex type`)
+                    continue
+                }
+                if (!( other.stream instanceof Stream.Writable
+                    || other.stream instanceof Stream.Duplex  )) {
+                    cli!.log("warning", `stream of input node "${other.id}" is neither of Writable nor Duplex type`)
+                    continue
+                }
+                node.stream.unpipe(other.stream)
+            }
+        }
+
+        /*  graph processing: PASS 2: disconnect and close nodes  */
+        for (const node of graphNodes) {
+            cli!.log("info", `disconnecting node "${node.id}"`)
             const connectionsIn  = Array.from(node.connectionsIn)
             const connectionsOut = Array.from(node.connectionsOut)
             connectionsIn.forEach((other) => { other.disconnect(node) })
             connectionsOut.forEach((other) => { node.disconnect(other) })
+
+            cli!.log("info", `closing node "${node.id}"`)
             await node.close()
         }
         process.exit(1)
