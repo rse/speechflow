@@ -190,6 +190,39 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **voice**    | 0         | "Brian"  | *none* |
   | **language** | 1         | "de"     | *none* |
 
+Graph Expression Language
+-------------------------
+
+The **SpeechFlow** graph expression language is based on
+[**FlowLink**](https://npmjs.org/flowlink), which itself has a language
+following the following BNF-style grammar:
+
+```
+expr             ::= parallel
+                   | sequential
+                   | node
+                   | group
+parallel         ::= sequential ("," sequential)+
+sequential       ::= node ("|" node)+
+node             ::= id ("(" (param ("," param)*)? ")")?
+param            ::= array | object | variable | template | string | number | value
+group            ::= "{" expr "}"
+id               ::= /[a-zA-Z_][a-zA-Z0-9_-]*/
+variable         ::= id
+array            ::= "[" (param ("," param)*)? "]"
+object           ::= "{" (id ":" param ("," id ":" param)*)? "}"
+template         ::= "`" ("${" variable "}" / ("\\`"|.))* "`"
+string           ::= /"(\\"|.)*"/
+                   | /'(\\'|.)*'/
+number           ::= /[+-]?/ number-value
+number-value     ::= "0b" /[01]+/
+                   | "0o" /[0-7]+/
+                   | "0x" /[0-9a-fA-F]+/
+                   | /[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?/
+                   | /[0-9]+/
+value            ::= "true" | "false" | "null" | "NaN" | "undefined"
+```
+
 History
 -------
 
