@@ -158,8 +158,37 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **version**  | 1         | "latest" | *none* |
   | **language** | 2         | "de"     | *none* |
 
-- **deepl**: DeepL Text-to-Text translation (input: text, output: text).
-- **elevenlabs**: ElevenLabs Text-to-Speech conversion (input: text, output: audio).
+- Node: **deepl**<br/>
+  Purpose: **DeepL Text-to-Text translation**<br/>
+  Example: `deepl(src: "de", dst: "en-US")`<br/>
+  Notice: this node requires an API key!
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPL | *none* |
+  | **src**      | 0         | "de"     | `/^(?:de\|en-US)$/` |
+  | **dst**      | 1         | "en-US"  | `/^(?:de\|en-US)$/` |
+
+- Node: **elevenlabs**<br/>
+  Purpose: **ElevenLabs Text-to-Speech conversion**<br/>
+  Example: `elevenlabs(language: "en")`<br/>
+  Notice: this node requires an API key!
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | audio       |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **key**      | *none*    | env.SPEECHFLOW\_KEY\_ELEVENLABS | *none* |
+  | **voice**    | 0         | "Brian"  | *none* |
+  | **language** | 1         | "de"     | *none* |
 
 History
 -------
