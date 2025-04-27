@@ -8,9 +8,9 @@ scripts:
     #   multiview-style development dashboard
     dev: >
                             stmux -w always -m beep -e "built.in.+ms" --
-                            [ -s 40% "npm start lint-watch" :
-                            -s 40% "npm start build-watch" :
-                            -s 20% "npm start server-delay server-dev-watch" ]
+                            [ -s 35% "npm start lint-watch" :
+                            -s 15% "npm start build-watch" :
+                            -s 30% "npm start server-delay server-watch" ]
 
     #   static code analysis (linting)
     lint-watch:             nodemon --exec "npm start lint" --watch src --ext ts
@@ -32,7 +32,7 @@ scripts:
     server:                 node dst/speechflow.js -v info -c sample@sample.yaml
     server-watch: >
                             cross-env NODE_OPTIONS="--enable-source-maps"
-                            nodemon --exec "npm start server" --watch src --ext ts --delay 1.0
+                            nodemon --exec "npm start server" --watch dst --ext ts --delay 1.0
 
     #   cleanup filesystem
     clean:                  rimraf dst
