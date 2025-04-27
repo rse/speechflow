@@ -29,9 +29,10 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            key: { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPL },
-            src: { type: "string", pos: 0, val: "de",    match: /^(?:de|en-US)$/ },
-            dst: { type: "string", pos: 1, val: "en-US", match: /^(?:de|en-US)$/ }
+            key:      { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPL },
+            src:      { type: "string", pos: 0, val: "de",      match: /^(?:de|en-US)$/ },
+            dst:      { type: "string", pos: 1, val: "en-US",   match: /^(?:de|en-US)$/ },
+            optimize: { type: "string", pos: 2, val: "latency", match: /^(?:latency|quality)$/ }
         })
     }
 
@@ -42,8 +43,13 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
-            const result = await this.deepl!.translateText(
-                text, this.params.src, this.params.dst, { splitSentences: "off" })
+            const result = await this.deepl!.translateText(text, this.params.src, this.params.dst, {
+                splitSentences: "off",
+                modelType: this.params.optimize === "latency" ?
+                    "latency_optimized" : "prefer_quality_optimized",
+                preserveFormatting: true,
+                formality: "prefer_more"
+            })
             return (result?.text ?? text)
         }
 
