@@ -18,11 +18,13 @@ About
 directed data flow graph of audio and text processing nodes. This way,
 it allows to perform various speech processing tasks in a flexible way.
 Currently, **SpeechFlow** comes with graph nodes for file I/O, audio
-device I/O, Websocket network I/O, Deepgram speech-to-text conversion,
-DeepL text-to-text translation, Gemma/Ollama text-to-text translation,
-ElevenLabs text-to-speech conversion, and FFmpeg speech-to-speech
-encoding. **SpeechFlow** is written in TypeScript and ships as a package
-for the Node Package Manager (NPM).
+device I/O, WebSocket network I/O, [Deepgram](https://deepgram.com)
+speech-to-text conversion, [DeepL](https://deepl.com) text-to-text
+translation, [Gemma/Ollama](https://ollama.com/library/gemma3)
+text-to-text translation, [ElevenLabs](https://elevenlabs.io/)
+text-to-speech conversion, and [FFmpeg](https://ffmpeg.org/)
+speech-to-speech encoding. **SpeechFlow** is written in TypeScript and
+ships as a package for the Node Package Manager (NPM).
 
 Installation
 ------------
