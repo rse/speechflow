@@ -41,46 +41,46 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        const encoding = this.params.type === "text" ? this.config.textEncoding : "binary"
         if (this.params.mode === "rw") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                process.stdin.setEncoding(this.params.type === "text" ? this.config.textEncoding : "binary")
-                process.stdout.setEncoding(this.params.type === "text" ? this.config.textEncoding : "binary")
+                process.stdin.setEncoding(encoding)
+                process.stdout.setEncoding(encoding)
                 this.stream = Stream.Duplex.from({
                     readable: process.stdin,
                     writable: process.stdout
                 })
             }
-            else
+            else {
                 /*  file I/O  */
                 this.stream = Stream.Duplex.from({
-                    readable: fs.createReadStream(this.params.path,
-                        { encoding: this.params.type === "text" ? this.config.textEncoding : "binary" }),
-                    writable: fs.createWriteStream(this.params.path,
-                        { encoding: this.params.type === "text" ? this.config.textEncoding : "binary" })
+                    readable: fs.createReadStream(this.params.path, { encoding }),
+                    writable: fs.createWriteStream(this.params.path, { encoding })
                 })
+            }
         }
         else if (this.params.mode === "r") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                process.stdin.setEncoding(this.params.type === "text" ? this.config.textEncoding : "binary")
+                process.stdin.setEncoding(encoding)
                 this.stream = process.stdin
             }
-            else
+            else {
                 /*  file I/O  */
-                this.stream = fs.createReadStream(this.params.path,
-                    { encoding: this.params.type === "text" ? this.config.textEncoding : "binary" })
+                this.stream = fs.createReadStream(this.params.path, { encoding })
+            }
         }
         else if (this.params.mode === "w") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                process.stdout.setEncoding(this.params.type === "text" ? this.config.textEncoding : "binary")
+                process.stdout.setEncoding(encoding)
                 this.stream = process.stdout
             }
-            else
+            else {
                 /*  file I/O  */
-                this.stream = fs.createWriteStream(this.params.path,
-                    { encoding: this.params.type === "text" ? this.config.textEncoding : "binary" })
+                this.stream = fs.createWriteStream(this.params.path, { encoding })
+            }
         }
         else
             throw new Error(`invalid file mode "${this.params.mode}"`)
