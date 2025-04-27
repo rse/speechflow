@@ -37,7 +37,7 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     }
 
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */
-    configure (spec: { [ id: string ]: { type: string, pos?: number, val?: any, match?: RegExp } }) {
+    configure (spec: { [ id: string ]: { type: string, pos?: number, val?: any, match?: RegExp | ((x: any) => boolean) } }) {
         for (const name of Object.keys(spec)) {
             if (this.opts[name] !== undefined) {
                 /*  named parameter  */
@@ -45,9 +45,11 @@ export default class SpeechFlowNode extends Events.EventEmitter {
                     throw new Error(`invalid type of named parameter "${name}" ` +
                         `(has to be ${spec[name].type})`)
                 if ("match" in spec[name]
-                    && this.opts[name].match(spec[name].match) === null)
-                    throw new Error(`invalid value of named parameter "${name}" ` +
-                        `(has to match ${spec[name].match})`)
+                    && (   (   spec[name].match instanceof RegExp
+                            && this.opts[name].match(spec[name].match) === null)
+                        || (   typeof spec[name].match === "function"
+                            && !spec[name].match(this.opts[name])    )          ))
+                    throw new Error(`invalid value "${this.opts[name]}" of named parameter "${name}"`)
                 this.params[name] = this.opts[name]
             }
             else if (this.opts[name] === undefined
@@ -55,14 +57,20 @@ export default class SpeechFlowNode extends Events.EventEmitter {
                 && typeof spec[name].pos === "number"
                 && spec[name].pos < this.args.length) {
                 /*  positional argument  */
-                if (typeof this.args[spec[name].pos!] !== spec[name].type)
+                if (typeof this.args[spec[name].pos] !== spec[name].type)
                     throw new Error(`invalid type of positional parameter "${name}" ` +
                         `(has to be ${spec[name].type})`)
                 if ("match" in spec[name]
-                    && this.args[spec[name].pos!].match(spec[name].match) === null)
+                    && this.args[spec[name].pos].match(spec[name].match) === null)
                     throw new Error(`invalid value of positional parameter "${name}" ` +
                         `(has to match ${spec[name].match})`)
-                this.params[name] = this.args[spec[name].pos!]
+                if ("match" in spec[name]
+                    && (   (   spec[name].match instanceof RegExp
+                            && this.args[spec[name].pos].match(spec[name].match) === null)
+                        || (   typeof spec[name].match === "function"
+                            && !spec[name].match(this.args[spec[name].pos])    )          ))
+                    throw new Error(`invalid value "${this.opts[name]}" of positional parameter "${name}"`)
+                this.params[name] = this.args[spec[name].pos]
             }
             else if ("val" in spec[name] && spec[name].val !== undefined)
                 /*  default argument  */

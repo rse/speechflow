@@ -47,7 +47,8 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_ELEVENLABS },
             voice:    { type: "string", val: "Brian",  pos: 0, match: /^(?:.+)$/ },
-            language: { type: "string", val: "de",     pos: 1, match: /^(?:de|en)$/ }
+            language: { type: "string", val: "de",     pos: 1, match: /^(?:de|en)$/ },
+            speed:    { type: "number", val: 1.0,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 }
         })
 
         /*  declare node input/output format  */
@@ -78,12 +79,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                 text,
                 model_id: "eleven_flash_v2_5",
                 language_code: this.params.language,
-                output_format: "pcm_16000", // = S16LE
-                seed: 815,
+                output_format: "pcm_16000",
+                seed: 815 /* arbitrary, but fixated by us */,
                 voice_settings: {
-                    stability: 0.0,
-                    similarity_boost: 0.0,
-                    speed: 1.0
+                    speed: this.params.speed
                 }
             }, {
                 timeoutInSeconds: 30,
