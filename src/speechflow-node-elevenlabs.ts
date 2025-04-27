@@ -4,12 +4,15 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/*  standard dependencies  */
 import Stream                from "node:stream"
 import { EventEmitter }      from "node:events"
 
+/*  external dependencies  */
 import * as ElevenLabs       from "elevenlabs"
 import { getStreamAsBuffer } from "get-stream"
 
+/*  internal dependencies  */
 import SpeechFlowNode        from "./speechflow-node"
 
 /*

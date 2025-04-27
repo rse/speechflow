@@ -4,26 +4,54 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-import Stream           from "node:stream"
-import ws               from "ws"
-import ReconnWebsocket, { ErrorEvent }  from "@opensumi/reconnecting-websocket"
-import SpeechFlowNode   from "./speechflow-node"
+/*  standard dependencies  */
+import Stream                          from "node:stream"
 
+/*  external dependencies  */
+import ws                              from "ws"
+import ReconnWebsocket, { ErrorEvent } from "@opensumi/reconnecting-websocket"
+
+/*  internal dependencies  */
+import SpeechFlowNode                  from "./speechflow-node"
+
+/*  SpeechFlow node for Websocket networking  */
 export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
+    /*  internal state  */
     private server: ws.WebSocketServer | null = null
-    private client: WebSocket | null = null
+    private client: WebSocket          | null = null
+
+    /*  construct node  */
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
+
+        /*  declare node configuration parameters  */
         this.configure({
             listen:  { type: "string", val: "",     match: /^(?:|ws:\/\/(.+?):(\d+))$/ },
             connect: { type: "string", val: "",     match: /^(?:|ws:\/\/(.+?):(\d+)(?:\/.*)?)$/ },
             type:    { type: "string", val: "text", match: /^(?:audio|text)$/ }
         })
-    }
-    async open () {
-        this.input  = this.params.type
-        this.output = this.params.type
+
+        /*  sanity check usage  */
+        if (this.params.listen !== "" && this.params.connect !== "")
+            throw new Error("Websocket node cannot listen and connect at the same time")
+        else if (this.params.listen === "" && this.params.connect === "")
+            throw new Error("Websocket node requires either listen or connect mode")
+
+        /*  declare node input/output format  */
         if (this.params.listen !== "") {
+            this.input  = "none"
+            this.output = this.params.type
+        }
+        else if (this.params.connect !== "") {
+            this.input  = this.params.type
+            this.output = "none"
+        }
+    }
+
+    /*  open node  */
+    async open () {
+        if (this.params.listen !== "") {
+            /*  listen locally on a Websocket port  */
             const url = new URL(this.params.listen)
             let websocket: ws.WebSocket | null = null
             const server = new ws.WebSocketServer({
@@ -46,8 +74,9 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 this.log("error", `error on URL ${this.params.listen}: ${error.message}`)
                 websocket = null
             })
+            const textEncoding = this.config.textEncoding
             this.stream = new Stream.Duplex({
-                write (chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void) {
+                write (chunk: Buffer, encoding, callback) {
                     const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
                     if (websocket !== null) {
                         websocket.send(data, (error) => {
@@ -61,7 +90,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 read (size: number) {
                     if (websocket !== null) {
                         websocket.once("message", (data, isBinary) => {
-                            this.push(data, isBinary ? "binary" : "utf8")
+                            this.push(data, isBinary ? "binary" : textEncoding)
                         })
                     }
                     else
@@ -70,6 +99,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             })
         }
         else if (this.params.connect !== "") {
+            /*  connect remotely to a Websocket port  */
             this.client = new ReconnWebsocket(this.params.connect, [], {
                 WebSocket:                   ws,
                 WebSocketOptions:            {},
@@ -90,8 +120,9 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             })
             const client = this.client
             client.binaryType = "arraybuffer"
+            const textEncoding = this.config.textEncoding
             this.stream = new Stream.Duplex({
-                write (chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void) {
+                write (chunk: Buffer, encoding, callback) {
                     const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
                     if (client.OPEN) {
                         client.send(data)
@@ -106,7 +137,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                             if (ev.data instanceof ArrayBuffer)
                                 this.push(ev.data, "binary")
                             else
-                                this.push(ev.data, "utf8")
+                                this.push(ev.data, textEncoding)
                         }, { once: true })
                     }
                     else
@@ -114,10 +145,11 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 }
             })
         }
-        else
-            throw new Error("neither listen nor connect mode requested")
     }
+
+    /*  close node  */
     async close () {
+        /*  close Websocket server  */
         if (this.server !== null) {
             await new Promise<void>((resolve, reject) => {
                 this.server!.close((error) => {
@@ -127,10 +159,14 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             })
             this.server = null
         }
+
+        /*  close Websocket client  */
         if (this.client !== null) {
             this.client!.close()
             this.client = null
         }
+
+        /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
