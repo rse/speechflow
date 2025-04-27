@@ -47,7 +47,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_ELEVENLABS },
             voice:    { type: "string", val: "Brian",   pos: 0, match: /^(?:.+)$/ },
-            language: { type: "string", val: "de",      pos: 1, match: /^(?:de|en)$/ },
+            language: { type: "string", val: "en",      pos: 1, match: /^(?:de|en)$/ },
             speed:    { type: "number", val: 1.05,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
             optimize: { type: "string", val: "latency", pos: 3, match: /^(?:latency|quality)$/ }
         })
@@ -68,9 +68,12 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             (for details see https://elevenlabs.io/text-to-speech)  */
         const voices = await this.elevenlabs.voices.getAll()
         console.log(voices)
-        const voice = voices.voices.find((voice) => voice.name === this.params.voice)
-        if (voice === undefined)
-            throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
+        let voice = voices.voices.find((voice) => voice.name === this.params.voice)
+        if (voice === undefined) {
+            voice = voices.voices.find((voice) => voice.name!.startsWith(this.params.voice))
+            if (voice === undefined)
+                throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
+        }
         const info = Object.keys(voice.labels ?? {}).length > 0 ?
             (", " + Object.entries(voice.labels!)
                 .map(([ key, val ]) => `${key}: "${val}"`).join(", ")) : ""
