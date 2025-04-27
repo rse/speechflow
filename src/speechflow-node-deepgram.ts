@@ -30,9 +30,9 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPGRAM },
-            model:    { type: "string", val: "nova-2", pos: 0 }, /* FIXME: nova-3 multiligual */
+            model:    { type: "string", val: "nova-3", pos: 0 },
             version:  { type: "string", val: "latest", pos: 1 },
-            language: { type: "string", val: "de",  pos: 2 }
+            language: { type: "string", val: "multi",  pos: 2 }
         })
     }
 
