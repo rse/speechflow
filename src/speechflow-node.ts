@@ -4,25 +4,30 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-import Events  from "node:events"
-import Stream  from "node:stream"
+/*  standard dependencies  */
+import Events from "node:events"
+import Stream from "node:stream"
 
+/*  the base class for all SpeechFlow nodes  */
 export default class SpeechFlowNode extends Events.EventEmitter {
-    public config = {
+    /*  general constant configuration (for reference)  */
+    config = {
         audioChannels:     1,      /* audio mono channel       */
         audioBitDepth:     16,     /* audio PCM 16-bit integer */
         audioLittleEndian: true,   /* audio PCM little-endian  */
         audioSampleRate:   48000,  /* audio 48kHz sample rate  */
         textEncoding:      "utf8"  /* UTF-8 text encoding      */
     } as const
-    public input  = "none"
-    public output = "none"
-    public params = {} as { [ id: string ]: any }
-    public stream: Stream.Writable | Stream.Readable | Stream.Duplex | null = null
 
-    public connectionsIn  = new Set<SpeechFlowNode>()
-    public connectionsOut = new Set<SpeechFlowNode>()
+    /*  announced information  */
+    input  = "none"
+    output = "none"
+    params: { [ id: string ]: any } = {}
+    stream: Stream.Writable | Stream.Readable | Stream.Duplex | null = null
+    connectionsIn  = new Set<SpeechFlowNode>()
+    connectionsOut = new Set<SpeechFlowNode>()
 
+    /*  the default constructor  */
     constructor (
         public  id:   string,
         private opts: { [ id: string ]: any },
@@ -31,46 +36,63 @@ export default class SpeechFlowNode extends Events.EventEmitter {
         super()
     }
 
+    /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */
     configure (spec: { [ id: string ]: { type: string, pos?: number, val?: any, match?: RegExp } }) {
         for (const name of Object.keys(spec)) {
             if (this.opts[name] !== undefined) {
+                /*  named parameter  */
                 if (typeof this.opts[name] !== spec[name].type)
-                    throw new Error(`invalid type of option "${name}"`)
-                if ("match" in spec[name] && this.opts[name].match(spec[name].match) === null)
-                    throw new Error(`invalid value of option "${name}" (has to match ${spec[name].match})`)
+                    throw new Error(`invalid type of named parameter "${name}" ` +
+                        `(has to be ${spec[name].type})`)
+                if ("match" in spec[name]
+                    && this.opts[name].match(spec[name].match) === null)
+                    throw new Error(`invalid value of named parameter "${name}" ` +
+                        `(has to match ${spec[name].match})`)
                 this.params[name] = this.opts[name]
             }
             else if (this.opts[name] === undefined
                 && "pos" in spec[name]
-                && spec[name].pos! < this.args.length) {
+                && typeof spec[name].pos === "number"
+                && spec[name].pos < this.args.length) {
+                /*  positional argument  */
                 if (typeof this.args[spec[name].pos!] !== spec[name].type)
-                    throw new Error(`invalid type of argument "${name}"`)
-                if ("match" in spec[name] && this.args[spec[name].pos!].match(spec[name].match) === null)
-                    throw new Error(`invalid value of option "${name}" (has to match ${spec[name].match})`)
+                    throw new Error(`invalid type of positional parameter "${name}" ` +
+                        `(has to be ${spec[name].type})`)
+                if ("match" in spec[name]
+                    && this.args[spec[name].pos!].match(spec[name].match) === null)
+                    throw new Error(`invalid value of positional parameter "${name}" ` +
+                        `(has to match ${spec[name].match})`)
                 this.params[name] = this.args[spec[name].pos!]
             }
             else if ("val" in spec[name] && spec[name].val !== undefined)
+                /*  default argument  */
                 this.params[name] = spec[name].val
             else
                 throw new Error(`required parameter "${name}" not given`)
         }
     }
+
+    /*  connect node to another one  */
     connect (other: SpeechFlowNode) {
         this.connectionsOut.add(other)
         other.connectionsIn.add(this)
     }
+
+    /*  disconnect node from another one  */
     disconnect (other: SpeechFlowNode) {
         if (!this.connectionsOut.has(other))
             throw new Error("invalid node: not connected to this node")
         this.connectionsOut.delete(other)
         other.connectionsIn.delete(this)
     }
+
+    /*  internal log function  */
     log (level: string, msg: string, data?: any) {
         this.emit("log", level, msg, data)
     }
-    async open () {
-    }
-    async close () {
-    }
+
+    /*  default implementation for open/close operations  */
+    async open  () {}
+    async close () {}
 }
 
