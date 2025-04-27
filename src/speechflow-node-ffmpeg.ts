@@ -24,15 +24,15 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
 
-        /*  declare node input/output format  */
-        this.input  = "audio"
-        this.output = "audio"
-
         /*  declare node configuration parameters  */
         this.configure({
             src: { type: "string", pos: 0, val: "pcm", match: /^(?:pcm|wav|mp3|opus)$/ },
             dst: { type: "string", pos: 1, val: "wav", match: /^(?:pcm|wav|mp3|opus)$/ }
         })
+
+        /*  declare node input/output format  */
+        this.input  = "audio"
+        this.output = "audio"
     }
 
     /*  open node  */

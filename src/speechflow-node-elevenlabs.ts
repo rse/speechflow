@@ -28,19 +28,27 @@ const elevenlabsVoices = {
 */
 
 export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
+    /*  internal state  */
     private elevenlabs: ElevenLabs.ElevenLabsClient | null = null
+
+    /*  construct node  */
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
+
+        /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_ELEVENLABS },
             voice:    { type: "string", val: "Brian",  pos: 0 },
             language: { type: "string", val: "de",     pos: 1 }
         })
-    }
-    async open () {
+
+        /*  declare node input/output format  */
         this.input  = "text"
         this.output = "audio"
+    }
 
+    /*  open node  */
+    async open () {
         this.elevenlabs = new ElevenLabs.ElevenLabsClient({
             apiKey: this.params.key
         })
@@ -89,7 +97,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             }
         })
     }
+
+    /*  close node  */
     async close () {
+        /*  destroy stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
