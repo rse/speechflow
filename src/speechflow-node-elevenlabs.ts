@@ -16,21 +16,7 @@ import SpeexResampler        from "speex-resampler"
 /*  internal dependencies  */
 import SpeechFlowNode        from "./speechflow-node"
 
-/*
-const elevenlabsVoices = {
-    "drew":    { name: "Drew",    model: "eleven_multilingual_v2", lang: [ "en", "de" ] },
-    "george":  { name: "George",  model: "eleven_multilingual_v2", lang: [ "en", "de" ] },
-    "bill":    { name: "Bill",    model: "eleven_multilingual_v2", lang: [ "en", "de" ] },
-    "daniel":  { name: "Daniel",  model: "eleven_multilingual_v1", lang: [ "en", "de" ] },
-    "brian":   { name: "Brian",   model: "eleven_turbo_v2",        lang: [ "en"       ] },
-    "sarah":   { name: "Sarah",   model: "eleven_multilingual_v2", lang: [ "en", "de" ] },
-    "racel":   { name: "Racel",   model: "eleven_multilingual_v2", lang: [ "en", "de" ] },
-    "grace":   { name: "Grace",   model: "eleven_multilingual_v1", lang: [ "en", "de" ] },
-    "matilda": { name: "Matilda", model: "eleven_multilingual_v1", lang: [ "en", "de" ] },
-    "alice":   { name: "Alice",   model: "eleven_turbo_v2",        lang: [ "en"       ] }
-}
-*/
-
+/*  SpeechFlow node for Elevenlabs text-to-speech conversion  */
 export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "elevenlabs"
