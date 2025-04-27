@@ -11,6 +11,7 @@ import { EventEmitter }      from "node:events"
 /*  external dependencies  */
 import * as ElevenLabs       from "elevenlabs"
 import { getStreamAsBuffer } from "get-stream"
+import SpeexResampler        from "speex-resampler"
 
 /*  internal dependencies  */
 import SpeechFlowNode        from "./speechflow-node"
@@ -89,13 +90,18 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  internal queue of results  */
         const queue = new EventEmitter()
 
+        /*  establish resampler from ElevenLabs hard-coded 16Khz
+            output to our standard audio sample rate (48KHz)  */
+        const resampler = new SpeexResampler(1, 16000, this.config.audioSampleRate, 7)
+
         /*  create duplex stream and connect it to the ElevenLabs API  */
         this.stream = new Stream.Duplex({
             write (chunk: Buffer, encoding, callback) {
                 const data = chunk.toString()
                 speechStream(data).then((stream) => {
                     getStreamAsBuffer(stream).then((buffer) => {
-                        queue.emit("audio", buffer)
+                        const bufferResampled = resampler.processChunk(buffer)
+                        queue.emit("audio", bufferResampled)
                         callback()
                     }).catch((error) => {
                         callback(error)
