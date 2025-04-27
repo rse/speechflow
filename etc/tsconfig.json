@@ -14,6 +14,8 @@
         "lib":                     [ "es2022" ],
         "skipLibCheck":            true,
         "noEmit":                  false,
+        "declaration":             true,
+        "emitDeclarationOnly":     false,
         "types":                   [ "node" ],
         "rootDir":                 "../src"
     },
