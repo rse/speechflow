@@ -37,6 +37,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
     /*  internal state  */
     private elevenlabs: ElevenLabs.ElevenLabsClient | null = null
+    private static speexInitialized = false
 
     /*  construct node  */
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
@@ -45,7 +46,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_ELEVENLABS },
-            voice:    { type: "string", val: "Brian",  pos: 0, match: /^(?:Brian)$/ },
+            voice:    { type: "string", val: "Brian",  pos: 0, match: /^(?:.+)$/ },
             language: { type: "string", val: "de",     pos: 1, match: /^(?:de|en)$/ }
         })
 
@@ -66,7 +67,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         const voice = voices.voices.find((voice) => voice.name === this.params.voice)
         if (voice === undefined)
             throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
-        console.log((await import("node:util")).inspect(voice, true, null, true))
+        const info = Object.keys(voice.labels ?? {}).length > 0 ?
+            (", " + Object.entries(voice.labels!)
+                .map(([ key, val ]) => `${key}: "${val}"`).join(", ")) : ""
+        this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
         /*  perform text-to-speech operation with Elevenlabs API  */
         const speechStream = (text: string) => {
@@ -92,6 +96,11 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
         /*  establish resampler from ElevenLabs hard-coded 16Khz
             output to our standard audio sample rate (48KHz)  */
+        if (!SpeechFlowNodeElevenlabs.speexInitialized) {
+            /*  at least once initialize resampler  */
+            await SpeexResampler.initPromise
+            SpeechFlowNodeElevenlabs.speexInitialized = true
+        }
         const resampler = new SpeexResampler(1, 16000, this.config.audioSampleRate, 7)
 
         /*  create duplex stream and connect it to the ElevenLabs API  */
