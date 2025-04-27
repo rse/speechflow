@@ -29,13 +29,10 @@ scripts:
 
     #   start server run-time
     server-delay:           delay 2.0
-    server-dev-watch: >
+    server:                 node dst/speechflow.js -v info -c sample@sample.yaml
+    server-watch: >
                             cross-env NODE_OPTIONS="--enable-source-maps"
                             nodemon --exec "npm start server" --watch src --ext ts --delay 1.0
-    server: >
-                            node --env-file=.env                             dst/speechflow.js -v debug -c sample@sample.yaml
-    server-dev:             node --env-file=.env -r ts-node/register --watch src/speechflow.ts -v debug -c sample@sample.yaml
-    server-prd:             node --env-file=.env -r ts-node/register         src/speechflow.ts -v info  -c sample@sample.yaml
 
     #   cleanup filesystem
     clean:                  rimraf dst

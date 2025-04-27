@@ -26,7 +26,8 @@ translation: |
      deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en-US") |
      file(path: "-", mode: "w", type: "text")
 
+#  sample for development
 sample: |
-     device(device: "wasapi:Voicemeeter Out B1", mode: "r") |
+     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
      file(path: "capture.pcm", mode: "w", type: "audio")
 
