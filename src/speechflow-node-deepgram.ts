@@ -6,9 +6,9 @@
 
 /*  standard dependencies  */
 import { EventEmitter } from "node:events"
+import Stream           from "node:stream"
 
 /*  external dependencies  */
-import Stream           from "node:stream"
 import * as Deepgram    from "@deepgram/sdk"
 
 /*  internal dependencies  */
