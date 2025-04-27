@@ -29,7 +29,7 @@ translation: |
 #  sample for development
 sample: |
     file(path: "sample.txt", mode: "r", type: "text") |
-    elevenlabs(voice: "Stefan Rank", speed: 1.0) |
+    elevenlabs(voice: "Mark", speed: 1.05) |
     ffmpeg(dst: "wav") |
     file(path: "sample.wav", mode: "w", type: "audio")
 sample2: |
