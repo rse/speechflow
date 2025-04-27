@@ -57,7 +57,7 @@ let cli: CLIio | null = null
 
     /*  short-circuit version request  */
     if (args.version) {
-        process.stderr.write(`${pkg.name} ${pkg.version} <${pkg.homepage}>\n`)
+        process.stderr.write(`SpeechFlow ${pkg["x-stdver"]} (${pkg["x-release"]}) <${pkg.homepage}>\n`)
         process.stderr.write(`${pkg.description}\n`)
         process.stderr.write(`Copyright (c) 2024-2025 ${pkg.author.name} <${pkg.author.url}>\n`)
         process.stderr.write(`Licensed under ${pkg.license} <http://spdx.org/licenses/${pkg.license}.html>\n`)
@@ -71,6 +71,9 @@ let cli: CLIio | null = null
         logTime:   true,
         logPrefix: pkg.name
     })
+
+    /*  provide startup information  */
+    cli.log("info", `starting SpeechFlow ${pkg["x-stdver"]} (${pkg["x-release"]})`)
 
     /*  handle uncaught exceptions  */
     process.on("uncaughtException", async (err: Error) => {
