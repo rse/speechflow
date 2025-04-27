@@ -36,7 +36,10 @@
         "get-stream":                       "9.0.1",
         "ollama":                           "0.5.15",
         "@rse/ffmpeg":                      "1.4.2",
-        "ffmpeg-stream":                    "1.0.0"
+        "ffmpeg-stream":                    "1.0.0",
+        "installed-packages":               "1.0.13",
+        "resolve":                          "1.22.10",
+        "load-json-file":                   "7.0.1"
     },
     "devDependencies": {
         "eslint":                           "9.25.1",
@@ -47,8 +50,8 @@
         "eslint-plugin-node":               "11.1.0",
         "@typescript-eslint/eslint-plugin": "8.31.0",
         "@typescript-eslint/parser":        "8.31.0",
-        "oxlint":                           "0.16.7",
-        "eslint-plugin-oxlint":             "0.16.7",
+        "oxlint":                           "0.16.8",
+        "eslint-plugin-oxlint":             "0.16.8",
         "@biomejs/biome":                   "1.9.4",
         "eslint-config-biome":              "1.9.4",
 
@@ -57,6 +60,7 @@
         "@types/js-yaml":                   "4.0.9",
         "@types/object-path":               "0.11.4",
         "@types/ws":                        "8.18.1",
+        "@types/resolve":                   "1.20.6",
 
         "ts-node":                          "10.9.2",
         "stmux":                            "1.8.10",
