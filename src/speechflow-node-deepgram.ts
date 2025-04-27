@@ -14,8 +14,8 @@ import * as Deepgram    from "@deepgram/sdk"
 /*  internal dependencies  */
 import SpeechFlowNode   from "./speechflow-node"
 
-/*  SpeechFlow node for device access  */
-export default class SpeechFlowNodeDevice extends SpeechFlowNode {
+/*  SpeechFlow node for Deepgram speech-to-text conversion  */
+export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
     /*  internal state  */
     private dg: Deepgram.LiveClient | null = null
 
