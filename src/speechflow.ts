@@ -127,7 +127,7 @@ let cli: CLIio | null = null
         "gemma":      SpeechFlowNodeGemma
     }
 
-    /*  parse configuration into node graph  */
+    /*  graph processing: PASS 1: parse DSL and create and connect nodes  */
     const flowlink = new FlowLink<SpeechFlowNode>({
         trace: (msg: string) => {
             cli!.log("debug", msg)
@@ -146,37 +146,22 @@ let cli: CLIio | null = null
         },
         createNode (id: string, opts: { [ id: string ]: any }, args: any[]) {
             if (nodes[id] === undefined)
-                throw new Error(`unknown SpeechFlow node "${id}"`)
+                throw new Error(`unknown node "${id}"`)
             const node = new nodes[id](`${id}[${nodenum++}]`, opts, args)
-            graphNodes.add(node)
             const params = Object.keys(node.params)
                 .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
-            cli!.log("info", `created SpeechFlow node "${node.id}" (${params})`)
+            cli!.log("info", `create node "${node.id}" (${params})`)
+            graphNodes.add(node)
             return node
         },
         connectNode (node1: SpeechFlowNode, node2: SpeechFlowNode) {
-            cli!.log("info", `connect SpeechFlow node "${node1.id}" to node "${node2.id}"`)
+            cli!.log("info", `connect node "${node1.id}" to node "${node2.id}"`)
             node1.connect(node2)
         }
     })
 
-    /*  graph processing: PASS 1: open and connect nodes  */
+    /*  graph processing: PASS 2: prune connections of nodes  */
     for (const node of graphNodes) {
-        /*  connect node events  */
-        node.on("log", (level: string, msg: string, data?: any) => {
-            let str = `[${node.id}]: ${msg}`
-            if (data !== undefined)
-                str += ` (${JSON.stringify(data)})`
-            cli!.log(level, str)
-        })
-
-        /*  open node  */
-        cli!.log("info", `opening node "${node.id}"`)
-        await node.open().catch((err: Error) => {
-            cli!.log("error", `[${node.id}]: ${err.message}`)
-            throw new Error(`failed to open node "${node.id}"`)
-        })
-
         /*  determine connections  */
         const connectionsIn  = Array.from(node.connectionsIn)
         const connectionsOut = Array.from(node.connectionsOut)
@@ -196,19 +181,40 @@ let cli: CLIio | null = null
         /*  prune unnecessary outgoing links  */
         if (node.output === "none" && connectionsOut.length > 0)
             connectionsOut.forEach((other) => { node.disconnect(other) })
+
+        /*  check for payload compatibility  */
+        for (const other of connectionsOut)
+            if (other.input !== node.output)
+                throw new Error(`${node.output} output node "${node.id}" cannot be ` +
+                    `connected to ${other.input} input node "${other.id}" (payload is incompatible)`)
     }
 
-    /*  graph processing: PASS 2: connect node streams  */
+    /*  graph processing: PASS 3: open nodes  */
+    for (const node of graphNodes) {
+        /*  connect node events  */
+        node.on("log", (level: string, msg: string, data?: any) => {
+            let str = `[${node.id}]: ${msg}`
+            if (data !== undefined)
+                str += ` (${JSON.stringify(data)})`
+            cli!.log(level, str)
+        })
+
+        /*  open node  */
+        cli!.log("info", `open node "${node.id}"`)
+        await node.open().catch((err: Error) => {
+            cli!.log("error", `[${node.id}]: ${err.message}`)
+            throw new Error(`failed to open node "${node.id}"`)
+        })
+    }
+
+    /*  graph processing: PASS 4: connect node streams  */
     for (const node of graphNodes) {
         if (node.stream === null)
             throw new Error(`stream of node "${node.id}" still not initialized`)
         for (const other of Array.from(node.connectionsOut)) {
             if (other.stream === null)
                 throw new Error(`stream of incoming node "${other.id}" still not initialized`)
-            if (node.output !== other.input)
-                throw new Error(`${node.output} output node "${node.id}" cannot be ` +
-                    `connected to ${other.input} input node "${other.id}" (payload is incompatible)`)
-            cli!.log("info", `connecting stream of node "${node.id}" to stream of node "${other.id}"`)
+            cli!.log("info", `connect stream of node "${node.id}" to stream of node "${other.id}"`)
             if (!( node.stream instanceof Stream.Readable
                 || node.stream instanceof Stream.Duplex  ))
                 throw new Error(`stream of output node "${node.id}" is neither of Readable nor Duplex type`)
@@ -238,7 +244,6 @@ let cli: CLIio | null = null
                     cli!.log("warning", `stream of incoming node "${other.id}" no longer initialized`)
                     continue
                 }
-                cli!.log("info", `disconnecting stream of node "${node.id}" from stream of node "${other.id}"`)
                 if (!( node.stream instanceof Stream.Readable
                     || node.stream instanceof Stream.Duplex  )) {
                     cli!.log("warning", `stream of output node "${node.id}" is neither of Readable nor Duplex type`)
@@ -249,21 +254,33 @@ let cli: CLIio | null = null
                     cli!.log("warning", `stream of input node "${other.id}" is neither of Writable nor Duplex type`)
                     continue
                 }
+                cli!.log("info", `disconnect stream of node "${node.id}" from stream of node "${other.id}"`)
                 node.stream.unpipe(other.stream)
             }
         }
 
-        /*  graph processing: PASS 2: disconnect and close nodes  */
+        /*  graph processing: PASS 2: close nodes  */
         for (const node of graphNodes) {
-            cli!.log("info", `disconnecting node "${node.id}"`)
+            cli!.log("info", `close node "${node.id}"`)
+            await node.close()
+        }
+
+        /*  graph processing: PASS 3: disconnect nodes  */
+        for (const node of graphNodes) {
+            cli!.log("info", `disconnect node "${node.id}"`)
             const connectionsIn  = Array.from(node.connectionsIn)
             const connectionsOut = Array.from(node.connectionsOut)
             connectionsIn.forEach((other) => { other.disconnect(node) })
             connectionsOut.forEach((other) => { node.disconnect(other) })
-
-            cli!.log("info", `closing node "${node.id}"`)
-            await node.close()
         }
+
+        /*  graph processing: PASS 4: shutdown nodes  */
+        for (const node of graphNodes) {
+            cli!.log("info", `destroy node "${node.id}"`)
+            graphNodes.delete(node)
+        }
+
+        /*  terminate process  */
         process.exit(1)
     }
     process.on("SIGINT", () => {
