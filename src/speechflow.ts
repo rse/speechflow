@@ -4,14 +4,17 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/*  standard dependencies  */
 import Stream                   from "node:stream"
 
+/*  external dependencies  */
 import CLIio                    from "cli-io"
 import yargs                    from "yargs"
 import jsYAML                   from "js-yaml"
 import FlowLink                 from "flowlink"
 import objectPath               from "object-path"
 
+/*  internal dependencies  */
 import SpeechFlowNode           from "./speechflow-node"
 import SpeechFlowNodeFile       from "./speechflow-node-file"
 import SpeechFlowNodeDevice     from "./speechflow-node-device"
@@ -21,10 +24,12 @@ import SpeechFlowNodeDeepgram   from "./speechflow-node-deepgram"
 import SpeechFlowNodeDeepL      from "./speechflow-node-deepl"
 import SpeechFlowNodeElevenLabs from "./speechflow-node-elevenlabs"
 import SpeechFlowNodeGemma      from "./speechflow-node-gemma"
-
 import pkg                      from "../package.json"
 
+/*  global state  */
 let cli: CLIio | null = null
+
+/*  establish asynchronous environment  */
 ;(async () => {
     /*  parse command-line arguments  */
     const args = await yargs()
