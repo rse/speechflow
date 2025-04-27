@@ -36,27 +36,33 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
         /*  wrapper for local logging  */
         const log = (level: string, msg: string) => {
             if (this.params.name !== undefined)
-                this.log(level, `<${this.params.name}>: ${this.params.type}: ${msg}`)
+                this.log(level, `<${this.params.name}>: ${msg}`)
             else
-                this.log(level, `${this.params.type}: ${msg}`)
+                this.log(level, msg)
         }
 
         /*  internal queue for data chunks  */
         const queue = new EventEmitter()
 
         /*  provide Duplex stream and internally attach to Deepgram API  */
+        const type = this.params.type
         this.stream = new Stream.Duplex({
-            write (chunk: Buffer, encoding, callback) {
-                log("info", `write chunk: bytes=${chunk.byteLength} encoding=${encoding}`)
+            write (chunk: Buffer | string, encoding, callback) {
+                if (Buffer.isBuffer(chunk))
+                    log("info", `writing ${type} chunk: bytes=${chunk.byteLength}`)
+                else
+                    log("info", `writing ${type} chunk: string="${chunk.toString()}" length=${chunk.length} encoding=${encoding}`)
                 queue.emit("result", chunk)
                 callback()
             },
             read (size) {
-                queue.once("result", (chunk: Buffer) => {
+                queue.once("result", (chunk: Buffer | string) => {
                     this.push(chunk)
                 })
             },
             final (callback) {
+                this.push(null)
+                callback()
             }
         })
     }
