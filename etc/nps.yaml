@@ -21,7 +21,10 @@ scripts:
     lint-eslint:            eslint --config etc/eslint.mjs src/**/*.ts
 
     #   code compilation/transpiling (building)
-    build:                  tsc --project etc/tsconfig.json
+    build: >
+                            tsc --project etc/tsconfig.json &&
+                            (echo "#!/usr/bin/env node"; cat dst/speechflow.js) >dst/speechflow.js.new &&
+                            mv dst/speechflow.js.new dst/speechflow.js
     build-watch:            nodemon --exec "npm start build" --watch src --ext ts
 
     #   start server run-time
