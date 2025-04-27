@@ -4,21 +4,30 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/*  standard dependencies  */
 import Stream           from "node:stream"
 import { EventEmitter } from "node:events"
-import SpeechFlowNode   from "./speechflow-node"
+
+/*  external dependencies  */
 import * as DeepL       from "deepl-node"
 
-export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
-    private translator: DeepL.Translator | null = null
+/*  internal dependencies  */
+import SpeechFlowNode   from "./speechflow-node"
 
+/*  SpeechFlow node for DeepL text-to-text translations  */
+export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
+    /*  internal state  */
+    private deepl: DeepL.Translator | null = null
+
+    /*  construct node  */
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
 
+        /*  declare node input/output format  */
         this.input  = "text"
         this.output = "text"
-        this.stream = null
 
+        /*  declare node configuration parameters  */
         this.configure({
             key: { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPL },
             src: { type: "string", pos: 0, val: "de",    match: /^(?:de|en-US)$/ },
@@ -26,22 +35,22 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
         })
     }
 
+    /*  open node  */
     async open () {
         /*  instantiate DeepL API SDK  */
-        this.translator = new DeepL.Translator(this.params.key)
+        this.deepl = new DeepL.Translator(this.params.key)
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
-            const result = await this.translator!.translateText(text, this.params.src, this.params.dst, {
-                splitSentences: "off"
-            })
+            const result = await this.deepl!.translateText(
+                text, this.params.src, this.params.dst, { splitSentences: "off" })
             return (result?.text ?? text)
         }
 
-        /*  establish a duplex stream and connect it to the translation  */
+        /*  establish a duplex stream and connect it to DeepL translation  */
         const queue = new EventEmitter()
         this.stream = new Stream.Duplex({
-            write (chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void) {
+            write (chunk: Buffer, encoding, callback) {
                 const data = chunk.toString()
                 if (data === "") {
                     queue.emit("result", "")
@@ -64,13 +73,17 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
         })
     }
 
+    /*  open node  */
     async close () {
+        /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
         }
-        if (this.translator !== null)
-            this.translator = null
+
+        /*  shutdown DeepL API  */
+        if (this.deepl !== null)
+            this.deepl = null
     }
 }
 
