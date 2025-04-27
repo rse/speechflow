@@ -72,7 +72,7 @@
     },
     "upd":                                  [ "!get-stream" ],
     "engines": {
-        "node":                             ">=20.6.0"
+        "node":                             ">=22.0.0"
     },
     "bin":                                  { "speechflow": "./dst/speechflow.js" },
     "types":                                "./dst/speechflow-node.d.ts",
