@@ -23,10 +23,6 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
 
-        /*  declare node input/output format  */
-        this.input  = "audio"
-        this.output = "text"
-
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPGRAM },
@@ -34,6 +30,10 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             version:  { type: "string", val: "latest", pos: 1 },
             language: { type: "string", val: "multi",  pos: 2 }
         })
+
+        /*  declare node input/output format  */
+        this.input  = "audio"
+        this.output = "text"
     }
 
     /*  open node  */

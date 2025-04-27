@@ -4,28 +4,85 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/*  standard dependencies  */
 import Stream           from "node:stream"
-import PortAudio        from "@gpeng/naudiodon"
-import SpeechFlowNode   from "./speechflow-node"
-import SpeechFlowUtil   from "./speechflow-util"
 
+/*  external dependencies  */
+import PortAudio        from "@gpeng/naudiodon"
+
+/*  internal dependencies  */
+import SpeechFlowNode   from "./speechflow-node"
+
+/*  SpeechFlow node for device access  */
 export default class SpeechFlowNodeDevice extends SpeechFlowNode {
+    /*  internal state  */
     private io: PortAudio.IoStreamRead | PortAudio.IoStreamWrite | PortAudio.IoStreamDuplex | null = null
+
+    /*  construct node  */
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
+
+        /*  declare node configuration parameters  */
         this.configure({
             device: { type: "string", pos: 0,            match: /^(.+?):(.+)$/ },
             mode:   { type: "string", pos: 1, val: "rw", match: /^(?:r|w|rw)$/ }
         })
+
+        /*  declare node input/output format  */
+        if (this.params.mode === "rw") {
+            this.input  = "audio"
+            this.output = "audio"
+        }
+        else if (this.params.mode === "r") {
+            this.input  = "none"
+            this.output = "audio"
+        }
+        else if (this.params.mode === "w") {
+            this.input  = "audio"
+            this.output = "none"
+        }
     }
+
+    /*  INTERNAL: utility function for finding audio device by pseudo-URL notation  */
+    private audioDeviceFromURL (mode: "any" | "r" | "w" | "rw", url: string) {
+        /*  parse URL  */
+        const m = url.match(/^(.+?):(.+)$/)
+        if (m === null)
+            throw new Error(`invalid audio device URL "${url}"`)
+        const [ , type, name ] = m
+
+        /*  determine audio API  */
+        const apis = PortAudio.getHostAPIs()
+        const api = apis.HostAPIs.find((api) => api.type.toLowerCase() === type.toLowerCase())
+        if (!api)
+            throw new Error(`invalid audio API type "${type}"`)
+
+        /*  determine device of audio API  */
+        const devices = PortAudio.getDevices()
+        const device = devices.find((device) => {
+            return (
+                (   (   mode === "r"   && device.maxInputChannels  > 0)
+                    || (mode === "w"   && device.maxOutputChannels > 0)
+                    || (mode === "rw"  && device.maxInputChannels  > 0 && device.maxOutputChannels > 0)
+                    || (mode === "any" && (device.maxInputChannels > 0 || device.maxOutputChannels > 0)))
+                && device.name.match(name)
+                && device.hostAPIName === api.name
+            )
+        })
+        if (!device)
+            throw new Error(`invalid audio device "${name}" (of audio API type "${type}")`)
+        return device
+    }
+
+    /*  open node  */
     async open () {
         /*  determine device  */
-        const device = SpeechFlowUtil.audioDeviceFromURL(this.params.mode, this.params.device)
+        const device = this.audioDeviceFromURL(this.params.mode, this.params.device)
 
         /*  sanity check sample rate compatibility
             (we still do not resample in input/output for simplification reasons)  */
         if (device.defaultSampleRate !== this.config.audioSampleRate)
-            throw new Error(`device audio sample rate ${device.defaultSampleRate} is ` +
+            throw new Error(`audio device sample rate ${device.defaultSampleRate} is ` +
                 `incompatible with required sample rate ${this.config.audioSampleRate}`)
 
         /*  establish device connection
@@ -40,8 +97,6 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             if (device.maxOutputChannels === 0)
                 throw new Error(`device "${device.id}" does not have any output channels (required by read/write mode)`)
             this.log("info", `resolved "${this.params.device}" to duplex device "${device.id}"`)
-            this.input  = "audio"
-            this.output = "audio"
             this.io = PortAudio.AudioIO({
                 inOptions: {
                     deviceId:     device.id,
@@ -63,8 +118,6 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             if (device.maxInputChannels === 0)
                 throw new Error(`device "${device.id}" does not have any input channels (required by read mode)`)
             this.log("info", `resolved "${this.params.device}" to input device "${device.id}"`)
-            this.input  = "none"
-            this.output = "audio"
             this.io = PortAudio.AudioIO({
                 inOptions: {
                     deviceId:     device.id,
@@ -80,8 +133,6 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             if (device.maxOutputChannels === 0)
                 throw new Error(`device "${device.id}" does not have any output channels (required by write mode)`)
             this.log("info", `resolved "${this.params.device}" to output device "${device.id}"`)
-            this.input  = "audio"
-            this.output = "none"
             this.io = PortAudio.AudioIO({
                 outOptions: {
                     deviceId:     device.id,
@@ -95,15 +146,22 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         else
             throw new Error(`device "${device.id}" does not have any input or output channels`)
 
-        /*  pass-through errors  */
+        /*  pass-through PortAudio errors  */
         this.io.on("error", (err) => {
             this.emit("error", err)
         })
+
+        /*  start PortAudio  */
         this.io.start()
     }
+
+    /*  close node  */
     async close () {
-        if (this.io !== null)
+        /*  shutdown PortAudio  */
+        if (this.io !== null) {
             this.io.quit()
+            this.io = null
+        }
     }
 }
 

@@ -23,10 +23,6 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)
 
-        /*  declare node input/output format  */
-        this.input  = "text"
-        this.output = "text"
-
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPL },
@@ -34,6 +30,10 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
             dst:      { type: "string", pos: 1, val: "en-US",   match: /^(?:de|en-US)$/ },
             optimize: { type: "string", pos: 2, val: "latency", match: /^(?:latency|quality)$/ }
         })
+
+        /*  declare node input/output format  */
+        this.input  = "text"
+        this.output = "text"
     }
 
     /*  open node  */
