@@ -24,7 +24,7 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     public connectionsOut = new Set<SpeechFlowNode>()
 
     constructor (
-        public id: string,
+        public  id:   string,
         private opts: { [ id: string ]: any },
         private args: any[]
     ) {
