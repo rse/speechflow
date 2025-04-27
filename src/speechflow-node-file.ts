@@ -13,6 +13,9 @@ import SpeechFlowNode   from "./speechflow-node"
 
 /*  SpeechFlow node for file access  */
 export default class SpeechFlowNodeFile extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "file"
+
     /*  construct node  */
     constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
         super(id, opts, args)

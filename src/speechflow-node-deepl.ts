@@ -16,6 +16,9 @@ import SpeechFlowNode   from "./speechflow-node"
 
 /*  SpeechFlow node for DeepL text-to-text translations  */
 export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "deepl"
+
     /*  internal state  */
     private deepl: DeepL.Translator | null = null
 

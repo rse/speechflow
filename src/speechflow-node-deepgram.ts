@@ -16,6 +16,9 @@ import SpeechFlowNode   from "./speechflow-node"
 
 /*  SpeechFlow node for Deepgram speech-to-text conversion  */
 export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "deepgram"
+
     /*  internal state  */
     private dg: Deepgram.LiveClient | null = null
 

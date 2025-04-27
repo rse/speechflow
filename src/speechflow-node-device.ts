@@ -15,6 +15,9 @@ import SpeechFlowNode   from "./speechflow-node"
 
 /*  SpeechFlow node for device access  */
 export default class SpeechFlowNodeDevice extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "device"
+
     /*  internal state  */
     private io: PortAudio.IoStreamRead | PortAudio.IoStreamWrite | PortAudio.IoStreamDuplex | null = null
 

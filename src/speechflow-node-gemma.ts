@@ -20,6 +20,9 @@ type Config      = { [ key: string ]: ConfigEntry }
 
 /*  SpeechFlow node for Gemma/Ollama text-to-text translation  */
 export default class SpeechFlowNodeGemma extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "gemma"
+
     /*  internal state  */
     private ollama: Ollama | null = null
 

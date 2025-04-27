@@ -31,6 +31,9 @@ const elevenlabsVoices = {
 */
 
 export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "elevenlabs"
+
     /*  internal state  */
     private elevenlabs: ElevenLabs.ElevenLabsClient | null = null
 

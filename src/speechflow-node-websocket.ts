@@ -16,6 +16,9 @@ import SpeechFlowNode                  from "./speechflow-node"
 
 /*  SpeechFlow node for Websocket networking  */
 export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "websocket"
+
     /*  internal state  */
     private server: ws.WebSocketServer | null = null
     private client: WebSocket          | null = null
