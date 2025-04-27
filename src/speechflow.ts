@@ -13,20 +13,13 @@ import yargs                    from "yargs"
 import jsYAML                   from "js-yaml"
 import FlowLink                 from "flowlink"
 import objectPath               from "object-path"
+import installedPackages        from "installed-packages"
 
 /*  internal dependencies  */
 import SpeechFlowNode           from "./speechflow-node"
-import SpeechFlowNodeFile       from "./speechflow-node-file"
-import SpeechFlowNodeDevice     from "./speechflow-node-device"
-import SpeechFlowNodeWebsocket  from "./speechflow-node-websocket"
-import SpeechFlowNodeFFmpeg     from "./speechflow-node-ffmpeg"
-import SpeechFlowNodeDeepgram   from "./speechflow-node-deepgram"
-import SpeechFlowNodeDeepL      from "./speechflow-node-deepl"
-import SpeechFlowNodeElevenLabs from "./speechflow-node-elevenlabs"
-import SpeechFlowNodeGemma      from "./speechflow-node-gemma"
 import pkg                      from "../package.json"
 
-/*  global state  */
+/*  central CLI context  */
 let cli: CLIio | null = null
 
 /*  establish asynchronous environment  */
@@ -120,16 +113,47 @@ let cli: CLIio | null = null
         config = obj[key] as string
     }
 
-    /*  configuration of nodes  */
-    const nodes: { [ id: string ]: typeof SpeechFlowNode } = {
-        "file":       SpeechFlowNodeFile,
-        "device":     SpeechFlowNodeDevice,
-        "websocket":  SpeechFlowNodeWebsocket,
-        "ffmpeg":     SpeechFlowNodeFFmpeg,
-        "deepgram":   SpeechFlowNodeDeepgram,
-        "deepl":      SpeechFlowNodeDeepL,
-        "elevenlabs": SpeechFlowNodeElevenLabs,
-        "gemma":      SpeechFlowNodeGemma
+    /*  track the available SpeechFlow nodes  */
+    const nodes: { [ id: string ]: typeof SpeechFlowNode } = {}
+
+    /*  load internal SpeechFlow nodes  */
+    const pkgsI = [
+        "./speechflow-node-file.js",
+        "./speechflow-node-device.js",
+        "./speechflow-node-websocket.js",
+        "./speechflow-node-ffmpeg.js",
+        "./speechflow-node-deepgram.js",
+        "./speechflow-node-deepl.js",
+        "./speechflow-node-elevenlabs.js",
+        "./speechflow-node-gemma.js",
+    ]
+    for (const pkg of pkgsI) {
+        let node: any = await import(pkg)
+        while (node.default !== undefined)
+            node = node.default
+        if (typeof node === "function" && typeof node.name === "string") {
+            cli.log("info", `loading SpeechFlow node "${node.name}" from internal module`)
+            nodes[node.name] = node as typeof SpeechFlowNode
+        }
+    }
+
+    /*  load external SpeechFlow nodes  */
+    const pkgsE = await installedPackages()
+    for (const pkg of pkgsE) {
+        if (pkg.match(/^(?:@[^/]+\/)?speechflow-node-.+$/)) {
+            let node: any = await import(pkg)
+            while (node.default !== undefined)
+                node = node.default
+            if (typeof node === "function" && typeof node.name === "string") {
+                if (nodes[node.name] !== undefined) {
+                    cli.log("warning", `failed loading SpeechFlow node "${node.name}" ` +
+                        `from external module "${pkg}" -- node already exists`)
+                    continue
+                }
+                cli.log("info", `loading SpeechFlow node "${node.name}" from external module "${pkg}"`)
+                nodes[node.name] = node as typeof SpeechFlowNode
+            }
+        }
     }
 
     /*  graph processing: PASS 1: parse DSL and create and connect nodes  */
