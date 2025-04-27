@@ -64,10 +64,26 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             apiKey: this.params.key
         })
 
+        /*  determine maximum sample rate of ElevenLabs tier  */
+        const maxSampleRates = {
+            "free":                  16000,
+            "starter":               22050,
+            "creator":               24000,
+            "independent_publisher": 44100,
+            "growing_business":      44100,
+            "enterprise":            44100
+        }
+        const sub = await this.elevenlabs.user.getSubscription()
+        const tier = (sub.tier ?? "free") as keyof typeof maxSampleRates
+        this.log("info", `determined ElevenLabs tier: "${tier}"`)
+        let maxSampleRate = 16000
+        if (maxSampleRates[tier] !== undefined)
+            maxSampleRate = maxSampleRates[tier]
+        this.log("info", `determined maximum audio sample rate: ${maxSampleRate}`)
+
         /*  determine voice for text-to-speech operation
             (for details see https://elevenlabs.io/text-to-speech)  */
         const voices = await this.elevenlabs.voices.getAll()
-        console.log(voices)
         let voice = voices.voices.find((voice) => voice.name === this.params.voice)
         if (voice === undefined) {
             voice = voices.voices.find((voice) => voice.name!.startsWith(this.params.voice))
@@ -88,7 +104,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                 text,
                 model_id:         model,
                 language_code:    this.params.language,
-                output_format:    "pcm_16000",
+                output_format:    `pcm_${maxSampleRate}` as ElevenLabs.ElevenLabs.OutputFormat,
                 seed:             815, /* arbitrary, but fixated by us */
                 voice_settings: {
                     speed:        this.params.speed
@@ -102,14 +118,14 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  internal queue of results  */
         const queue = new EventEmitter()
 
-        /*  establish resampler from ElevenLabs hard-coded 16Khz
+        /*  establish resampler from ElevenLabs's maximum 24Khz
             output to our standard audio sample rate (48KHz)  */
         if (!SpeechFlowNodeElevenlabs.speexInitialized) {
             /*  at least once initialize resampler  */
             await SpeexResampler.initPromise
             SpeechFlowNodeElevenlabs.speexInitialized = true
         }
-        const resampler = new SpeexResampler(1, 16000, this.config.audioSampleRate, 7)
+        const resampler = new SpeexResampler(1, maxSampleRate, this.config.audioSampleRate, 7)
 
         /*  create duplex stream and connect it to the ElevenLabs API  */
         this.stream = new Stream.Duplex({
