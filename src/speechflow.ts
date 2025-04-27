@@ -14,6 +14,7 @@ import jsYAML                   from "js-yaml"
 import FlowLink                 from "flowlink"
 import objectPath               from "object-path"
 import installedPackages        from "installed-packages"
+import dotenvx                  from "@dotenvx/dotenvx"
 
 /*  internal dependencies  */
 import SpeechFlowNode           from "./speechflow-node"
@@ -74,6 +75,12 @@ let cli: CLIio | null = null
 
     /*  provide startup information  */
     cli.log("info", `starting SpeechFlow ${pkg["x-stdver"]} (${pkg["x-release"]})`)
+
+    /*  load .env files  */
+    const result = dotenvx.config({ encoding: "utf8", quiet: true })
+    if (result?.parsed !== undefined)
+        for (const key of Object.keys(result.parsed))
+            cli.log("info", `loaded environment variable "${key}" from ".env" files`)
 
     /*  handle uncaught exceptions  */
     process.on("uncaughtException", async (err: Error) => {
