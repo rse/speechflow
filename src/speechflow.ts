@@ -128,6 +128,7 @@ let cli: CLIio | null = null
 
     /*  load internal SpeechFlow nodes  */
     const pkgsI = [
+        "./speechflow-node-trace.js",
         "./speechflow-node-file.js",
         "./speechflow-node-device.js",
         "./speechflow-node-websocket.js",

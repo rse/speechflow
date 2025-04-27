@@ -233,6 +233,20 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **voice**    | 0         | "Brian"  | *none* |
   | **language** | 1         | "de"     | *none* |
 
+- Node: **trace**<br/>
+  Purpose: **data flow tracing**<br/>
+  Example: `trace(type: "audio")`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text, audio |
+  | output  | text, audio |
+
+  | Parameter    | Position  | Default  | Requirement           |
+  | ------------ | --------- | -------- | --------------------- |
+  | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
+  | **name**     | 1         | *none*   | *none*                |
+
 Graph Expression Language
 -------------------------
 
