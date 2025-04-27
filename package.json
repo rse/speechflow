@@ -25,7 +25,7 @@
         "deepl-node":                       "1.17.3",
         "elevenlabs":                       "1.57.0",
         "stream-transform":                 "3.3.3",
-        "get-stream":                       "6.0.1",
+        "get-stream":                       "9.0.1",
         "speex-resampler":                  "3.0.1",
         "pcm-convert":                      "1.6.5",
         "object-path":                      "0.11.8",
@@ -33,7 +33,6 @@
         "bufferutil":                       "4.0.9",
         "utf-8-validate":                   "6.0.5",
         "@opensumi/reconnecting-websocket": "4.4.0",
-        "get-stream":                       "9.0.1",
         "ollama":                           "0.5.15",
         "@rse/ffmpeg":                      "1.4.2",
         "ffmpeg-stream":                    "1.0.0",
@@ -70,7 +69,7 @@
         "nps":                              "5.10.0",
         "cross-env":                        "7.0.3"
     },
-    "upd":                                  [ "!get-stream" ],
+    "upd":                                  [],
     "engines": {
         "node":                             ">=22.0.0"
     },
