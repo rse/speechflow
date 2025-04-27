@@ -46,9 +46,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_ELEVENLABS },
-            voice:    { type: "string", val: "Brian",  pos: 0, match: /^(?:.+)$/ },
-            language: { type: "string", val: "de",     pos: 1, match: /^(?:de|en)$/ },
-            speed:    { type: "number", val: 1.0,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 }
+            voice:    { type: "string", val: "Brian",   pos: 0, match: /^(?:.+)$/ },
+            language: { type: "string", val: "de",      pos: 1, match: /^(?:de|en)$/ },
+            speed:    { type: "number", val: 1.05,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
+            optimize: { type: "string", val: "latency", pos: 3, match: /^(?:latency|quality)$/ }
         })
 
         /*  declare node input/output format  */
@@ -63,8 +64,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             apiKey: this.params.key
         })
 
-        /*  determine voice for text-to-speech operation  */
+        /*  determine voice for text-to-speech operation
+            (for details see https://elevenlabs.io/text-to-speech)  */
         const voices = await this.elevenlabs.voices.getAll()
+        console.log(voices)
         const voice = voices.voices.find((voice) => voice.name === this.params.voice)
         if (voice === undefined)
             throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
@@ -74,19 +77,22 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
         /*  perform text-to-speech operation with Elevenlabs API  */
+        const model = this.params.optimize === "quality" ?
+            "eleven_multilingual_v2" :
+            "eleven_flash_v2_5"
         const speechStream = (text: string) => {
             return this.elevenlabs!.textToSpeech.convert(voice.voice_id, {
                 text,
-                model_id: "eleven_flash_v2_5",
-                language_code: this.params.language,
-                output_format: "pcm_16000",
-                seed: 815 /* arbitrary, but fixated by us */,
+                model_id:         model,
+                language_code:    this.params.language,
+                output_format:    "pcm_16000",
+                seed:             815, /* arbitrary, but fixated by us */
                 voice_settings: {
-                    speed: this.params.speed
+                    speed:        this.params.speed
                 }
             }, {
                 timeoutInSeconds: 30,
-                maxRetries: 10
+                maxRetries:       10
             })
         }
 
