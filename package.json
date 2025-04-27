@@ -13,7 +13,7 @@
     },
     "repository": {
         "type":                             "git",
-        "url":                              "git+https://github.com/rse/speechflow"
+        "url":                              "git+https://github.com/rse/speechflow.git"
     },
     "dependencies": {
         "cli-io":                           "0.9.13",
@@ -74,7 +74,7 @@
     "engines": {
         "node":                             ">=22.0.0"
     },
-    "bin":                                  { "speechflow": "./dst/speechflow.js" },
+    "bin":                                  { "speechflow": "dst/speechflow.js" },
     "types":                                "./dst/speechflow-node.d.ts",
     "module":                               "./dst/speechflow-node.js",
     "main":                                 "./dst/speechflow-node.js",
