@@ -44,8 +44,8 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_KEY_ELEVENLABS },
-            voice:    { type: "string", val: "Brian",  pos: 0 },
-            language: { type: "string", val: "de",     pos: 1 }
+            voice:    { type: "string", val: "Brian",  pos: 0, match: /^(?:Brian)$/ },
+            language: { type: "string", val: "de",     pos: 1, match: /^(?:de|en)$/ }
         })
 
         /*  declare node input/output format  */
@@ -55,35 +55,43 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        /*  establish ElevenLabs API connection  */
         this.elevenlabs = new ElevenLabs.ElevenLabsClient({
             apiKey: this.params.key
         })
+
+        /*  determine voice for text-to-speech operation  */
         const voices = await this.elevenlabs.voices.getAll()
         const voice = voices.voices.find((voice) => voice.name === this.params.voice)
         if (voice === undefined)
             throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
+        console.log((await import("node:util")).inspect(voice, true, null, true))
+
+        /*  perform text-to-speech operation with Elevenlabs API  */
         const speechStream = (text: string) => {
             return this.elevenlabs!.textToSpeech.convert(voice.voice_id, {
                 text,
-                optimize_streaming_latency: 2,
-                output_format: "pcm_16000", // S16LE
                 model_id: "eleven_flash_v2_5",
-                /*
+                language_code: this.params.language,
+                output_format: "pcm_16000", // = S16LE
+                seed: 815,
                 voice_settings: {
-                    stability: 0,
-                    similarity_boost: 0
+                    stability: 0.0,
+                    similarity_boost: 0.0,
+                    speed: 1.0
                 }
-                */
             }, {
                 timeoutInSeconds: 30,
                 maxRetries: 10
             })
         }
+
+        /*  internal queue of results  */
         const queue = new EventEmitter()
+
+        /*  create duplex stream and connect it to the ElevenLabs API  */
         this.stream = new Stream.Duplex({
-            write (chunk: Buffer, encoding: BufferEncoding, callback: (error?: Error | null | undefined) => void) {
-                if (encoding !== "utf8" && encoding !== "utf-8")
-                    callback(new Error("only text input supported by Elevenlabs node"))
+            write (chunk: Buffer, encoding, callback) {
                 const data = chunk.toString()
                 speechStream(data).then((stream) => {
                     getStreamAsBuffer(stream).then((buffer) => {
@@ -96,7 +104,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                     callback(error)
                 })
             },
-            read (size: number) {
+            read (size) {
                 queue.once("audio", (buffer: Buffer) => {
                     this.push(buffer, "binary")
                 })
@@ -111,6 +119,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             this.stream.destroy()
             this.stream = null
         }
+
+        /*  destroy ElevenLabs API  */
+        if (this.elevenlabs !== null)
+            this.elevenlabs = null
     }
 }
 
