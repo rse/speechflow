@@ -15,8 +15,14 @@ About
 -----
 
 **SpeechFlow** is a command-line interface based tool for establishing a
-directed data flow graph of audio and text processing nodes. This way it
-allows to perform various speech processing tasks in a flexible way.
+directed data flow graph of audio and text processing nodes. This way,
+it allows to perform various speech processing tasks in a flexible way.
+Currently, **SpeechFlow** comes with graph nodes for file I/O, audio
+device I/O, Websocket network I/O, Deepgram speech-to-text conversion,
+DeepL text-to-text translation, Gemma/Ollama text-to-text translation,
+ElevenLabs text-to-speech conversion, and FFmpeg speech-to-speech
+encoding. **SpeechFlow** is written in TypeScript and ships as a package
+for the Node Package Manager (NPM).
 
 Installation
 ------------
