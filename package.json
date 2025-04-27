@@ -74,7 +74,16 @@
     "engines": {
         "node":                             ">=20.6.0"
     },
-    "main":                                 "dst/speechflow.js",
+    "bin":                                  { "speechflow": "./dst/speechflow.js" },
+    "types":                                "./dst/speechflow-node.d.ts",
+    "module":                               "./dst/speechflow-node.js",
+    "main":                                 "./dst/speechflow-node.js",
+    "exports": {
+        ".": {
+            "import":                       { "types": "./dst/speechflow-node.d.ts", "default": "./dst/speechflow-node.js" },
+            "require":                      { "types": "./dst/speechflow-node.d.ts", "default": "./dst/speechflow-node.js" }
+        }
+    },
     "scripts": {
         "start":                            "nps -c etc/nps.yaml"
     }
