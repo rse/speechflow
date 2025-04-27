@@ -325,6 +325,12 @@ let cli: CLIio | null = null
     process.on("SIGINT", () => {
         shutdown("SIGINT")
     })
+    process.on("SIGUSR1", () => {
+        shutdown("SIGUSR1")
+    })
+    process.on("SIGUSR2", () => {
+        shutdown("SIGUSR2")
+    })
     process.on("SIGTERM", () => {
         shutdown("SIGTERM")
     })
