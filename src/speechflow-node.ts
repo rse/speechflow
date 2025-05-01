@@ -78,6 +78,19 @@ export default class SpeechFlowNode extends Events.EventEmitter {
             else
                 throw new Error(`required parameter "${name}" not given`)
         }
+        for (const name of Object.keys(this.opts)) {
+            if (spec[name] === undefined)
+                throw new Error(`named parameter "${name}" not known`)
+        }
+        for (let i = 0; i < this.args.length; i++) {
+            let found = false
+            for (const name of Object.keys(spec))
+                if (spec[name].pos === i)
+                    found = true
+            if (!found)
+                throw new Error(`positional parameter #${i} ("${this.args[i]}") ` +
+                    "not mappable to any known argument")
+        }
     }
 
     /*  connect node to another one  */
