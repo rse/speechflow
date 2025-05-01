@@ -88,12 +88,47 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         })
 
         /*  wait for Deepgram API to be available  */
-        await new Promise((resolve) => {
+        await new Promise((resolve, reject) => {
+            let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+                if (timer !== null) {
+                    timer = null
+                    reject(new Error("Deepgram: timeout waiting for connection open"))
+                }
+            }, 3000)
             this.dg!.once(Deepgram.LiveTranscriptionEvents.Open, () => {
                 this.log("info", "Deepgram: connection open")
+                if (timer !== null) {
+                    clearTimeout(timer)
+                    timer = null
+                }
                 resolve(true)
             })
         })
+
+        /*  workaround Deepgram initialization problems  */
+        let initDone = false
+        let initTimeout: ReturnType<typeof setTimeout> | null = null
+        const initTimeoutStart = () => {
+            if (initDone)
+                return
+            setTimeout(async () => {
+                if (initTimeout === null)
+                    return
+                initTimeout = null
+                this.log("warning", "Deepgram: initialization timeout -- restarting service usage")
+                await this.close()
+                this.open()
+            }, 3000)
+        }
+        const initTimeoutStop = () => {
+            if (initDone)
+                return
+            initDone = true
+            if (initTimeout !== null) {
+                clearTimeout(initTimeout)
+                initTimeout = null
+            }
+        }
 
         /*  provide Duplex stream and internally attach to Deepgram API  */
         const dg = this.dg
@@ -114,6 +149,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                         queue.emit("text", "")
                     else {
                         log("info", `Deepgram: send data (${data.byteLength} bytes)`)
+                        initTimeoutStart()
                         dg.send(chunk)
                     }
                     callback()
@@ -122,6 +158,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             read (size) {
                 queue.once("text", (text: string) => {
                     log("info", `Deepgram: receive data (${text.length} bytes)`)
+                    initTimeoutStop()
                     this.push(text, encoding)
                 })
             },
