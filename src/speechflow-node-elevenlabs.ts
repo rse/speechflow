@@ -115,6 +115,9 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
         /*  create duplex stream and connect it to the ElevenLabs API  */
         this.stream = new Stream.Duplex({
+            writableObjectMode: true,
+            readableObjectMode: false,
+            decodeStrings:      false,
             write (chunk: Buffer, encoding, callback) {
                 const data = chunk.toString()
                 speechStream(data).then((stream) => {
@@ -133,6 +136,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                 queue.once("audio", (buffer: Buffer) => {
                     this.push(buffer, "binary")
                 })
+            },
+            final (callback) {
+                this.push(null)
+                callback()
             }
         })
     }

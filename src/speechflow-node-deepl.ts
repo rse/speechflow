@@ -60,6 +60,7 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
+            decodeStrings:      false,
             transform (chunk: Buffer | string, encoding, callback) {
                 if (encoding === undefined || (encoding as string) === "buffer")
                     encoding = textEncoding
@@ -77,6 +78,10 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
                         callback(err)
                     })
                 }
+            },
+            final (callback) {
+                this.push(null)
+                callback()
             }
         })
     }

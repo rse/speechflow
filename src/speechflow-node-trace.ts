@@ -5,7 +5,6 @@
 */
 
 /*  standard dependencies  */
-import { EventEmitter } from "node:events"
 import Stream           from "node:stream"
 
 /*  internal dependencies  */
@@ -36,28 +35,24 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
         /*  wrapper for local logging  */
         const log = (level: string, msg: string) => {
             if (this.params.name !== undefined)
-                this.log(level, `<${this.params.name}>: ${msg}`)
+                this.log(level, `[${this.params.name}]: ${msg}`)
             else
                 this.log(level, msg)
         }
 
-        /*  internal queue for data chunks  */
-        const queue = new EventEmitter()
-
         /*  provide Duplex stream and internally attach to Deepgram API  */
         const type = this.params.type
-        this.stream = new Stream.Duplex({
-            writableObjectMode: true,
-            readableObjectMode: true,
-            write (chunk: Buffer | string, encoding, callback) {
+        this.stream = new Stream.Transform({
+            writableObjectMode: false,
+            readableObjectMode: false,
+            decodeStrings:      false,
+            transform (chunk: Buffer | string, encoding, callback) {
                 let error: Error | undefined
                 if (Buffer.isBuffer(chunk)) {
                     if (type === "audio")
                         log("info", `writing ${type} chunk: type=Buffer bytes=${chunk.byteLength}`)
-                    else {
-                        console.log("FUCK", chunk, chunk.toString())
+                    else
                         error = new Error(`writing ${type} chunk: seen Buffer instead of String chunk type`)
-                    }
                 }
                 else {
                     if (type === "text")
@@ -69,14 +64,9 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 if (error !== undefined)
                     callback(error)
                 else {
-                    queue.emit("result", { chunk, encoding })
+                    this.push(chunk, encoding)
                     callback()
                 }
-            },
-            read (size) {
-                queue.once("result", (data: { chunk: Buffer | string, encoding: BufferEncoding }) => {
-                    this.push(data.chunk, data.encoding)
-                })
             },
             final (callback) {
                 this.push(null)
