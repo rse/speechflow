@@ -72,9 +72,8 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
-            const text = data.channel?.alternatives[0].transcript ?? ""
-            if (text === "")
-                return
+            this.log("info", `Deepgram: text received (start: ${data.start}s, duration: ${data.duration}s)`)
+            const text = (data.channel?.alternatives[0].transcript as string) ?? ""
             queue.emit("text", text)
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Metadata, (data) => {
@@ -98,22 +97,38 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  provide Duplex stream and internally attach to Deepgram API  */
         const dg = this.dg
+        const log = (level: string, msg: string) => {
+            this.log(level, msg)
+        }
+        const encoding = this.config.textEncoding
         this.stream = new Stream.Duplex({
+            writableObjectMode: false,
+            readableObjectMode: true,
+            decodeStrings:      false,
             write (chunk: Buffer, encoding, callback) {
-                const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
-                if (data.byteLength === 0)
-                    queue.emit("text", "")
-                else
-                    dg.send(data)
-                callback()
+                if (!Buffer.isBuffer(chunk))
+                    callback(new Error("expected audio input as Buffer chunks"))
+                else {
+                    const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
+                    if (data.byteLength === 0)
+                        queue.emit("text", "")
+                    else {
+                        log("info", `Deepgram: send data (${data.byteLength} bytes)`)
+                        dg.send(chunk)
+                    }
+                    callback()
+                }
             },
             read (size) {
                 queue.once("text", (text: string) => {
-                    this.push(text)
+                    log("info", `Deepgram: receive data (${text.length} bytes)`)
+                    this.push(text, encoding)
                 })
             },
             final (callback) {
                 dg.requestClose()
+                this.push(null)
+                callback()
             }
         })
     }
