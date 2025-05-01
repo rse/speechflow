@@ -28,12 +28,25 @@ translation: |
 
 #  sample for development
 sample: |
-    file(path: "sample.txt", mode: "r", type: "text") |
+    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+    trace(type: "audio", name: "audio1") |
+    deepgram() |
+    trace(type: "text", name: "text1") |
+    gemma(src: "de", dst: "en") |
+    trace(type: "text", name: "text2") |
     elevenlabs(voice: "Mark", speed: 1.05) |
+    trace(type: "audio", name: "audio2") |
     ffmpeg(dst: "wav") |
+    trace(type: "audio", name: "audio3") |
     file(path: "sample.wav", mode: "w", type: "audio")
 sample2: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+    deepgram() |
+    ffmpeg(dst: "wav") |
+    file(path: "sample.wav", mode: "w", type: "audio")
+sample3: |
+    file(path: "sample.txt", mode: "r", type: "text") |
+    elevenlabs(voice: "Mark", speed: 1.05) |
     ffmpeg(dst: "wav") |
     file(path: "sample.wav", mode: "w", type: "audio")
 
