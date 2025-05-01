@@ -47,17 +47,35 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
         /*  provide Duplex stream and internally attach to Deepgram API  */
         const type = this.params.type
         this.stream = new Stream.Duplex({
+            writableObjectMode: true,
+            readableObjectMode: true,
             write (chunk: Buffer | string, encoding, callback) {
-                if (Buffer.isBuffer(chunk))
-                    log("info", `writing ${type} chunk: bytes=${chunk.byteLength}`)
-                else
-                    log("info", `writing ${type} chunk: string="${chunk.toString()}" length=${chunk.length} encoding=${encoding}`)
-                queue.emit("result", chunk)
-                callback()
+                let error: Error | undefined
+                if (Buffer.isBuffer(chunk)) {
+                    if (type === "audio")
+                        log("info", `writing ${type} chunk: type=Buffer bytes=${chunk.byteLength}`)
+                    else {
+                        console.log("FUCK", chunk, chunk.toString())
+                        error = new Error(`writing ${type} chunk: seen Buffer instead of String chunk type`)
+                    }
+                }
+                else {
+                    if (type === "text")
+                        log("info", `writing ${type} chunk: type=String length=${chunk.length} ` +
+                            `encoding=${encoding} payload="${chunk.toString()}"`)
+                    else
+                        error = new Error(`writing ${type} chunk: seen String instead of Buffer chunk type`)
+                }
+                if (error !== undefined)
+                    callback(error)
+                else {
+                    queue.emit("result", { chunk, encoding })
+                    callback()
+                }
             },
             read (size) {
-                queue.once("result", (chunk: Buffer | string) => {
-                    this.push(chunk)
+                queue.once("result", (data: { chunk: Buffer | string, encoding: BufferEncoding }) => {
+                    this.push(data.chunk, data.encoding)
                 })
             },
             final (callback) {
