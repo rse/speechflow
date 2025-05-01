@@ -245,7 +245,7 @@ let cli: CLIio | null = null
     for (const node of graphNodes) {
         /*  connect node events  */
         node.on("log", (level: string, msg: string, data?: any) => {
-            let str = `[${node.id}]: ${msg}`
+            let str = `<${node.id}>: ${msg}`
             if (data !== undefined)
                 str += ` (${JSON.stringify(data)})`
             cli!.log(level, str)
