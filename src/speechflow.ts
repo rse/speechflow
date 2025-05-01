@@ -187,7 +187,19 @@ let cli: CLIio | null = null
         createNode (id: string, opts: { [ id: string ]: any }, args: any[]) {
             if (nodes[id] === undefined)
                 throw new Error(`unknown node "${id}"`)
-            const node = new nodes[id](`${id}[${nodenum++}]`, opts, args)
+            let node: SpeechFlowNode
+            try {
+                node = new nodes[id](`${id}[${nodenum}]`, opts, args)
+            }
+            catch (err) {
+                /*  fatal error  */
+                if (err instanceof Error)
+                    cli!.log("error", `creation of "${id}[${nodenum}]" node failed: ${err.message}`)
+                else
+                    cli!.log("error", `creation of "${id}"[${nodenum}] node failed: ${err}`)
+                process.exit(1)
+            }
+            nodenum++
             const params = Object.keys(node.params)
                 .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
             cli!.log("info", `create node "${node.id}" (${params})`)
