@@ -6,7 +6,6 @@
 
 /*  standard dependencies  */
 import Stream           from "node:stream"
-import { EventEmitter } from "node:events"
 
 /*  external dependencies  */
 import * as DeepL       from "deepl-node"
@@ -57,27 +56,27 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
         }
 
         /*  establish a duplex stream and connect it to DeepL translation  */
-        const queue = new EventEmitter()
-        this.stream = new Stream.Duplex({
-            write (chunk: Buffer, encoding, callback) {
-                const data = chunk.toString()
-                if (data === "") {
-                    queue.emit("result", "")
+        const textEncoding = this.config.textEncoding
+        this.stream = new Stream.Transform({
+            readableObjectMode: true,
+            writableObjectMode: true,
+            transform (chunk: Buffer | string, encoding, callback) {
+                if (encoding === undefined || (encoding as string) === "buffer")
+                    encoding = textEncoding
+                if (Buffer.isBuffer(chunk))
+                    chunk = chunk.toString(encoding)
+                if (chunk === "") {
+                    this.push("", encoding)
                     callback()
                 }
                 else {
-                    translate(data).then((result) => {
-                        queue.emit("result", result)
+                    translate(chunk).then((result) => {
+                        this.push(result, encoding)
                         callback()
                     }).catch((err) => {
                         callback(err)
                     })
                 }
-            },
-            read (size: number) {
-                queue.once("result", (result: string) => {
-                    this.push(result)
-                })
             }
         })
     }
