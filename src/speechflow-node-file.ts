@@ -44,12 +44,17 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        const encoding = this.params.type === "text" ? this.config.textEncoding : "binary"
         if (this.params.mode === "rw") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                process.stdin.setEncoding(encoding)
-                process.stdout.setEncoding(encoding)
+                if (this.params.type === "audio") {
+                    process.stdin.setEncoding()
+                    process.stdout.setEncoding()
+                }
+                else {
+                    process.stdin.setEncoding(this.config.textEncoding)
+                    process.stdout.setEncoding(this.config.textEncoding)
+                }
                 this.stream = Stream.Duplex.from({
                     readable: process.stdin,
                     writable: process.stdout
@@ -57,32 +62,56 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
             }
             else {
                 /*  file I/O  */
-                this.stream = Stream.Duplex.from({
-                    readable: fs.createReadStream(this.params.path, { encoding }),
-                    writable: fs.createWriteStream(this.params.path, { encoding })
-                })
+                if (this.params.type === "audio") {
+                    this.stream = Stream.Duplex.from({
+                        readable: fs.createReadStream(this.params.path),
+                        writable: fs.createWriteStream(this.params.path)
+                    })
+                }
+                else {
+                    this.stream = Stream.Duplex.from({
+                        readable: fs.createReadStream(this.params.path,
+                            { encoding: this.config.textEncoding }),
+                        writable: fs.createWriteStream(this.params.path,
+                            { encoding: this.config.textEncoding })
+                    })
+                }
             }
         }
         else if (this.params.mode === "r") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                process.stdin.setEncoding(encoding)
+                if (this.params.type === "audio")
+                    process.stdin.setEncoding()
+                else
+                    process.stdin.setEncoding(this.config.textEncoding)
                 this.stream = process.stdin
             }
             else {
                 /*  file I/O  */
-                this.stream = fs.createReadStream(this.params.path, { encoding })
+                if (this.params.type === "audio")
+                    this.stream = fs.createReadStream(this.params.path)
+                else
+                    this.stream = fs.createReadStream(this.params.path,
+                        { encoding: this.config.textEncoding })
             }
         }
         else if (this.params.mode === "w") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                process.stdout.setEncoding(encoding)
+                if (this.params.type === "audio")
+                    process.stdout.setEncoding()
+                else
+                    process.stdout.setEncoding(this.config.textEncoding)
                 this.stream = process.stdout
             }
             else {
                 /*  file I/O  */
-                this.stream = fs.createWriteStream(this.params.path, { encoding })
+                if (this.params.type === "audio")
+                    this.stream = fs.createWriteStream(this.params.path)
+                else
+                    this.stream = fs.createWriteStream(this.params.path,
+                        { encoding: this.config.textEncoding })
             }
         }
         else
