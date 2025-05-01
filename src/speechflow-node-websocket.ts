@@ -78,11 +78,18 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 websocket = null
             })
             const textEncoding = this.config.textEncoding
+            const type = this.params.type
             this.stream = new Stream.Duplex({
-                write (chunk: Buffer, encoding, callback) {
-                    const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
+                writableObjectMode: false,
+                readableObjectMode: false,
+                decodeStrings:      false,
+                write (chunk: Buffer | string, encoding, callback) {
+                    if (type === "audio" && !Buffer.isBuffer(chunk))
+                        chunk = Buffer.from(chunk)
+                    else if (type === "text" && Buffer.isBuffer(chunk))
+                        chunk = chunk.toString(encoding ?? textEncoding)
                     if (websocket !== null) {
-                        websocket.send(data, (error) => {
+                        websocket.send(chunk, (error) => {
                             if (error) callback(error)
                             else       callback()
                         })
@@ -124,11 +131,18 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             const client = this.client
             client.binaryType = "arraybuffer"
             const textEncoding = this.config.textEncoding
+            const type = this.params.type
             this.stream = new Stream.Duplex({
-                write (chunk: Buffer, encoding, callback) {
-                    const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
+                writableObjectMode: false,
+                readableObjectMode: false,
+                decodeStrings:      false,
+                write (chunk: Buffer | string, encoding, callback) {
+                    if (type === "audio" && !Buffer.isBuffer(chunk))
+                        chunk = Buffer.from(chunk)
+                    else if (type === "text" && Buffer.isBuffer(chunk))
+                        chunk = chunk.toString(encoding ?? textEncoding)
                     if (client.OPEN) {
-                        client.send(data)
+                        client.send(chunk)
                         callback()
                     }
                     else
