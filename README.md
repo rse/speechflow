@@ -154,6 +154,19 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **device**  | 0         | *none*   | `/^(.+?):(.+)$/`   |
   | **mode**    | 1         | "rw"     | `/^(?:r\|w\|rw)$/` |
 
+- Node: **wav**<br/>
+  Purpose: **WAV audio format conversion**<br/>
+  Example: `wav(mode: "encode")`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **mode**    | 0         | "encode" | `/^(?:encode\|decode)$/` |
+
 - Node: **ffmpeg**<br/>
   Purpose: **FFmpeg audio format conversion**<br/>
   Example: `ffmpeg(src: "pcm", dst: "mp3")`

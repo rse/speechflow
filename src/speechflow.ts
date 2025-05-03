@@ -143,12 +143,12 @@ let cli: CLIio | null = null
         "./speechflow-node-file.js",
         "./speechflow-node-device.js",
         "./speechflow-node-websocket.js",
+        "./speechflow-node-wav.js",
         "./speechflow-node-ffmpeg.js",
         "./speechflow-node-deepgram.js",
         "./speechflow-node-deepl.js",
         "./speechflow-node-elevenlabs.js",
-        "./speechflow-node-gemma.js",
-        "./speechflow-node-whisper.js"
+        "./speechflow-node-gemma.js"
     ]
     for (const pkg of pkgsI) {
         let node: any = await import(pkg)
