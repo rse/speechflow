@@ -15,6 +15,6 @@ declare module "pcm-convert" {
         data:        Buffer,
         srcFormat:   Format,
         dstFormat:   Format
-    ): Buffer
+    ): any
 }
 
