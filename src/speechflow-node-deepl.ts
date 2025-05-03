@@ -22,8 +22,8 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
     private deepl: DeepL.Translator | null = null
 
     /*  construct node  */
-    constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
-        super(id, opts, args)
+    constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
+        super(id, cfg, opts, args)
 
         /*  declare node configuration parameters  */
         this.configure({

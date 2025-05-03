@@ -17,8 +17,8 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
     public static name = "file"
 
     /*  construct node  */
-    constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
-        super(id, opts, args)
+    constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
+        super(id, cfg, opts, args)
 
         /*  declare node configuration parameters  */
         this.configure({

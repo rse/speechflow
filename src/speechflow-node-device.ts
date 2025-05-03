@@ -19,11 +19,14 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
     public static name = "device"
 
     /*  internal state  */
-    private io: PortAudio.IoStreamRead | PortAudio.IoStreamWrite | PortAudio.IoStreamDuplex | null = null
+    private io: PortAudio.IoStreamRead
+        | PortAudio.IoStreamWrite
+        | PortAudio.IoStreamDuplex
+        | null = null
 
     /*  construct node  */
-    constructor (id: string, opts: { [ id: string ]: any }, args: any[]) {
-        super(id, opts, args)
+    constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
+        super(id, cfg, opts, args)
 
         /*  declare node configuration parameters  */
         this.configure({

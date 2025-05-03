@@ -12,12 +12,13 @@ import Stream from "node:stream"
 export default class SpeechFlowNode extends Events.EventEmitter {
     /*  general constant configuration (for reference)  */
     config = {
-        audioChannels:     1,      /* audio mono channel       */
-        audioBitDepth:     16,     /* audio PCM 16-bit integer */
-        audioLittleEndian: true,   /* audio PCM little-endian  */
-        audioSampleRate:   48000,  /* audio 48kHz sample rate  */
-        textEncoding:      "utf8"  /* UTF-8 text encoding      */
-    } as const
+        audioChannels:     1,                            /* audio mono channel        */
+        audioBitDepth:     16 as (1 | 8 | 16 | 24 | 32), /* audio PCM 16-bit integer  */
+        audioLittleEndian: true,                         /* audio PCM little-endian   */
+        audioSampleRate:   48000,                        /* audio 48kHz sample rate   */
+        textEncoding:      "utf8" as BufferEncoding,     /* UTF-8 text encoding       */
+        cacheDir:          ""                            /* directory for cache files */
+    }
 
     /*  announced information  */
     input  = "none"
@@ -30,10 +31,16 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     /*  the default constructor  */
     constructor (
         public  id:   string,
+        private cfg:  { [ id: string ]: any },
         private opts: { [ id: string ]: any },
         private args: any[]
     ) {
         super()
+        for (const key of Object.keys(cfg)) {
+            const idx = key as keyof typeof this.config
+            if (this.config[idx] !== undefined)
+                (this.config[idx] as any) = cfg[key]
+        }
     }
 
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */

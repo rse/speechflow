@@ -5,6 +5,7 @@
 */
 
 /*  standard dependencies  */
+import path                     from "node:path"
 import Stream                   from "node:stream"
 
 /*  external dependencies  */
@@ -15,6 +16,7 @@ import FlowLink                 from "flowlink"
 import objectPath               from "object-path"
 import installedPackages        from "installed-packages"
 import dotenvx                  from "@dotenvx/dotenvx"
+import syspath                  from "syspath"
 
 /*  internal dependencies  */
 import SpeechFlowNode           from "./speechflow-node"
@@ -25,6 +27,12 @@ let cli: CLIio | null = null
 
 /*  establish asynchronous environment  */
 ;(async () => {
+    /*  determine system paths  */
+    const { dataDir } = syspath({
+        appName: "speechflow",
+        dataDirAutoCreate: true
+    })
+
     /*  parse command-line arguments  */
     const args = await yargs()
         /* eslint @stylistic/indent: off */
@@ -33,6 +41,7 @@ let cli: CLIio | null = null
             "[-h|--help] " +
             "[-V|--version] " +
             "[-v|--verbose <level>] " +
+            "[-C|--cache <directory>] " +
             "[-e|--expression <expression>] " +
             "[-f|--expression-file <expression-file>] " +
             "[-c|--config <key>@<yaml-config-file>] " +
@@ -44,6 +53,8 @@ let cli: CLIio | null = null
             .describe("V", "show program version information")
         .string("v").nargs("v", 1).alias("v", "log-level").default("v", "warning")
             .describe("v", "level for verbose logging ('none', 'error', 'warning', 'info', 'debug')")
+        .string("C").nargs("C", 1).alias("C", "cache").default("C", path.join(dataDir, "cache"))
+            .describe("C", "directory for cached files (primarily AI model files)")
         .string("e").nargs("e", 1).alias("e", "expression").default("e", "")
             .describe("e", "FlowLink expression")
         .string("f").nargs("f", 1).alias("f", "expression-file").default("f", "")
@@ -137,6 +148,7 @@ let cli: CLIio | null = null
         "./speechflow-node-deepl.js",
         "./speechflow-node-elevenlabs.js",
         "./speechflow-node-gemma.js",
+        "./speechflow-node-whisper.js"
     ]
     for (const pkg of pkgsI) {
         let node: any = await import(pkg)
@@ -176,6 +188,14 @@ let cli: CLIio | null = null
     let nodenum = 1
     const variables = { argv: args._, env: process.env }
     const graphNodes = new Set<SpeechFlowNode>()
+    const cfg = {
+        audioChannels:     1,
+        audioBitDepth:     16,
+        audioLittleEndian: true,
+        audioSampleRate:   48000,
+        textEncoding:      "utf8",
+        cacheDir:          args.cache
+    }
     flowlink.evaluate(config, {
         resolveVariable (id: string) {
             if (!objectPath.has(variables, id))
@@ -189,7 +209,7 @@ let cli: CLIio | null = null
                 throw new Error(`unknown node "${id}"`)
             let node: SpeechFlowNode
             try {
-                node = new nodes[id](`${id}[${nodenum}]`, opts, args)
+                node = new nodes[id](`${id}[${nodenum}]`, cfg, opts, args)
             }
             catch (err) {
                 /*  fatal error  */
@@ -215,8 +235,8 @@ let cli: CLIio | null = null
     /*  graph processing: PASS 2: prune connections of nodes  */
     for (const node of graphNodes) {
         /*  determine connections  */
-        const connectionsIn  = Array.from(node.connectionsIn)
-        const connectionsOut = Array.from(node.connectionsOut)
+        let connectionsIn  = Array.from(node.connectionsIn)
+        let connectionsOut = Array.from(node.connectionsOut)
 
         /*  ensure necessary incoming links  */
         if (node.input !== "none" && connectionsIn.length === 0)
@@ -235,6 +255,8 @@ let cli: CLIio | null = null
             connectionsOut.forEach((other) => { node.disconnect(other) })
 
         /*  check for payload compatibility  */
+        connectionsIn  = Array.from(node.connectionsIn)
+        connectionsOut = Array.from(node.connectionsOut)
         for (const other of connectionsOut)
             if (other.input !== node.output)
                 throw new Error(`${node.output} output node "${node.id}" cannot be ` +
