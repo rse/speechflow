@@ -30,7 +30,7 @@ WorkerThreads.parentPort?.on("message", async (request: WorkerRequest) => {
         transcriber = await Transformers.pipeline(
             "automatic-speech-recognition", request.model, {
                 cache_dir: path.join(request.cacheDir, "whisper"),
-                dtype:     "fp32",
+                dtype:     "q4",
                 device:    "gpu"
             }
         )

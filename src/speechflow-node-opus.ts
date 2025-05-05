@@ -48,7 +48,7 @@ export default class SpeechFlowNodeOPUS extends SpeechFlowNode {
         this.translator = await Transformers.pipeline("translation", model, {
             cache_dir: path.join(this.config.cacheDir, "opus"),
             dtype:     "q4",
-            device:    "cpu"
+            device:    "gpu"
         })
         if (this.translator === null)
             throw new Error("failed to instantiate translator pipeline")

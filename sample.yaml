@@ -27,6 +27,10 @@ translation: |
     file(path: "-", mode: "w", type: "text")
 
 #  sample for development
+sample4: |
+    file(path: "sample.txt", mode: "r", type: "text") |
+    opus(src: "de", dst: "en") |
+    file(path: "out.txt", mode: "w", type: "text")
 sample: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
     trace(type: "audio", name: "audio") |
