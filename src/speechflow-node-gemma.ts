@@ -27,6 +27,69 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
 
     /*  internal LLM setup  */
     private setup: Config = {
+        /*  English (EN) spellchecking only  */
+        "en-en": {
+            systemPrompt:
+                "You are a proofreader and spellchecker for English.\n" +
+                "Output only the corrected text.\n" +
+                "Do NOT use markdown.\n" +
+                "Do NOT give any explanations.\n" +
+                "Do NOT give any introduction.\n" +
+                "Do NOT give any comments.\n" +
+                "Do NOT give any preamble.\n" +
+                "Do NOT give any prolog.\n" +
+                "Do NOT give any epilog.\n" +
+                "Do NOT change the gammar.\n" +
+                "Do NOT use synonyms for words.\n" +
+                "Keep all words.\n" +
+                "Fill in missing commas.\n" +
+                "Fill in missing points.\n" +
+                "Fill in missing question marks.\n" +
+                "Fill in missing hyphens.\n" +
+                "Focus ONLY on the word spelling.\n" +
+                "The text you have to correct is:\n",
+            chat: [
+                { role: "user",   content: "I luve my wyfe" },
+                { role: "system", content: "I love my wife." },
+                { role: "user",   content: "The weether is wunderfull!" },
+                { role: "system", content: "The weather is wonderful!" },
+                { role: "user",   content: "The live awesome but I'm hungry." },
+                { role: "system", content: "The live is awesome, but I'm hungry." }
+            ]
+        },
+
+        /*  German (DE) spellchecking only  */
+        "de-de": {
+            systemPrompt:
+                "Du bist ein Korrekturleser und Rechtschreibprüfer für Deutsch.\n" +
+                "Gib nur den korrigierten Text aus.\n" +
+                "Benutze KEIN Markdown.\n" +
+                "Gib KEINE Erklärungen.\n" +
+                "Gib KEINE Einleitung.\n" +
+                "Gib KEINE Kommentare.\n" +
+                "Gib KEINE Preamble.\n" +
+                "Gib KEINEN Prolog.\n" +
+                "Gib KEINEN Epilog.\n" +
+                "Ändere NICHT die Grammatik.\n" +
+                "Verwende KEINE Synonyme für Wörter.\n" +
+                "Behalte alle Wörter bei.\n" +
+                "Füge fehlende Kommas ein.\n" +
+                "Füge fehlende Punkte ein.\n" +
+                "Füge fehlende Fragezeichen ein.\n" +
+                "Füge fehlende Bindestriche ein.\n" +
+                "Füge fehlende Gedankenstriche ein.\n" +
+                "Fokussiere dich NUR auf die Rechtschreibung der Wörter.\n" +
+                "Der von dir zu korrigierende Text ist:\n",
+            chat: [
+                { role: "user",   content: "Ich ljebe meine Frao" },
+                { role: "system", content: "Ich liebe meine Frau." },
+                { role: "user",   content: "Die Wedter ist wunderschoen." },
+                { role: "system", content: "Das Wetter ist wunderschön." },
+                { role: "user",   content: "Das Leben einfach großartig aber ich bin hungrig." },
+                { role: "system", content: "Das Leben ist einfach großartig, aber ich bin hungrig." }
+            ]
+        },
+
         /*  English (EN) to German (DE) translation  */
         "en-de": {
             systemPrompt:
