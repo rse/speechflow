@@ -26,7 +26,7 @@
         "elevenlabs":                       "1.57.0",
         "stream-transform":                 "3.3.3",
         "get-stream":                       "9.0.1",
-        "@dotenvx/dotenvx":                 "1.42.2",
+        "@dotenvx/dotenvx":                 "1.43.0",
         "speex-resampler":                  "3.0.1",
         "pcm-convert":                      "1.6.5",
         "object-path":                      "0.11.8",
@@ -36,10 +36,13 @@
         "@opensumi/reconnecting-websocket": "4.4.0",
         "ollama":                           "0.5.15",
         "@rse/ffmpeg":                      "1.4.2",
-        "ffmpeg-stream":                    "1.0.0",
+        "ffmpeg-stream":                    "1.0.1",
         "installed-packages":               "1.0.13",
         "syspath":                          "1.0.8",
-        "wav":                              "1.0.2"
+        "wav":                              "1.0.2",
+        "wavefile":                         "11.0.0",
+        "@huggingface/transformers":        "3.5.1",
+        "@ericedouard/vad-node-realtime":   "0.2.0"
     },
     "devDependencies": {
         "eslint":                           "9.26.0",
@@ -48,10 +51,10 @@
         "eslint-plugin-promise":            "7.2.1",
         "eslint-plugin-import":             "2.31.0",
         "eslint-plugin-node":               "11.1.0",
-        "@typescript-eslint/eslint-plugin": "8.31.1",
-        "@typescript-eslint/parser":        "8.31.1",
-        "oxlint":                           "0.16.8",
-        "eslint-plugin-oxlint":             "0.16.8",
+        "@typescript-eslint/eslint-plugin": "8.32.0",
+        "@typescript-eslint/parser":        "8.32.0",
+        "oxlint":                           "0.16.9",
+        "eslint-plugin-oxlint":             "0.16.9",
         "@biomejs/biome":                   "1.9.4",
         "eslint-config-biome":              "1.9.4",
 
@@ -63,6 +66,7 @@
         "@types/resolve":                   "1.20.6",
         "@types/wav":                       "1.0.4",
 
+        "patch-package":                    "8.0.0",
         "stmux":                            "1.8.10",
         "nodemon":                          "3.1.10",
         "rimraf":                           "6.0.1",
@@ -70,6 +74,9 @@
         "delay-cli":                        "2.0.0",
         "nps":                              "5.10.0",
         "cross-env":                        "7.0.3"
+    },
+    "overrides": {
+        "onnxruntime-node":                 "1.22.0-dev.20250418-c19a49615b"
     },
     "upd":                                  [],
     "engines": {
@@ -86,6 +93,7 @@
         }
     },
     "scripts": {
+        "postinstall":                      "npm start patch-apply",
         "start":                            "nps -c etc/nps.yaml",
         "speechflow":                       "node dst/speechflow.js"
     }
