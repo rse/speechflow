@@ -5,6 +5,13 @@
 ##
 
 scripts:
+    #   make and apply patches
+    patch-make: >
+                            npm shrinkwrap &&
+                            patch-package --patch-dir package.d "@ericedouard/vad-node-realtime" &&
+                            shx rm -f npm-shrinkwrap.json
+    patch-apply:            patch-package --patch-dir package.d
+
     #   multiview-style development dashboard
     dev: >
                             stmux -w always -m beep -e "built.in.+ms" --
