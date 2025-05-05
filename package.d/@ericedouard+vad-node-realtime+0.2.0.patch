@@ -1,0 +1,18 @@
+diff --git a/node_modules/@ericedouard/vad-node-realtime/dist/common/models/v5.js b/node_modules/@ericedouard/vad-node-realtime/dist/common/models/v5.js
+index 4a75457..e3a4e9a 100644
+--- a/node_modules/@ericedouard/vad-node-realtime/dist/common/models/v5.js
++++ b/node_modules/@ericedouard/vad-node-realtime/dist/common/models/v5.js
+@@ -39,13 +39,11 @@ class SileroV5 {
+ exports.SileroV5 = SileroV5;
+ _a = SileroV5;
+ SileroV5.new = async (ortInstance, modelFetcher) => {
+-    logging_1.log.debug("Loading VAD...");
+     const modelArrayBuffer = await modelFetcher();
+     const _session = await ortInstance.InferenceSession.create(modelArrayBuffer);
+     // @ts-ignore
+     const _sr = new ortInstance.Tensor("int64", [16000n]);
+     const _state = getNewState(ortInstance);
+-    logging_1.log.debug("...finished loading VAD");
+     return new _a(_session, _state, _sr, ortInstance);
+ };
+ //# sourceMappingURL=v5.js.map

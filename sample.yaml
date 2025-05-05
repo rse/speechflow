@@ -29,6 +29,16 @@ translation: |
 #  sample for development
 sample: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+    trace(type: "audio", name: "audio") |
+    whisper(language: "de") |
+    trace(type: "text", name: "text") |
+    file(path: "sample.txt", mode: "w", type: "text")
+# trace(type: "text", name: "text") |
+# wav(mode: "encode") | file(path: "sample.wav", mode: "w", type: "audio"),
+# trace(type: "audio", name: "audio")
+# } |
+sample1: |
+    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
     trace(type: "audio", name: "audio1") |
     deepgram() |
     trace(type: "text", name: "text1") |
