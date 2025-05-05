@@ -18,13 +18,19 @@ About
 directed data flow graph of audio and text processing nodes. This way,
 it allows to perform various speech processing tasks in a flexible way.
 
-**SpeechFlow** comes with built-in graph nodes for local file I/O, local audio
-device I/O, local/remote WebSocket network I/O, cloud-based [Deepgram](https://deepgram.com)
-speech-to-text conversion, cloud-based [DeepL](https://deepl.com) text-to-text
-translation, local [Gemma/Ollama](https://ollama.com/library/gemma3)
-text-to-text translation, cloud-based [ElevenLabs](https://elevenlabs.io/)
-text-to-speech conversion, and local [FFmpeg](https://ffmpeg.org/)
-speech-to-speech encoding. Additional SpeechFlow graph nodes can be provided externally
+**SpeechFlow** comes with built-in graph nodes for
+local file I/O,
+local audio device I/O,
+local/remote WebSocket network I/O,
+cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
+local [Whisper/ONNX](https://openai.com/index/whisper/) speech-to-text conversion,
+cloud-based [DeepL](https://deepl.com) text-to-text translation,
+local [Gemma/Ollama](https://ollama.com/library/gemma3) text-to-text translation,
+local [Gemma/Ollama](https://ollama.com/library/gemma3) text-to-text spelling correction,
+local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translation,
+cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
+and local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding.
+Additional SpeechFlow graph nodes can be provided externally
 by NPM packages named `speechflow-node-xxx` which expose a class
 derived from the exported `SpeechFlowNode` class of the `speechflow` package.
 
@@ -198,6 +204,20 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **version**  | 1         | "latest" | *none* |
   | **language** | 2         | "de"     | *none* |
 
+- Node: **whisper**<br/>
+  Purpose: **OpenAI Whisper Speech-to-Text conversion**<br/>
+  Example: `whisper(language: "de")`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | text        |
+
+  | Parameter    | Position  | Default          | Requirement        |
+  | ------------ | --------- | ---------------- | ------------------ |
+  | **language** | 0         | "en"             | *none* |
+  | **model**    | 1         | "v3-large-turbo" | *none* |
+
 - Node: **deepl**<br/>
   Purpose: **DeepL Text-to-Text translation**<br/>
   Example: `deepl(src: "de", dst: "en-US")`<br/>
@@ -215,7 +235,7 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **dst**      | 1         | "en-US"  | `/^(?:de\|en-US)$/` |
 
 - Node: **gemma**<br/>
-  Purpose: **Google Gemma Text-to-Text translation**<br/>
+  Purpose: **Google Gemma Text-to-Text translation and spelling correction**<br/>
   Example: `gemma(src: "de", dst: "en")`<br/>
   Notice; this node requires the Ollama API!
 
@@ -227,6 +247,20 @@ Currently **SpeechFlow** provides the following processing nodes:
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **url**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?:\d+$/` |
+  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
+  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+
+- Node: **opus**<br/>
+  Purpose: **OPUS Text-to-Text translation**<br/>
+  Example: `deepl(src: "de", dst: "en")`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement      |
+  | ------------ | --------- | -------- | ---------------- |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
