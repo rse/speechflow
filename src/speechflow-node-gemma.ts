@@ -150,10 +150,6 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
             dst: { type: "string", pos: 1, val: "en", match: /^(?:de|en)$/ }
         })
 
-        /*  sanity check situation  */
-        if (this.params.src === this.params.dst)
-            throw new Error("source and destination languages cannot be the same")
-
         /*  declare node input/output format  */
         this.input  = "text"
         this.output = "text"
