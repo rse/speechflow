@@ -21,26 +21,41 @@ const log = (message: string) =>
 /*  internal state  */
 let transcriber: Transformers.AutomaticSpeechRecognitionPipeline | null = null
 
+/*  OpenAI Whisper models (ONNX variants)  */
+const models = {
+    "v1-tiny":        { model: "onnx-community/whisper-tiny-ONNX" },
+    "v1-base":        { model: "onnx-community/whisper-base" },
+    "v1-small":       { model: "onnx-community/whisper-small" },
+    "v1-medium":      { model: "onnx-community/whisper-medium-ONNX" },
+    "v2-large":       { model: "reach-vb/whisper-large-v2-onnx" },
+    "v3-large":       { model: "onnx-community/whisper-large-v3-ONNX" },
+    "v3-large-turbo": { model: "onnx-community/whisper-large-v3-turbo" }
+}
 /*  thread communication hook  */
 WorkerThreads.parentPort?.on("message", async (request: WorkerRequest) => {
     let response: WorkerResponse | null = null
     if (request.type === "open") {
         /*  initialize Whisper  */
-        log(`loading Whisper model "${request.model}": BEGIN`)
-        transcriber = await Transformers.pipeline(
-            "automatic-speech-recognition", request.model, {
-                cache_dir: path.join(request.cacheDir, "whisper"),
-                dtype:     "q4",
-                device:    "gpu"
-            }
-        )
-        if (transcriber === null) {
-            log(`loading Whisper model "${request.model}": FAILED`)
-            response = { type: "error", message: "failed to open Whisper" }
-        }
+        const model = models[request.model as keyof typeof models]?.model
+        if (!model)
+            response = { type: "error", message: `unknown Whisper model "${request.model}"` }
         else {
-            log(`loading Whisper model "${request.model}": SUCCESS`)
-            response = { type: "ok" }
+            log(`loading Whisper model "${request.model}": BEGIN`)
+            transcriber = await Transformers.pipeline(
+                "automatic-speech-recognition", model, {
+                    cache_dir: path.join(request.cacheDir, "whisper"),
+                    dtype:     "q4",
+                    device:    "gpu"
+                }
+            )
+            if (transcriber === null) {
+                log(`loading Whisper model "${request.model}": FAILED`)
+                response = { type: "error", message: "failed to open Whisper" }
+            }
+            else {
+                log(`loading Whisper model "${request.model}": SUCCESS`)
+                response = { type: "ok" }
+            }
         }
     }
     else if (request.type === "task-request") {

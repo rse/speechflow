@@ -34,7 +34,7 @@ sample4: |
 sample: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
     trace(type: "audio", name: "audio") |
-    whisper(language: "de") |
+    whisper(language: "de", model: "v1-small", runtime: "ggml") |
     trace(type: "text", name: "text") |
     file(path: "sample.txt", mode: "w", type: "text")
 # trace(type: "text", name: "text") |

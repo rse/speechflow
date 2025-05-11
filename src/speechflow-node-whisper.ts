@@ -195,6 +195,7 @@ class TranscriptionQueue extends EventEmitter {
     constructor (
         private cacheDir: string,
         private model:    string,
+        private runtime:  string,
         private log:      (msg: string) => void
     ) {
         super()
@@ -226,7 +227,12 @@ class TranscriptionQueue extends EventEmitter {
     }
     async start () {
         this.log("start transcription service worker: BEGIN")
-        const script = path.resolve(__dirname, "speechflow-node-whisper-worker.js")
+        if (this.runtime === "ggml") {
+            const basedir = path.dirname(await require.resolve("smart-whisper/package.json"))
+            process.env.GGML_METAL_PATH_RESOURCES = path.resolve(basedir, "whisper.cpp/ggml/src")
+            console.log(process.env.GGML_METAL_PATH_RESOURCES)
+        }
+        const script = path.resolve(__dirname, `speechflow-node-whisper-${this.runtime}.js`)
         this.worker = new Worker(script, { env: { ...process.env } })
         this.worker.postMessage({
             type:     "open",
@@ -295,34 +301,13 @@ export default class SpeechFlowNodeWhisper extends SpeechFlowNode {
 
     /*  OpenAI Whisper https://github.com/openai/whisper/  */
     private models = {
-        "v1-tiny": {
-            version:  "v1", released: "2022-09", paramsM: 39, vramGB: 1, speed: 10,
-            url:      "onnx-community/whisper-tiny-ONNX"
-        },
-        "v1-base": {
-            version:  "v1", released: "2022-09", paramsM: 74, vramGB: 1, speed: 7,
-            url:      "onnx-community/whisper-base"
-        },
-        "v1-small": {
-            version:  "v1", released: "2022-09", paramsM: 244, vramGB: 2, speed: 4,
-            url:      "onnx-community/whisper-small",
-        },
-        "v1-medium": {
-            version:  "v1", released: "2022-09", paramsM: 769, vramGB: 5, speed: 2,
-            url:      "onnx-community/whisper-medium-ONNX"
-        },
-        "v2-large": {
-            version:  "v2", released: "2022-12", paramsM: 1550, vramGB: 10, speed: 1,
-            url:      "reach-vb/whisper-large-v2-onnx"
-        },
-        "v3-large": {
-            version:  "v3", released: "2023-11", paramsM: 1550, vramGB: 10, speed: 1,
-            url:      "onnx-community/whisper-large-v3-ONNX"
-        },
-        "v3-large-turbo": {
-            version:  "v3", released: "2024-09", paramsM: 798, vramGB: 6, speed: 8,
-            url:      "onnx-community/whisper-large-v3-turbo"
-        }
+        "v1-tiny":        { version:  "v1", released: "2022-09", paramsM:   39, vramGB:  1, speed: 10 },
+        "v1-base":        { version:  "v1", released: "2022-09", paramsM:   74, vramGB:  1, speed:  7 },
+        "v1-small":       { version:  "v1", released: "2022-09", paramsM:  244, vramGB:  2, speed:  4 },
+        "v1-medium":      { version:  "v1", released: "2022-09", paramsM:  769, vramGB:  5, speed:  2 },
+        "v2-large":       { version:  "v2", released: "2022-12", paramsM: 1550, vramGB: 10, speed:  1 },
+        "v3-large":       { version:  "v3", released: "2023-11", paramsM: 1550, vramGB: 10, speed:  1 },
+        "v3-large-turbo": { version:  "v3", released: "2024-09", paramsM:  798, vramGB:  6, speed:  8 }
     }
 
     /*  internal state  */
@@ -339,9 +324,11 @@ export default class SpeechFlowNodeWhisper extends SpeechFlowNode {
         super(id, cfg, opts, args)
 
         /*  declare node configuration parameters  */
+        const validModels = new RegExp(`^(?:${Object.keys(this.models).join("|")})$`)
         this.configure({
             language: { type: "string", val: "en",             pos: 0, match: /^(?:en|de)$/ },
-            model:    { type: "string", val: "v3-large-turbo", pos: 1 }
+            model:    { type: "string", val: "v3-large-turbo", pos: 1, match: validModels },
+            runtime:  { type: "string", val: "onnx",           pos: 2, match: /^(?:onnx|ggml)$/ }
         })
 
         /*  sanity check model  */
@@ -365,10 +352,9 @@ export default class SpeechFlowNodeWhisper extends SpeechFlowNode {
         }
 
         /*  create queue for results  */
-        // let   queueInput  = Promise.resolve()
-        // let   queueInput  = []
         const queueOutput = new EventEmitter()
 
+        /*  internal processing constants  */
         const sampleRateTarget   = 16000
         const samplesPerVADFrame = 512 /* required for VAD v5 */
         const minFramesPerSecond = Math.trunc(sampleRateTarget / samplesPerVADFrame) + 1
@@ -381,7 +367,8 @@ export default class SpeechFlowNodeWhisper extends SpeechFlowNode {
         /*  transcribe a chunk of audio  */
         this.tqueue = new TranscriptionQueue(
             this.config.cacheDir,
-            model.url,
+            this.params.model,
+            this.params.runtime,
             (msg: string) => { this.log("info", msg) }
         )
         await this.tqueue.start()
