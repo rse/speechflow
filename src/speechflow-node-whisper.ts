@@ -5,6 +5,7 @@
 */
 
 /*  standard dependencies  */
+import os                 from "node:os"
 import path               from "node:path"
 import { EventEmitter }   from "node:events"
 import Stream             from "node:stream"
@@ -199,6 +200,12 @@ class TranscriptionQueue extends EventEmitter {
         private log:      (msg: string) => void
     ) {
         super()
+        if (this.runtime === "auto") {
+            const platform = os.platform()
+            if      (platform === "win32")  this.runtime = "onnx"
+            else if (platform === "darwin") this.runtime = "ggml"
+            else                            this.runtime = "onnx"
+        }
     }
     enqueue (task: TranscriptionTaskRequest) {
         /*  destroy previous tasks of same id  */
@@ -328,7 +335,7 @@ export default class SpeechFlowNodeWhisper extends SpeechFlowNode {
         this.configure({
             language: { type: "string", val: "en",             pos: 0, match: /^(?:en|de)$/ },
             model:    { type: "string", val: "v3-large-turbo", pos: 1, match: validModels },
-            runtime:  { type: "string", val: "onnx",           pos: 2, match: /^(?:onnx|ggml)$/ }
+            runtime:  { type: "string", val: "auto",           pos: 2, match: /^(?:auto|onnx|ggml)$/ }
         })
 
         /*  sanity check model  */
