@@ -3,6 +3,9 @@
 ##
 
 #  capture audio from microphone to file
+capture-microphone1: |
+    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+    file(path: "capture.pcm", mode: "w", type: "audio")
 capture-microphone: |
     device(device: "wasapi:VoiceMeeter Output", mode: "r") |
     file(path: "capture.pcm", mode: "w", type: "audio")
