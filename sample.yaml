@@ -67,3 +67,29 @@ sample3: |
     ffmpeg(dst: "wav") |
     file(path: "sample.wav", mode: "w", type: "audio")
 
+filmstudio: |
+    device(device: "wasapi:VoiceMeeter A3", mode: "r") | {
+        wav(mode: "encode") |
+            file(path: "program-de.wav", mode: "w", type: "audio"),
+        deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM, language: "de") | {
+            file(path: "program-de.txt", mode: "w", type: "text"),
+            deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en-US") | {
+                file(path: "program-en.txt", mode: "w", type: "text"),
+                subtitle(format: "vtt") | {
+                    file(path: "program-en.vtt", mode: "w", type: "text"),
+                    mqtt(url: "mqtt://127.0.0.1:1883",
+                        username: env.SPEECHFLOW_MQTT_USER,
+                        password: env.SPEECHFLOW_MQTT_PASS,
+                        topic: "stream/studio/sender")
+                },
+                subtitle(format: "srt") |
+                    file(path: "program-en.srt", mode: "w", type: "text"),
+                elevenlabs(voice: "Mark", speed: 1.05, language: "en") | {
+                    wav(mode: "encode") |
+                        file(path: "program-en.wav", mode: "w", type: "audio"),
+                    device(device: "wasapi:VoiceMeeter IN2", mode: "w")
+                }
+            }
+        }
+    }
+
