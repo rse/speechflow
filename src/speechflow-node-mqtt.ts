@@ -81,7 +81,7 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
                 if (broker.connected) {
                     broker.publish(topic, chunk, { qos: 2, retain: false }, (err) => {
                         if (err)
-                            callback(new Error(`failed to publish to MQTT topic "${topic}"`))
+                            callback(new Error(`failed to publish to MQTT topic "${topic}": ${err}`))
                         else
                             callback()
                     })
