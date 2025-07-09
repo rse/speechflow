@@ -18,7 +18,7 @@
     "dependencies": {
         "cli-io":                           "0.9.13",
         "yargs":                            "18.0.0",
-        "flowlink":                         "0.9.9",
+        "flowlink":                         "0.9.11",
         "js-yaml":                          "4.1.0",
         "@gpeng/naudiodon":                 "2.4.1",
         "@deepgram/sdk":                    "4.9.1",
