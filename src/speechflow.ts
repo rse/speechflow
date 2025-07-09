@@ -200,41 +200,65 @@ let cli: CLIio | null = null
         textEncoding:      "utf8",
         cacheDir:          args.cache
     }
-    flowlink.evaluate(config, {
-        resolveVariable (id: string) {
-            if (!objectPath.has(variables, id))
-                throw new Error(`failed to resolve variable "${id}"`)
-            const value = objectPath.get(variables, id)
-            cli!.log("info", `resolve variable: "${id}" -> "${value}"`)
-            return value
-        },
-        createNode (id: string, opts: { [ id: string ]: any }, args: any[]) {
-            if (nodes[id] === undefined)
-                throw new Error(`unknown node "${id}"`)
-            let node: SpeechFlowNode
-            try {
-                node = new nodes[id](`${id}[${nodenum}]`, cfg, opts, args)
+    let ast: unknown
+    try {
+        ast = flowlink.compile(config)
+    }
+    catch (err) {
+        if (err instanceof Error && err.name === "FlowLinkError")
+            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.toString()}"`)
+        else if (err instanceof Error)
+            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.message}"`)
+        else
+            cli!.log("error", "failed to parse SpeechFlow configuration: internal error")
+        process.exit(1)
+    }
+    try {
+        flowlink.execute(ast, {
+            resolveVariable (id: string) {
+                if (!objectPath.has(variables, id))
+                    throw new Error(`failed to resolve variable "${id}"`)
+                const value = objectPath.get(variables, id)
+                cli!.log("info", `resolve variable: "${id}" -> "${value}"`)
+                return value
+            },
+            createNode (id: string, opts: { [ id: string ]: any }, args: any[]) {
+                if (nodes[id] === undefined)
+                    throw new Error(`unknown node "${id}"`)
+                let node: SpeechFlowNode
+                try {
+                    node = new nodes[id](`${id}[${nodenum}]`, cfg, opts, args)
+                }
+                catch (err) {
+                    /*  fatal error  */
+                    if (err instanceof Error)
+                        cli!.log("error", `creation of "${id}[${nodenum}]" node failed: ${err.message}`)
+                    else
+                        cli!.log("error", `creation of "${id}"[${nodenum}] node failed: ${err}`)
+                    process.exit(1)
+                }
+                nodenum++
+                const params = Object.keys(node.params)
+                    .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
+                cli!.log("info", `create node "${node.id}" (${params})`)
+                graphNodes.add(node)
+                return node
+            },
+            connectNode (node1: SpeechFlowNode, node2: SpeechFlowNode) {
+                cli!.log("info", `connect node "${node1.id}" to node "${node2.id}"`)
+                node1.connect(node2)
             }
-            catch (err) {
-                /*  fatal error  */
-                if (err instanceof Error)
-                    cli!.log("error", `creation of "${id}[${nodenum}]" node failed: ${err.message}`)
-                else
-                    cli!.log("error", `creation of "${id}"[${nodenum}] node failed: ${err}`)
-                process.exit(1)
-            }
-            nodenum++
-            const params = Object.keys(node.params)
-                .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
-            cli!.log("info", `create node "${node.id}" (${params})`)
-            graphNodes.add(node)
-            return node
-        },
-        connectNode (node1: SpeechFlowNode, node2: SpeechFlowNode) {
-            cli!.log("info", `connect node "${node1.id}" to node "${node2.id}"`)
-            node1.connect(node2)
-        }
-    })
+        })
+    }
+    catch (err) {
+        if (err instanceof Error && err.name === "FlowLinkError")
+            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.toString()}"`)
+        else if (err instanceof Error)
+            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.message}"`)
+        else
+            cli!.log("error", "failed to materialize SpeechFlow configuration: internal error")
+        process.exit(1)
+    }
 
     /*  graph processing: PASS 2: prune connections of nodes  */
     for (const node of graphNodes) {
