@@ -142,11 +142,13 @@ let cli: CLIio | null = null
         "./speechflow-node-trace.js",
         "./speechflow-node-file.js",
         "./speechflow-node-device.js",
+        "./speechflow-node-mqtt.js",
         "./speechflow-node-websocket.js",
         "./speechflow-node-wav.js",
         "./speechflow-node-ffmpeg.js",
         "./speechflow-node-deepgram.js",
         "./speechflow-node-deepl.js",
+        "./speechflow-node-subtitle.js",
         "./speechflow-node-elevenlabs.js",
         "./speechflow-node-gemma.js",
         "./speechflow-node-whisper.js",
@@ -338,7 +340,9 @@ let cli: CLIio | null = null
         /*  graph processing: PASS 2: close nodes  */
         for (const node of graphNodes) {
             cli!.log("info", `close node "${node.id}"`)
-            await node.close()
+            await node.close().catch((err) => {
+                cli!.log("warning", `node "${node.id}" failed to close: ${err}`)
+            })
         }
 
         /*  graph processing: PASS 3: disconnect nodes  */
