@@ -30,21 +30,17 @@ translation: |
     file(path: "-", mode: "w", type: "text")
 
 #  sample for development
-sample4: |
+sample1: |
     file(path: "sample.txt", mode: "r", type: "text") |
     opus(src: "de", dst: "en") |
     file(path: "out.txt", mode: "w", type: "text")
-sample: |
+sample2: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
     trace(type: "audio", name: "audio") |
     whisper(language: "de", model: "v1-small") |
     trace(type: "text", name: "text") |
     file(path: "sample.txt", mode: "w", type: "text")
-# trace(type: "text", name: "text") |
-# wav(mode: "encode") | file(path: "sample.wav", mode: "w", type: "audio"),
-# trace(type: "audio", name: "audio")
-# } |
-sample1: |
+sample3: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
     trace(type: "audio", name: "audio1") |
     deepgram() |
@@ -56,17 +52,18 @@ sample1: |
     ffmpeg(dst: "wav") |
     trace(type: "audio", name: "audio3") |
     file(path: "sample.wav", mode: "w", type: "audio")
-sample2: |
+sample4: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
     deepgram() |
     ffmpeg(dst: "wav") |
     file(path: "sample.wav", mode: "w", type: "audio")
-sample3: |
+sample5: |
     file(path: "sample.txt", mode: "r", type: "text") |
     elevenlabs(voice: "Mark", speed: 1.05) |
     ffmpeg(dst: "wav") |
     file(path: "sample.wav", mode: "w", type: "audio")
 
+#   standard graph for msg Filmstudio
 filmstudio: |
     device(device: "wasapi:VoiceMeeter A3", mode: "r") | {
         wav(mode: "encode") |
