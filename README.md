@@ -133,7 +133,8 @@ Currently **SpeechFlow** provides the following processing nodes:
 
 - Node: **websocket**<br/>
   Purpose: **WebSocket source/sink**<br/>
-  Example: `websocket(connect: "ws://127.0.0.1:12345". type: "text")`
+  Example: `websocket(connect: "ws://127.0.0.1:12345", type: "text")`
+  Notice: this node requires a peer WebSocket service!
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -145,6 +146,23 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **listen**  | *none*    | *none*   | `/^(?:\|ws:\/\/(.+?):(\d+))$/` |
   | **connect** | *none*    | *none*   | `/^(?:\|ws:\/\/(.+?):(\d+)(?:\/.*)?)$/` |
   | **type**    | *none*    | "audio"  | `/^(?:audio\|text)$/` |
+
+- Node: **mqtt**<br/>
+  Purpose: **MQTT sink**<br/>
+  Example: `mqtt(url: "mqtt://127.0.0.1:1883", username: "foo", password: "bar", topic: "quux")`
+  Notice: this node requires a peer MQTT broker!
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | none        |
+
+  | Parameter    | Position  | Default  | Requirement           |
+  | ------------ | --------- | -------- | --------------------- |
+  | **url**      | 0         | *none*   | `/^(?:\|(?:ws|mqtt):\/\/(.+?):(\d+))$/` |
+  | **username** | 1         | *none*   | `/^.+$/` |
+  | **password** | 2         | *none*   | `/^.+$/` |
+  | **topic**    | 3         | *none*   | `/^.+$/` |
 
 - Node: **device**<br/>
   Purpose: **Microphone/speaker device source/sink**<br/>
@@ -233,6 +251,19 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPL | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en-US)$/` |
   | **dst**      | 1         | "en-US"  | `/^(?:de\|en-US)$/` |
+
+- Node: **subtitle**<br/>
+  Purpose: **SRT/VTT Subtitle Generation**<br/>
+  Example: `subtitle(format: "srt")`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **format**   | *none*    | "srt"    | /^(?:srt\|vtt)$/   |
 
 - Node: **gemma**<br/>
   Purpose: **Google Gemma Text-to-Text translation and spelling correction**<br/>
