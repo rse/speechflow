@@ -50,10 +50,15 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  connect to Deepgram API  */
         const deepgram = Deepgram.createClient(this.params.key)
+        let language = "en"
+        if (this.params.model.match(/^nova-2/) && this.params.language !== "en")
+            language = this.params.language
+        else if (this.params.model.match(/^nova-3/) && this.params.language !== "en")
+            language = "multi"
         this.dg = deepgram.listen.live({
             model:            this.params.model,
             version:          this.params.version,
-            language:         this.params.language,
+            language,
             channels:         this.config.audioChannels,
             sample_rate:      this.config.audioSampleRate,
             encoding:         "linear16",
