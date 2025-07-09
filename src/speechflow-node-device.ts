@@ -67,7 +67,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         const devices = PortAudio.getDevices()
         for (const device of devices)
             this.log("info", `found audio device "${device.name}" ` +
-                `(inputs: ${device.maxInputChannels}), outputs: ${device.maxOutputChannels}`)
+                `(inputs: ${device.maxInputChannels}, outputs: ${device.maxOutputChannels}`)
         const device = devices.find((device) => {
             return (
                 (   (   mode === "r"   && device.maxInputChannels  > 0)
