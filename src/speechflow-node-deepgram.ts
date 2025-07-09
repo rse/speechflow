@@ -142,7 +142,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         }
         const encoding = this.config.textEncoding
         this.stream = new Stream.Duplex({
-            writableObjectMode: false,
+            writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
             write (chunk: Buffer, encoding, callback) {

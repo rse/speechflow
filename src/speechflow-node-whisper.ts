@@ -506,7 +506,7 @@ export default class SpeechFlowNodeWhisper extends SpeechFlowNode {
         let carrySamples = new Float32Array()
         let endOfStream = false
         this.stream = new Stream.Duplex({
-            writableObjectMode: false,
+            writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
 

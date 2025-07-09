@@ -116,7 +116,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  create duplex stream and connect it to the ElevenLabs API  */
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
-            readableObjectMode: false,
+            readableObjectMode: true,
             decodeStrings:      false,
             write (chunk: Buffer, encoding, callback) {
                 const data = chunk.toString()

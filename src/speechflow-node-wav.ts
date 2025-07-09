@@ -16,7 +16,9 @@ import SpeechFlowNode   from "./speechflow-node"
 /*  utility class for wrapping a custom stream into a regular Transform stream  */
 class StreamWrapper extends Stream.Transform {
     private foreignStream: any
-    constructor (foreignStream: any, options?: Stream.TransformOptions) {
+    constructor (foreignStream: any, options: Stream.TransformOptions = {}) {
+        options.readableObjectMode = true
+        options.writableObjectMode = true
         super(options)
         this.foreignStream = foreignStream
         this.foreignStream.on("data", (chunk: any) => {

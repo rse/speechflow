@@ -72,8 +72,8 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
         const topic  = this.params.topic
         const textEncoding = this.config.textEncoding
         this.stream = new Stream.Duplex({
-            writableObjectMode: false,
-            readableObjectMode: false,
+            writableObjectMode: true,
+            readableObjectMode: true,
             decodeStrings:      false,
             write (chunk: Buffer | string, encoding, callback) {
                 if (Buffer.isBuffer(chunk))

@@ -80,8 +80,8 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             const textEncoding = this.config.textEncoding
             const type = this.params.type
             this.stream = new Stream.Duplex({
-                writableObjectMode: false,
-                readableObjectMode: false,
+                writableObjectMode: true,
+                readableObjectMode: true,
                 decodeStrings:      false,
                 write (chunk: Buffer | string, encoding, callback) {
                     if (type === "audio" && !Buffer.isBuffer(chunk))
@@ -133,8 +133,8 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             const textEncoding = this.config.textEncoding
             const type = this.params.type
             this.stream = new Stream.Duplex({
-                writableObjectMode: false,
-                readableObjectMode: false,
+                writableObjectMode: true,
+                readableObjectMode: true,
                 decodeStrings:      false,
                 write (chunk: Buffer | string, encoding, callback) {
                     if (type === "audio" && !Buffer.isBuffer(chunk))
