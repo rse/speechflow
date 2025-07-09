@@ -9,7 +9,7 @@ import Stream                from "node:stream"
 import { EventEmitter }      from "node:events"
 
 /*  external dependencies  */
-import * as ElevenLabs       from "elevenlabs"
+import * as ElevenLabs       from "@elevenlabs/elevenlabs-js"
 import { getStreamAsBuffer } from "get-stream"
 import SpeexResampler        from "speex-resampler"
 
@@ -59,7 +59,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             "growing_business":      44100,
             "enterprise":            44100
         }
-        const sub = await this.elevenlabs.user.getSubscription()
+        const sub = await this.elevenlabs.user.subscription.get()
         const tier = (sub.tier ?? "free") as keyof typeof maxSampleRates
         this.log("info", `determined ElevenLabs tier: "${tier}"`)
         let maxSampleRate = 16000
@@ -86,13 +86,13 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             "eleven_multilingual_v2" :
             "eleven_flash_v2_5"
         const speechStream = (text: string) => {
-            return this.elevenlabs!.textToSpeech.convert(voice.voice_id, {
+            return this.elevenlabs!.textToSpeech.convert(voice.voiceId, {
                 text,
-                model_id:         model,
-                language_code:    this.params.language,
-                output_format:    `pcm_${maxSampleRate}` as ElevenLabs.ElevenLabs.OutputFormat,
+                modelId:          model,
+                languageCode:     this.params.language,
+                outputFormat:     `pcm_${maxSampleRate}` as ElevenLabs.ElevenLabs.OutputFormat,
                 seed:             815, /* arbitrary, but fixated by us */
-                voice_settings: {
+                voiceSettings: {
                     speed:        this.params.speed
                 }
             }, {

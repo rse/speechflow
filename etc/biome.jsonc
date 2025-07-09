@@ -5,11 +5,16 @@
 */
 
 {
+    "root": false,
     "formatter": {
         "enabled": false
     },
-    "organizeImports": {
-        "enabled": false
+    "assist": {
+        "actions": {
+            "source": {
+                "organizeImports": "off"
+            }
+        }
     },
     "linter": {
         "enabled": true,
@@ -28,8 +33,11 @@
             },
             "suspicious": {
                 "noExplicitAny": "off",
-                "noAssignInExpressions": "off",
-                "useValidTypeof": "off"
+                "noAssignInExpressions": "off"
+            },
+            "correctness": {
+                "useValidTypeof": "off",
+                "noUnusedFunctionParameters": "off"
             }
         }
     }
