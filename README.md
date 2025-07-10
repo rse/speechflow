@@ -121,7 +121,7 @@ First an overview of the available processing nodes, based on their type:
 | **file**      |                  | **file**      |
 | **device**    |                  | **device**    |
 | **websocket** |                  | **websocket** |
-|               |                  | **mqtt**      |
+| **mqtt**      |                  | **mqtt**      |
 |               | **deepgram**     |               |
 |               | **whisper**      |               |
 |               | **deepl**        |               |
