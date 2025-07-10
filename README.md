@@ -114,6 +114,28 @@ Processing Graph Examples
 Processing Node Types
 ---------------------
 
+First an overview of the available processing nodes, based on their type:
+
+| Input/Source  | Filter/Converter | Output/Sink   |
+| ------------- | ---------------- | ------------- |
+| **file**      |                  | **file**      |
+| **device**    |                  | **device**    |
+| **websocket** |                  | **websocket** |
+|               |                  | **mqtt**      |
+| ------------- | ---------------- | ------------- |
+|               | **deepgram**     |               |
+|               | **whisper**      |               |
+|               | **deepl**        |               |
+|               | **gemma**        |               |
+|               | **opus**         |               |
+|               | **elevenlabs**   |               |
+| ------------- | ---------------- | ------------- |
+|               | **wav**          |               |
+|               | **ffmpeg**       |               |
+|               | **subtitle**     |               |
+| ------------- | ---------------- | ------------- |
+|               | **trace**        |               |
+
 Currently **SpeechFlow** provides the following processing nodes:
 
 - Node:    **file**<br/>
