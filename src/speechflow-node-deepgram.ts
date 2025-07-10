@@ -56,6 +56,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         else if (this.params.model.match(/^nova-3/) && this.params.language !== "en")
             language = "multi"
         this.dg = deepgram.listen.live({
+            mip_opt_out:      true,
             model:            this.params.model,
             version:          this.params.version,
             language,
