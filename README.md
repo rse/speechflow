@@ -117,7 +117,7 @@ Processing Node Types
 First a short overview of the available processing nodes:
 
 - Input/Output nodes:
-  **file**, **device** **websocket** **mqtt**.
+  **file**, **device**, **websocket**, **mqtt**.
 
 - Converter nodes:
   **deepgram**, **whisper**,
