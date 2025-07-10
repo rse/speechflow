@@ -122,18 +122,15 @@ First an overview of the available processing nodes, based on their type:
 | **device**    |                  | **device**    |
 | **websocket** |                  | **websocket** |
 |               |                  | **mqtt**      |
-| ------------- | ---------------- | ------------- |
 |               | **deepgram**     |               |
 |               | **whisper**      |               |
 |               | **deepl**        |               |
 |               | **gemma**        |               |
 |               | **opus**         |               |
 |               | **elevenlabs**   |               |
-| ------------- | ---------------- | ------------- |
 |               | **wav**          |               |
 |               | **ffmpeg**       |               |
 |               | **subtitle**     |               |
-| ------------- | ---------------- | ------------- |
 |               | **trace**        |               |
 
 Currently **SpeechFlow** provides the following processing nodes:
