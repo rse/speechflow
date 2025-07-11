@@ -6,7 +6,6 @@
 
 /*  standard dependencies  */
 import Stream                from "node:stream"
-import { EventEmitter }      from "node:events"
 
 /*  external dependencies  */
 import * as ElevenLabs       from "@elevenlabs/elevenlabs-js"
@@ -14,7 +13,7 @@ import { getStreamAsBuffer } from "get-stream"
 import SpeexResampler        from "speex-resampler"
 
 /*  internal dependencies  */
-import SpeechFlowNode        from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  SpeechFlow node for Elevenlabs text-to-speech conversion  */
 export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
@@ -86,6 +85,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             "eleven_multilingual_v2" :
             "eleven_flash_v2_5"
         const speechStream = (text: string) => {
+            this.log("info", `ElevenLabs: send text "${text}"`)
             return this.elevenlabs!.textToSpeech.convert(voice.voiceId, {
                 text,
                 modelId:          model,
@@ -101,9 +101,6 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             })
         }
 
-        /*  internal queue of results  */
-        const queue = new EventEmitter()
-
         /*  establish resampler from ElevenLabs's maximum 24Khz
             output to our standard audio sample rate (48KHz)  */
         if (!SpeechFlowNodeElevenlabs.speexInitialized) {
@@ -113,29 +110,32 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         }
         const resampler = new SpeexResampler(1, maxSampleRate, this.config.audioSampleRate, 7)
 
-        /*  create duplex stream and connect it to the ElevenLabs API  */
-        this.stream = new Stream.Duplex({
+        /*  create transform stream and connect it to the ElevenLabs API  */
+        const log = (level: string, msg: string) => { this.log(level, msg) }
+        this.stream = new Stream.Transform({
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
-            write (chunk: Buffer, encoding, callback) {
-                const data = chunk.toString()
-                speechStream(data).then((stream) => {
-                    getStreamAsBuffer(stream).then((buffer) => {
-                        const bufferResampled = resampler.processChunk(buffer)
-                        queue.emit("audio", bufferResampled)
-                        callback()
+            transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (Buffer.isBuffer(chunk.payload))
+                    callback(new Error("invalid chunk payload type"))
+                else {
+                    speechStream(chunk.payload).then((stream) => {
+                        getStreamAsBuffer(stream).then((buffer) => {
+                            const bufferResampled = resampler.processChunk(buffer)
+                            log("info", `ElevenLabs: received audio (buffer length: ${buffer.byteLength})`)
+                            const chunkNew = chunk.clone()
+                            chunkNew.type = "audio"
+                            chunkNew.payload = bufferResampled
+                            this.push(chunkNew)
+                            callback()
+                        }).catch((error) => {
+                            callback(error)
+                        })
                     }).catch((error) => {
                         callback(error)
                     })
-                }).catch((error) => {
-                    callback(error)
-                })
-            },
-            read (size) {
-                queue.once("audio", (buffer: Buffer) => {
-                    this.push(buffer, "binary")
-                })
+                }
             },
             final (callback) {
                 this.push(null)

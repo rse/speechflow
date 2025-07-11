@@ -10,6 +10,7 @@ import Stream           from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode   from "./speechflow-node"
+import * as utils       from "./speechflow-utils"
 
 /*  SpeechFlow node for file access  */
 export default class SpeechFlowNodeFile extends SpeechFlowNode {
@@ -77,6 +78,11 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
                     })
                 }
             }
+
+            /*  convert regular stream into object-mode stream  */
+            const wrapper1 = utils.createTransformStreamForWritableSide()
+            const wrapper2 = utils.createTransformStreamForReadableSide(this.params.type, () => this.timeZero)
+            this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
         }
         else if (this.params.mode === "r") {
             if (this.params.path === "-") {
@@ -95,6 +101,11 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
                     this.stream = fs.createReadStream(this.params.path,
                         { encoding: this.config.textEncoding })
             }
+
+            /*  convert regular stream into object-mode stream  */
+            const wrapper = utils.createTransformStreamForReadableSide(this.params.type, () => this.timeZero)
+            this.stream.pipe(wrapper)
+            this.stream = wrapper
         }
         else if (this.params.mode === "w") {
             if (this.params.path === "-") {
@@ -113,6 +124,11 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
                     this.stream = fs.createWriteStream(this.params.path,
                         { encoding: this.config.textEncoding })
             }
+
+            /*  convert regular stream into object-mode stream  */
+            const wrapper = utils.createTransformStreamForWritableSide()
+            wrapper.pipe(this.stream as Stream.Writable)
+            this.stream = wrapper
         }
         else
             throw new Error(`invalid file mode "${this.params.mode}"`)

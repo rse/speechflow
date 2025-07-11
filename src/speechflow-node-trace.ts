@@ -5,10 +5,11 @@
 */
 
 /*  standard dependencies  */
-import Stream           from "node:stream"
+import Stream       from "node:stream"
+import { Duration } from "luxon"
 
 /*  internal dependencies  */
-import SpeechFlowNode   from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  SpeechFlow node for data flow tracing  */
 export default class SpeechFlowNodeTrace extends SpeechFlowNode {
@@ -46,18 +47,23 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
-            transform (chunk: Buffer | string, encoding, callback) {
+            transform (chunk: SpeechFlowChunk, encoding, callback) {
                 let error: Error | undefined
-                if (Buffer.isBuffer(chunk)) {
+                const fmt = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
+                if (Buffer.isBuffer(chunk.payload)) {
                     if (type === "audio")
-                        log("info", `writing ${type} chunk: type=Buffer bytes=${chunk.byteLength}`)
+                        log("info", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
+                            `end=${fmt(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type} ` +
+                            `payload-type=Buffer payload-bytes=${chunk.payload.byteLength}`)
                     else
                         error = new Error(`writing ${type} chunk: seen Buffer instead of String chunk type`)
                 }
                 else {
                     if (type === "text")
-                        log("info", `writing ${type} chunk: type=String length=${chunk.length} ` +
-                            `encoding=${encoding} payload="${chunk.toString()}"`)
+                        log("info", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
+                            `end=${fmt(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type}` +
+                            `payload-type=String payload-length=${chunk.payload.length} ` +
+                            `payload-encoding=${encoding} payload-content="${chunk.payload.toString()}"`)
                     else
                         error = new Error(`writing ${type} chunk: seen String instead of Buffer chunk type`)
                 }

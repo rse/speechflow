@@ -7,6 +7,32 @@
 /*  standard dependencies  */
 import Events from "node:events"
 import Stream from "node:stream"
+import { DateTime, Duration } from "luxon"
+
+/*  the definition of a single payload chunk passed through the SpeechFlow nodes  */
+export class SpeechFlowChunk {
+    constructor (
+        public timestampStart: Duration,
+        public timestampEnd:   Duration,
+        public kind:           "intermediate" | "final",
+        public type:           "audio" | "text",
+        public payload:        Buffer | string
+    ) {}
+    clone () {
+        let payload: Buffer | string
+        if (Buffer.isBuffer(this.payload))
+            payload = Buffer.from(this.payload)
+        else
+            payload = String(this.payload)
+        return new SpeechFlowChunk(
+            Duration.fromMillis(this.timestampStart.toMillis()),
+            Duration.fromMillis(this.timestampEnd.toMillis()),
+            this.kind,
+            this.type,
+            payload
+        )
+    }
+}
 
 /*  the base class for all SpeechFlow nodes  */
 export default class SpeechFlowNode extends Events.EventEmitter {
@@ -27,6 +53,9 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     stream: Stream.Writable | Stream.Readable | Stream.Duplex | null = null
     connectionsIn  = new Set<SpeechFlowNode>()
     connectionsOut = new Set<SpeechFlowNode>()
+    timeOpen:       DateTime<boolean> | undefined
+    timeZero:       DateTime<boolean> = DateTime.fromMillis(0)
+    timeZeroOffset: Duration<boolean> = Duration.fromMillis(0)
 
     /*  the default constructor  */
     constructor (
@@ -41,6 +70,14 @@ export default class SpeechFlowNode extends Events.EventEmitter {
             if (this.config[idx] !== undefined)
                 (this.config[idx] as any) = cfg[key]
         }
+    }
+
+    /*  set base/zero time for relative timestamp calculations  */
+    setTimeZero (time: DateTime) {
+        this.timeZero = time
+        if (this.timeOpen === undefined)
+            this.timeOpen = this.timeZero
+        this.timeZeroOffset = this.timeZero.diff(this.timeOpen)
     }
 
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */

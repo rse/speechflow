@@ -18,3 +18,8 @@ declare module "pcm-convert" {
     ): any
 }
 
+declare module "node:stream" {
+    import { Stream, Duplex } from "node:stream"
+    export function compose (...streams: Stream[]): Duplex
+}
+

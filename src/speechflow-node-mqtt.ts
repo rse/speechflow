@@ -12,7 +12,8 @@ import MQTT                            from "mqtt"
 import UUID                            from "pure-uuid"
 
 /*  internal dependencies  */
-import SpeechFlowNode                  from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for MQTT networking  */
 export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
@@ -29,20 +30,39 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            url:      { type: "string", pos: 0, val: "", match: /^(?:|(?:ws|mqtt):\/\/(.+?):(\d+)(?:\/.*)?)$/ },
-            username: { type: "string", pos: 1, val: "", match: /^.+$/ },
-            password: { type: "string", pos: 2, val: "", match: /^.+$/ },
-            topic:    { type: "string", pos: 3, val: "", match: /^.+$/ }
+            url:        { type: "string", pos: 0, val: "",     match: /^(?:|(?:ws|mqtt):\/\/(.+?):(\d+)(?:\/.*)?)$/ },
+            username:   { type: "string", pos: 1, val: "",     match: /^.+$/ },
+            password:   { type: "string", pos: 2, val: "",     match: /^.+$/ },
+            topicRead:  { type: "string", pos: 3, val: "",     match: /^.+$/ },
+            topicWrite: { type: "string", pos: 4, val: "",     match: /^.+$/ },
+            mode:       { type: "string", pos: 5, val: "w",    match: /^(?:r|w|rw)$/ },
+            type:       { type: "string", pos: 6, val: "text", match: /^(?:audio|text)$/ }
         })
 
+        /*  logical parameter sanity check  */
+        if ((this.params.mode === "w" || this.params.mode === "rw") && this.params.topicWrite === "")
+            throw new Error("writing to MQTT requires a topicWrite parameter")
+        if ((this.params.mode === "r" || this.params.mode === "rw") && this.params.topicRead === "")
+            throw new Error("reading from MQTT requires a topicRead parameter")
+
         /*  declare node input/output format  */
-        this.input  = "text"
-        this.output = "none"
+        if (this.params.mode === "rw") {
+            this.input  = this.params.type
+            this.output = this.params.type
+        }
+        else if (this.params.mode === "r") {
+            this.input  = "none"
+            this.output = this.params.type
+        }
+        else if (this.params.mode === "w") {
+            this.input  = this.params.type
+            this.output = "none"
+        }
     }
 
     /*  open node  */
     async open () {
-        /*  connect remotely to a Websocket port  */
+        /*  connect remotely to a MQTT broker  */
         this.broker = MQTT.connect(this.params.url, {
             protocolId:      "MQTT",
             protocolVersion: 5,
@@ -60,34 +80,58 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
         })
         this.broker.on("connect", (packet: MQTT.IConnackPacket) => {
             this.log("info", `connection opened to MQTT ${this.params.url}`)
+            if (this.params.mode !== "w" && !packet.sessionPresent)
+                this.broker!.subscribe([ this.params.topicRead ], () => {})
         })
         this.broker.on("reconnect", () => {
-            this.log("info", `connection re-established to MQTT ${this.params.url}`)
+            this.log("info", `connection re-opened to MQTT ${this.params.url}`)
         })
         this.broker.on("disconnect", (packet: MQTT.IDisconnectPacket) => {
             this.log("info", `connection closed to MQTT ${this.params.url}`)
         })
-
-        const broker = this.broker
-        const topic  = this.params.topic
-        const textEncoding = this.config.textEncoding
+        const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
+        this.broker.on("message", (topic: string, payload: Buffer, packet: MQTT.IPublishPacket) => {
+            if (topic !== this.params.topicRead)
+                return
+            try {
+                const chunk = utils.streamChunkDecode(payload)
+                chunkQueue.write(chunk)
+            }
+            catch (_err: any) {
+                this.log("warning", `received invalid CBOR chunk from MQTT ${this.params.url}`)
+            }
+        })
+        const broker     = this.broker
+        const topicWrite = this.params.topicWrite
+        const type       = this.params.type
+        const mode       = this.params.mode
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
-            write (chunk: Buffer | string, encoding, callback) {
-                if (Buffer.isBuffer(chunk))
-                    chunk = chunk.toString(encoding ?? textEncoding)
-                if (broker.connected) {
-                    broker.publish(topic, chunk, { qos: 2, retain: false }, (err) => {
+            write (chunk: SpeechFlowChunk, encoding, callback) {
+                if (mode === "r")
+                    callback(new Error("write operation on read-only node"))
+                else if (chunk.type !== type)
+                    callback(new Error(`written chunk is not of ${type} type`))
+                else if (!broker.connected)
+                    callback(new Error("still no MQTT connection available"))
+                else {
+                    const data = Buffer.from(utils.streamChunkEncode(chunk))
+                    broker.publish(topicWrite, data, { qos: 2, retain: false }, (err) => {
                         if (err)
-                            callback(new Error(`failed to publish to MQTT topic "${topic}": ${err}`))
+                            callback(new Error(`failed to publish to MQTT topic "${topicWrite}": ${err}`))
                         else
                             callback()
                     })
                 }
-                else
-                    callback(new Error("still no MQTT connection available"))
+            },
+            read (size: number) {
+                if (mode === "w")
+                    throw new Error("read operation on write-only node")
+                chunkQueue.read().then((chunk) => {
+                    this.push(chunk, "binary")
+                })
             }
         })
     }

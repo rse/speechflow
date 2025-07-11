@@ -8,7 +8,7 @@
 import Stream           from "node:stream"
 
 /*  internal dependencies  */
-import SpeechFlowNode   from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  SpeechFlow node for subtitle (text-to-text) "translations"  */
 export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
@@ -37,17 +37,20 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
         this.sequenceNo = 1
 
         /*  provide text-to-subtitle conversion  */
-        const convert = async (text: string) => {
+        const convert = async (chunk: SpeechFlowChunk) => {
+            if (typeof chunk.payload !== "string")
+                throw new Error("chunk payload type must be string")
+            let text = chunk.payload
             if (this.params.format === "srt") {
-                const start = new Date().toISOString().substring(11, 23).replace(".", ",")
-                const end   = start /* FIXME */
+                const start = chunk.timestampStart.toFormat("hh:mm:ss,SSS")
+                const end   = chunk.timestampEnd.toFormat("hh:mm:ss,SSS")
                 text = `${this.sequenceNo++}\n` +
                     `${start} --> ${end}\n` +
                     `${text}\n\n`
             }
             else if (this.params.format === "vtt") {
-                const start = new Date().toISOString().substring(11, 23)
-                const end   = start /* FIXME */
+                const start = chunk.timestampStart.toFormat("hh:mm:ss.SSS")
+                const end   = chunk.timestampEnd.toFormat("hh:mm:ss.SSS")
                 text = `${this.sequenceNo++}\n` +
                     `${start} --> ${end}\n` +
                     `${text}\n\n`
@@ -56,27 +59,28 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
         }
 
         /*  establish a duplex stream  */
-        const textEncoding = this.config.textEncoding
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
             decodeStrings:      false,
-            transform (chunk: Buffer | string, encoding, callback) {
-                if (encoding === undefined || (encoding as string) === "buffer")
-                    encoding = textEncoding
-                if (Buffer.isBuffer(chunk))
-                    chunk = chunk.toString(encoding)
-                if (chunk === "") {
-                    this.push("", encoding)
-                    callback()
-                }
+            transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (Buffer.isBuffer(chunk.payload))
+                    callback(new Error("invalid chunk payload type"))
                 else {
-                    convert(chunk).then((result) => {
-                        this.push(result, encoding)
+                    if (chunk.payload === "") {
+                        this.push(chunk)
                         callback()
-                    }).catch((err) => {
-                        callback(err)
-                    })
+                    }
+                    else {
+                        convert(chunk).then((payload) => {
+                            const chunkNew = chunk.clone()
+                            chunkNew.payload = payload
+                            this.push(chunkNew)
+                            callback()
+                        }).catch((err) => {
+                            callback(err)
+                        })
+                    }
                 }
             },
             final (callback) {

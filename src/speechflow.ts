@@ -9,6 +9,7 @@ import path                     from "node:path"
 import Stream                   from "node:stream"
 
 /*  external dependencies  */
+import { DateTime }             from "luxon"
 import CLIio                    from "cli-io"
 import yargs                    from "yargs"
 import jsYAML                   from "js-yaml"
@@ -151,8 +152,8 @@ let cli: CLIio | null = null
         "./speechflow-node-subtitle.js",
         "./speechflow-node-elevenlabs.js",
         "./speechflow-node-gemma.js",
-        "./speechflow-node-whisper.js",
-        "./speechflow-node-opus.js"
+        "./speechflow-node-opus.js",
+        "./speechflow-node-format.js"
     ]
     for (const pkg of pkgsI) {
         let node: any = await import(pkg)
@@ -309,7 +310,14 @@ let cli: CLIio | null = null
         })
     }
 
-    /*  graph processing: PASS 4: connect node streams  */
+    /*  graph processing: PASS 4: set time zero in all nodes  */
+    const timeZero = DateTime.now()
+    for (const node of graphNodes) {
+        cli!.log("info", `set time zero in node "${node.id}"`)
+        node.setTimeZero(timeZero)
+    }
+
+    /*  graph processing: PASS 5: connect node streams  */
     for (const node of graphNodes) {
         if (node.stream === null)
             throw new Error(`stream of node "${node.id}" still not initialized`)
@@ -326,6 +334,9 @@ let cli: CLIio | null = null
             node.stream.pipe(other.stream)
         }
     }
+
+    /*  start of internal stream processing  */
+    cli!.log("info", "everything established -- stream processing in SpeechFlow graph starts")
 
     /*  gracefully shutdown process  */
     let shuttingDown = false

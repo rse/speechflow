@@ -12,6 +12,7 @@ import PortAudio        from "@gpeng/naudiodon"
 
 /*  internal dependencies  */
 import SpeechFlowNode   from "./speechflow-node"
+import * as utils       from "./speechflow-utils"
 
 /*  SpeechFlow node for device access  */
 export default class SpeechFlowNodeDevice extends SpeechFlowNode {
@@ -121,6 +122,11 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
                 }
             })
             this.stream = this.io as unknown as Stream.Duplex
+
+            /*  convert regular stream into object-mode stream  */
+            const wrapper1 = utils.createTransformStreamForWritableSide()
+            const wrapper2 = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
+            this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
         }
         else if (this.params.mode === "r") {
             /*  input device  */
@@ -136,6 +142,11 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
                 }
             })
             this.stream = this.io as unknown as Stream.Readable
+
+            /*  convert regular stream into object-mode stream  */
+            const wrapper = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
+            this.stream.pipe(wrapper)
+            this.stream = wrapper
         }
         else if (this.params.mode === "w") {
             /*  output device  */
@@ -151,6 +162,11 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
                 }
             })
             this.stream = this.io as unknown as Stream.Writable
+
+            /*  convert regular stream into object-mode stream  */
+            const wrapper = utils.createTransformStreamForWritableSide()
+            wrapper.pipe(this.stream)
+            this.stream = wrapper
         }
         else
             throw new Error(`device "${device.id}" does not have any input or output channels`)

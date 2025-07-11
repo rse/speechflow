@@ -11,7 +11,7 @@ import Stream           from "node:stream"
 import * as DeepL       from "deepl-node"
 
 /*  internal dependencies  */
-import SpeechFlowNode   from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  SpeechFlow node for DeepL text-to-text translations  */
 export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
@@ -56,27 +56,28 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
         }
 
         /*  establish a duplex stream and connect it to DeepL translation  */
-        const textEncoding = this.config.textEncoding
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
             decodeStrings:      false,
-            transform (chunk: Buffer | string, encoding, callback) {
-                if (encoding === undefined || (encoding as string) === "buffer")
-                    encoding = textEncoding
-                if (Buffer.isBuffer(chunk))
-                    chunk = chunk.toString(encoding)
-                if (chunk === "") {
-                    this.push("", encoding)
-                    callback()
-                }
+            transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (Buffer.isBuffer(chunk.payload))
+                    callback(new Error("invalid chunk payload type"))
                 else {
-                    translate(chunk).then((result) => {
-                        this.push(result, encoding)
+                    if (chunk.payload === "") {
+                        this.push(chunk)
                         callback()
-                    }).catch((err) => {
-                        callback(err)
-                    })
+                    }
+                    else {
+                        translate(chunk.payload).then((payload) => {
+                            const chunkNew = chunk.clone()
+                            chunkNew.payload = payload
+                            this.push(chunkNew)
+                            callback()
+                        }).catch((err) => {
+                            callback(err)
+                        })
+                    }
                 }
             },
             final (callback) {

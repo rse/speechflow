@@ -13,6 +13,7 @@ import { Converter as FFmpegStream } from "ffmpeg-stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode                from "./speechflow-node"
+import * as utils                    from "./speechflow-utils"
 
 /*  SpeechFlow node for FFmpeg  */
 export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
@@ -93,9 +94,14 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
 
         /*  establish a duplex stream and connect it to FFmpeg  */
         this.stream = Stream.Duplex.from({
-            readable: streamOutput,
-            writable: streamInput
+            writable: streamInput,
+            readable: streamOutput
         })
+
+        /*  wrap streams with conversions for chunk vs plain audio  */
+        const wrapper1 = utils.createTransformStreamForWritableSide()
+        const wrapper2 = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
+        this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
     }
 
     /*  close node  */

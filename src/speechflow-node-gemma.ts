@@ -11,7 +11,7 @@ import Stream           from "node:stream"
 import { Ollama }       from "ollama"
 
 /*  internal dependencies  */
-import SpeechFlowNode   from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  internal utility types  */
 type ConfigEntry = { systemPrompt: string, chat: Array<{ role: string, content: string }> }
@@ -184,27 +184,28 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
         }
 
         /*  establish a duplex stream and connect it to Ollama  */
-        const textEncoding = this.config.textEncoding
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
             decodeStrings:      false,
-            transform (chunk: Buffer | string, encoding, callback) {
-                if (encoding === undefined || (encoding as string) === "buffer")
-                    encoding = textEncoding
-                if (Buffer.isBuffer(chunk))
-                    chunk = chunk.toString(encoding)
-                if (chunk === "") {
-                    this.push("", encoding)
-                    callback()
-                }
+            transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (Buffer.isBuffer(chunk.payload))
+                    callback(new Error("invalid chunk payload type"))
                 else {
-                    translate(chunk).then((result) => {
-                        this.push(result, encoding)
+                    if (chunk.payload === "") {
+                        this.push(chunk)
                         callback()
-                    }).catch((err) => {
-                        callback(err)
-                    })
+                    }
+                    else {
+                        translate(chunk.payload).then((payload) => {
+                            const chunkNew = chunk.clone()
+                            chunkNew.payload = payload
+                            this.push(chunkNew)
+                            callback()
+                        }).catch((err) => {
+                            callback(err)
+                        })
+                    }
                 }
             },
             final (callback) {

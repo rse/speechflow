@@ -5,14 +5,15 @@
 */
 
 /*  standard dependencies  */
-import { EventEmitter } from "node:events"
 import Stream           from "node:stream"
 
 /*  external dependencies  */
-import * as Deepgram    from "@deepgram/sdk"
+import * as Deepgram          from "@deepgram/sdk"
+import { DateTime, Duration } from "luxon"
 
 /*  internal dependencies  */
-import SpeechFlowNode   from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for Deepgram speech-to-text conversion  */
 export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
@@ -46,7 +47,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             throw new Error("Deepgram node currently supports PCM-S16LE audio only")
 
         /*  create queue for results  */
-        const queue = new EventEmitter()
+        const queue = new utils.SingleQueue<SpeechFlowChunk>()
 
         /*  connect to Deepgram API  */
         const deepgram = Deepgram.createClient(this.params.key)
@@ -69,18 +70,23 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             smart_format:     true,
             punctuate:        true,
             filler_words:     true,
-            diarize:          true,
+            diarize:          true, /* still not used by us */
             numerals:         true,
-            paragraphs:       true,
-            profanity_filter: true,
-            utterances:       false
+            profanity_filter: false
         })
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
-            this.log("info", `Deepgram: text received (start: ${data.start}s, duration: ${data.duration}s)`)
             const text = (data.channel?.alternatives[0].transcript as string) ?? ""
-            queue.emit("text", text)
+            if (text === "")
+                this.log("info", `Deepgram: empty/dummy text received (start: ${data.start}s, duration: ${data.duration}s)`)
+            else {
+                this.log("info", `Deepgram: text received (start: ${data.start}s, duration: ${data.duration}s): "${text}"`)
+                const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
+                const end   = start.plus({ seconds: data.duration })
+                const chunk = new SpeechFlowChunk(start, end, "final", "text", text)
+                queue.write(chunk)
+            }
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Metadata, (data) => {
             this.log("info", "Deepgram: metadata received")
@@ -110,6 +116,9 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                 resolve(true)
             })
         })
+
+        /*  remember opening time to receive time zero offset  */
+        this.timeOpen = DateTime.now()
 
         /*  workaround Deepgram initialization problems  */
         let initDone = false
@@ -146,26 +155,25 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
-            write (chunk: Buffer, encoding, callback) {
-                if (!Buffer.isBuffer(chunk))
-                    callback(new Error("expected audio input as Buffer chunks"))
+            write (chunk: SpeechFlowChunk, encoding, callback) {
+                if (chunk.type !== "audio")
+                    callback(new Error("expected audio input chunk"))
+                else if (!Buffer.isBuffer(chunk.payload))
+                    callback(new Error("expected Buffer input chunk"))
                 else {
-                    const data = chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
-                    if (data.byteLength === 0)
-                        queue.emit("text", "")
-                    else {
-                        log("info", `Deepgram: send data (${data.byteLength} bytes)`)
+                    if (chunk.payload.byteLength > 0) {
+                        log("info", `Deepgram: send data (${chunk.payload.byteLength} bytes)`)
                         initTimeoutStart()
-                        dg.send(chunk)
+                        dg.send(chunk.payload) /* intentionally discard all time information  */
                     }
                     callback()
                 }
             },
             read (size) {
-                queue.once("text", (text: string) => {
-                    log("info", `Deepgram: receive data (${text.length} bytes)`)
+                queue.read().then((chunk) => {
+                    log("info", `Deepgram: receive data (${chunk.payload.length} bytes)`)
                     initTimeoutStop()
-                    this.push(text, encoding)
+                    this.push(chunk, encoding)
                 })
             },
             final (callback) {

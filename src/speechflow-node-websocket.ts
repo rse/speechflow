@@ -12,7 +12,8 @@ import ws                              from "ws"
 import ReconnWebsocket, { ErrorEvent } from "@opensumi/reconnecting-websocket"
 
 /*  internal dependencies  */
-import SpeechFlowNode                  from "./speechflow-node"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for Websocket networking  */
 export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
@@ -31,6 +32,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
         this.configure({
             listen:  { type: "string", val: "",     match: /^(?:|ws:\/\/(.+?):(\d+))$/ },
             connect: { type: "string", val: "",     match: /^(?:|ws:\/\/(.+?):(\d+)(?:\/.*)?)$/ },
+            mode:    { type: "string", val: "r",    match: /^(?:r|w|rw)$/ },
             type:    { type: "string", val: "text", match: /^(?:audio|text)$/ }
         })
 
@@ -41,11 +43,15 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             throw new Error("Websocket node requires either listen or connect mode")
 
         /*  declare node input/output format  */
-        if (this.params.listen !== "") {
+        if (this.params.mode === "rw") {
+            this.input  = this.params.type
+            this.output = this.params.type
+        }
+        else if (this.params.mode === "r") {
             this.input  = "none"
             this.output = this.params.type
         }
-        else if (this.params.connect !== "") {
+        else if (this.params.mode === "w") {
             this.input  = this.params.type
             this.output = "none"
         }
@@ -56,7 +62,8 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
         if (this.params.listen !== "") {
             /*  listen locally on a Websocket port  */
             const url = new URL(this.params.listen)
-            let websocket: ws.WebSocket | null = null
+            const websockets = new Set<ws.WebSocket>()
+            const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
             const server = new ws.WebSocketServer({
                 host: url.hostname,
                 port: Number.parseInt(url.port),
@@ -66,45 +73,81 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 this.log("info", `listening on URL ${this.params.listen}`)
             })
             server.on("connection", (ws, request) => {
-                this.log("info", `connection opened on URL ${this.params.listen}`)
-                websocket = ws
-            })
-            server.on("close", () => {
-                this.log("info", `connection closed on URL ${this.params.listen}`)
-                websocket = null
+                const peer = `${request.socket.remoteAddress}:${request.socket.remotePort}`
+                this.log("info", `connection opened on URL ${this.params.listen} by peer ${peer}`)
+                websockets.add(ws)
+                ws.on("close", () => {
+                    this.log("info", `connection closed on URL ${this.params.listen} by peer ${peer}`)
+                    websockets.delete(ws)
+                })
+                ws.on("error", (error) => {
+                    this.log("error", `error of connection on URL ${this.params.listen} for peer ${peer}: ${error.message}`)
+                })
+                ws.on("message", (data, isBinary) => {
+                    if (this.params.mode === "w") {
+                        this.log("warning", `connection on URL ${this.params.listen} by peer ${peer}: ` +
+                            "received remote data on write-only node")
+                        return
+                    }
+                    if (!isBinary) {
+                        this.log("warning", `connection on URL ${this.params.listen} by peer ${peer}: ` +
+                            "received non-binary message")
+                        return
+                    }
+                    let buffer: Buffer
+                    if (Buffer.isBuffer(data))
+                        buffer = data
+                    else if (data instanceof ArrayBuffer)
+                        buffer = Buffer.from(data)
+                    else
+                        buffer = Buffer.concat(data)
+                    const chunk = utils.streamChunkDecode(buffer)
+                    chunkQueue.write(chunk)
+                })
             })
             server.on("error", (error) => {
-                this.log("error", `error on URL ${this.params.listen}: ${error.message}`)
-                websocket = null
+                this.log("error", `error of some connection on URL ${this.params.listen}: ${error.message}`)
             })
-            const textEncoding = this.config.textEncoding
             const type = this.params.type
+            const mode = this.params.mode
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
                 readableObjectMode: true,
                 decodeStrings:      false,
-                write (chunk: Buffer | string, encoding, callback) {
-                    if (type === "audio" && !Buffer.isBuffer(chunk))
-                        chunk = Buffer.from(chunk)
-                    else if (type === "text" && Buffer.isBuffer(chunk))
-                        chunk = chunk.toString(encoding ?? textEncoding)
-                    if (websocket !== null) {
-                        websocket.send(chunk, (error) => {
-                            if (error) callback(error)
-                            else       callback()
+                write (chunk: SpeechFlowChunk, encoding, callback) {
+                    if (mode === "r")
+                        callback(new Error("write operation on read-only node"))
+                    else if (chunk.type !== type)
+                        callback(new Error(`written chunk is not of ${type} type`))
+                    else if (websockets.size === 0)
+                        callback(new Error("still no Websocket connections available"))
+                    else {
+                        const data = utils.streamChunkEncode(chunk)
+                        const results = []
+                        for (const websocket of websockets.values()) {
+                            results.push(new Promise<void>((resolve, reject) => {
+                                websocket.send(data, (error) => {
+                                    if (error)
+                                        reject(error)
+                                    else
+                                        resolve()
+                                })
+                            }))
+                        }
+                        Promise.all(results).then(() => {
+                            callback()
+                        }).catch((errors: Error[]) => {
+                            const error = new Error(errors.map((e) => e.message).join("; "))
+                            callback(error)
                         })
                     }
-                    else
-                        callback(new Error("still no Websocket connection available"))
                 },
                 read (size: number) {
-                    if (websocket !== null) {
-                        websocket.once("message", (data, isBinary) => {
-                            this.push(data, isBinary ? "binary" : textEncoding)
-                        })
-                    }
-                    else
-                        throw new Error("still no Websocket connection available")
+                    if (mode === "w")
+                        throw new Error("read operation on write-only node")
+                    chunkQueue.read().then((chunk) => {
+                        this.push(chunk, "binary")
+                    })
                 }
             })
         }
@@ -120,45 +163,57 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 minUptime:                   5000
             })
             this.client.addEventListener("open", (ev: Event) => {
-                this.log("info", `connection opened on URL ${this.params.connect}`)
+                this.log("info", `connection opened to URL ${this.params.connect}`)
             })
             this.client.addEventListener("close", (ev: Event) => {
-                this.log("info", `connection closed on URL ${this.params.connect}`)
+                this.log("info", `connection closed to URL ${this.params.connect}`)
             })
             this.client.addEventListener("error", (ev: ErrorEvent) => {
-                this.log("error", `error on URL ${this.params.connect}: ${ev.error.message}`)
+                this.log("error", `error of connection on URL ${this.params.connect}: ${ev.error.message}`)
+            })
+            const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
+            this.client.addEventListener("message", (ev: MessageEvent) => {
+                if (this.params.mode === "w") {
+                    this.log("warning", `connection to URL ${this.params.listen}: ` +
+                        "received remote data on write-only node")
+                    return
+                }
+                if (!(ev.data instanceof ArrayBuffer)) {
+                    this.log("warning", `connection to URL ${this.params.listen}: ` +
+                        "received non-binary message")
+                    return
+                }
+                const buffer = Buffer.from(ev.data)
+                const chunk = utils.streamChunkDecode(buffer)
+                chunkQueue.write(chunk)
             })
             const client = this.client
             client.binaryType = "arraybuffer"
-            const textEncoding = this.config.textEncoding
             const type = this.params.type
+            const mode = this.params.mode
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
                 readableObjectMode: true,
                 decodeStrings:      false,
-                write (chunk: Buffer | string, encoding, callback) {
-                    if (type === "audio" && !Buffer.isBuffer(chunk))
-                        chunk = Buffer.from(chunk)
-                    else if (type === "text" && Buffer.isBuffer(chunk))
-                        chunk = chunk.toString(encoding ?? textEncoding)
-                    if (client.OPEN) {
-                        client.send(chunk)
-                        callback()
-                    }
-                    else
+                write (chunk: SpeechFlowChunk, encoding, callback) {
+                    if (mode === "r")
+                        callback(new Error("write operation on read-only node"))
+                    else if (chunk.type !== type)
+                        callback(new Error(`written chunk is not of ${type} type`))
+                    else if (!client.OPEN)
                         callback(new Error("still no Websocket connection available"))
+                    const data = utils.streamChunkEncode(chunk)
+                    client.send(data)
+                    callback()
                 },
                 read (size: number) {
-                    if (client.OPEN) {
-                        client.addEventListener("message", (ev: MessageEvent) => {
-                            if (ev.data instanceof ArrayBuffer)
-                                this.push(ev.data, "binary")
-                            else
-                                this.push(ev.data, textEncoding)
-                        }, { once: true })
-                    }
-                    else
+                    if (mode === "w")
+                        throw new Error("read operation on write-only node")
+                    if (!client.OPEN)
                         throw new Error("still no Websocket connection available")
+                    chunkQueue.read().then((chunk) => {
+                        this.push(chunk, "binary")
+                    })
                 }
             })
         }

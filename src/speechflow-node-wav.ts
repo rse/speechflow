@@ -12,6 +12,7 @@ import wav              from "wav"
 
 /*  internal dependencies  */
 import SpeechFlowNode   from "./speechflow-node"
+import * as utils       from "./speechflow-utils"
 
 /*  utility class for wrapping a custom stream into a regular Transform stream  */
 class StreamWrapper extends Stream.Transform {
@@ -117,6 +118,11 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
         }
         else
             throw new Error(`invalid operation mode "${this.params.mode}"`)
+
+        /*  convert regular stream into object-mode stream  */
+        const wrapper1 = utils.createTransformStreamForWritableSide()
+        const wrapper2 = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
+        this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
     }
 
     /*  close node  */
@@ -124,8 +130,10 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
         /*  shutdown stream  */
         if (this.stream !== null) {
             await new Promise<void>((resolve) => {
-                if (this.stream instanceof Stream.Transform)
+                if (this.stream instanceof Stream.Duplex)
                     this.stream.end(() => { resolve() })
+                else
+                    resolve()
             })
             this.stream.destroy()
             this.stream = null
