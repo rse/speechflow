@@ -85,6 +85,16 @@ Processing Graph Examples
           file(path: argv.1, mode: "w", type: "text")
   ```
 
+- **Subtitling**: Generate subtitles for video file
+
+  ```
+  file(path: argv.0, mode: "r", type: "audio") |
+      ffmpeg(src: "mp4", dst: "pcm") |
+          deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+              subtitle(format: "vtt") |
+                  file(path: argv.1, mode: "w", type: "text")
+  ```
+
 - **Translation**: Translate stdin to stdout:
 
   ```
