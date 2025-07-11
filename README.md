@@ -414,7 +414,8 @@ History
 **Speechflow**, as a technical cut-through, was initially created in
 March 2024 for use in the msg Filmstudio context. It was later refined
 into a more complete toolkit in April 2025 and this way the first time
-could be used in production.
+could be used in production. It was fully refactored in July 2025 in
+order to support timestamps in the streams processing.
 
 Copyright & License
 -------------------
