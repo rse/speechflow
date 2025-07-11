@@ -61,30 +61,14 @@ $ speechflow
 Processing Graph Examples
 -------------------------
 
-- Capture audio from microphone to file:
+- **Capturing**: Capture audio from microphone to file:
 
   ```
   device(device: "wasapi:VoiceMeeter Out B1", mode: "r") |
-  file(path: "capture.pcm", mode: "w", type: "audio")
+      file(path: "capture.pcm", mode: "w", type: "audio")
   ```
 
-- Generate audio file with narration of text file:
-
-  ```
-  file(path: argv.0, mode: "r", type: "audio") |
-  deepgram(language: "en") |
-  file(path: argv.1, mode: "w", type: "text")
-  ```
-
-- Translate stdin to stdout:
-
-  ```
-  file(path: "-", mode: "r", type: "text") |
-  deepl(src: "de", dst: "en-US") |
-  file(path: "-", mode: "w", type: "text")
-  ```
-
-- Pass-through audio from microphone to speaker and in parallel record it to file:
+- **Pass-Through**: Pass-through audio from microphone to speaker and in parallel record it to file:
 
   ```
   device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
@@ -93,20 +77,49 @@ Processing Graph Examples
   }
   ```
 
-- Real-time translation from german to english, including capturing of all inputs and outputs:
+- **Narration**: Generate audio file with narration of text file:
 
   ```
-  device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
-      file(path: "translation-audio-de.pcm", mode: "w", type: "audio"),
-      deepgram(language: "de") |
-      file(path: "translation-text-de.txt", mode: "w", type: "text")
-  } | {
+  file(path: argv.0, mode: "r", type: "audio") |
+      deepgram(language: "en") |
+          file(path: argv.1, mode: "w", type: "text")
+  ```
+
+- **Translation**: Translate stdin to stdout:
+
+  ```
+  file(path: "-", mode: "r", type: "text") |
       deepl(src: "de", dst: "en-US") |
-      file(path: "translation-text-en.txt", mode: "w", type: "text")
-  } | {
-      elevenlabs(language: "en") | {
-          file(path: "translation-audio-en.pcm", mode: "w", type: "audio"),
-          device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
+          file(path: "-", mode: "w", type: "text")
+  ```
+
+- **Translation**: Real-time translation from german to english, including capturing of all inputs and outputs:
+
+  ```
+  device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
+      wav(mode: "encode") |
+          file(path: "program-de.wav", mode: "w", type: "audio"),
+      deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM, language: "de") | {
+          format(width: 80) |
+              file(path: "program-de.txt", mode: "w", type: "text"),
+          deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en-US") | {
+              format(width: 80) |
+                  file(path: "program-en.txt", mode: "w", type: "text"),
+              subtitle(format: "vtt") | {
+                  file(path: "program-en.vtt", mode: "w", type: "text"),
+                  mqtt(url: "mqtt://10.1.0.10:1883",
+                      username: env.SPEECHFLOW_MQTT_USER,
+                      password: env.SPEECHFLOW_MQTT_PASS,
+                      topicWrite: "stream/studio/sender")
+              },
+              subtitle(format: "srt") |
+                  file(path: "program-en.srt", mode: "w", type: "text"),
+              elevenlabs(voice: "Mark", speed: 1.05, language: "en") | {
+                  wav(mode: "encode") |
+                      file(path: "program-en.wav", mode: "w", type: "audio"),
+                  device(device: "coreaudio:USBAudio2.0", mode: "w")
+              }
+          }
       }
   }
   ```
