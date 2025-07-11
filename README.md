@@ -21,9 +21,9 @@ it allows to perform various speech processing tasks in a flexible way.
 **SpeechFlow** comes with built-in graph nodes for
 local file I/O,
 local audio device I/O,
-local/remote WebSocket network I/O,
+remote WebSocket network I/O,
+remote MQTT network I/O,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
-local [Whisper/ONNX](https://openai.com/index/whisper/) speech-to-text conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
 local [Gemma/Ollama](https://ollama.com/library/gemma3) text-to-text translation,
 local [Gemma/Ollama](https://ollama.com/library/gemma3) text-to-text spelling correction,
@@ -120,11 +120,12 @@ First a short overview of the available processing nodes:
   **file**, **device**, **websocket**, **mqtt**.
 
 - Converter nodes:
-  **deepgram**, **whisper**,
+  **deepgram**,
   **deepl**, **gemma**, **opus**,
   **elevenlabs**,
   **wav**, **ffmpeg**,
   **subtitle**,
+  **format**,
   **trace**.
 
 Currently **SpeechFlow** provides the following processing nodes:
@@ -323,6 +324,19 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_ELEVENLABS | *none* |
   | **voice**    | 0         | "Brian"  | *none* |
   | **language** | 1         | "de"     | *none* |
+
+- Node: **format**<br/>
+  Purpose: **text paragraph formatting**<br/>
+  Example: `format(width: 80)`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement           |
+  | ------------ | --------- | -------- | --------------------- |
+  | **width**    | 0         | 80       | *none*                |
 
 - Node: **trace**<br/>
   Purpose: **data flow tracing**<br/>
