@@ -164,15 +164,15 @@ First a short overview of the available processing nodes:
 - Audio-to-Text nodes:
   **deepgram**.
 
-- Text-to-Audio nodes:
-  **elevenlabs**.
-
 - Text-to-Text nodes:
   **deepl**,
   **gemma**,
   **opus**,
   **subtitle**,
   **format**.
+
+- Text-to-Audio nodes:
+  **elevenlabs**.
 
 - Any-to-Any nodes:
   **trace**.
@@ -241,20 +241,7 @@ First a short overview of the available processing nodes:
   | **password** | 2         | *none*   | `/^.+$/` |
   | **topic**    | 3         | *none*   | `/^.+$/` |
 
-### Audio-to-Text Nodes:
-
-- Node: **wav**<br/>
-  Purpose: **WAV audio format conversion**<br/>
-  Example: `wav(mode: "encode")`
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | audio       |
-  | output  | audio       |
-
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **mode**    | 0         | "encode" | `/^(?:encode\|decode)$/` |
+### Audio-to-Audio Nodes:
 
 - Node: **ffmpeg**<br/>
   Purpose: **FFmpeg audio format conversion**<br/>
@@ -269,6 +256,21 @@ First a short overview of the available processing nodes:
   | ----------- | --------- | -------- | ------------------ |
   | **src**     | 0         | "pcm"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
   | **dst**     | 1         | "wav"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
+
+- Node: **wav**<br/>
+  Purpose: **WAV audio format conversion**<br/>
+  Example: `wav(mode: "encode")`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **mode**    | 0         | "encode" | `/^(?:encode\|decode)$/` |
+
+### Audio-to-Text Nodes:
 
 - Node: **deepgram**<br/>
   Purpose: **Deepgram Speech-to-Text conversion**<br/>
@@ -287,19 +289,7 @@ First a short overview of the available processing nodes:
   | **version**  | 1         | "latest" | *none* |
   | **language** | 2         | "de"     | *none* |
 
-- Node: **whisper**<br/>
-  Purpose: **OpenAI Whisper Speech-to-Text conversion**<br/>
-  Example: `whisper(language: "de")`
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | audio       |
-  | output  | text        |
-
-  | Parameter    | Position  | Default          | Requirement        |
-  | ------------ | --------- | ---------------- | ------------------ |
-  | **language** | 0         | "en"             | *none* |
-  | **model**    | 1         | "v3-large-turbo" | *none* |
+### Text-to-Text Nodes:
 
 - Node: **deepl**<br/>
   Purpose: **DeepL Text-to-Text translation**<br/>
@@ -316,19 +306,6 @@ First a short overview of the available processing nodes:
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPL | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
-
-- Node: **subtitle**<br/>
-  Purpose: **SRT/VTT Subtitle Generation**<br/>
-  Example: `subtitle(format: "srt")`<br/>
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | text        |
-  | output  | text        |
-
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **format**   | *none*    | "srt"    | /^(?:srt\|vtt)$/   |
 
 - Node: **gemma**<br/>
   Purpose: **Google Gemma Text-to-Text translation and spelling correction**<br/>
@@ -360,6 +337,34 @@ First a short overview of the available processing nodes:
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
+- Node: **subtitle**<br/>
+  Purpose: **SRT/VTT Subtitle Generation**<br/>
+  Example: `subtitle(format: "srt")`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **format**   | *none*    | "srt"    | /^(?:srt\|vtt)$/   |
+
+- Node: **format**<br/>
+  Purpose: **text paragraph formatting**<br/>
+  Example: `format(width: 80)`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement           |
+  | ------------ | --------- | -------- | --------------------- |
+  | **width**    | 0         | 80       | *none*                |
+
+### Text-to-Audio Nodes:
+
 - Node: **elevenlabs**<br/>
   Purpose: **ElevenLabs Text-to-Speech conversion**<br/>
   Example: `elevenlabs(language: "en")`<br/>
@@ -376,18 +381,7 @@ First a short overview of the available processing nodes:
   | **voice**    | 0         | "Brian"  | *none* |
   | **language** | 1         | "de"     | *none* |
 
-- Node: **format**<br/>
-  Purpose: **text paragraph formatting**<br/>
-  Example: `format(width: 80)`<br/>
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | text        |
-  | output  | text        |
-
-  | Parameter    | Position  | Default  | Requirement           |
-  | ------------ | --------- | -------- | --------------------- |
-  | **width**    | 0         | 80       | *none*                |
+### Any-to-Any Nodes:
 
 - Node: **trace**<br/>
   Purpose: **data flow tracing**<br/>
