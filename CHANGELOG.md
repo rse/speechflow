@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - CLEANUP: switch "trace" node to output log messages with "debug" level
+- CLEANUP: cleanup CLI option parsing
 - UPGRADE: upgrade NPM dependencies
 
 0.9.8 (2025-07-12)
