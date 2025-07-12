@@ -347,8 +347,13 @@ let cli: CLIio | null = null
         node.stream.on("finish", () => {
             activeNodes.delete(node)
             cli!.log("info", `stream of node "${node.id}" finished (${activeNodes.size} nodes remaining active)`)
-            if (activeNodes.size === 0)
+            if (activeNodes.size === 0) {
+                const timeFinished = DateTime.now()
+                const duration = timeFinished.diff(timeZero)
+                cli!.log("info", "everything finished -- stream processing in SpeechFlow graph stops " +
+                    `(total duration: ${duration.toFormat("hh:mm:ss.SSS")})`)
                 finishEvents.emit("finished")
+            }
         })
     }
 
