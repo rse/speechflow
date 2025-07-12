@@ -2,85 +2,46 @@
 ##  sample.yaml -- Speechflow Sample Audio Processing Graphs
 ##
 
-#  capture audio from microphone to file
-capture-microphone1: |
-    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-    file(path: "capture.pcm", mode: "w", type: "audio")
-capture-microphone: |
-    device(device: "wasapi:VoiceMeeter Output", mode: "r") |
-    file(path: "capture.pcm", mode: "w", type: "audio")
+#   Capture audio from microphone device into WAV audio file
+capturing:
+    device(device: "wasapi:VoiceMeeter Out B1", mode: "r") |
+        wav(mode: "encode") |
+            file(path: "capture.wav", mode: "w", type: "audio")
 
-#  generate audio file with narration of text file
-generate-narration: |
-    file(path: argv.0, mode: "r", type: "audio") |
-    deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM)   |
-    file(path: argv.1, mode: "w", type: "text")
-
-#  pass-through audio from microphone to speaker and in parallel record it to file
-microphone-to-speaker: |
-    device(device: "wasapi:VoiceMeeter Output", mode: "r") | {
-        file(path: "capture.pcm", mode: "w", type: "audio"),
+#   Pass-through audio from microphone device to speaker
+#   device and in parallel record it to WAV audio file
+pass-through:
+    device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
+        wav(mode: "encode") |
+            file(path: "capture.wav", mode: "w", type: "audio"),
         device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
     }
 
-#  translate stdin to stdout
-translation: |
-    file(path: "-", mode: "r", type: "text") |
-    deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en") |
-    file(path: "-", mode: "w", type: "text")
-
-#  generate subtitle for video file
-subtitling: |
+#   Generate text file with German narration of MP3 audio file
+narration:
     file(path: argv.0, mode: "r", type: "audio") |
-    ffmpeg(src: "mp4", dst: "pcm") |
-    deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM) |
-    subtitle(format: "vtt") |
-    file(path: argv.1, mode: "w", type: "text")
+        ffmpeg(src: "mp3", dst: "pcm") |
+            deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+                format(width: 80) |
+                    file(path: argv.1, mode: "w", type: "text")
 
-#  sample for development
-sample1: |
-    file(path: "sample.txt", mode: "r", type: "text") |
-    opus(src: "de", dst: "en") |
-    file(path: "out.txt", mode: "w", type: "text")
-sample2: |
-    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-    trace(type: "audio", name: "audio") |
-    whisper(language: "de", model: "v1-small") |
-    trace(type: "text", name: "text") |
-    file(path: "sample.txt", mode: "w", type: "text")
-sample3: |
-    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-    trace(type: "audio", name: "audio1") |
-    deepgram() |
-    trace(type: "text", name: "text1") |
-    gemma(src: "de", dst: "en") |
-    trace(type: "text", name: "text2") |
-    elevenlabs(voice: "Mark", speed: 1.05) |
-    trace(type: "audio", name: "audio2") |
-    ffmpeg(dst: "wav") |
-    trace(type: "audio", name: "audio3") |
-    file(path: "sample.wav", mode: "w", type: "audio")
-sample4: |
-    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-    deepgram() |
-    ffmpeg(dst: "wav") |
-    file(path: "sample.wav", mode: "w", type: "audio")
-sample5: |
-    file(path: "sample.txt", mode: "r", type: "text") |
-    elevenlabs(voice: "Mark", speed: 1.05) |
-    ffmpeg(dst: "wav") |
-    file(path: "sample.wav", mode: "w", type: "audio")
-sample6: |
-    file(path: "sample-de.txt", mode: "r", type: "text") |
-        deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en") |
-            file(path: "sample-en.txt", mode: "w", type: "text")
-sample7: |
-    file(path: "sample-de.txt", mode: "r", type: "text") |
-        opus(src: "de", dst: "en") |
-            file(path: "sample-en.txt", mode: "w", type: "text")
+#  Generate text file with German subtitles of MP3 audio file
+subtitling:
+    file(path: argv.0, mode: "r", type: "audio") |
+        ffmpeg(src: "mp3", dst: "pcm") |
+            deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+                subtitle(format: "vtt") |
+                    file(path: argv.1, mode: "w", type: "text")
 
-#   standard graph for msg Filmstudio
-filmstudio: |
+#  Ad-Hoc text translation from German to English
+translation:
+    file(path: "-", mode: "r", type: "text") |
+        deepl(src: "de", dst: "en") |
+            file(path: "-", mode: "w", type: "text")
+
+#  Real-time studio translation from German to English,
+#  including the capturing of all involved inputs and outputs:
+studio:
     device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
         wav(mode: "encode") |
             file(path: "program-de.wav", mode: "w", type: "audio"),
