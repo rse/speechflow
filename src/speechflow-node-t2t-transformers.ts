@@ -90,7 +90,7 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
         this.configure({
             src:   { type: "string", pos: 0, val: "de", match: /^(?:de|en)$/ },
             dst:   { type: "string", pos: 1, val: "en", match: /^(?:de|en)$/ },
-            model: { type: "string", val: "SmolLM3",  match: /^(?:OPUS|SmolLM3)$/ }
+            model: { type: "string", val: "OPUS", match: /^(?:OPUS|SmolLM3)$/ }
         })
 
         /*  sanity check parameters  */
