@@ -141,20 +141,20 @@ let cli: CLIio | null = null
 
     /*  load internal SpeechFlow nodes  */
     const pkgsI = [
-        "./speechflow-node-trace.js",
-        "./speechflow-node-file.js",
-        "./speechflow-node-device.js",
-        "./speechflow-node-mqtt.js",
-        "./speechflow-node-websocket.js",
-        "./speechflow-node-wav.js",
-        "./speechflow-node-ffmpeg.js",
-        "./speechflow-node-deepgram.js",
-        "./speechflow-node-deepl.js",
-        "./speechflow-node-subtitle.js",
-        "./speechflow-node-elevenlabs.js",
-        "./speechflow-node-gemma.js",
-        "./speechflow-node-opus.js",
-        "./speechflow-node-format.js"
+        "./speechflow-node-a2a-ffmpeg.js",
+        "./speechflow-node-a2a-wav.js",
+        "./speechflow-node-a2t-deepgram.js",
+        "./speechflow-node-t2a-elevenlabs.js",
+        "./speechflow-node-t2t-deepl.js",
+        "./speechflow-node-t2t-format.js",
+        "./speechflow-node-t2t-gemma.js",
+        "./speechflow-node-t2t-opus.js",
+        "./speechflow-node-t2t-subtitle.js",
+        "./speechflow-node-x2x-trace.js",
+        "./speechflow-node-xio-device.js",
+        "./speechflow-node-xio-file.js",
+        "./speechflow-node-xio-mqtt.js",
+        "./speechflow-node-xio-websocket.js"
     ]
     for (const pkg of pkgsI) {
         let node: any = await import(pkg)
