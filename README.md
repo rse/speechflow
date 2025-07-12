@@ -67,8 +67,7 @@ Processing Graph Examples
 -------------------------
 
 The following are examples of **SpeechFlow** processing graphs.
-They can also be found in the [sample.yaml](./sample.yaml) file
-for easy consumption with `speechflow -c <id>@sample.yaml>`.
+They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) file.
 
 - **Capturing**: Capture audio from microphone device into WAV audio file:
 
