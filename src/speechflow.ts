@@ -13,6 +13,7 @@ import { EventEmitter }         from "node:events"
 import { DateTime }             from "luxon"
 import CLIio                    from "cli-io"
 import yargs                    from "yargs"
+import { hideBin }              from "yargs/helpers"
 import jsYAML                   from "js-yaml"
 import FlowLink                 from "flowlink"
 import objectPath               from "object-path"
@@ -36,6 +37,7 @@ let cli: CLIio | null = null
     })
 
     /*  parse command-line arguments  */
+    const coerce = (arg: string) => Array.isArray(arg) ? arg[arg.length - 1] : arg
     const args = await yargs()
         /* eslint @stylistic/indent: off */
         .usage(
@@ -49,28 +51,69 @@ let cli: CLIio | null = null
             "[-c|--config <id>@<yaml-config-file>] " +
             "[<argument> [...]]"
         )
-        .help("h").alias("h", "help").default("h", false)
-            .describe("h", "show usage help")
-        .boolean("V").alias("V", "version").default("V", false)
-            .describe("V", "show program version information")
-        .string("v").nargs("v", 1).alias("v", "log-level").default("v", "warning")
-            .describe("v", "level for verbose logging ('none', 'error', 'warning', 'info', 'debug')")
-        .string("C").nargs("C", 1).alias("C", "cache").default("C", path.join(dataDir, "cache"))
-            .describe("C", "directory for cached files (primarily AI model files)")
-        .string("e").nargs("e", 1).alias("e", "expression").default("e", "")
-            .describe("e", "FlowLink expression string")
-        .string("f").nargs("f", 1).alias("f", "file").default("f", "")
-            .describe("f", "FlowLink expression file")
-        .string("c").nargs("c", 1).alias("c", "config").default("c", "")
-            .describe("c", "FlowLink expression reference into YAML file (in format <id>@<file>)")
+        .option("V", {
+            alias:    "version",
+            type:     "boolean",
+            array:    false,
+            coerce,
+            default:  false,
+            describe: "show program version information"
+        })
+        .option("v", {
+            alias:    "log-level",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  "warning",
+            describe: "level for verbose logging ('none', 'error', 'warning', 'info', 'debug')"
+        })
+        .option("C", {
+            alias:    "cache",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  path.join(dataDir, "cache"),
+            describe: "directory for cached files (primarily AI model files)"
+        })
+        .option("e", {
+            alias:    "expression",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  "",
+            describe: "FlowLink expression string"
+        })
+        .option("f", {
+            alias:    "file",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  "",
+            describe: "FlowLink expression file"
+        })
+        .option("c", {
+            alias:    "config",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  "",
+            describe: "FlowLink expression reference into YAML file (in format <id>@<file>)"
+        })
+        .help("h", "show usage help")
+        .alias("h", "help")
+        .showHelpOnFail(true)
         .version(false)
         .strict()
-        .showHelpOnFail(true)
         .demand(0)
-        .parse(process.argv.slice(2))
+        .parse(hideBin(process.argv))
 
     /*  short-circuit version request  */
-    if (args.version) {
+    if (args.V) {
         process.stderr.write(`SpeechFlow ${pkg["x-stdver"]} (${pkg["x-release"]}) <${pkg.homepage}>\n`)
         process.stderr.write(`${pkg.description}\n`)
         process.stderr.write(`Copyright (c) 2024-2025 ${pkg.author.name} <${pkg.author.url}>\n`)
@@ -81,7 +124,7 @@ let cli: CLIio | null = null
     /*  establish CLI environment  */
     cli = new CLIio({
         encoding:  "utf8",
-        logLevel:  args.logLevel,
+        logLevel:  args.v,
         logTime:   true,
         logPrefix: pkg.name
     })
@@ -112,20 +155,21 @@ let cli: CLIio | null = null
 
     /*  sanity check usage  */
     let n = 0
-    if (typeof args.expression === "string" && args.expression !== "") n++
-    if (typeof args.file       === "string" && args.file       !== "") n++
-    if (typeof args.config     === "string" && args.config     !== "") n++
+    console.log(args)
+    if (typeof args.e === "string" && args.e !== "") n++
+    if (typeof args.f === "string" && args.f !== "") n++
+    if (typeof args.c === "string" && args.c !== "") n++
     if (n !== 1)
         throw new Error("cannot use more than one FlowLink specification source (either option -e, -f or -c)")
 
     /*  read configuration  */
     let config = ""
-    if (typeof args.expression === "string" && args.expression !== "")
-        config = args.expression
-    else if (typeof args.file === "string" && args.file !== "")
-        config = await cli.input(args.file, { encoding: "utf8" })
-    else if (typeof args.config === "string" && args.config !== "") {
-        const m = args.config.match(/^(.+?)@(.+)$/)
+    if (typeof args.e === "string" && args.e !== "")
+        config = args.e
+    else if (typeof args.f === "string" && args.f !== "")
+        config = await cli.input(args.f, { encoding: "utf8" })
+    else if (typeof args.c === "string" && args.c !== "") {
+        const m = args.c.match(/^(.+?)@(.+)$/)
         if (m === null)
             throw new Error("invalid configuration file specification (expected \"<id>@<yaml-config-file>\")")
         const [ , id, file ] = m
@@ -201,7 +245,7 @@ let cli: CLIio | null = null
         audioLittleEndian: true,
         audioSampleRate:   48000,
         textEncoding:      "utf8",
-        cacheDir:          args.cache
+        cacheDir:          args.C
     }
     let ast: unknown
     try {
