@@ -7,6 +7,7 @@
 /*  standard dependencies  */
 import path                     from "node:path"
 import Stream                   from "node:stream"
+import { EventEmitter }         from "node:events"
 
 /*  external dependencies  */
 import { DateTime }             from "luxon"
@@ -335,6 +336,22 @@ let cli: CLIio | null = null
         }
     }
 
+    /*  graph processing: PASS 6: track stream finishing  */
+    const activeNodes  = new Set<SpeechFlowNode>()
+    const finishEvents = new EventEmitter()
+    for (const node of graphNodes) {
+        if (node.stream === null)
+            throw new Error(`stream of node "${node.id}" still not initialized`)
+        cli!.log("info", `observe stream of node "${node.id}" for finish event`)
+        activeNodes.add(node)
+        node.stream.on("finish", () => {
+            activeNodes.delete(node)
+            cli!.log("info", `stream of node "${node.id}" finished (${activeNodes.size} nodes remaining active)`)
+            if (activeNodes.size === 0)
+                finishEvents.emit("finished")
+        })
+    }
+
     /*  start of internal stream processing  */
     cli!.log("info", "everything established -- stream processing in SpeechFlow graph starts")
 
@@ -344,7 +361,10 @@ let cli: CLIio | null = null
         if (shuttingDown)
             return
         shuttingDown = true
-        cli!.log("warning", `received signal ${signal} -- shutting down service`)
+        if (signal === "finished")
+            cli!.log("info", "streams of all nodes finished -- shutting down service")
+        else
+            cli!.log("warning", `received signal ${signal} -- shutting down service`)
 
         /*  graph processing: PASS 1: disconnect node streams  */
         for (const node of graphNodes) {
@@ -396,8 +416,14 @@ let cli: CLIio | null = null
         }
 
         /*  terminate process  */
-        process.exit(1)
+        if (signal === "finished")
+            process.exit(0)
+        else
+            process.exit(1)
     }
+    finishEvents.on("finished", () => {
+        shutdown("finished")
+    })
     process.on("SIGINT", () => {
         shutdown("SIGINT")
     })

@@ -70,6 +70,14 @@ sample5: |
     elevenlabs(voice: "Mark", speed: 1.05) |
     ffmpeg(dst: "wav") |
     file(path: "sample.wav", mode: "w", type: "audio")
+sample6: |
+    file(path: "sample-de.txt", mode: "r", type: "text") |
+        deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en-US") |
+            file(path: "sample-en.txt", mode: "w", type: "text")
+sample7: |
+    file(path: "sample-de.txt", mode: "r", type: "text") |
+        opus(src: "de", dst: "en") |
+            file(path: "sample-en.txt", mode: "w", type: "text")
 
 #   standard graph for msg Filmstudio
 filmstudio: |
