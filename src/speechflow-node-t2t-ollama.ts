@@ -122,7 +122,7 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 "Output only the requested text.\n" +
                 "Do not use markdown.\n" +
                 "Do not chat.\n" +
-                "Do not show any explanations. \n" +
+                "Do not show any explanations.\n" +
                 "Do not show any introduction.\n" +
                 "Do not show any preamble. \n" +
                 "Do not show any prolog. \n" +
