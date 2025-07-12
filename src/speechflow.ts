@@ -155,7 +155,6 @@ let cli: CLIio | null = null
 
     /*  sanity check usage  */
     let n = 0
-    console.log(args)
     if (typeof args.e === "string" && args.e !== "") n++
     if (typeof args.f === "string" && args.f !== "") n++
     if (typeof args.c === "string" && args.c !== "") n++
