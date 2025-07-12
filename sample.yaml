@@ -3,14 +3,14 @@
 ##
 
 #   Capture audio from microphone device into WAV audio file
-capturing:
+capturing: |
     device(device: "wasapi:VoiceMeeter Out B1", mode: "r") |
         wav(mode: "encode") |
             file(path: "capture.wav", mode: "w", type: "audio")
 
 #   Pass-through audio from microphone device to speaker
 #   device and in parallel record it to WAV audio file
-pass-through:
+pass-through: |
     device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
         wav(mode: "encode") |
             file(path: "capture.wav", mode: "w", type: "audio"),
@@ -18,7 +18,7 @@ pass-through:
     }
 
 #   Generate text file with German narration of MP3 audio file
-narration:
+narration: |
     file(path: argv.0, mode: "r", type: "audio") |
         ffmpeg(src: "mp3", dst: "pcm") |
             deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
@@ -26,7 +26,7 @@ narration:
                     file(path: argv.1, mode: "w", type: "text")
 
 #  Generate text file with German subtitles of MP3 audio file
-subtitling:
+subtitling: |
     file(path: argv.0, mode: "r", type: "audio") |
         ffmpeg(src: "mp3", dst: "pcm") |
             deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
@@ -34,14 +34,14 @@ subtitling:
                     file(path: argv.1, mode: "w", type: "text")
 
 #  Ad-Hoc text translation from German to English
-translation:
+translation: |
     file(path: "-", mode: "r", type: "text") |
         deepl(src: "de", dst: "en") |
             file(path: "-", mode: "w", type: "text")
 
 #  Real-time studio translation from German to English,
 #  including the capturing of all involved inputs and outputs:
-studio:
+studio: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
         wav(mode: "encode") |
             file(path: "program-de.wav", mode: "w", type: "audio"),
