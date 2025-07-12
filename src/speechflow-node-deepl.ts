@@ -33,6 +33,10 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
             optimize: { type: "string", pos: 2, val: "latency", match: /^(?:latency|quality)$/ }
         })
 
+        /*  sanity check situation  */
+        if (this.params.src === this.params.dst)
+            throw new Error("source and destination languages cannot be the same")
+
         /*  declare node input/output format  */
         this.input  = "text"
         this.output = "text"
@@ -87,7 +91,7 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
         })
     }
 
-    /*  open node  */
+    /*  close node  */
     async close () {
         /*  close stream  */
         if (this.stream !== null) {
