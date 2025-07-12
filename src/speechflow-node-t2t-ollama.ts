@@ -20,7 +20,7 @@ type Config      = { [ key: string ]: ConfigEntry }
 /*  SpeechFlow node for Ollama text-to-text translation  */
 export default class SpeechFlowNodeOllama extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "gemma"
+    public static name = "ollama"
 
     /*  internal state  */
     private ollama: Ollama | null = null
@@ -177,7 +177,19 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
         if (!exists) {
             this.log("info", `Ollama: model "${model}" still not present in Ollama -- ` +
                 "automatically downloading model")
-            await this.ollama.pull({ model })
+            let artifact = ""
+            let percent  = 0
+            const interval = setInterval(() => {
+                this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
+            }, 1000)
+            const progress = await this.ollama.pull({ model, stream: true })
+            for await (const event of progress) {
+                if (event.digest)
+                    artifact = event.digest
+                if (event.completed && event.total)
+                    percent = (event.completed / event.total) * 100
+            }
+            clearInterval(interval)
         }
         else
             this.log("info", `Ollama: model "${model}" already present in Ollama`)
