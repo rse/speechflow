@@ -17,8 +17,8 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 type ConfigEntry = { systemPrompt: string, chat: Array<{ role: string, content: string }> }
 type Config      = { [ key: string ]: ConfigEntry }
 
-/*  SpeechFlow node for Gemma/Ollama text-to-text translation  */
-export default class SpeechFlowNodeGemma extends SpeechFlowNode {
+/*  SpeechFlow node for Ollama text-to-text translation  */
+export default class SpeechFlowNodeOllama extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "gemma"
 
@@ -155,9 +155,9 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
 
         /*  tell effective mode  */
         if (this.params.src === this.params.dst)
-            this.log("info", `Gemma/Ollama: operation mode: spellchecking for language "${this.params.src}"`)
+            this.log("info", `Ollama: operation mode: spellchecking for language "${this.params.src}"`)
         else
-            this.log("info", `Gemma/Ollama: operation mode: translation from language "${this.params.src}"` +
+            this.log("info", `Ollama: operation mode: translation from language "${this.params.src}"` +
                 ` to language "${this.params.dst}"`)
 
         /*  declare node input/output format  */
@@ -175,12 +175,12 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
         const models = await this.ollama.list()
         const exists = models.models.some((m) => m.name === model)
         if (!exists) {
-            this.log("info", `Gemma/Ollama: model "${model}" still not present in Ollama -- ` +
+            this.log("info", `Ollama: model "${model}" still not present in Ollama -- ` +
                 "automatically downloading model")
             await this.ollama.pull({ model })
         }
         else
-            this.log("info", `Gemma/Ollama: model "${model}" already present in Ollama`)
+            this.log("info", `Ollama: model "${model}" already present in Ollama`)
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {

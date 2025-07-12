@@ -26,8 +26,8 @@ remote MQTT network I/O,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
 cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
-cloud-based [OpenAI](https://openai.com) text-to-text translation (or spelling correction),
-local [Gemma/Ollama](https://ollama.com/library/gemma3) text-to-text translation (or spelling correction),
+cloud-based [OpenAI/GPT](https://openai.com) text-to-text translation (or spelling correction),
+local [Ollama/Gemma](https://ollama.com) text-to-text translation (or spelling correction),
 local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translation,
 local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding,
 local WAV speech-to-speech encoding,
@@ -167,7 +167,7 @@ First a short overview of the available processing nodes:
 - Text-to-Text nodes:
   **deepl**,
   **openai**,
-  **gemma**,
+  **ollama**,
   **opus**,
   **subtitle**,
   **format**.
@@ -307,7 +307,7 @@ First a short overview of the available processing nodes:
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
 - Node: **openai**<br/>
-  Purpose: **OpenAI GPT Text-to-Text translation and spelling correction**<br/>
+  Purpose: **OpenAI/GPT Text-to-Text translation and spelling correction**<br/>
   Example: `openai(src: "de", dst: "en")`<br/>
   Notice: this node requires an OpenAI API key!
 
@@ -318,14 +318,15 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
+  | **api**      | *none*    | "https://api.openai.com" | `/^https?:\/\/.+?:\d+$/` |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_OPENAI | *none* |
   | **model**    | *none*    | "gpt-4o-mini" | *none* |
 
-- Node: **gemma**<br/>
-  Purpose: **Google Gemma Text-to-Text translation and spelling correction**<br/>
-  Example: `gemma(src: "de", dst: "en")`<br/>
+- Node: **ollama**<br/>
+  Purpose: **Ollama/Gemma Text-to-Text translation and spelling correction**<br/>
+  Example: `ollama(src: "de", dst: "en")`<br/>
   Notice: this node requires the Ollama API!
 
   | Port    | Payload     |
@@ -335,7 +336,8 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
-  | **url**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?:\d+$/` |
+  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?:\d+$/` |
+  | **model**    | *none*    | "gemma3:4b-it-q4_K_M" | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
