@@ -5,6 +5,7 @@ ChangeLog
 0.9.9 (2025-07-12)
 ------------------
 
+- IMPROVEMENT: add "openai" node for text-to-text translation and spellchecking
 - CLEANUP: switch "trace" node to output log messages with "debug" level
 - CLEANUP: cleanup CLI option parsing
 - UPGRADE: upgrade NPM dependencies

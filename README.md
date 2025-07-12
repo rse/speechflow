@@ -166,6 +166,7 @@ First a short overview of the available processing nodes:
   **deepgram**.
 - Text-to-Text nodes:
   **deepl**,
+  **openai**,
   **gemma**,
   **opus**,
   **subtitle**,
@@ -304,6 +305,23 @@ First a short overview of the available processing nodes:
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPL | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+
+- Node: **openai**<br/>
+  Purpose: **OpenAI GPT Text-to-Text translation and spelling correction**<br/>
+  Example: `openai(src: "de", dst: "en")`<br/>
+  Notice; this node requires an OpenAI API key!
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
+  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+  | **key**      | *none*    | env.SPEECHFLOW\_KEY\_OPENAI | *none* |
+  | **model**    | *none*    | "gpt-4o-mini" | *none* |
 
 - Node: **gemma**<br/>
   Purpose: **Google Gemma Text-to-Text translation and spelling correction**<br/>
