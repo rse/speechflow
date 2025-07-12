@@ -168,7 +168,7 @@ First a short overview of the available processing nodes:
   **deepl**,
   **openai**,
   **ollama**,
-  **opus**,
+  **transformers**,
   **subtitle**,
   **format**.
 - Text-to-Audio nodes:
@@ -341,9 +341,9 @@ First a short overview of the available processing nodes:
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **opus**<br/>
-  Purpose: **OPUS Text-to-Text translation**<br/>
-  Example: `deepl(src: "de", dst: "en")`<br/>
+- Node: **transformers**<br/>
+  Purpose: **Transformers Text-to-Text translation**<br/>
+  Example: `transformers(src: "de", dst: "en")`<br/>
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -352,6 +352,7 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement      |
   | ------------ | --------- | -------- | ---------------- |
+  | **model**    | *none*    | "OPUS"   | `/^(?:OPUS|SmolLM3)$/` |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
