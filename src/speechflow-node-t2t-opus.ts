@@ -61,7 +61,7 @@ export default class SpeechFlowNodeOPUS extends SpeechFlowNode {
                 (result as Transformers.TranslationSingle).translation_text
         }
 
-        /*  establish a duplex stream and connect it to Ollama  */
+        /*  establish a duplex stream and connect it to OPUS  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,

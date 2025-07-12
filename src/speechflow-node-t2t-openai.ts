@@ -196,7 +196,7 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
             return translation
         }
 
-        /*  establish a duplex stream and connect it to Ollama  */
+        /*  establish a duplex stream and connect it to OpenAI  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
@@ -236,7 +236,7 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
             this.stream = null
         }
 
-        /*  shutdown Ollama  */
+        /*  shutdown OpenAI  */
         if (this.openai !== null)
             this.openai = null
     }
