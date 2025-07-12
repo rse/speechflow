@@ -24,12 +24,17 @@ local audio device I/O,
 remote WebSocket network I/O,
 remote MQTT network I/O,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
+cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
 local [Gemma/Ollama](https://ollama.com/library/gemma3) text-to-text translation,
 local [Gemma/Ollama](https://ollama.com/library/gemma3) text-to-text spelling correction,
 local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translation,
-cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
-and local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding.
+local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding,
+local WAV speech-to-speech encoding,
+local text-to-text formatting,
+local text-to-text subtitle generation, and
+local text or audio tracing.
+
 Additional SpeechFlow graph nodes can be provided externally
 by NPM packages named `speechflow-node-xxx` which expose a class
 derived from the exported `SpeechFlowNode` class of the `speechflow` package.
@@ -61,49 +66,56 @@ $ speechflow
 Processing Graph Examples
 -------------------------
 
-- **Capturing**: Capture audio from microphone to file:
+- **Capturing**: Capture audio from microphone device into WAV audio file:
 
   ```
   device(device: "wasapi:VoiceMeeter Out B1", mode: "r") |
-      file(path: "capture.pcm", mode: "w", type: "audio")
+      wav(mode: "encode") |
+          file(path: "capture.wav", mode: "w", type: "audio")
   ```
 
-- **Pass-Through**: Pass-through audio from microphone to speaker and in parallel record it to file:
+- **Pass-Through**: Pass-through audio from microphone device to speaker
+  device and in parallel record it to WAV audio file:
 
   ```
   device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
-      file(path: "capture.pcm", mode: "w", type: "audio"),
+      wav(mode: "encode") |
+          file(path: "capture.wav", mode: "w", type: "audio"),
       device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
   }
   ```
 
-- **Narration**: Generate audio file with narration of text file:
+- **Narration**: Generate text file with German narration of MP3 audio file:
 
   ```
   file(path: argv.0, mode: "r", type: "audio") |
-      deepgram(language: "en") |
-          file(path: argv.1, mode: "w", type: "text")
+      ffmpeg(src: "mp3", dst: "pcm") |
+          deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+              format(width: 80) |
+                  file(path: argv.1, mode: "w", type: "text")
   ```
 
-- **Subtitling**: Generate subtitles for video file
+- **Subtitling**: Generate text file with German subtitles of MP3 audio file:
 
   ```
   file(path: argv.0, mode: "r", type: "audio") |
-      ffmpeg(src: "mp4", dst: "pcm") |
-          deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+      ffmpeg(src: "mp3", dst: "pcm") |
+          deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
               subtitle(format: "vtt") |
                   file(path: argv.1, mode: "w", type: "text")
   ```
 
-- **Translation**: Translate stdin to stdout:
+- **Ad-Hoc Translation**: Ad-Hoc text translation from German to English
+  via stdin/stdout:
 
   ```
   file(path: "-", mode: "r", type: "text") |
-      deepl(src: "de", dst: "en-US") |
+      deepl(src: "de", dst: "en") |
           file(path: "-", mode: "w", type: "text")
   ```
 
-- **Translation**: Real-time translation from german to english, including capturing of all inputs and outputs:
+- **Studio Translation**: Real-time studio translation from German to English,
+  including the capturing of all involved inputs and outputs:
 
   ```
   device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
@@ -112,7 +124,7 @@ Processing Graph Examples
       deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM, language: "de") | {
           format(width: 80) |
               file(path: "program-de.txt", mode: "w", type: "text"),
-          deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en-US") | {
+          deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en") | {
               format(width: 80) |
                   file(path: "program-en.txt", mode: "w", type: "text"),
               subtitle(format: "vtt") | {
@@ -275,7 +287,7 @@ Currently **SpeechFlow** provides the following processing nodes:
 
 - Node: **deepl**<br/>
   Purpose: **DeepL Text-to-Text translation**<br/>
-  Example: `deepl(src: "de", dst: "en-US")`<br/>
+  Example: `deepl(src: "de", dst: "en")`<br/>
   Notice: this node requires an API key!
 
   | Port    | Payload     |
@@ -286,8 +298,8 @@ Currently **SpeechFlow** provides the following processing nodes:
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPL | *none* |
-  | **src**      | 0         | "de"     | `/^(?:de\|en-US)$/` |
-  | **dst**      | 1         | "en-US"  | `/^(?:de\|en-US)$/` |
+  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
+  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
 - Node: **subtitle**<br/>
   Purpose: **SRT/VTT Subtitle Generation**<br/>
