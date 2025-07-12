@@ -147,9 +147,10 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            api: { type: "string", val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?:\d+$/ },
-            src: { type: "string", pos: 0, val: "de", match: /^(?:de|en)$/ },
-            dst: { type: "string", pos: 1, val: "en", match: /^(?:de|en)$/ }
+            api:   { type: "string", val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?:\d+$/ },
+            model: { type: "string", val: "gemma3:4b-it-q4_K_M", match: /^.+$/ },
+            src:   { type: "string", pos: 0, val: "de", match: /^(?:de|en)$/ },
+            dst:   { type: "string", pos: 1, val: "en", match: /^(?:de|en)$/ }
         })
 
         /*  tell effective mode  */
@@ -169,12 +170,24 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
         /*  instantiate Ollama API  */
         this.ollama = new Ollama({ host: this.params.api })
 
+        /*  ensure the model is available  */
+        const model  = this.params.model
+        const models = await this.ollama.list()
+        const exists = models.models.some((m) => m.name === model)
+        if (!exists) {
+            this.log("info", `Gemma/Ollama: model "${model}" still not present in Ollama -- ` +
+                "automatically downloading model")
+            await this.ollama.pull({ model })
+        }
+        else
+            this.log("info", `Gemma/Ollama: model "${model}" already present in Ollama`)
+
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
             const key = `${this.params.src}-${this.params.dst}`
             const cfg = this.setup[key]
             const response = await this.ollama!.chat({
-                model: "gemma3:4b-it-q4_K_M",
+                model,
                 messages: [
                     { role: "system", content: cfg.systemPrompt },
                     ...cfg.chat,
