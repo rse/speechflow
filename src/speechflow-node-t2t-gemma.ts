@@ -150,6 +150,13 @@ export default class SpeechFlowNodeGemma extends SpeechFlowNode {
             dst: { type: "string", pos: 1, val: "en", match: /^(?:de|en)$/ }
         })
 
+        /*  tell effective mode  */
+        if (this.params.src === this.params.dst)
+            this.log("info", `Gemma/Ollama: operation mode: spellchecking for language "${this.params.src}"`)
+        else
+            this.log("info", `Gemma/Ollama: operation mode: translation from language "${this.params.src}"` +
+                ` to language "${this.params.dst}"`)
+
         /*  declare node input/output format  */
         this.input  = "text"
         this.output = "text"
