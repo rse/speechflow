@@ -61,7 +61,7 @@ let cli: CLIio | null = null
             .describe("e", "FlowLink expression string")
         .string("f").nargs("f", 1).alias("f", "file").default("f", "")
             .describe("f", "FlowLink expression file")
-        .string("c").nargs("c", 1).alias("c", "config-file").default("c", "")
+        .string("c").nargs("c", 1).alias("c", "config").default("c", "")
             .describe("c", "FlowLink expression reference into YAML file (in format <id>@<file>)")
         .version(false)
         .strict()
@@ -112,9 +112,9 @@ let cli: CLIio | null = null
 
     /*  sanity check usage  */
     let n = 0
-    if (typeof args.expression     === "string" && args.expression     !== "") n++
-    if (typeof args.expressionFile === "string" && args.expressionFile !== "") n++
-    if (typeof args.configFile     === "string" && args.configFile     !== "") n++
+    if (typeof args.expression === "string" && args.expression !== "") n++
+    if (typeof args.file       === "string" && args.file       !== "") n++
+    if (typeof args.config     === "string" && args.config     !== "") n++
     if (n !== 1)
         throw new Error("cannot use more than one FlowLink specification source (either option -e, -f or -c)")
 
@@ -122,18 +122,18 @@ let cli: CLIio | null = null
     let config = ""
     if (typeof args.expression === "string" && args.expression !== "")
         config = args.expression
-    else if (typeof args.expressionFile === "string" && args.expressionFile !== "")
-        config = await cli.input(args.expressionFile, { encoding: "utf8" })
-    else if (typeof args.configFile === "string" && args.configFile !== "") {
-        const m = args.configFile.match(/^(.+?)@(.+)$/)
+    else if (typeof args.file === "string" && args.file !== "")
+        config = await cli.input(args.file, { encoding: "utf8" })
+    else if (typeof args.config === "string" && args.config !== "") {
+        const m = args.config.match(/^(.+?)@(.+)$/)
         if (m === null)
-            throw new Error("invalid configuration file specification (expected \"<key>@<yaml-config-file>\")")
-        const [ , key, file ] = m
+            throw new Error("invalid configuration file specification (expected \"<id>@<yaml-config-file>\")")
+        const [ , id, file ] = m
         const yaml = await cli.input(file, { encoding: "utf8" })
         const obj: any = jsYAML.load(yaml)
-        if (obj[key] === undefined)
-            throw new Error(`no such key "${key}" found in configuration file`)
-        config = obj[key] as string
+        if (obj[id] === undefined)
+            throw new Error(`no such id "${id}" found in configuration file`)
+        config = obj[id] as string
     }
 
     /*  track the available SpeechFlow nodes  */
