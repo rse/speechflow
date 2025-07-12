@@ -45,7 +45,7 @@ let cli: CLIio | null = null
             "[-v|--verbose <level>] " +
             "[-C|--cache <directory>] " +
             "[-e|--expression <expression>] " +
-            "[-f|--expression-file <expression-file>] " +
+            "[-f|--file <file>] " +
             "[-c|--config <key>@<yaml-config-file>] " +
             "[<argument> [...]]"
         )
@@ -58,11 +58,11 @@ let cli: CLIio | null = null
         .string("C").nargs("C", 1).alias("C", "cache").default("C", path.join(dataDir, "cache"))
             .describe("C", "directory for cached files (primarily AI model files)")
         .string("e").nargs("e", 1).alias("e", "expression").default("e", "")
-            .describe("e", "FlowLink expression")
-        .string("f").nargs("f", 1).alias("f", "expression-file").default("f", "")
+            .describe("e", "FlowLink expression string")
+        .string("f").nargs("f", 1).alias("f", "file").default("f", "")
             .describe("f", "FlowLink expression file")
         .string("c").nargs("c", 1).alias("c", "config-file").default("c", "")
-            .describe("c", "configuration in format <id>@<file>")
+            .describe("c", "FlowLink expression reference into YAML file (in format <id>@<file>)")
         .version(false)
         .strict()
         .showHelpOnFail(true)

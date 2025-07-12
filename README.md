@@ -58,7 +58,7 @@ $ speechflow
   [-V|--version]
   [-v|--verbose <level>]
   [-e|--expression <expression>]
-  [-f|--expression-file <expression-file>]
+  [-f|--file <file>]
   [-c|--config <key>@<yaml-config-file>]
   [<argument> [...]]
 ```
