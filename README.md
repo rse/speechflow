@@ -152,18 +152,32 @@ Processing Node Types
 First a short overview of the available processing nodes:
 
 - Input/Output nodes:
-  **file**, **device**, **websocket**, **mqtt**.
+  **file**,
+  **device**,
+  **websocket**, 
+  **mqtt**.
 
-- Converter nodes:
-  **deepgram**,
-  **deepl**, **gemma**, **opus**,
-  **elevenlabs**,
-  **wav**, **ffmpeg**,
+- Audio-to-Audio nodes:
+  **ffmpeg**,
+  **wav**.
+
+- Audio-to-Text nodes:
+  **deepgram**.
+
+- Text-to-Audio nodes:
+  **elevenlabs**.
+
+- Text-to-Text nodes:
+  **deepl**,
+  **gemma**,
+  **opus**,
   **subtitle**,
-  **format**,
+  **format**.
+
+- Any-to-Any nodes:
   **trace**.
 
-Currently **SpeechFlow** provides the following processing nodes:
+### Input/Output Nodes:
 
 - Node:    **file**<br/>
   Purpose: **File and StdIO source/sink**<br/>
@@ -179,6 +193,20 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **path**   | 0         | *none*   | *none*                |
   | **mode**   | 1         | "r"      | `/^(?:r\|w\|rw)$/`    |
   | **type**   | 2         | "audio"  | `/^(?:audio\|text)$/` |
+
+- Node: **device**<br/>
+  Purpose: **Microphone/speaker device source/sink**<br/>
+  Example: `device(device: "wasapi:VoiceMeeter Out B1", mode: "r")`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement        |
+  | ----------- | --------- | -------- | ------------------ |
+  | **device**  | 0         | *none*   | `/^(.+?):(.+)$/`   |
+  | **mode**    | 1         | "rw"     | `/^(?:r\|w\|rw)$/` |
 
 - Node: **websocket**<br/>
   Purpose: **WebSocket source/sink**<br/>
@@ -213,19 +241,7 @@ Currently **SpeechFlow** provides the following processing nodes:
   | **password** | 2         | *none*   | `/^.+$/` |
   | **topic**    | 3         | *none*   | `/^.+$/` |
 
-- Node: **device**<br/>
-  Purpose: **Microphone/speaker device source/sink**<br/>
-  Example: `device(device: "wasapi:VoiceMeeter Out B1", mode: "r")`
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | audio       |
-  | output  | audio       |
-
-  | Parameter   | Position  | Default  | Requirement        |
-  | ----------- | --------- | -------- | ------------------ |
-  | **device**  | 0         | *none*   | `/^(.+?):(.+)$/`   |
-  | **mode**    | 1         | "rw"     | `/^(?:r\|w\|rw)$/` |
+### Audio-to-Text Nodes:
 
 - Node: **wav**<br/>
   Purpose: **WAV audio format conversion**<br/>
