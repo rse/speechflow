@@ -309,7 +309,7 @@ First a short overview of the available processing nodes:
 - Node: **openai**<br/>
   Purpose: **OpenAI GPT Text-to-Text translation and spelling correction**<br/>
   Example: `openai(src: "de", dst: "en")`<br/>
-  Notice; this node requires an OpenAI API key!
+  Notice: this node requires an OpenAI API key!
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -326,7 +326,7 @@ First a short overview of the available processing nodes:
 - Node: **gemma**<br/>
   Purpose: **Google Gemma Text-to-Text translation and spelling correction**<br/>
   Example: `gemma(src: "de", dst: "en")`<br/>
-  Notice; this node requires the Ollama API!
+  Notice: this node requires the Ollama API!
 
   | Port    | Payload     |
   | ------- | ----------- |
