@@ -47,8 +47,7 @@
         "@huggingface/transformers":        "3.6.3",
         "@ericedouard/vad-node-realtime":   "0.2.0",
         "luxon":                            "3.7.1",
-        "wrap-text":                        "1.0.10",
-        "smart-whisper":                    "0.8.1"
+        "wrap-text":                        "1.0.10"
     },
     "devDependencies": {
         "eslint":                           "9.31.0",
