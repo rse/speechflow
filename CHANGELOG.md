@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+0.9.9 (2025-07-12)
+------------------
+
+- CLEANUP: switch "trace" node to output log messages with "debug" level
+
 0.9.8 (2025-07-12)
 ------------------
 

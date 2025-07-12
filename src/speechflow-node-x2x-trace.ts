@@ -52,7 +52,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 const fmt = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (type === "audio")
-                        log("info", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
+                        log("debug", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
                             `end=${fmt(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type} ` +
                             `payload-type=Buffer payload-bytes=${chunk.payload.byteLength}`)
                     else
@@ -60,7 +60,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 }
                 else {
                     if (type === "text")
-                        log("info", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
+                        log("debug", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
                             `end=${fmt(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type}` +
                             `payload-type=String payload-length=${chunk.payload.length} ` +
                             `payload-encoding=${encoding} payload-content="${chunk.payload.toString()}"`)
