@@ -42,7 +42,7 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  establish Kokoro  */
-        const model = "onnx-community/Kokoro-82M-ONNX"
+        const model = "onnx-community/Kokoro-82M-v1.0-ONNX"
         const progressState = new Map<string, number>()
         const progressCallback = (progress: any) => {
             let artifact = model
