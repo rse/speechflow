@@ -46,7 +46,7 @@ let cli: CLIio | null = null
             "[-C|--cache <directory>] " +
             "[-e|--expression <expression>] " +
             "[-f|--file <file>] " +
-            "[-c|--config <key>@<yaml-config-file>] " +
+            "[-c|--config <id>@<yaml-config-file>] " +
             "[<argument> [...]]"
         )
         .help("h").alias("h", "help").default("h", false)

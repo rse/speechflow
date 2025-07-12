@@ -59,12 +59,16 @@ $ speechflow
   [-v|--verbose <level>]
   [-e|--expression <expression>]
   [-f|--file <file>]
-  [-c|--config <key>@<yaml-config-file>]
+  [-c|--config <id>@<yaml-config-file>]
   [<argument> [...]]
 ```
 
 Processing Graph Examples
 -------------------------
+
+The following are examples of **SpeechFlow** processing graphs.
+They can also be found in the [sample.yaml](./sample.yaml) file
+for easy consumption with `speechflow -c <id>@sample.yaml>`.
 
 - **Capturing**: Capture audio from microphone device into WAV audio file:
 
