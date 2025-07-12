@@ -129,7 +129,7 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
                 "Do not show any epilog. \n" +
                 "Get to the point.\n" +
                 "Preserve the original meaning, tone, and nuance.\n" +
-                "Directly translate text from German (DE) to English (EN) language.\n",
+                "Directly translate text from German (DE) to fluent and natural English (EN) language.\n",
             chat: [
                 { role: "user",   content: "Ich liebe meine Frau." },
                 { role: "system", content: "I love my wife." },
