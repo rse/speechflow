@@ -188,6 +188,7 @@ let cli: CLIio | null = null
         "./speechflow-node-a2a-wav.js",
         "./speechflow-node-a2t-deepgram.js",
         "./speechflow-node-t2a-elevenlabs.js",
+        "./speechflow-node-t2a-kokoro.js",
         "./speechflow-node-t2t-deepl.js",
         "./speechflow-node-t2t-openai.js",
         "./speechflow-node-t2t-ollama.js",

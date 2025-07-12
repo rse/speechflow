@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: add "openai" node for text-to-text translation and spellchecking
+- IMPROVEMENT: add "kokoro" node for local text-to-speech generation
 - CLEANUP: switch "trace" node to output log messages with "debug" level
 - CLEANUP: cleanup CLI option parsing
 - UPGRADE: upgrade NPM dependencies

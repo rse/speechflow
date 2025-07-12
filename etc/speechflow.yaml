@@ -39,6 +39,13 @@ translation: |
         deepl(src: "de", dst: "en") |
             file(path: "-", mode: "w", type: "text")
 
+#   Generate audio file with English voice for a text file
+speaking: |
+    file(path: argv.0, mode: "r", type: "text") |
+        kokoro(language: "en") |
+            wav(mode: "encode") |
+                file(path: argv.1, mode: "w", type: "audio")
+
 #  Real-time studio translation from German to English,
 #  including the capturing of all involved inputs and outputs:
 studio: |

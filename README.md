@@ -108,6 +108,15 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
                   file(path: argv.1, mode: "w", type: "text")
   ```
 
+- **Speaking**: Generate audio file with English voice for a text file:
+
+  ```
+  file(path: argv.0, mode: "r", type: "text") |
+      kokoro(language: "en") |
+          wav(mode: "encode") |
+              file(path: argv.1, mode: "w", type: "audio")
+  ```
+
 - **Ad-Hoc Translation**: Ad-Hoc text translation from German to English
   via stdin/stdout:
 
@@ -399,6 +408,22 @@ First a short overview of the available processing nodes:
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_ELEVENLABS | *none* |
   | **voice**    | 0         | "Brian"  | *none* |
   | **language** | 1         | "de"     | *none* |
+
+- Node: **kokoro**<br/>
+  Purpose: **Kokoro Text-to-Speech conversion**<br/>
+  Example: `kokoro(language: "en")`<br/>
+  Notice: this currently support English language only!
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | audio       |
+
+  | Parameter    | Position  | Default  | Requirement |
+  | ------------ | --------- | -------- | ----------- |
+  | **voice**    | 0         | "Aoede"  | `/^(?:Aoede|Heart|Puck|Fenrir)$/` |
+  | **language** | 1         | "en"     | `/^en$/`    |
+  | **speed**    | 2         | 1.25     | 1.0...1.30  |
 
 ### Any-to-Any Nodes:
 
