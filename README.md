@@ -160,24 +160,19 @@ First a short overview of the available processing nodes:
   **device**,
   **websocket**,
   **mqtt**.
-
 - Audio-to-Audio nodes:
   **ffmpeg**,
   **wav**.
-
 - Audio-to-Text nodes:
   **deepgram**.
-
 - Text-to-Text nodes:
   **deepl**,
   **gemma**,
   **opus**,
   **subtitle**,
   **format**.
-
 - Text-to-Audio nodes:
   **elevenlabs**.
-
 - Any-to-Any nodes:
   **trace**.
 
