@@ -284,9 +284,9 @@ First a short overview of the available processing nodes:
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPGRAM | *none* |
-  | **model**    | 0         | "nova-2" | *none* |
+  | **model**    | 0         | "nova-3" | *none* |
   | **version**  | 1         | "latest" | *none* |
-  | **language** | 2         | "de"     | *none* |
+  | **language** | 2         | "multi"  | *none* |
 
 ### Text-to-Text Nodes:
 
