@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+0.9.8 (2025-07-12)
+------------------
+
+- CLEANUP: provide start scripts and move config to sub-directory
+
 0.9.7 (2025-07-12)
 ------------------
 
