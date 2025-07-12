@@ -22,6 +22,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: major refactoring to object-mode streaming for supporting timestamps
+- UPGRADE: upgrade NPM dependencies
 
 0.9.5 (2025-04-27)
 ------------------
