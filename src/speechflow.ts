@@ -191,9 +191,10 @@ let cli: CLIio | null = null
         "./speechflow-node-t2t-deepl.js",
         "./speechflow-node-t2t-openai.js",
         "./speechflow-node-t2t-ollama.js",
-        "./speechflow-node-t2t-format.js",
+        "./speechflow-node-t2t-transformers.js",
         "./speechflow-node-t2t-opus.js",
         "./speechflow-node-t2t-subtitle.js",
+        "./speechflow-node-t2t-format.js",
         "./speechflow-node-x2x-trace.js",
         "./speechflow-node-xio-device.js",
         "./speechflow-node-xio-file.js",
@@ -298,9 +299,9 @@ let cli: CLIio | null = null
     }
     catch (err) {
         if (err instanceof Error && err.name === "FlowLinkError")
-            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.toString()}"`)
+            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.toString()}`)
         else if (err instanceof Error)
-            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.message}"`)
+            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.message}`)
         else
             cli!.log("error", "failed to materialize SpeechFlow configuration: internal error")
         process.exit(1)
@@ -402,7 +403,7 @@ let cli: CLIio | null = null
     }
 
     /*  start of internal stream processing  */
-    cli!.log("info", "everything established -- stream processing in SpeechFlow graph starts")
+    cli!.log("info", "**** everything established -- stream processing in SpeechFlow graph starts ****")
 
     /*  gracefully shutdown process  */
     let shuttingDown = false
@@ -411,9 +412,9 @@ let cli: CLIio | null = null
             return
         shuttingDown = true
         if (signal === "finished")
-            cli!.log("info", "streams of all nodes finished -- shutting down service")
+            cli!.log("info", "**** streams of all nodes finished -- shutting down service ****")
         else
-            cli!.log("warning", `received signal ${signal} -- shutting down service`)
+            cli!.log("warning", `**** received signal ${signal} -- shutting down service ****`)
 
         /*  graph processing: PASS 1: disconnect node streams  */
         for (const node of graphNodes) {
