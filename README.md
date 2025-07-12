@@ -154,7 +154,7 @@ First a short overview of the available processing nodes:
 - Input/Output nodes:
   **file**,
   **device**,
-  **websocket**, 
+  **websocket**,
   **mqtt**.
 
 - Audio-to-Audio nodes:
@@ -429,6 +429,10 @@ number-value     ::= "0b" /[01]+/
                    | /[0-9]+/
 value            ::= "true" | "false" | "null" | "NaN" | "undefined"
 ```
+
+**SpeechFlow** makes available to **FlowLink** all **SpeechFlow** nodes as
+`node`, the CLI arguments under the array `variable` named `argv`, and all
+environment variables under the object `variable` named `env`.
 
 History
 -------
