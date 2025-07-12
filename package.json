@@ -77,10 +77,10 @@
         "patch-package":                    "8.0.0",
         "stmux":                            "1.8.11",
         "nodemon":                          "3.1.10",
-        "rimraf":                           "6.0.1",
+        "shx":                              "0.4.0",
         "typescript":                       "5.8.3",
         "delay-cli":                        "2.0.0",
-        "nps":                              "5.10.0",
+        "@rse/stx":                         "1.0.2",
         "cross-env":                        "7.0.3"
     },
     "overrides": {
@@ -102,7 +102,6 @@
     },
     "scripts": {
         "postinstall":                      "npm start patch-apply",
-        "start":                            "nps -c etc/nps.yaml",
-        "speechflow":                       "node dst/speechflow.js"
+        "start":                            "stx -v4 -c etc/stx.conf"
     }
 }
