@@ -35,7 +35,7 @@ local text-to-text formatting,
 local text-to-text subtitle generation, and
 local text or audio tracing.
 
-Additional SpeechFlow graph nodes can be provided externally
+Additional **SpeechFlow** graph nodes can be provided externally
 by NPM packages named `speechflow-node-xxx` which expose a class
 derived from the exported `SpeechFlowNode` class of the `speechflow` package.
 
