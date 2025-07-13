@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.0.0 (2025-07-13)
+------------------
+
+- IMPROVEMENT: add "mute" node for audio muting
+
 0.9.9 (2025-07-13)
 ------------------
 
