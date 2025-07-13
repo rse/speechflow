@@ -104,10 +104,11 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        /*  instantiate Transformers engine and model  */
         let model: string = ""
+
+        /*  track download progress when instantiating Transformers engine and model  */
         const progressState = new Map<string, number>()
-        const progressCallback = (progress: any) => {
+        const progressCallback: Transformers.ProgressCallback = (progress: any) => {
             let artifact = model
             if (typeof progress.file === "string")
                 artifact += `:${progress.file}`
@@ -126,26 +127,30 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
                     progressState.delete(artifact)
             }
         }, 1000)
+
+        /*  instantiate Transformers engine and model  */
         if (this.params.model === "OPUS") {
             model = `onnx-community/opus-mt-${this.params.src}-${this.params.dst}`
-            this.translator = await Transformers.pipeline("translation", model, {
-                cache_dir: path.join(this.config.cacheDir, "opus"),
+            const pipeline = Transformers.pipeline("translation", model, {
+                cache_dir: path.join(this.config.cacheDir, "transformers"),
                 dtype:     "q4",
-                device:    "gpu",
+                device:    "auto",
                 progress_callback: progressCallback
             })
+            this.translator = await pipeline
             clearInterval(interval)
             if (this.translator === null)
                 throw new Error("failed to instantiate translator pipeline")
         }
         else if (this.params.model === "SmolLM3") {
             model = "HuggingFaceTB/SmolLM3-3B-ONNX"
-            this.generator = await Transformers.pipeline("text-generation", model, {
+            const pipeline = Transformers.pipeline("text-generation", model, {
                 cache_dir: path.join(this.config.cacheDir, "transformers"),
                 dtype:     "q4",
-                device:    "gpu",
+                device:    "auto",
                 progress_callback: progressCallback
             })
+            this.generator = await pipeline
             clearInterval(interval)
             if (this.generator === null)
                 throw new Error("failed to instantiate generator pipeline")
