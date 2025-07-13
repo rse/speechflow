@@ -9,7 +9,7 @@ import Stream                          from "node:stream"
 
 /*  external dependencies  */
 import ws                              from "ws"
-import ReconnWebsocket, { ErrorEvent } from "@opensumi/reconnecting-websocket"
+import ReconnWebSocket, { ErrorEvent } from "@opensumi/reconnecting-websocket"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -22,7 +22,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
 
     /*  internal state  */
     private server: ws.WebSocketServer | null = null
-    private client: WebSocket          | null = null
+    private client: ReconnWebSocket    | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -153,7 +153,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
         }
         else if (this.params.connect !== "") {
             /*  connect remotely to a Websocket port  */
-            this.client = new ReconnWebsocket(this.params.connect, [], {
+            this.client = new ReconnWebSocket(this.params.connect, [], {
                 WebSocket:                   ws,
                 WebSocketOptions:            {},
                 reconnectionDelayGrowFactor: 1.3,
@@ -162,10 +162,10 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 connectionTimeout:           4000,
                 minUptime:                   5000
             })
-            this.client.addEventListener("open", (ev: Event) => {
+            this.client.addEventListener("open", (ev) => {
                 this.log("info", `connection opened to URL ${this.params.connect}`)
             })
-            this.client.addEventListener("close", (ev: Event) => {
+            this.client.addEventListener("close", (ev) => {
                 this.log("info", `connection closed to URL ${this.params.connect}`)
             })
             this.client.addEventListener("error", (ev: ErrorEvent) => {
