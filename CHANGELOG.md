@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-0.9.9 (2025-07-12)
+0.9.9 (2025-07-13)
 ------------------
 
 - IMPROVEMENT: add "openai" node for text-to-text translation and spellchecking
