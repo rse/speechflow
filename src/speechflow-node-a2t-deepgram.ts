@@ -164,7 +164,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     if (chunk.payload.byteLength > 0) {
                         log("info", `Deepgram: send data (${chunk.payload.byteLength} bytes)`)
                         initTimeoutStart()
-                        dg.send(chunk.payload) /* intentionally discard all time information  */
+                        dg.send(chunk.payload.buffer) /* intentionally discard all time information  */
                     }
                     callback()
                 }
