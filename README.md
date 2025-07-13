@@ -14,9 +14,13 @@ SpeechFlow
 About
 -----
 
-**SpeechFlow** is a command-line interface based tool for establishing a
-directed data flow graph of audio and text processing nodes. This way,
-it allows to perform various speech processing tasks in a flexible way.
+**SpeechFlow** is a command-line interface based tool for establishing
+a directed data flow graph of audio and text processing nodes. This
+way, it allows to perform various speech processing tasks in a very
+flexible and configurable way. The usual supported tasks are capturing
+audio, generate narrations of text (aka text-to-speech), generate
+transcriptions or subtitles for audio (aka speech-to-text), and generate
+translations for audio (aka speech-to-speech).
 
 **SpeechFlow** comes with built-in graph nodes for
 local file I/O,
@@ -88,7 +92,7 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
   }
   ```
 
-- **Narration**: Generate text file with German narration of MP3 audio file:
+- **Transcription**: Generate text file with German transcription of MP3 audio file:
 
   ```
   file(path: argv.0, mode: "r", type: "audio") |

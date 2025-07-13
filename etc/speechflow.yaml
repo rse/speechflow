@@ -17,8 +17,8 @@ pass-through: |
         device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
     }
 
-#   Generate text file with German narration of MP3 audio file
-narration: |
+#   Generate text file with German transcription of MP3 audio file
+transcription: |
     file(path: argv.0, mode: "r", type: "audio") |
         ffmpeg(src: "mp3", dst: "pcm") |
             deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
