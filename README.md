@@ -174,7 +174,8 @@ First a short overview of the available processing nodes:
   **mqtt**.
 - Audio-to-Audio nodes:
   **ffmpeg**,
-  **wav**.
+  **wav**,
+  **mute**.
 - Audio-to-Text nodes:
   **deepgram**.
 - Text-to-Text nodes:
@@ -281,6 +282,19 @@ First a short overview of the available processing nodes:
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
   | **mode**    | 0         | "encode" | `/^(?:encode\|decode)$/` |
+
+- Node: **mute**<br/>
+  Purpose: **volume muting node**<br/>
+  Example: `mute()`
+  Notice: this node has to be externally controlled via REST/WebSockets!
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
 
 ### Audio-to-Text Nodes:
 

@@ -36,8 +36,22 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
         this.output = "audio"
     }
 
+    /*  receive external request  */
+    async receiveRequest (params: any[]) {
+        if (params.length === 2 && params[0] === "mode") {
+            if (!params[1].match(/^(?:none|silenced|unplugged)$/))
+                throw new Error("mute: invalid mode argument in external request")
+            const muteMode: MuteMode = params[1] as MuteMode
+            this.setMuteMode(muteMode)
+            this.sendResponse([ "mute", "mode", muteMode ])
+        }
+        else
+            throw new Error("mute: invalid arguments in external request")
+    }
+
     /*  change mute mode  */
     setMuteMode (mode: MuteMode) {
+        this.log("info", `setting mute mode to "${mode}"`)
         this.muteMode = mode
     }
 
