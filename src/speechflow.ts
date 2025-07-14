@@ -8,6 +8,11 @@
 import path                     from "node:path"
 import Stream                   from "node:stream"
 import { EventEmitter }         from "node:events"
+import http                     from "node:http"
+import * as HAPI                from "@hapi/hapi"
+import WebSocket                from "ws"
+import HAPIWebSocket            from "hapi-plugin-websocket"
+import HAPIHeader               from "hapi-plugin-header"
 
 /*  external dependencies  */
 import { DateTime }             from "luxon"
@@ -20,6 +25,7 @@ import objectPath               from "object-path"
 import installedPackages        from "installed-packages"
 import dotenvx                  from "@dotenvx/dotenvx"
 import syspath                  from "syspath"
+import * as arktype             from "arktype"
 
 /*  internal dependencies  */
 import SpeechFlowNode           from "./speechflow-node"
@@ -27,6 +33,15 @@ import pkg                      from "../package.json"
 
 /*  central CLI context  */
 let cli: CLIio | null = null
+
+type wsPeerCtx = {
+    peer: string
+}
+type wsPeerInfo = {
+    ctx:        wsPeerCtx
+    ws:         WebSocket
+    req:        http.IncomingMessage
+}
 
 /*  establish asynchronous environment  */
 ;(async () => {
@@ -45,6 +60,8 @@ let cli: CLIio | null = null
             "[-h|--help] " +
             "[-V|--version] " +
             "[-v|--verbose <level>] " +
+            "[-a|--address <ip-address>] " +
+            "[-p|--port <tcp-port>] " +
             "[-C|--cache <directory>] " +
             "[-e|--expression <expression>] " +
             "[-f|--file <file>] " +
@@ -67,6 +84,24 @@ let cli: CLIio | null = null
             nargs:    1,
             default:  "warning",
             describe: "level for verbose logging ('none', 'error', 'warning', 'info', 'debug')"
+        })
+        .option("a", {
+            alias:    "address",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  "0.0.0.0",
+            describe: "IP address for REST/WebSocket API"
+        })
+        .option("p", {
+            alias:    "port",
+            type:     "number",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  8484,
+            describe: "TCP port for REST/WebSocket API"
         })
         .option("C", {
             alias:    "cache",
@@ -186,6 +221,7 @@ let cli: CLIio | null = null
     const pkgsI = [
         "./speechflow-node-a2a-ffmpeg.js",
         "./speechflow-node-a2a-wav.js",
+        "./speechflow-node-a2a-mute.js",
         "./speechflow-node-a2t-deepgram.js",
         "./speechflow-node-t2a-elevenlabs.js",
         "./speechflow-node-t2a-kokoro.js",
@@ -237,9 +273,9 @@ let cli: CLIio | null = null
             cli!.log("debug", msg)
         }
     })
-    let nodenum = 1
     const variables = { argv: args._, env: process.env }
     const graphNodes = new Set<SpeechFlowNode>()
+    const nodeNums = new Map<typeof SpeechFlowNode, number>()
     const cfg = {
         audioChannels:     1,
         audioBitDepth:     16,
@@ -275,17 +311,19 @@ let cli: CLIio | null = null
                     throw new Error(`unknown node "${id}"`)
                 let node: SpeechFlowNode
                 try {
-                    node = new nodes[id](`${id}[${nodenum}]`, cfg, opts, args)
+                    let num = nodeNums.get(nodes[id]) ?? 0
+                    nodeNums.set(nodes[id], ++num)
+                    const name = num === 1 ? id : `${id}:${num}`
+                    node = new nodes[id](name, cfg, opts, args)
                 }
                 catch (err) {
                     /*  fatal error  */
                     if (err instanceof Error)
-                        cli!.log("error", `creation of "${id}[${nodenum}]" node failed: ${err.message}`)
+                        cli!.log("error", `creation of <${id}> node failed: ${err.message}`)
                     else
-                        cli!.log("error", `creation of "${id}"[${nodenum}] node failed: ${err}`)
+                        cli!.log("error", `creation of <${id}> node failed: ${err}`)
                     process.exit(1)
                 }
-                nodenum++
                 const params = Object.keys(node.params)
                     .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
                 cli!.log("info", `create node "${node.id}" (${params})`)
@@ -403,6 +441,147 @@ let cli: CLIio | null = null
         })
     }
 
+    /*  define external request/response structure  */
+    const requestValidator  = arktype.type({ request:  "string", node: "string", args: "unknown[]" })
+    // const responseValidator = arktype.type({ response: "string", node: "string", args: "unknown[]" })
+
+    /*  forward external request to target node in graph  */
+    const consumeExternalRequest = async (_req: any) => {
+        const req = requestValidator(_req)
+        if (req instanceof arktype.type.errors)
+            throw new Error(`invalid request: ${req.summary}`)
+        if (req.request !== "COMMAND")
+            throw new Error("invalid external request (command expected)")
+        const name = req.node as string
+        const args = req.args as any[]
+        const foundNode = Array.from(graphNodes).find((node) => node.id === name)
+        if (foundNode === undefined)
+            cli!.log("warning", `external request failed: no such node <${name}>`)
+        else {
+            await foundNode.receiveRequest(args).catch((err: Error) => {
+                cli!.log("warning", `external request to node <${name}> failed: ${err}`)
+                throw new Error(`external request to node <${name}> failed: ${err}`)
+            })
+        }
+    }
+
+    /*  establish REST/WebSocket API  */
+    const wsPeers = new Map<string, wsPeerInfo>()
+    const hapi = new HAPI.Server({
+        address: args.a,
+        port:    args.p
+    })
+    await hapi.register({ plugin: HAPIHeader, options: { Server: `${pkg.name}/${pkg.version}` } })
+    await hapi.register({ plugin: HAPIWebSocket })
+    hapi.events.on("response", (request: HAPI.Request) => {
+        let protocol = `HTTP/${request.raw.req.httpVersion}`
+        const ws = request.websocket()
+        if (ws.mode === "websocket") {
+            const wsVersion = (ws.ws as any).protocolVersion ??
+                request.headers["sec-websocket-version"] ?? "13?"
+            protocol = `WebSocket/${wsVersion}+${protocol}`
+        }
+        const msg =
+            "remote="   + request.info.remoteAddress + ", " +
+            "method="   + request.method.toUpperCase() + ", " +
+            "url="      + request.url.pathname + ", " +
+            "protocol=" + protocol + ", " +
+            "response=" + ("statusCode" in request.response ? request.response.statusCode : "<unknown>")
+        cli!.log("info", `HAPI: request: ${msg}`)
+    })
+    hapi.events.on({ name: "request", channels: [ "error" ] }, (request: HAPI.Request, event: HAPI.RequestEvent, tags: { [key: string]: true }) => {
+        if (event.error instanceof Error)
+            cli!.log("error", `HAPI: request-error: ${event.error.message}`)
+        else
+            cli!.log("error", `HAPI: request-error: ${event.error}`)
+    })
+    hapi.events.on("log", (event: HAPI.LogEvent, tags: { [key: string]: true }) => {
+        if (tags.error) {
+            const err = event.error
+            if (err instanceof Error)
+                cli!.log("error", `HAPI: log: ${err.message}`)
+            else
+                cli!.log("error", `HAPI: log: ${err}`)
+        }
+    })
+    hapi.route({
+        method: "GET",
+        path:   "/api/{req}/{node}/{params*}",
+        options: {
+        },
+        handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
+            const peer = request.info.remoteAddress
+            const req = {
+                request: request.params.req,
+                node:    request.params.node,
+                args:    (request.params.params as string ?? "").split("/").filter((seg) => seg !== "")
+            }
+            cli!.log("info", `HAPI: peer ${peer}: GET: ${JSON.stringify(req)}`)
+            return consumeExternalRequest(req).then(() => {
+                return h.response({ response: "OK" }).code(200)
+            }).catch((err) => {
+                return h.response({ response: "ERROR", data: err.message }).code(417)
+            })
+        }
+    })
+    hapi.route({
+        method: "POST",
+        path:   "/api",
+        options: {
+            payload: {
+                output: "data",
+                parse:  true,
+                allow:  "application/json"
+            },
+            plugins: {
+                websocket: {
+                    autoping: 30 * 1000,
+                    connect: (args: any) => {
+                        const ctx: wsPeerCtx            = args.ctx
+                        const ws:  WebSocket            = args.ws
+                        const req: http.IncomingMessage = args.req
+                        const peer = `${req.socket.remoteAddress}:${req.socket.remotePort}`
+                        ctx.peer = peer
+                        wsPeers.set(peer, { ctx, ws, req })
+                        cli!.log("info", `HAPI: WebSocket: connect: peer ${peer}`)
+                    },
+                    disconnect: (args: any) => {
+                        const ctx: wsPeerCtx = args.ctx
+                        const peer = ctx.peer
+                        wsPeers.delete(peer)
+                        cli!.log("info", `HAPI: WebSocket: disconnect: peer ${peer}`)
+                    }
+                }
+            }
+        },
+        handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
+            /*  on WebSocket message transfer  */
+            const peer = request.info.remoteAddress
+            const req = requestValidator(request.payload)
+            if (req instanceof arktype.type.errors)
+                return h.response({ response: "ERROR", data: `invalid request: ${req.summary}` }).code(417)
+            cli!.log("info", `HAPI: peer ${peer}: POST: ${JSON.stringify(req)}`)
+            return consumeExternalRequest(req).then(() => {
+                return h.response({ response: "OK" }).code(200)
+            }).catch((err: Error) => {
+                return h.response({ response: "ERROR", data: err.message }).code(417)
+            })
+        }
+    })
+    await hapi.start()
+    cli!.log("info", `HAPI: started REST/WebSocket network service: http://${args.address}:${args.port}`)
+
+    /*  hook for sendResponse method of nodes  */
+    for (const node of graphNodes) {
+        node.on("send-response", (args: any[]) => {
+            const data = JSON.stringify({ response: "NOTIFY", node: node.id, args })
+            for (const [ peer, info ] of wsPeers.entries()) {
+                cli!.log("info", `HAPI: peer ${peer}: ${data}`)
+                info.ws.send(data)
+            }
+        })
+    }
+
     /*  start of internal stream processing  */
     cli!.log("info", "**** everything established -- stream processing in SpeechFlow graph starts ****")
 
@@ -416,6 +595,10 @@ let cli: CLIio | null = null
             cli!.log("info", "**** streams of all nodes finished -- shutting down service ****")
         else
             cli!.log("warning", `**** received signal ${signal} -- shutting down service ****`)
+
+        /*  shutdown HAPI service  */
+        cli!.log("info", `HAPI: stopping REST/WebSocket network service: http://${args.address}:${args.port}`)
+        await hapi.stop()
 
         /*  graph processing: PASS 1: disconnect node streams  */
         for (const node of graphNodes) {

@@ -36,6 +36,8 @@ export class SpeechFlowChunk {
 
 /*  the base class for all SpeechFlow nodes  */
 export default class SpeechFlowNode extends Events.EventEmitter {
+    public static name: string | undefined
+
     /*  general constant configuration (for reference)  */
     config = {
         audioChannels:     1,                            /* audio mono channel        */
@@ -78,6 +80,16 @@ export default class SpeechFlowNode extends Events.EventEmitter {
         if (this.timeOpen === undefined)
             this.timeOpen = this.timeZero
         this.timeZeroOffset = this.timeZero.diff(this.timeOpen)
+    }
+
+    /*  receive external request  */
+    async receiveRequest (args: any[]) {
+        /*  no-op  */
+    }
+
+    /*  send external response  */
+    sendResponse (args: any[]) {
+        this.emit("send-response", args)
     }
 
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */
