@@ -442,8 +442,11 @@ type wsPeerInfo = {
     }
 
     /*  define external request/response structure  */
-    const requestValidator  = arktype.type({ request:  "string", node: "string", args: "unknown[]" })
-    // const responseValidator = arktype.type({ response: "string", node: "string", args: "unknown[]" })
+    const requestValidator = arktype.type({
+        request: "string",
+        node:    "string",
+        args:    "unknown[]"
+    })
 
     /*  forward external request to target node in graph  */
     const consumeExternalRequest = async (_req: any) => {
