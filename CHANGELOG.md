@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - BUGFIX: add "final" callback to Stream.Transform of "meter" node
+- BUGFIX: fix positional argument usage in "meter" node
 
 1.0.0 (2025-07-16)
 ------------------
