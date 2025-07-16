@@ -16,8 +16,11 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  audio stream queue element */
-type AudioQueueElement =
-    { type: "audio-frame", chunk: SpeechFlowChunk, isSpeech?: boolean }
+type AudioQueueElement = {
+    type:      "audio-frame",
+    chunk:     SpeechFlowChunk,
+    isSpeech?: boolean
+}
 
 /*  SpeechFlow node for VAD speech-to-speech processing  */
 export default class SpeechFlowNodeVAD extends SpeechFlowNode {
@@ -41,7 +44,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
             posSpeechThreshold: { type: "number", val: 0.50 },
             negSpeechThreshold: { type: "number", val: 0.35 },
             minSpeechFrames:    { type: "number", val: 2    },
-            redemptionFrames:   { type: "number", val: 24   },
+            redemptionFrames:   { type: "number", val: 12   },
             preSpeechPadFrames: { type: "number", val: 1    }
         })
 
@@ -69,7 +72,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                 log("info", "VAD: speech start")
             },
             onSpeechEnd: (audio) => {
-                log("info", `VAD: speech end (samples: ${audio.length})`)
+                const duration = utils.audioArrayDuration(audio, vadSampleRateTarget)
+                log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
             },
             onVADMisfire: () => {
                 log("info", "VAD: speech end (segment too short)")

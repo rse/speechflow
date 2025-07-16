@@ -31,6 +31,16 @@ export function audioBufferDuration (
     return totalSamples / sampleRate
 }
 
+/*  calculate duration of an audio array  */
+export function audioArrayDuration (
+    arr: Float32Array,
+    sampleRate   = 48000,
+    channels     = 1
+) {
+    const totalSamples = arr.length / channels
+    return totalSamples / sampleRate
+}
+
 /*  create a Duplex/Transform stream which has
     object-mode on Writable side and buffer/string-mode on Readable side  */
 export function createTransformStreamForWritableSide () {
