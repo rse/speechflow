@@ -28,7 +28,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            interval: { type: "number", val: 250 }
+            interval: { type: "number", pos: 0, val: 250 }
         })
 
         /*  declare node input/output format  */
