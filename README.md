@@ -176,6 +176,7 @@ First a short overview of the available processing nodes:
   **ffmpeg**,
   **wav**,
   **mute**.
+  **meter**.
   **vad**.
 - Audio-to-Text nodes:
   **deepgram**.
@@ -296,6 +297,19 @@ First a short overview of the available processing nodes:
 
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
+
+- Node: **meter**<br/>
+  Purpose: **Loudness metering node**<br/>
+  Example: `meter(250)`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **interval**  | 0 | 250 | *none* |
 
 - Node: **vad**<br/>
   Purpose: **Voice Audio Detection (VAD) node**<br/>

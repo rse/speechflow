@@ -222,6 +222,7 @@ type wsPeerInfo = {
         "./speechflow-node-a2a-ffmpeg.js",
         "./speechflow-node-a2a-wav.js",
         "./speechflow-node-a2a-mute.js",
+        "./speechflow-node-a2a-meter.js",
         "./speechflow-node-a2a-vad.js",
         "./speechflow-node-a2t-deepgram.js",
         "./speechflow-node-t2a-elevenlabs.js",

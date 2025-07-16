@@ -6,8 +6,9 @@
 capturing: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
         vad() |
-            wav(mode: "encode") |
-                file(path: "capture.wav", mode: "w", type: "audio")
+            meter(1000) |
+                wav(mode: "encode") |
+                    file(path: "capture.wav", mode: "w", type: "audio")
 
 #   Pass-through audio from microphone device to speaker
 #   device and in parallel record it to WAV audio file

@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: add "vad" node for voice audio detection
 - IMPROVEMENT: add "mute" node for audio muting
+- IMPROVEMENT: add "meter" node for audio loudness metering
 - IMPROVEMENT: add REST/WebSocket API for external requests to nodes and events from nodes
 
 0.9.9 (2025-07-13)
