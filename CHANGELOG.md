@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.0.0 (2025-07-14)
+1.0.0 (2025-07-16)
 ------------------
 
 - IMPROVEMENT: add "vad" node for voice audio detection
