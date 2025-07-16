@@ -16,6 +16,7 @@
         "declaration":             true,
         "emitDeclarationOnly":     false,
         "types":                   [ "node" ],
+        "sourceMap":               true,
         "rootDir":                 "../src"
     },
     "include": [
