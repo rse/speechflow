@@ -104,6 +104,10 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
                     this.push(chunk)
                     callback()
                 }
+            },
+            final (callback) {
+                this.push(null)
+                callback()
             }
         })
     }

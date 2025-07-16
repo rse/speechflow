@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.0.1 (2025-07-16)
+------------------
+
+- BUGFIX: add "final" callback to Stream.Transform of "meter" node
+
 1.0.0 (2025-07-16)
 ------------------
 
