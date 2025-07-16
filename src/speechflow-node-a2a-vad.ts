@@ -20,6 +20,8 @@ type AudioQueueElement = {
     type:      "audio-frame",
     chunk:     SpeechFlowChunk,
     isSpeech?: boolean
+} | {
+    type:      "audio-eof"
 }
 
 /*  SpeechFlow node for VAD speech-to-speech processing  */
@@ -66,8 +68,16 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         const vadSampleRateTarget = 16000 /* internal target of VAD */
         const vadSamplesPerFrame  = 512   /* required for VAD v5 */
 
-        /*  Voice Activity Detection (VAD)  */
+        /*  establish Voice Activity Detection (VAD) facility  */
         this.vad = await RealTimeVAD.new({
+            model:                   "v5",
+            sampleRate:              this.config.audioSampleRate, /* before resampling to 16KHz */
+            frameSamples:            vadSamplesPerFrame,          /* after  resampling to 16KHz */
+            positiveSpeechThreshold: this.params.posSpeechThreshold,
+            negativeSpeechThreshold: this.params.negSpeechThreshold,
+            minSpeechFrames:         this.params.minSpeechFrames,
+            redemptionFrames:        this.params.redemptionFrames,
+            preSpeechPadFrames:      this.params.preSpeechPadFrames,
             onSpeechStart: () => {
                 log("info", "VAD: speech start")
             },
@@ -79,20 +89,15 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                 log("info", "VAD: speech end (segment too short)")
             },
             onFrameProcessed: (audio) => {
+                /*  annotate the current audio frame  */
                 const element = this.queueVAD.peek()
-                const isSpeech = audio.isSpeech > audio.notSpeech
-                element.isSpeech = isSpeech
-                this.queueVAD.touch()
-                this.queueVAD.walk(+1)
-            },
-            model:                   "v5",
-            sampleRate:              this.config.audioSampleRate, /* before resampling to 16KHz */
-            frameSamples:            vadSamplesPerFrame,          /* after  resampling to 16KHz */
-            positiveSpeechThreshold: this.params.posSpeechThreshold,
-            negativeSpeechThreshold: this.params.negSpeechThreshold,
-            minSpeechFrames:         this.params.minSpeechFrames,
-            redemptionFrames:        this.params.redemptionFrames,
-            preSpeechPadFrames:      this.params.preSpeechPadFrames
+                if (element !== undefined && element.type === "audio-frame") {
+                    const isSpeech = audio.isSpeech > audio.notSpeech
+                    element.isSpeech = isSpeech
+                    this.queueVAD.touch()
+                    this.queueVAD.walk(+1)
+                }
+            }
         })
         this.vad.start()
 
@@ -122,13 +127,12 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         const mode      = this.params.mode
         let carrySamples = new Float32Array()
         let carryStart   = Duration.fromDurationLike(0)
-        let endOfStream = false
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
 
-            /*  receive audio samples  */
+            /*  receive audio chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected audio input as Buffer chunks"))
@@ -173,56 +177,10 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                 }
             },
 
-            /*  send transcription texts  */
-            read (size) {
-                if (endOfStream)
-                    this.push(null)
-                else {
-                    const tryToRead = () => {
-                        const flushFrames = () => {
-                            let pushed = 0
-                            while (true) {
-                                const element = queueSend.peek()
-                                if (element === undefined || element.isSpeech === undefined)
-                                    break
-                                queueSend.walk(+1)
-                                if (element.isSpeech) {
-                                    this.push(element.chunk)
-                                    pushed++
-                                }
-                                else if (mode === "silenced") {
-                                    const chunk = element.chunk.clone()
-                                    const buffer = chunk.payload as Buffer
-                                    buffer.fill(0)
-                                    this.push(chunk)
-                                    pushed++
-                                }
-                                else if (pushed === 0)
-                                    tryToRead()
-                            }
-                        }
-                        const element = queueSend.peek()
-                        if (element !== undefined && element.isSpeech !== undefined)
-                            flushFrames()
-                        else {
-                            const flushOnWrite = () => {
-                                const element = queueSend.peek()
-                                if (element !== undefined && element.isSpeech !== undefined)
-                                    flushFrames()
-                                else
-                                    queue.once("write", flushOnWrite)
-                            }
-                            queue.once("write", flushOnWrite)
-                        }
-                    }
-                    tryToRead()
-                }
-            },
-
-            /*  react on end of input  */
+            /*  receive no more audio chunks (writable side of stream)  */
             final (callback) {
+                /*  flush pending audio chunks  */
                 if (carrySamples.length > 0) {
-                    /*  flush pending audio samples  */
                     const chunkSize = (vadSamplesPerFrame * (cfg.audioSampleRate / vadSampleRateTarget))
                     if (carrySamples.length < chunkSize) {
                         const merged = new Float32Array(chunkSize)
@@ -236,19 +194,73 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     const chunk = new SpeechFlowChunk(carryStart, end, "final", "audio", buf)
                     queueRecv.append({ type: "audio-frame", chunk })
                     vad.processAudio(carrySamples)
+                }
 
-                    /*  give the processing a chance to still process the remaining samples  */
-                    setTimeout(() => {
-                        endOfStream = true
+                /*  signal end of file  */
+                queueRecv.append({ type: "audio-eof" })
+                callback()
+            },
+
+            /*  send audio chunk(s) (readable side of stream)  */
+            read (_size) {
+                /*  try to perform read operation from scratch  */
+                const tryToRead = () => {
+                    /*  flush pending audio chunks  */
+                    const flushPendingChunks = () => {
+                        let pushed = 0
+                        while (true) {
+                            const element = queueSend.peek()
+                            if (element === undefined)
+                                break
+                            else if (element.type === "audio-eof") {
+                                this.push(null)
+                                break
+                            }
+                            else if (element.type === "audio-frame"
+                                && element.isSpeech === undefined)
+                                break
+                            queueSend.walk(+1)
+                            if (element.isSpeech) {
+                                this.push(element.chunk)
+                                pushed++
+                            }
+                            else if (mode === "silenced") {
+                                const chunk = element.chunk.clone()
+                                const buffer = chunk.payload as Buffer
+                                buffer.fill(0)
+                                this.push(chunk)
+                                pushed++
+                            }
+                            else if (mode === "unplugged" && pushed === 0)
+                                /*  we have to await chunks now, as in unplugged
+                                    mode we else would be never called again until
+                                    we at least once push a new chunk as the result  */
+                                tryToRead()
+                        }
+                    }
+
+                    /*  await forthcoming audio chunks  */
+                    const awaitForthcomingChunks = () => {
+                        const element = queueSend.peek()
+                        if (element !== undefined
+                            && element.type === "audio-frame"
+                            && element.isSpeech !== undefined)
+                            flushPendingChunks()
+                        else
+                            queue.once("write", awaitForthcomingChunks)
+                    }
+
+                    const element = queueSend.peek()
+                    if (element !== undefined && element.type === "audio-eof")
                         this.push(null)
-                        callback()
-                    }, 2000)
+                    else if (element !== undefined
+                        && element.type === "audio-frame"
+                        && element.isSpeech !== undefined)
+                        flushPendingChunks()
+                    else
+                        queue.once("write", awaitForthcomingChunks)
                 }
-                else {
-                    endOfStream = true
-                    this.push(null)
-                    callback()
-                }
+                tryToRead()
             }
         })
     }
