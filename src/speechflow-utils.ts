@@ -210,3 +210,171 @@ export class DoubleQueue<T0, T1> extends EventEmitter {
         })
     }
 }
+
+/*  queue element */
+export type QueueElement = { type: string }
+
+/*  queue pointer  */
+export class QueuePointer<T extends QueueElement> extends EventEmitter {
+    /*  internal state  */
+    private index = 0
+
+    /*  construction  */
+    constructor (
+        private name: string,
+        private queue: Queue<T>
+    ) {
+        super()
+    }
+
+    /*  positioning operations  */
+    maxPosition () {
+        return this.queue.elements.length
+    }
+    position (index?: number): number {
+        if (index !== undefined) {
+            this.index = index
+            if (this.index < 0)
+                this.index = 0
+            else if (this.index >= this.queue.elements.length)
+                this.index = this.queue.elements.length
+            this.emit("position", this.index)
+        }
+        return this.index
+    }
+    walk (num: number) {
+        if (num > 0) {
+            for (let i = 0; i < num && this.index < this.queue.elements.length; i++)
+                this.index++
+            this.emit("position", { start: this.index })
+        }
+        else if (num < 0) {
+            for (let i = 0; i < Math.abs(num) && this.index > 0; i++)
+                this.index--
+            this.emit("position", { start: this.index })
+        }
+    }
+    walkForwardUntil (type: T["type"]) {
+        while (this.index < this.queue.elements.length
+            && this.queue.elements[this.index].type !== type)
+            this.index++
+        this.emit("position", { start: this.index })
+    }
+    walkBackwardUntil (type: T["type"]) {
+        while (this.index > 0
+            && this.queue.elements[this.index].type !== type)
+            this.index--
+        this.emit("position", { start: this.index })
+    }
+
+    /*  search operations  */
+    searchForward (type: T["type"]) {
+        let position = this.index
+        while (position < this.queue.elements.length
+            && this.queue.elements[position].type !== type)
+            position++
+        this.emit("search", { start: this.index, end: position })
+        return position
+    }
+    searchBackward (type: T["type"]) {
+        let position = this.index
+        while (position > 0
+            && this.queue.elements[position].type !== type)
+            position--
+        this.emit("search", { start: position, end: this.index })
+        return position
+    }
+
+    /*  reading operations  */
+    peek (position?: number) {
+        if (position === undefined)
+            position = this.index
+        else {
+            if (position < 0)
+                position = 0
+            else if (position > this.queue.elements.length)
+                position = this.queue.elements.length
+        }
+        const element = this.queue.elements[position]
+        this.queue.emit("read", { start: position, end: position })
+        return element
+    }
+    read () {
+        const element = this.queue.elements[this.index]
+        if (this.index < this.queue.elements.length)
+            this.index++
+        this.queue.emit("read", { start: this.index - 1, end: this.index - 1 })
+        return element
+    }
+    slice (size?: number) {
+        let slice: T[]
+        const start = this.index
+        if (size !== undefined) {
+            if (size < 0)
+                size = 0
+            else if (size > this.queue.elements.length - this.index)
+                size = this.queue.elements.length - this.index
+            slice = this.queue.elements.slice(this.index, size)
+            this.index += size
+        }
+        else {
+            slice = this.queue.elements.slice(this.index)
+            this.index = this.queue.elements.length
+        }
+        this.queue.emit("read", { start, end: this.index })
+        return slice
+    }
+
+    /*  writing operations  */
+    touch () {
+        if (this.index >= this.queue.elements.length)
+            throw new Error("cannot touch after last element")
+        this.queue.emit("write", { start: this.index, end: this.index + 1 })
+    }
+    append (element: T) {
+        this.queue.elements.push(element)
+        this.index = this.queue.elements.length
+        this.queue.emit("write", { start: this.index - 1, end: this.index - 1 })
+    }
+    insert (element: T) {
+        this.queue.elements.splice(this.index++, 0, element)
+        this.queue.emit("write", { start: this.index - 1, end: this.index })
+    }
+    delete () {
+        if (this.index >= this.queue.elements.length)
+            throw new Error("cannot delete after last element")
+        this.queue.elements.splice(this.index, 1)
+        this.queue.emit("write", { start: this.index, end: this.index })
+    }
+}
+
+/*  queue  */
+export class Queue<T extends QueueElement> extends EventEmitter {
+    public elements: T[] = []
+    private pointers = new Map<string, QueuePointer<T>>()
+    pointerUse (name: string): QueuePointer<T> {
+        if (!this.pointers.has(name))
+            this.pointers.set(name, new QueuePointer<T>(name, this))
+        return this.pointers.get(name)!
+    }
+    pointerDelete (name: string): void {
+        if (!this.pointers.has(name))
+            throw new Error("pointer not exists")
+        this.pointers.delete(name)
+    }
+    trim (): void {
+        /*  determine minimum pointer position  */
+        let min = this.elements.length
+        for (const pointer of this.pointers.values())
+            if (min > pointer.position())
+                min = pointer.position()
+
+        /*  trim the maximum amount of first elements  */
+        this.elements.splice(0, min)
+
+        /*  shift all pointers  */
+        for (const pointer of this.pointers.values())
+            pointer.position(pointer.position() - min)
+    }
+}
+

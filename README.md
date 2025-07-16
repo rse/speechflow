@@ -176,6 +176,7 @@ First a short overview of the available processing nodes:
   **ffmpeg**,
   **wav**,
   **mute**.
+  **vad**.
 - Audio-to-Text nodes:
   **deepgram**.
 - Text-to-Text nodes:
@@ -295,6 +296,24 @@ First a short overview of the available processing nodes:
 
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
+
+- Node: **vad**<br/>
+  Purpose: **Voice Audio Detection (VAD) node**<br/>
+  Example: `vad()`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **mode**               | *none* | "unplugged" | `/^(?:silenced|unplugged)$/` |
+  | **posSpeechThreshold** | *none* | 0.50  | *none* |
+  | **negSpeechThreshold** | *none* | 0.35  | *none* |
+  | **minSpeechFrames**    | *none* | 4     | *none* |
+  | **redemptionFrames**   | *none* | 8     | *none* |
+  | **preSpeechPadFrames** | *none* | 1     | *none* |
 
 ### Audio-to-Text Nodes:
 

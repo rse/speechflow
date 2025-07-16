@@ -5,7 +5,7 @@
 #   Capture audio from microphone device into WAV audio file
 capturing: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-        mute() |
+        vad() |
             wav(mode: "encode") |
                 file(path: "capture.wav", mode: "w", type: "audio")
 

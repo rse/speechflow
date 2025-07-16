@@ -5,6 +5,7 @@ ChangeLog
 1.0.0 (2025-07-14)
 ------------------
 
+- IMPROVEMENT: add "vad" node for voice audio detection
 - IMPROVEMENT: add "mute" node for audio muting
 - IMPROVEMENT: add REST/WebSocket API for external requests to nodes and events from nodes
 
