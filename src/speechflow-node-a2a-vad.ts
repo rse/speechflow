@@ -40,9 +40,9 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
             mode:               { type: "string", val: "unplugged", match: /^(?:silenced|unplugged)$/ },
             posSpeechThreshold: { type: "number", val: 0.50 },
             negSpeechThreshold: { type: "number", val: 0.35 },
-            minSpeechFrames:    { type: "number", val: 4    }, /* (= 128ms: 4 x 512 frameSamples) */
-            redemptionFrames:   { type: "number", val: 8    }, /* (= 256ms: 8 x 512 frameSamples) */
-            preSpeechPadFrames: { type: "number", val: 1    }  /* (= 32ms:  1 x 512 frameSamples) */
+            minSpeechFrames:    { type: "number", val: 2    },
+            redemptionFrames:   { type: "number", val: 24   },
+            preSpeechPadFrames: { type: "number", val: 1    }
         })
 
         /*  declare node input/output format  */
@@ -174,35 +174,44 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                 if (endOfStream)
                     this.push(null)
                 else {
-                    const flushFrames = () => {
-                        while (true) {
-                            const element = queueSend.peek()
-                            if (element === undefined || element.isSpeech === undefined)
-                                break
-                            if (element.isSpeech)
-                                this.push(element.chunk)
-                            else if (mode === "silenced") {
-                                const chunk = element.chunk.clone()
-                                const buffer = chunk.payload as Buffer
-                                buffer.fill(0)
-                                this.push(chunk)
+                    const tryToRead = () => {
+                        const flushFrames = () => {
+                            let pushed = 0
+                            while (true) {
+                                const element = queueSend.peek()
+                                if (element === undefined || element.isSpeech === undefined)
+                                    break
+                                queueSend.walk(+1)
+                                if (element.isSpeech) {
+                                    this.push(element.chunk)
+                                    pushed++
+                                }
+                                else if (mode === "silenced") {
+                                    const chunk = element.chunk.clone()
+                                    const buffer = chunk.payload as Buffer
+                                    buffer.fill(0)
+                                    this.push(chunk)
+                                    pushed++
+                                }
+                                else if (pushed === 0)
+                                    tryToRead()
                             }
-                            queueSend.walk(+1)
+                        }
+                        const element = queueSend.peek()
+                        if (element !== undefined && element.isSpeech !== undefined)
+                            flushFrames()
+                        else {
+                            const flushOnWrite = () => {
+                                const element = queueSend.peek()
+                                if (element !== undefined && element.isSpeech !== undefined)
+                                    flushFrames()
+                                else
+                                    queue.once("write", flushOnWrite)
+                            }
+                            queue.once("write", flushOnWrite)
                         }
                     }
-                    const element = queueSend.peek()
-                    if (element !== undefined && element.isSpeech !== undefined)
-                        flushFrames()
-                    else {
-                        const flushOnWrite = () => {
-                            const element = queueSend.peek()
-                            if (element !== undefined && element.isSpeech !== undefined)
-                                flushFrames()
-                            else
-                                queue.once("write", flushOnWrite)
-                        }
-                        queue.once("write", flushOnWrite)
-                    }
+                    tryToRead()
                 }
             },
 
