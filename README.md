@@ -311,8 +311,8 @@ First a short overview of the available processing nodes:
   | **mode**               | *none* | "unplugged" | `/^(?:silenced|unplugged)$/` |
   | **posSpeechThreshold** | *none* | 0.50  | *none* |
   | **negSpeechThreshold** | *none* | 0.35  | *none* |
-  | **minSpeechFrames**    | *none* | 4     | *none* |
-  | **redemptionFrames**   | *none* | 8     | *none* |
+  | **minSpeechFrames**    | *none* | 2     | *none* |
+  | **redemptionFrames**   | *none* | 12    | *none* |
   | **preSpeechPadFrames** | *none* | 1     | *none* |
 
 ### Audio-to-Text Nodes:
