@@ -41,6 +41,23 @@ export function audioArrayDuration (
     return totalSamples / sampleRate
 }
 
+/*  helper function: convert Buffer in PCM/I16 to Float32Array in PCM/F32 format  */
+export function convertBufToF32 (buf: Buffer, littleEndian = true) {
+    const dataView = new DataView(buf.buffer)
+    const arr = new Float32Array(buf.length / 2)
+    for (let i = 0; i < arr.length; i++)
+        arr[i] = dataView.getInt16(i * 2, littleEndian) / 32768
+    return arr
+}
+
+/*  helper function: convert Float32Array in PCM/F32 to Buffer in PCM/I16 format  */
+export function convertF32ToBuf (arr: Float32Array) {
+    const int16Array = new Int16Array(arr.length)
+    for (let i = 0; i < arr.length; i++)
+        int16Array[i] = Math.max(-32768, Math.min(32767, Math.round(arr[i] * 32768)))
+    return Buffer.from(int16Array.buffer)
+}
+
 /*  create a Duplex/Transform stream which has
     object-mode on Writable side and buffer/string-mode on Readable side  */
 export function createTransformStreamForWritableSide () {

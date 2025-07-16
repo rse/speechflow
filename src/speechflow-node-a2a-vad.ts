@@ -101,23 +101,6 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         })
         this.vad.start()
 
-        /*  helper function: convert Buffer in PCM/I16 to Float32Array in PCM/F32 format  */
-        const convertBufToF32 = (buf: Buffer) => {
-            const dataView = new DataView(buf.buffer)
-            const arr = new Float32Array(buf.length / 2)
-            for (let i = 0; i < arr.length; i++)
-                arr[i] = dataView.getInt16(i * 2, cfg.audioLittleEndian) / 32768
-            return arr
-        }
-
-        /*  helper function: convert Float32Array in PCM/F32 to Buffer in PCM/I16 format  */
-        const convertF32ToBuf = (arr: Float32Array) => {
-            const int16Array = new Int16Array(arr.length)
-            for (let i = 0; i < arr.length; i++)
-                int16Array[i] = Math.max(-32768, Math.min(32767, Math.round(arr[i] * 32768)))
-            return Buffer.from(int16Array.buffer)
-        }
-
         /*  provide Duplex stream and internally attach to VAD  */
         const vad       = this.vad
         const cfg       = this.config
@@ -140,7 +123,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     callback()
                 else {
                     /*  convert audio samples from PCM/I16 to PCM/F32  */
-                    let data = convertBufToF32(chunk.payload)
+                    let data = utils.convertBufToF32(chunk.payload, cfg.audioLittleEndian)
                     let start = chunk.timestampStart
 
                     /*  merge previous carry samples  */
@@ -159,7 +142,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     const chunks = Math.trunc(data.length / chunkSize)
                     for (let i = 0; i < chunks; i++) {
                         const frame = data.slice(i * chunkSize, (i + 1) * chunkSize)
-                        const buf = convertF32ToBuf(frame)
+                        const buf = utils.convertF32ToBuf(frame)
                         const duration = utils.audioBufferDuration(buf)
                         const end = start.plus(duration)
                         const chunk = new SpeechFlowChunk(start, end, "final", "audio", buf)
@@ -188,7 +171,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         merged.fill(0.0, carrySamples.length, chunkSize)
                         carrySamples = merged
                     }
-                    const buf = convertF32ToBuf(carrySamples)
+                    const buf = utils.convertF32ToBuf(carrySamples)
                     const duration = utils.audioBufferDuration(buf)
                     const end = carryStart.plus(duration)
                     const chunk = new SpeechFlowChunk(carryStart, end, "final", "audio", buf)
