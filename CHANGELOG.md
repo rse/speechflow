@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.0.1 (2025-07-16)
+1.1.0 (2025-07-19)
 ------------------
 
 - IMPROVEMENT: allow querying the status of nodes: currently used for gathering credit/usage information
