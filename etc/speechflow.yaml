@@ -23,7 +23,7 @@ pass-through: |
 transcription: |
     file(path: argv.0, mode: "r", type: "audio") |
         ffmpeg(src: "mp3", dst: "pcm") |
-            deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+            deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
                 format(width: 80) |
                     file(path: argv.1, mode: "w", type: "text")
 
@@ -31,7 +31,7 @@ transcription: |
 subtitling: |
     file(path: argv.0, mode: "r", type: "audio") |
         ffmpeg(src: "mp3", dst: "pcm") |
-            deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+            deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
                 subtitle(format: "vtt") |
                     file(path: argv.1, mode: "w", type: "text")
 
@@ -54,10 +54,10 @@ studio: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
         wav(mode: "encode") |
             file(path: "program-de.wav", mode: "w", type: "audio"),
-        deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM, language: "de") | {
+        deepgram(key: env.SPEECHFLOW_DEEPGRAM_KEY, language: "de") | {
             format(width: 80) |
                 file(path: "program-de.txt", mode: "w", type: "text"),
-            deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en") | {
+            deepl(key: env.SPEECHFLOW_DEEPL_KEY, src: "de", dst: "en") | {
                 format(width: 80) |
                     file(path: "program-en.txt", mode: "w", type: "text"),
                 subtitle(format: "vtt") | {

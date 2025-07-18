@@ -97,7 +97,7 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
   ```
   file(path: argv.0, mode: "r", type: "audio") |
       ffmpeg(src: "mp3", dst: "pcm") |
-          deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+          deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
               format(width: 80) |
                   file(path: argv.1, mode: "w", type: "text")
   ```
@@ -107,7 +107,7 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
   ```
   file(path: argv.0, mode: "r", type: "audio") |
       ffmpeg(src: "mp3", dst: "pcm") |
-          deepgram(language: "de", key: env.SPEECHFLOW_KEY_DEEPGRAM) |
+          deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
               subtitle(format: "vtt") |
                   file(path: argv.1, mode: "w", type: "text")
   ```
@@ -137,10 +137,10 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
   device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
       wav(mode: "encode") |
           file(path: "program-de.wav", mode: "w", type: "audio"),
-      deepgram(key: env.SPEECHFLOW_KEY_DEEPGRAM, language: "de") | {
+      deepgram(key: env.SPEECHFLOW_DEEPGRAM_KEY, language: "de") | {
           format(width: 80) |
               file(path: "program-de.txt", mode: "w", type: "text"),
-          deepl(key: env.SPEECHFLOW_KEY_DEEPL, src: "de", dst: "en") | {
+          deepl(key: env.SPEECHFLOW_DEEPL_KEY, src: "de", dst: "en") | {
               format(width: 80) |
                   file(path: "program-en.txt", mode: "w", type: "text"),
               subtitle(format: "vtt") | {
@@ -343,7 +343,8 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
-  | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPGRAM | *none* |
+  | **key**      | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY | *none* |
+  | **keyAdm**   | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY\_ADM | *none* |
   | **model**    | 0         | "nova-3" | *none* |
   | **version**  | 1         | "latest" | *none* |
   | **language** | 2         | "multi"  | *none* |
@@ -362,7 +363,7 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
-  | **key**      | *none*    | env.SPEECHFLOW\_KEY\_DEEPL | *none* |
+  | **key**      | *none*    | env.SPEECHFLOW\_DEEPL\_KEY | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
@@ -381,7 +382,7 @@ First a short overview of the available processing nodes:
   | **api**      | *none*    | "https://api.openai.com" | `/^https?:\/\/.+?:\d+$/` |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
-  | **key**      | *none*    | env.SPEECHFLOW\_KEY\_OPENAI | *none* |
+  | **key**      | *none*    | env.SPEECHFLOW\_OPENAI\_KEY | *none* |
   | **model**    | *none*    | "gpt-4o-mini" | *none* |
 
 - Node: **ollama**<br/>
@@ -456,7 +457,7 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
-  | **key**      | *none*    | env.SPEECHFLOW\_KEY\_ELEVENLABS | *none* |
+  | **key**      | *none*    | env.SPEECHFLOW\_ELEVENLABS\_KEY | *none* |
   | **voice**    | 0         | "Brian"  | *none* |
   | **language** | 1         | "de"     | *none* |
 
