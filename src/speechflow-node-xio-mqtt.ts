@@ -39,12 +39,6 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
             type:       { type: "string", pos: 6, val: "text", match: /^(?:audio|text)$/ }
         })
 
-        /*  logical parameter sanity check  */
-        if ((this.params.mode === "w" || this.params.mode === "rw") && this.params.topicWrite === "")
-            throw new Error("writing to MQTT requires a topicWrite parameter")
-        if ((this.params.mode === "r" || this.params.mode === "rw") && this.params.topicRead === "")
-            throw new Error("reading from MQTT requires a topicRead parameter")
-
         /*  declare node input/output format  */
         if (this.params.mode === "rw") {
             this.input  = this.params.type
@@ -62,6 +56,14 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        /*  logical parameter sanity check  */
+        if (this.params.url === "")
+            throw new Error("required parameter \"url\" has to be given")
+        if ((this.params.mode === "w" || this.params.mode === "rw") && this.params.topicWrite === "")
+            throw new Error("writing to MQTT requires a topicWrite parameter")
+        if ((this.params.mode === "r" || this.params.mode === "rw") && this.params.topicRead === "")
+            throw new Error("reading from MQTT requires a topicRead parameter")
+
         /*  connect remotely to a MQTT broker  */
         this.broker = MQTT.connect(this.params.url, {
             protocolId:      "MQTT",

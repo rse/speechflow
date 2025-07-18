@@ -26,6 +26,8 @@ import installedPackages        from "installed-packages"
 import dotenvx                  from "@dotenvx/dotenvx"
 import syspath                  from "syspath"
 import * as arktype             from "arktype"
+import Table                    from "cli-table3"
+import chalk                    from "chalk"
 
 /*  internal dependencies  */
 import SpeechFlowNode           from "./speechflow-node"
@@ -63,11 +65,13 @@ type wsPeerInfo = {
             "[-a|--address <ip-address>] " +
             "[-p|--port <tcp-port>] " +
             "[-C|--cache <directory>] " +
+            "[-S|--status] " +
             "[-e|--expression <expression>] " +
             "[-f|--file <file>] " +
             "[-c|--config <id>@<yaml-config-file>] " +
             "[<argument> [...]]"
         )
+        .version(false)
         .option("V", {
             alias:    "version",
             type:     "boolean",
@@ -112,6 +116,14 @@ type wsPeerInfo = {
             default:  path.join(dataDir, "cache"),
             describe: "directory for cached files (primarily AI model files)"
         })
+        .option("S", {
+            alias:    "status",
+            type:     "boolean",
+            array:    false,
+            coerce,
+            default:  false,
+            describe: "show one-time status of nodes"
+        })
         .option("e", {
             alias:    "expression",
             type:     "string",
@@ -142,7 +154,6 @@ type wsPeerInfo = {
         .help("h", "show usage help")
         .alias("h", "help")
         .showHelpOnFail(true)
-        .version(false)
         .strict()
         .demand(0)
         .parse(hideBin(process.argv))
@@ -268,6 +279,45 @@ type wsPeerInfo = {
         }
     }
 
+    /*  static configuration  */
+    const cfg = {
+        audioChannels:     1,
+        audioBitDepth:     16,
+        audioLittleEndian: true,
+        audioSampleRate:   48000,
+        textEncoding:      "utf8",
+        cacheDir:          args.C
+    }
+
+    /*  handle one-time status query of nodes  */
+    if (args.S) {
+        const table = new Table({
+            head: [
+                chalk.reset.bold("NODE"),
+                chalk.reset.bold("PROPERTY"),
+                chalk.reset.bold("VALUE")
+            ],
+            colWidths: [ 15, 15, 50 - (2 * 2 + 2 * 3) ],
+            style: { "padding-left": 1, "padding-right": 1, border: [ "grey" ], compact: true },
+            chars: { "left-mid": "", mid: "", "mid-mid": "", "right-mid": "" }
+        })
+        for (const name of Object.keys(nodes)) {
+            cli!.log("info", `gathering status of node <${name}>`)
+            const node = new nodes[name](name, cfg, {}, [])
+            const status = await node.status()
+            if (Object.keys(status).length > 0) {
+                let first = true
+                for (const key of Object.keys(status)) {
+                    table.push([ first ? chalk.bold(name) : "", key, chalk.blue(status[key]) ])
+                    first = false
+                }
+            }
+        }
+        const output = table.toString()
+        process.stdout.write(output + "\n")
+        process.exit(0)
+    }
+
     /*  graph processing: PASS 1: parse DSL and create and connect nodes  */
     const flowlink = new FlowLink<SpeechFlowNode>({
         trace: (msg: string) => {
@@ -277,14 +327,6 @@ type wsPeerInfo = {
     const variables = { argv: args._, env: process.env }
     const graphNodes = new Set<SpeechFlowNode>()
     const nodeNums = new Map<typeof SpeechFlowNode, number>()
-    const cfg = {
-        audioChannels:     1,
-        audioBitDepth:     16,
-        audioLittleEndian: true,
-        audioSampleRate:   48000,
-        textEncoding:      "utf8",
-        cacheDir:          args.C
-    }
     let ast: unknown
     try {
         ast = flowlink.compile(config)
@@ -678,7 +720,7 @@ type wsPeerInfo = {
     if (cli !== null)
         cli.log("error", err.message)
     else
-        process.stderr.write(`${pkg.name}: ERROR: ${err.message}\n`)
+        process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message} ${err.stack}\n`)
     process.exit(1)
 })
 

@@ -29,7 +29,8 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            key:      { type: "string", val: process.env.SPEECHFLOW_KEY_DEEPGRAM },
+            key:      { type: "string", val: process.env.SPEECHFLOW_DEEPGRAM_KEY },
+            keyAdm:   { type: "string", val: process.env.SPEECHFLOW_DEEPGRAM_KEY_ADM },
             model:    { type: "string", val: "nova-3", pos: 0 },
             version:  { type: "string", val: "latest", pos: 1 },
             language: { type: "string", val: "multi",  pos: 2 }
@@ -38,6 +39,21 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         /*  declare node input/output format  */
         this.input  = "audio"
         this.output = "text"
+    }
+
+    /*  one-time status of node  */
+    async status () {
+        let balance  = 0
+        const deepgram = Deepgram.createClient(this.params.keyAdm)
+        const response = await deepgram.manage.getProjects()
+        if (response !== null && response.error === null) {
+            for (const project of response.result.projects) {
+                const response = await deepgram.manage.getProjectBalances(project.project_id)
+                if (response !== null && response.error === null)
+                    balance += response.result.balances[0]?.amount ?? 0
+            }
+        }
+        return { balance: balance.toFixed(2) }
     }
 
     /*  open node  */

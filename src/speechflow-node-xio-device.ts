@@ -31,7 +31,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            device: { type: "string", pos: 0,            match: /^(.+?):(.+)$/ },
+            device: { type: "string", pos: 0, val: "",   match: /^(.+?):(.+)$/ },
             mode:   { type: "string", pos: 1, val: "rw", match: /^(?:r|w|rw)$/ }
         })
 
@@ -86,6 +86,9 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        if (this.params.device === "")
+            throw new Error("required parameter \"device\" has to be given")
+
         /*  determine device  */
         const device = this.audioDeviceFromURL(this.params.mode, this.params.device)
 

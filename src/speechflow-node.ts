@@ -170,6 +170,11 @@ export default class SpeechFlowNode extends Events.EventEmitter {
         this.emit("log", level, msg, data)
     }
 
+    /*  default implementation for status operation  */
+    async status (): Promise<{ [ key: string ]: string | number }> {
+        return {}
+    }
+
     /*  default implementation for open/close operations  */
     async open  () {}
     async close () {}

@@ -23,7 +23,7 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            path: { type: "string", pos: 0 },
+            path: { type: "string", pos: 0, val: "" },
             mode: { type: "string", pos: 1, val: "r",     match: /^(?:r|w|rw)$/ },
             type: { type: "string", pos: 2, val: "audio", match: /^(?:audio|text)$/ }
         })
@@ -45,6 +45,8 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        if (this.params.path === "")
+            throw new Error("required parameter \"path\" has to be given")
         if (this.params.mode === "rw") {
             if (this.params.path === "-") {
                 /*  standard I/O  */

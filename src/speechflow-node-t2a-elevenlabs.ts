@@ -30,7 +30,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            key:      { type: "string", val: process.env.SPEECHFLOW_KEY_ELEVENLABS },
+            key:      { type: "string", val: process.env.SPEECHFLOW_ELEVENLABS_KEY },
             voice:    { type: "string", val: "Brian",   pos: 0, match: /^(?:.+)$/ },
             language: { type: "string", val: "en",      pos: 1, match: /^(?:de|en)$/ },
             speed:    { type: "number", val: 1.05,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
@@ -40,6 +40,14 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  declare node input/output format  */
         this.input  = "text"
         this.output = "audio"
+    }
+
+    /*  one-time status of node  */
+    async status () {
+        const elevenlabs = new ElevenLabs.ElevenLabsClient({ apiKey: this.params.key })
+        const subscription = await elevenlabs.user.subscription.get()
+        const percent = subscription.characterCount / subscription.characterLimit
+        return { usage: `${percent.toFixed(2)}%` }
     }
 
     /*  open node  */

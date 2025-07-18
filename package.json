@@ -55,7 +55,8 @@
         "kokoro-js":                        "1.2.1",
         "@ericedouard/vad-node-realtime":   "0.2.0",
         "luxon":                            "3.7.1",
-        "wrap-text":                        "1.0.10"
+        "wrap-text":                        "1.0.10",
+        "cli-table3":                       "0.6.5"
     },
     "devDependencies": {
         "eslint":                           "9.31.0",

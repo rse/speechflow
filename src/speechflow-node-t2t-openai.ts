@@ -149,7 +149,7 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
         this.configure({
             src:   { type: "string", pos: 0, val: "de", match: /^(?:de|en)$/   },
             dst:   { type: "string", pos: 1, val: "en", match: /^(?:de|en)$/   },
-            key:   { type: "string", val: process.env.SPEECHFLOW_KEY_OPENAI },
+            key:   { type: "string", val: process.env.SPEECHFLOW_OPENAI_KEY },
             api:   { type: "string", val: "https://api.openai.com/v1", match: /^https?:\/\/.+?:\d+$/ },
             model: { type: "string", val: "gpt-4o-mini" }
         })

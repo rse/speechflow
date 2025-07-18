@@ -23,7 +23,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             type: { type: "string", pos: 0, val: "audio", match: /^(?:audio|text)$/ },
-            name: { type: "string", pos: 1 }
+            name: { type: "string", pos: 1, val: "trace" }
         })
 
         /*  declare node input/output format  */
