@@ -16,7 +16,8 @@ export class SpeechFlowChunk {
         public timestampEnd:   Duration,
         public kind:           "intermediate" | "final",
         public type:           "audio" | "text",
-        public payload:        Buffer | string
+        public payload:        Buffer | string,
+        public meta            = new Map<string, any>()
     ) {}
     clone () {
         let payload: Buffer | string
@@ -29,7 +30,8 @@ export class SpeechFlowChunk {
             Duration.fromMillis(this.timestampEnd.toMillis()),
             this.kind,
             this.type,
-            payload
+            payload,
+            new Map(this.meta)
         )
     }
 }
