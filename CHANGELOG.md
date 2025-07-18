@@ -5,6 +5,7 @@ ChangeLog
 1.0.1 (2025-07-16)
 ------------------
 
+- IMPROVEMENT: allow querying the status of nodes: currently used for gathering credit/usage information
 - BUGFIX: add "final" callback to Stream.Transform of "meter" node
 - BUGFIX: fix positional argument usage in "meter" node
 - UPGRADE: upgrade NPM dependencies
