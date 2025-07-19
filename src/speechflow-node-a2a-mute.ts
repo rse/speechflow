@@ -72,6 +72,7 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
                 else if (self.muteMode === "silenced") {
                     /*  pass-through a silenced chunk  */
                     chunk = chunk.clone()
+                    chunk.meta.set("muted", true)
                     const buffer = chunk.payload as Buffer
                     buffer.fill(0)
                     callback()
