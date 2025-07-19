@@ -7,52 +7,69 @@
 /*  standard dependencies  */
 import Stream           from "node:stream"
 
-/*  external dependencies  */
-import wav              from "wav"
-
 /*  internal dependencies  */
-import SpeechFlowNode   from "./speechflow-node"
-import * as utils       from "./speechflow-utils"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
-/*  utility class for wrapping a custom stream into a regular Transform stream  */
-class StreamWrapper extends Stream.Transform {
-    private foreignStream: any
-    constructor (foreignStream: any, options: Stream.TransformOptions = {}) {
-        options.readableObjectMode = true
-        options.writableObjectMode = true
-        super(options)
-        this.foreignStream = foreignStream
-        this.foreignStream.on("data", (chunk: any) => {
-            this.push(chunk)
-        })
-        this.foreignStream.on("error", (err: Error) => {
-            this.emit("error", err)
-        })
-        this.foreignStream.on("end", () => {
-            this.push(null)
-        })
-    }
-    _transform (chunk: any, encoding: BufferEncoding, callback: Stream.TransformCallback): void {
-        try {
-            const canContinue = this.foreignStream.write(chunk)
-            if (canContinue)
-                callback()
-            else
-                this.foreignStream.once("drain", callback)
-        }
-        catch (err) {
-            callback(err as Error)
-        }
-    }
-    _flush (callback: Stream.TransformCallback): void {
-        try {
-            if (typeof this.foreignStream.end === "function")
-                this.foreignStream.end()
-            callback()
-        }
-        catch (err) {
-            callback(err as Error)
-        }
+/*  write WAV header  */
+const writeWavHeader = (
+    length: number,
+    options?: { audioFormat?: number, channels?: number, sampleRate?: number, bitDepth?: number }
+) => {
+    const audioFormat  = options?.audioFormat ?? 0x001 /* PCM */
+    const channels     = options?.channels    ?? 1     /* mono */
+    const sampleRate   = options?.sampleRate  ?? 44100 /* 44KHz */
+    const bitDepth     = options?.bitDepth    ?? 16    /* 16-Bit */
+
+    const headerLength = 44
+    const dataLength   = length || (4294967295 - 100)
+    const fileSize     = dataLength + headerLength
+    const header       = Buffer.alloc(headerLength)
+
+    const RIFF         = Buffer.alloc(4, "RIFF")
+    const WAVE         = Buffer.alloc(4, "WAVE")
+    const fmt          = Buffer.alloc(4, "fmt ")
+    const data         = Buffer.alloc(4, "data")
+    const byteRate     = (sampleRate * channels * bitDepth) / 8
+    const blockAlign   = (channels * bitDepth) / 8
+
+    let offset = 0
+    RIFF.copy(header, offset);                  offset += RIFF.length
+    header.writeUInt32LE(fileSize - 8, offset); offset += 4
+    WAVE.copy(header, offset);                  offset += WAVE.length
+    fmt.copy(header, offset);                   offset += fmt.length
+    header.writeUInt32LE(16, offset);           offset += 4
+    header.writeUInt16LE(audioFormat, offset);  offset += 2
+    header.writeUInt16LE(channels, offset);     offset += 2
+    header.writeUInt32LE(sampleRate, offset);   offset += 4
+    header.writeUInt32LE(byteRate, offset);     offset += 4
+    header.writeUInt16LE(blockAlign, offset);   offset += 2
+    header.writeUInt16LE(bitDepth, offset);     offset += 2
+    data.copy(header, offset);                  offset += data.length
+    header.writeUInt32LE(dataLength, offset);   offset += 4
+
+    return header
+}
+
+/*  read WAV header  */
+const readWavHeader = (buffer: Buffer) => {
+    let offset = 0
+    const riffHead     = buffer.subarray(offset, offset + 4).toString(); offset += 4
+    const fileSize     = buffer.readUInt32LE(offset);                    offset += 4
+    const waveHead     = buffer.subarray(offset, offset + 4).toString(); offset += 4
+    const fmtHead      = buffer.subarray(offset, offset + 4).toString(); offset += 4
+    const formatLength = buffer.readUInt32LE(offset);                    offset += 4
+    const audioFormat  = buffer.readUInt16LE(offset);                    offset += 2
+    const channels     = buffer.readUInt16LE(offset);                    offset += 2
+    const sampleRate   = buffer.readUInt32LE(offset);                    offset += 4
+    const byteRate     = buffer.readUInt32LE(offset);                    offset += 4
+    const blockAlign   = buffer.readUInt16LE(offset);                    offset += 2
+    const bitDepth     = buffer.readUInt16LE(offset);                    offset += 2
+    const data         = buffer.subarray(offset, offset + 4).toString(); offset += 4
+    const dataLength   = buffer.readUInt32LE(offset);                    offset += 4
+
+    return {
+        riffHead, fileSize, waveHead, fmtHead, formatLength, audioFormat,
+        channels, sampleRate, byteRate, blockAlign, bitDepth, data, dataLength
     }
 }
 
@@ -77,52 +94,72 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        if (this.params.mode === "encode") {
-            /*  convert raw/PCM to WAV/PCM  */
-            /*  NOTICE: as this is a continuous stream, the resulting WAV header is not 100%
-                conforming to the WAV standard, as it has to use a zero duration information.
-                This cannot be changed in a stream-based processing.  */
-            const writer = new wav.Writer({
-                format:     0x0001 /* PCM */,
-                channels:   this.config.audioChannels,
-                sampleRate: this.config.audioSampleRate,
-                bitDepth:   this.config.audioBitDepth
-            })
-            this.stream = new StreamWrapper(writer)
-        }
-        else if (this.params.mode === "decode") {
-            /*  convert WAV/PCM to raw/PCM  */
-            const reader = new wav.Reader()
-            reader.on("format", (format: any) => {
-                this.log("info", `WAV audio stream: format=${format.audioFormat === 0x0001 ? "PCM" :
-                    "0x" + (format.audioFormat as number).toString(16).padStart(4, "0")} ` +
-                    `bitDepth=${format.bitDepth} ` +
-                    `signed=${format.signed ? "yes" : "no"} ` +
-                    `endian=${format.endianness} ` +
-                    `sampleRate=${format.sampleRate} ` +
-                    `channels=${format.channels}`)
-                if (format.audioFormat !== 0x0001 /* PCM */)
-                    throw new Error("WAV not based on PCM format")
-                if (format.bitDepth !== 16)
-                    throw new Error("WAV not based on 16 bit samples")
-                if (!format.signed)
-                    throw new Error("WAV not based on signed integers")
-                if (format.endianness !== "LE")
-                    throw new Error("WAV not based on little endianness")
-                if (format.sampleRate !== 48000)
-                    throw new Error("WAV not based on 48Khz sample rate")
-                if (format.channels !== 1)
-                    throw new Error("WAV not based on mono channel")
-            })
-            this.stream = new StreamWrapper(reader)
-        }
-        else
-            throw new Error(`invalid operation mode "${this.params.mode}"`)
-
-        /*  convert regular stream into object-mode stream  */
-        const wrapper1 = utils.createTransformStreamForWritableSide()
-        const wrapper2 = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
-        this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
+        /*  establish a transform stream  */
+        const self = this
+        let firstChunk = true
+        this.stream = new Stream.Transform({
+            readableObjectMode: true,
+            writableObjectMode: true,
+            decodeStrings:      false,
+            transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (!Buffer.isBuffer(chunk.payload))
+                    callback(new Error("invalid chunk payload type"))
+                else if (firstChunk) {
+                    if (self.params.mode === "encode") {
+                        /*  convert raw/PCM to WAV/PCM
+                            (NOTICE: as this is a continuous stream, the
+                            resulting WAV header is not 100% conforming
+                            to the WAV standard, as it has to use a zero
+                            duration information. This cannot be changed in
+                            a stream-based processing.)  */
+                        const headerBuffer = writeWavHeader(0, {
+                            audioFormat: 0x0001 /* PCM */,
+                            channels:    self.config.audioChannels,
+                            sampleRate:  self.config.audioSampleRate,
+                            bitDepth:    self.config.audioBitDepth
+                        })
+                        const headerChunk = chunk.clone()
+                        headerChunk.payload = headerBuffer
+                        this.push(headerChunk)
+                        this.push(chunk)
+                        callback()
+                    }
+                    else if (self.params.mode === "decode") {
+                        /*  convert WAV/PCM to raw/PCM  */
+                        const header = readWavHeader(chunk.payload)
+                        self.log("info", "WAV audio stream: " +
+                            `audioFormat=${header.audioFormat === 0x0001 ? "PCM" :
+                                "0x" + (header.audioFormat as number).toString(16).padStart(4, "0")} ` +
+                            `channels=${header.channels} ` +
+                            `sampleRate=${header.sampleRate} ` +
+                            `bitDepth=${header.bitDepth}`)
+                        if (header.audioFormat !== 0x0001 /* PCM */)
+                            throw new Error("WAV not based on PCM format")
+                        if (header.bitDepth !== 16)
+                            throw new Error("WAV not based on 16 bit samples")
+                        if (header.sampleRate !== 48000)
+                            throw new Error("WAV not based on 48Khz sample rate")
+                        if (header.channels !== 1)
+                            throw new Error("WAV not based on mono channel")
+                        chunk.payload = chunk.payload.subarray(44)
+                        this.push(chunk)
+                        callback()
+                    }
+                    else
+                        throw new Error(`invalid operation mode "${self.params.mode}"`)
+                }
+                else {
+                    /*  pass-through original chunk  */
+                    this.push(chunk)
+                    callback()
+                }
+                firstChunk = false
+            },
+            final (callback) {
+                this.push(null)
+                callback()
+            }
+        })
     }
 
     /*  close node  */

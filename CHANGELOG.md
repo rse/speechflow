@@ -2,6 +2,12 @@
 ChangeLog
 =========
 
+1.1.1 (2025-07-19)
+------------------
+
+- IMPROVEMENT: rewrite "wav" node to be self-contained and preserve chunk information (time, meta)
+- UPGRADE: upgrade NPM dependencies
+
 1.1.0 (2025-07-19)
 ------------------
 
