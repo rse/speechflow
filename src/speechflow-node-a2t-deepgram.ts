@@ -93,7 +93,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
-            const text = (data.channel?.alternatives[0].transcript as string) ?? ""
+            const text = (data.channel?.alternatives[0]?.transcript as string) ?? ""
             if (text === "")
                 this.log("info", `Deepgram: empty/dummy text received (start: ${data.start}s, duration: ${data.duration}s)`)
             else {
