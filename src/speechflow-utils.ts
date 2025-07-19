@@ -405,3 +405,44 @@ export class Queue<T extends QueueElement> extends EventEmitter {
     }
 }
 
+/*  utility class for wrapping a custom stream into a regular Transform stream  */
+export class StreamWrapper extends Stream.Transform {
+    private foreignStream: any
+    constructor (foreignStream: any, options: Stream.TransformOptions = {}) {
+        options.readableObjectMode = true
+        options.writableObjectMode = true
+        super(options)
+        this.foreignStream = foreignStream
+        this.foreignStream.on("data", (chunk: any) => {
+            this.push(chunk)
+        })
+        this.foreignStream.on("error", (err: Error) => {
+            this.emit("error", err)
+        })
+        this.foreignStream.on("end", () => {
+            this.push(null)
+        })
+    }
+    _transform (chunk: any, encoding: BufferEncoding, callback: Stream.TransformCallback): void {
+        try {
+            const canContinue = this.foreignStream.write(chunk)
+            if (canContinue)
+                callback()
+            else
+                this.foreignStream.once("drain", callback)
+        }
+        catch (err) {
+            callback(err as Error)
+        }
+    }
+    _flush (callback: Stream.TransformCallback): void {
+        try {
+            if (typeof this.foreignStream.end === "function")
+                this.foreignStream.end()
+            callback()
+        }
+        catch (err) {
+            callback(err as Error)
+        }
+    }
+}
