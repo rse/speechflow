@@ -49,21 +49,32 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 let error: Error | undefined
-                const fmt = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
+                const fmtTime = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
+                const fmtMeta = (meta: Map<string, any>) => {
+                    if (meta.size === 0)
+                        return "none"
+                    else
+                        return `{ ${Array.from(meta.entries())
+                            .map(([ k, v ]) => `${k}: ${JSON.stringify(v)}`)
+                            .join(", ")
+                        } }`
+                }
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (type === "audio")
-                        log("debug", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
-                            `end=${fmt(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type} ` +
-                            `payload-type=Buffer payload-bytes=${chunk.payload.byteLength}`)
+                        log("debug", `writing ${type} chunk: start=${fmtTime(chunk.timestampStart)} ` +
+                            `end=${fmtTime(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type} ` +
+                            `payload-type=Buffer payload-bytes=${chunk.payload.byteLength} ` +
+                            `meta=${fmtMeta(chunk.meta)}`)
                     else
                         error = new Error(`writing ${type} chunk: seen Buffer instead of String chunk type`)
                 }
                 else {
                     if (type === "text")
-                        log("debug", `writing ${type} chunk: start=${fmt(chunk.timestampStart)} ` +
-                            `end=${fmt(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type}` +
+                        log("debug", `writing ${type} chunk: start=${fmtTime(chunk.timestampStart)} ` +
+                            `end=${fmtTime(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type}` +
                             `payload-type=String payload-length=${chunk.payload.length} ` +
-                            `payload-encoding=${encoding} payload-content="${chunk.payload.toString()}"`)
+                            `payload-encoding=${encoding} payload-content="${chunk.payload.toString()}" ` +
+                            `meta=${fmtMeta(chunk.meta)}`)
                     else
                         error = new Error(`writing ${type} chunk: seen String instead of Buffer chunk type`)
                 }
