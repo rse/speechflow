@@ -40,7 +40,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
     async open () {
         /*  sanity check situation  */
         if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
-            throw new Error("VAD node currently supports PCM-S16LE audio only")
+            throw new Error("meter node currently supports PCM-S16LE audio only")
 
         /*  internal state  */
         const sampleWindowDuration = 3 /* LUFS-S requires 3s */
@@ -50,7 +50,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
         let lufss = 0
         let rms = 0
 
-        /*  setup loundess emitting interval  */
+        /*  setup loudness emitting interval  */
         this.interval = setInterval(() => {
             this.log("info", `LUFS-S: ${lufss.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
             this.sendResponse([ "meter", "LUFS-S", lufss ])
