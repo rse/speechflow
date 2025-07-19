@@ -61,22 +61,26 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 }
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (type === "audio")
-                        log("debug", `writing ${type} chunk: start=${fmtTime(chunk.timestampStart)} ` +
-                            `end=${fmtTime(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type} ` +
-                            `payload-type=Buffer payload-bytes=${chunk.payload.byteLength} ` +
+                        log("debug", `chunk: type=${chunk.type} ` +
+                            `kind=${chunk.kind} ` +
+                            `start=${fmtTime(chunk.timestampStart)} ` +
+                            `end=${fmtTime(chunk.timestampEnd)} ` +
+                            `payload-type=Buffer payload-length=${chunk.payload.byteLength} ` +
                             `meta=${fmtMeta(chunk.meta)}`)
                     else
-                        error = new Error(`writing ${type} chunk: seen Buffer instead of String chunk type`)
+                        error = new Error(`${type} chunk: seen Buffer instead of String chunk type`)
                 }
                 else {
                     if (type === "text")
-                        log("debug", `writing ${type} chunk: start=${fmtTime(chunk.timestampStart)} ` +
-                            `end=${fmtTime(chunk.timestampEnd)} kind=${chunk.kind} type=${chunk.type}` +
+                        log("debug", `${type} chunk: type=${chunk.type}` +
+                            `kind=${chunk.kind} ` +
+                            `start=${fmtTime(chunk.timestampStart)} ` +
+                            `end=${fmtTime(chunk.timestampEnd)} ` +
                             `payload-type=String payload-length=${chunk.payload.length} ` +
                             `payload-encoding=${encoding} payload-content="${chunk.payload.toString()}" ` +
                             `meta=${fmtMeta(chunk.meta)}`)
                     else
-                        error = new Error(`writing ${type} chunk: seen String instead of Buffer chunk type`)
+                        error = new Error(`${type} chunk: seen String instead of Buffer chunk type`)
                 }
                 if (error !== undefined)
                     callback(error)
