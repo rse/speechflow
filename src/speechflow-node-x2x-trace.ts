@@ -41,7 +41,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 this.log(level, msg)
         }
 
-        /*  provide Duplex stream and internally attach to Deepgram API  */
+        /*  provide Transform stream  */
         const type = this.params.type
         this.stream = new Stream.Transform({
             writableObjectMode: true,
