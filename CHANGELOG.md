@@ -9,6 +9,7 @@ ChangeLog
 - IMPROVEMENT: the "trace" node now also outputs meta information
 - IMPROVEMENT: add "gender" node for male/female speaker detection (result is passed as meta information)
 - IMPROVEMENT: add "filter" node for filtering based on meta information
+- IMPROVEMENT: do not segment audio stream chunks for "vad" node even if it internally has to segment it
 - UPGRADE: upgrade NPM dependencies
 
 1.1.0 (2025-07-19)
