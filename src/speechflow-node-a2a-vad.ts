@@ -9,19 +9,24 @@ import Stream             from "node:stream"
 
 /*  external dependencies  */
 import { RealTimeVAD }    from "@ericedouard/vad-node-realtime"
-import { Duration }       from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  audio stream queue element */
+type AudioQueueElementSegment = {
+    data:        Float32Array,
+    isSpeech?:   boolean
+}
 type AudioQueueElement = {
-    type:      "audio-frame",
-    chunk:     SpeechFlowChunk,
-    isSpeech?: boolean
+    type:       "audio-frame",
+    chunk:       SpeechFlowChunk,
+    segmentIdx:  number,
+    segmentData: AudioQueueElementSegment[],
+    isSpeech?:   boolean
 } | {
-    type:      "audio-eof"
+    type:        "audio-eof"
 }
 
 /*  SpeechFlow node for VAD speech-to-speech processing  */
@@ -89,10 +94,22 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                 log("info", "VAD: speech end (segment too short)")
             },
             onFrameProcessed: (audio) => {
-                /*  annotate the current audio frame  */
+                /*  annotate the current audio segment  */
                 const element = this.queueVAD.peek()
-                if (element !== undefined && element.type === "audio-frame") {
-                    const isSpeech = audio.isSpeech > audio.notSpeech
+                if (element === undefined || element.type !== "audio-frame")
+                    throw new Error("internal error which cannot happen: no more queued element")
+                const segment = element.segmentData[element.segmentIdx++]
+                segment.isSpeech = (audio.isSpeech > audio.notSpeech)
+
+                /*  annotate the entire audio chunk  */
+                if (element.segmentIdx >= element.segmentData.length) {
+                    let isSpeech = false
+                    for (const segment of element.segmentData) {
+                        if (segment.isSpeech) {
+                            isSpeech = true
+                            break
+                        }
+                    }
                     element.isSpeech = isSpeech
                     this.queueVAD.touch()
                     this.queueVAD.walk(+1)
@@ -102,14 +119,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         this.vad.start()
 
         /*  provide Duplex stream and internally attach to VAD  */
-        const vad       = this.vad
-        const cfg       = this.config
-        const queue     = this.queue
-        const queueRecv = this.queueRecv
-        const queueSend = this.queueSend
-        const mode      = this.params.mode
-        let carrySamples = new Float32Array()
-        let carryStart   = Duration.fromDurationLike(0)
+        const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -123,38 +133,34 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     callback()
                 else {
                     /*  convert audio samples from PCM/I16 to PCM/F32  */
-                    let data = utils.convertBufToF32(chunk.payload, cfg.audioLittleEndian)
-                    let start = chunk.timestampStart
+                    const data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
 
-                    /*  merge previous carry samples  */
-                    if (carrySamples.length > 0) {
-                        start = carryStart
-                        const merged = new Float32Array(carrySamples.length + data.length)
-                        merged.set(carrySamples)
-                        merged.set(data, carrySamples.length)
-                        data = merged
-                        carrySamples = new Float32Array()
-                    }
-
-                    /*  queue audio samples as individual VAD-sized frames
-                        and in parallel send it into the Voice Activity Detection (VAD)  */
-                    const chunkSize = (vadSamplesPerFrame * (cfg.audioSampleRate / vadSampleRateTarget))
+                    /*  segment audio samples as individual VAD-sized frames  */
+                    const segmentData: AudioQueueElementSegment[] = []
+                    const chunkSize = vadSamplesPerFrame * (self.config.audioSampleRate / vadSampleRateTarget)
                     const chunks = Math.trunc(data.length / chunkSize)
                     for (let i = 0; i < chunks; i++) {
                         const frame = data.slice(i * chunkSize, (i + 1) * chunkSize)
-                        const buf = utils.convertF32ToBuf(frame)
-                        const duration = utils.audioBufferDuration(buf)
-                        const end = start.plus(duration)
-                        const chunk = new SpeechFlowChunk(start, end, "final", "audio", buf)
-                        queueRecv.append({ type: "audio-frame", chunk })
-                        vad.processAudio(frame)
-                        start = end
+                        const segment: AudioQueueElementSegment = { data: frame }
+                        segmentData.push(segment)
+                    }
+                    if ((chunks * chunkSize) < data.length) {
+                        const frame = new Float32Array(chunkSize)
+                        frame.fill(0)
+                        frame.set(data.slice(chunks * chunkSize, data.length))
+                        const segment: AudioQueueElementSegment = { data: frame }
+                        segmentData.push(segment)
                     }
 
-                    /*  remember new carry samples  */
-                    const bulkLen = chunks * chunkSize
-                    carrySamples = data.slice(bulkLen)
-                    carryStart = start
+                    /*  queue the results  */
+                    self.queueRecv.append({
+                        type: "audio-frame", chunk,
+                        segmentIdx: 0, segmentData
+                    })
+
+                    /*  push segments through Voice Activity Detection (VAD)  */
+                    for (const segment of segmentData)
+                        self.vad!.processAudio(segment.data)
 
                     callback()
                 }
@@ -162,25 +168,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
             /*  receive no more audio chunks (writable side of stream)  */
             final (callback) {
-                /*  flush pending audio chunks  */
-                if (carrySamples.length > 0) {
-                    const chunkSize = (vadSamplesPerFrame * (cfg.audioSampleRate / vadSampleRateTarget))
-                    if (carrySamples.length < chunkSize) {
-                        const merged = new Float32Array(chunkSize)
-                        merged.set(carrySamples)
-                        merged.fill(0.0, carrySamples.length, chunkSize)
-                        carrySamples = merged
-                    }
-                    const buf = utils.convertF32ToBuf(carrySamples)
-                    const duration = utils.audioBufferDuration(buf)
-                    const end = carryStart.plus(duration)
-                    const chunk = new SpeechFlowChunk(carryStart, end, "final", "audio", buf)
-                    queueRecv.append({ type: "audio-frame", chunk })
-                    vad.processAudio(carrySamples)
-                }
-
                 /*  signal end of file  */
-                queueRecv.append({ type: "audio-eof" })
+                self.queueRecv.append({ type: "audio-eof" })
                 callback()
             },
 
@@ -192,7 +181,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     const flushPendingChunks = () => {
                         let pushed = 0
                         while (true) {
-                            const element = queueSend.peek()
+                            const element = self.queueSend.peek()
                             if (element === undefined)
                                 break
                             else if (element.type === "audio-eof") {
@@ -202,19 +191,20 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                             else if (element.type === "audio-frame"
                                 && element.isSpeech === undefined)
                                 break
-                            queueSend.walk(+1)
+                            self.queueSend.walk(+1)
+                            self.queue.trim()
                             if (element.isSpeech) {
                                 this.push(element.chunk)
                                 pushed++
                             }
-                            else if (mode === "silenced") {
+                            else if (self.params.mode === "silenced") {
                                 const chunk = element.chunk.clone()
                                 const buffer = chunk.payload as Buffer
                                 buffer.fill(0)
                                 this.push(chunk)
                                 pushed++
                             }
-                            else if (mode === "unplugged" && pushed === 0)
+                            else if (self.params.mode === "unplugged" && pushed === 0)
                                 /*  we have to await chunks now, as in unplugged
                                     mode we else would be never called again until
                                     we at least once push a new chunk as the result  */
@@ -224,16 +214,16 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
                     /*  await forthcoming audio chunks  */
                     const awaitForthcomingChunks = () => {
-                        const element = queueSend.peek()
+                        const element = self.queueSend.peek()
                         if (element !== undefined
                             && element.type === "audio-frame"
                             && element.isSpeech !== undefined)
                             flushPendingChunks()
                         else
-                            queue.once("write", awaitForthcomingChunks)
+                            self.queue.once("write", awaitForthcomingChunks)
                     }
 
-                    const element = queueSend.peek()
+                    const element = self.queueSend.peek()
                     if (element !== undefined && element.type === "audio-eof")
                         this.push(null)
                     else if (element !== undefined
@@ -241,7 +231,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         && element.isSpeech !== undefined)
                         flushPendingChunks()
                     else
-                        queue.once("write", awaitForthcomingChunks)
+                        self.queue.once("write", awaitForthcomingChunks)
                 }
                 tryToRead()
             }
