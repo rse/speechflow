@@ -45,86 +45,127 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        /*  determine how many bytes we need per chunk when
+            the chunk should be 200ms in duration  */
+        const highWaterMarkAudio = (
+            this.config.audioSampleRate *
+            (this.config.audioBitDepth / 8)
+        ) / 5
+        const highWaterMarkText = 65536 /* default */
+
+        /*  sanity check  */
         if (this.params.path === "")
             throw new Error("required parameter \"path\" has to be given")
+
+        /*  dispatch according to mode and path  */
         if (this.params.mode === "rw") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
                 if (this.params.type === "audio") {
                     process.stdin.setEncoding()
                     process.stdout.setEncoding()
+                    const streamR = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
+                    process.stdin.pipe(streamR)
+                    const streamW = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
+                    streamW.pipe(process.stdout)
+                    this.stream = Stream.Duplex.from({ readable: streamR, writable: streamW })
                 }
                 else {
                     process.stdin.setEncoding(this.config.textEncoding)
                     process.stdout.setEncoding(this.config.textEncoding)
+                    const streamR = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
+                    process.stdin.pipe(streamR)
+                    const streamW = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
+                    streamW.pipe(process.stdout)
+                    this.stream = Stream.Duplex.from({ readable: streamR, writable: streamW })
                 }
-                this.stream = Stream.Duplex.from({
-                    readable: process.stdin,
-                    writable: process.stdout
-                })
             }
             else {
                 /*  file I/O  */
                 if (this.params.type === "audio") {
                     this.stream = Stream.Duplex.from({
-                        readable: fs.createReadStream(this.params.path),
-                        writable: fs.createWriteStream(this.params.path)
+                        readable: fs.createReadStream(this.params.path,
+                            { highWaterMark: highWaterMarkAudio }),
+                        writable: fs.createWriteStream(this.params.path,
+                            { highWaterMark: highWaterMarkAudio })
                     })
                 }
                 else {
                     this.stream = Stream.Duplex.from({
-                        readable: fs.createReadStream(this.params.path,
-                            { encoding: this.config.textEncoding }),
-                        writable: fs.createWriteStream(this.params.path,
-                            { encoding: this.config.textEncoding })
+                        readable: fs.createReadStream(this.params.path, {
+                            highWaterMark: highWaterMarkText,
+                            encoding: this.config.textEncoding
+                        }),
+                        writable: fs.createWriteStream(this.params.path, {
+                            highWaterMark: highWaterMarkText,
+                            encoding: this.config.textEncoding
+                        })
                     })
                 }
             }
 
             /*  convert regular stream into object-mode stream  */
             const wrapper1 = utils.createTransformStreamForWritableSide()
-            const wrapper2 = utils.createTransformStreamForReadableSide(this.params.type, () => this.timeZero)
+            const wrapper2 = utils.createTransformStreamForReadableSide(
+                this.params.type, () => this.timeZero)
             this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
         }
         else if (this.params.mode === "r") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                if (this.params.type === "audio")
+                if (this.params.type === "audio") {
                     process.stdin.setEncoding()
-                else
+                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
+                    process.stdin.pipe(stream)
+                    this.stream = stream
+                }
+                else {
                     process.stdin.setEncoding(this.config.textEncoding)
-                this.stream = process.stdin
+                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
+                    process.stdin.pipe(stream)
+                    this.stream = stream
+                }
             }
             else {
                 /*  file I/O  */
                 if (this.params.type === "audio")
-                    this.stream = fs.createReadStream(this.params.path)
+                    this.stream = fs.createReadStream(this.params.path,
+                        { highWaterMark: highWaterMarkAudio })
                 else
                     this.stream = fs.createReadStream(this.params.path,
-                        { encoding: this.config.textEncoding })
+                        { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
             }
 
             /*  convert regular stream into object-mode stream  */
-            const wrapper = utils.createTransformStreamForReadableSide(this.params.type, () => this.timeZero)
+            const wrapper = utils.createTransformStreamForReadableSide(
+                this.params.type, () => this.timeZero)
             this.stream.pipe(wrapper)
             this.stream = wrapper
         }
         else if (this.params.mode === "w") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                if (this.params.type === "audio")
+                if (this.params.type === "audio") {
                     process.stdout.setEncoding()
-                else
+                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
+                    stream.pipe(process.stdout)
+                    this.stream = stream
+                }
+                else {
                     process.stdout.setEncoding(this.config.textEncoding)
-                this.stream = process.stdout
+                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
+                    stream.pipe(process.stdout)
+                    this.stream = stream
+                }
             }
             else {
                 /*  file I/O  */
                 if (this.params.type === "audio")
-                    this.stream = fs.createWriteStream(this.params.path)
+                    this.stream = fs.createWriteStream(this.params.path,
+                        { highWaterMark: highWaterMarkAudio })
                 else
                     this.stream = fs.createWriteStream(this.params.path,
-                        { encoding: this.config.textEncoding })
+                        { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
             }
 
             /*  convert regular stream into object-mode stream  */
