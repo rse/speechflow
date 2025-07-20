@@ -98,6 +98,13 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             throw new Error(`audio device sample rate ${device.defaultSampleRate} is ` +
                 `incompatible with required sample rate ${this.config.audioSampleRate}`)
 
+        /*  determine how many bytes we need per chunk when
+            the chunk should be 200ms in duration  */
+        const highwaterMark = (
+            this.config.audioSampleRate *
+            (this.config.audioBitDepth / 8)
+        ) / 5
+
         /*  establish device connection
             Notice: "naudion" actually implements Stream.{Readable,Writable,Duplex}, but
             declares just its sub-interface NodeJS.{Readable,Writable,Duplex}Stream,
@@ -115,13 +122,15 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
                     deviceId:     device.id,
                     channelCount: this.config.audioChannels,
                     sampleRate:   this.config.audioSampleRate,
-                    sampleFormat: this.config.audioBitDepth
+                    sampleFormat: this.config.audioBitDepth,
+                    highwaterMark
                 },
                 outOptions: {
                     deviceId:     device.id,
                     channelCount: this.config.audioChannels,
                     sampleRate:   this.config.audioSampleRate,
-                    sampleFormat: this.config.audioBitDepth
+                    sampleFormat: this.config.audioBitDepth,
+                    highwaterMark
                 }
             })
             this.stream = this.io as unknown as Stream.Duplex
@@ -138,10 +147,11 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
             this.log("info", `resolved "${this.params.device}" to input device "${device.id}"`)
             this.io = PortAudio.AudioIO({
                 inOptions: {
-                    deviceId:     device.id,
-                    channelCount: this.config.audioChannels,
-                    sampleRate:   this.config.audioSampleRate,
-                    sampleFormat: this.config.audioBitDepth
+                    deviceId:      device.id,
+                    channelCount:  this.config.audioChannels,
+                    sampleRate:    this.config.audioSampleRate,
+                    sampleFormat:  this.config.audioBitDepth,
+                    highwaterMark
                 }
             })
             this.stream = this.io as unknown as Stream.Readable
@@ -161,7 +171,8 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
                     deviceId:     device.id,
                     channelCount: this.config.audioChannels,
                     sampleRate:   this.config.audioSampleRate,
-                    sampleFormat: this.config.audioBitDepth
+                    sampleFormat: this.config.audioBitDepth,
+                    highwaterMark
                 }
             })
             this.stream = this.io as unknown as Stream.Writable
