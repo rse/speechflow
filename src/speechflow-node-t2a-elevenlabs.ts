@@ -33,7 +33,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             key:        { type: "string", val: process.env.SPEECHFLOW_ELEVENLABS_KEY },
             voice:      { type: "string", val: "Brian",   pos: 0, match: /^(?:Brittney|Cassidy|Leonie|Mark|Brian)$/ },
             language:   { type: "string", val: "en",      pos: 1, match: /^(?:de|en)$/ },
-            speed:      { type: "number", val: 1.05,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
+            speed:      { type: "number", val: 1.00,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
             stability:  { type: "number", val: 0.5,       pos: 3, match: (n: number) => n >= 0.0 && n <= 1.0 },
             similarity: { type: "number", val: 0.75,      pos: 4, match: (n: number) => n >= 0.0 && n <= 1.0 },
             optimize:   { type: "string", val: "latency", pos: 5, match: /^(?:latency|quality)$/ }
