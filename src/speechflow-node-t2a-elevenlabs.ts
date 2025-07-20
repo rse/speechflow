@@ -30,11 +30,13 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            key:      { type: "string", val: process.env.SPEECHFLOW_ELEVENLABS_KEY },
-            voice:    { type: "string", val: "Brian",   pos: 0, match: /^(?:.+)$/ },
-            language: { type: "string", val: "en",      pos: 1, match: /^(?:de|en)$/ },
-            speed:    { type: "number", val: 1.05,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
-            optimize: { type: "string", val: "latency", pos: 3, match: /^(?:latency|quality)$/ }
+            key:        { type: "string", val: process.env.SPEECHFLOW_ELEVENLABS_KEY },
+            voice:      { type: "string", val: "Brian",   pos: 0, match: /^(?:Brittney|Cassidy|Leonie|Mark|Brian)$/ },
+            language:   { type: "string", val: "en",      pos: 1, match: /^(?:de|en)$/ },
+            speed:      { type: "number", val: 1.05,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
+            stability:  { type: "number", val: 0.5,       pos: 3, match: (n: number) => n >= 0.0 && n <= 1.0 },
+            similarity: { type: "number", val: 0.75,      pos: 4, match: (n: number) => n >= 0.0 && n <= 1.0 },
+            optimize:   { type: "string", val: "latency", pos: 5, match: /^(?:latency|quality)$/ }
         })
 
         /*  declare node input/output format  */
@@ -90,7 +92,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
         /*  perform text-to-speech operation with Elevenlabs API  */
         const model = this.params.optimize === "quality" ?
-            "eleven_multilingual_v2" :
+            "eleven_turbo_v2_5" :
             "eleven_flash_v2_5"
         const speechStream = (text: string) => {
             this.log("info", `ElevenLabs: send text "${text}"`)
@@ -101,7 +103,9 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                 outputFormat:     `pcm_${maxSampleRate}` as ElevenLabs.ElevenLabs.OutputFormat,
                 seed:             815, /* arbitrary, but fixated by us */
                 voiceSettings: {
-                    speed:        this.params.speed
+                    speed:           this.params.speed,
+                    stability:       this.params.stability,
+                    similarityBoost: this.params.similarity
                 }
             }, {
                 timeoutInSeconds: 30,
@@ -128,6 +132,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
+                    log("info", `ElevenLabs: send text: ${JSON.stringify(chunk.payload)}`)
                     speechStream(chunk.payload).then((stream) => {
                         getStreamAsBuffer(stream).then((buffer) => {
                             const bufferResampled = resampler.processChunk(buffer)
