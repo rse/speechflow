@@ -253,6 +253,7 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         private queue: Queue<T>
     ) {
         super()
+        this.setMaxListeners(100)
     }
 
     /*  positioning operations  */
@@ -380,6 +381,10 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
 export class Queue<T extends QueueElement> extends EventEmitter {
     public elements: T[] = []
     private pointers = new Map<string, QueuePointer<T>>()
+    constructor () {
+        super()
+        this.setMaxListeners(100)
+    }
     pointerUse (name: string): QueuePointer<T> {
         if (!this.pointers.has(name))
             this.pointers.set(name, new QueuePointer<T>(name, this))
