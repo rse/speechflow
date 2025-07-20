@@ -224,6 +224,7 @@ First a short overview of the available processing nodes:
   | ----------- | --------- | -------- | ------------------ |
   | **device**  | 0         | *none*   | `/^(.+?):(.+)$/`   |
   | **mode**    | 1         | "rw"     | `/^(?:r\|w\|rw)$/` |
+  | **chunk**   | 2         | 200      | `10 <= n <= 1000`  |
 
 - Node: **websocket**<br/>
   Purpose: **WebSocket source/sink**<br/>

@@ -32,7 +32,8 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             device: { type: "string", pos: 0, val: "",   match: /^(.+?):(.+)$/ },
-            mode:   { type: "string", pos: 1, val: "rw", match: /^(?:r|w|rw)$/ }
+            mode:   { type: "string", pos: 1, val: "rw", match: /^(?:r|w|rw)$/ },
+            chunk:  { type: "number", pos: 2, val: 200,  match: (n: number) => n >= 10 && n <= 1000 }
         })
 
         /*  declare node input/output format  */
@@ -99,11 +100,11 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
                 `incompatible with required sample rate ${this.config.audioSampleRate}`)
 
         /*  determine how many bytes we need per chunk when
-            the chunk should be 200ms in duration  */
+            the chunk should be the requested duration  */
         const highwaterMark = (
             this.config.audioSampleRate *
             (this.config.audioBitDepth / 8)
-        ) / 5
+        ) / (1000 / this.params.chunk)
 
         /*  establish device connection
             Notice: "naudion" actually implements Stream.{Readable,Writable,Duplex}, but
