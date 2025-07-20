@@ -86,10 +86,13 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             smart_format:     true,
             punctuate:        true,
             filler_words:     true,
-            diarize:          true, /* still not used by us */
+            diarize:          false,
             numerals:         true,
             profanity_filter: false
         })
+
+        /*  create a store for the meta information  */
+        const metastore = new utils.TimeStore<Map<string, any>>()
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
@@ -100,7 +103,13 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                 this.log("info", `Deepgram: text received (start: ${data.start}s, duration: ${data.duration}s): "${text}"`)
                 const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
                 const end   = start.plus({ seconds: data.duration })
-                const chunk = new SpeechFlowChunk(start, end, "final", "text", text)
+                const metas = metastore.fetch(start, end)
+                const meta = metas.reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                    curr.forEach((val, key) => { prev.set(key, val) })
+                    return prev
+                }, new Map<string, any>())
+                metastore.prune(start)
+                const chunk = new SpeechFlowChunk(start, end, "final", "text", text, meta)
                 queue.write(chunk)
             }
         })
@@ -180,6 +189,8 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     if (chunk.payload.byteLength > 0) {
                         log("info", `Deepgram: send data (${chunk.payload.byteLength} bytes)`)
                         initTimeoutStart()
+                        if (chunk.meta.size > 0)
+                            metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         dg.send(chunk.payload.buffer) /* intentionally discard all time information  */
                     }
                     callback()

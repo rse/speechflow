@@ -9,6 +9,7 @@ import Stream                 from "node:stream"
 import { EventEmitter }       from "node:events"
 import { DateTime, Duration } from "luxon"
 import CBOR                   from "cbor2"
+import * as IntervalTree      from "node-interval-tree"
 
 /*  internal dependencies  */
 import { SpeechFlowChunk } from "./speechflow-node"
@@ -444,5 +445,27 @@ export class StreamWrapper extends Stream.Transform {
         catch (err) {
             callback(err as Error)
         }
+    }
+}
+
+/*  meta store  */
+interface TimeStoreInterval<T> extends IntervalTree.Interval {
+    item: T
+}
+export class TimeStore<T> extends EventEmitter {
+    private tree = new IntervalTree.IntervalTree<TimeStoreInterval<T>>()
+    store (start: Duration, end: Duration, item: T): void {
+        this.tree.insert({ low: start.toMillis(), high: end.toMillis(), item })
+    }
+    fetch (start: Duration, end: Duration): T[] {
+        const intervals = this.tree.search(start.toMillis(), end.toMillis())
+        return intervals.map((interval) => interval.item)
+    }
+    prune (_before: Duration): void {
+        const before = _before.toMillis()
+        const intervals = this.tree.search(0, before - 1)
+        for (const interval of intervals)
+            if (interval.low < before && interval.high < before)
+                this.tree.remove(interval)
     }
 }
