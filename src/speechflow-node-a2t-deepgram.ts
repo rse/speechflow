@@ -65,6 +65,9 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         /*  create queue for results  */
         const queue = new utils.SingleQueue<SpeechFlowChunk>()
 
+        /*  create a store for the meta information  */
+        const metastore = new utils.TimeStore<Map<string, any>>()
+
         /*  connect to Deepgram API  */
         const deepgram = Deepgram.createClient(this.params.key)
         let language = "en"
@@ -90,9 +93,6 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             numerals:         true,
             profanity_filter: false
         })
-
-        /*  create a store for the meta information  */
-        const metastore = new utils.TimeStore<Map<string, any>>()
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
