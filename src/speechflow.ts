@@ -5,33 +5,33 @@
 */
 
 /*  standard dependencies  */
-import path                     from "node:path"
-import Stream                   from "node:stream"
-import { EventEmitter }         from "node:events"
-import http                     from "node:http"
-import * as HAPI                from "@hapi/hapi"
-import WebSocket                from "ws"
-import HAPIWebSocket            from "hapi-plugin-websocket"
-import HAPIHeader               from "hapi-plugin-header"
+import path              from "node:path"
+import Stream            from "node:stream"
+import { EventEmitter }  from "node:events"
+import http              from "node:http"
+import * as HAPI         from "@hapi/hapi"
+import WebSocket         from "ws"
+import HAPIWebSocket     from "hapi-plugin-websocket"
+import HAPIHeader        from "hapi-plugin-header"
 
 /*  external dependencies  */
-import { DateTime }             from "luxon"
-import CLIio                    from "cli-io"
-import yargs                    from "yargs"
-import { hideBin }              from "yargs/helpers"
-import jsYAML                   from "js-yaml"
-import FlowLink                 from "flowlink"
-import objectPath               from "object-path"
-import installedPackages        from "installed-packages"
-import dotenvx                  from "@dotenvx/dotenvx"
-import syspath                  from "syspath"
-import * as arktype             from "arktype"
-import Table                    from "cli-table3"
-import chalk                    from "chalk"
+import { DateTime }      from "luxon"
+import CLIio             from "cli-io"
+import yargs             from "yargs"
+import { hideBin }       from "yargs/helpers"
+import jsYAML            from "js-yaml"
+import FlowLink          from "flowlink"
+import objectPath        from "object-path"
+import installedPackages from "installed-packages"
+import dotenvx           from "@dotenvx/dotenvx"
+import syspath           from "syspath"
+import * as arktype      from "arktype"
+import Table             from "cli-table3"
+import chalk             from "chalk"
 
 /*  internal dependencies  */
-import SpeechFlowNode           from "./speechflow-node"
-import pkg                      from "../package.json"
+import SpeechFlowNode    from "./speechflow-node"
+import pkg               from "../package.json"
 
 /*  central CLI context  */
 let cli: CLIio | null = null

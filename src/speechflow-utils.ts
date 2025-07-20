@@ -4,15 +4,17 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-/*  external dependencies  */
+/*  standard dependencies  */
 import Stream                 from "node:stream"
 import { EventEmitter }       from "node:events"
+
+/*  external dependencies  */
 import { DateTime, Duration } from "luxon"
 import CBOR                   from "cbor2"
 import * as IntervalTree      from "node-interval-tree"
 
 /*  internal dependencies  */
-import { SpeechFlowChunk } from "./speechflow-node"
+import { SpeechFlowChunk }    from "./speechflow-node"
 
 /*  calculate duration of an audio buffer  */
 export function audioBufferDuration (

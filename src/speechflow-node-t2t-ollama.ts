@@ -5,10 +5,10 @@
 */
 
 /*  standard dependencies  */
-import Stream           from "node:stream"
+import Stream     from "node:stream"
 
 /*  external dependencies  */
-import { Ollama }       from "ollama"
+import { Ollama } from "ollama"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"

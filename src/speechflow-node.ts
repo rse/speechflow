@@ -7,6 +7,8 @@
 /*  standard dependencies  */
 import Events from "node:events"
 import Stream from "node:stream"
+
+/*  external dependencies  */
 import { DateTime, Duration } from "luxon"
 
 /*  the definition of a single payload chunk passed through the SpeechFlow nodes  */

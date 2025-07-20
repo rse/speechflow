@@ -5,11 +5,11 @@
 */
 
 /*  standard dependencies  */
-import Stream                          from "node:stream"
+import Stream from "node:stream"
 
 /*  external dependencies  */
-import MQTT                            from "mqtt"
-import UUID                            from "pure-uuid"
+import MQTT   from "mqtt"
+import UUID   from "pure-uuid"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"

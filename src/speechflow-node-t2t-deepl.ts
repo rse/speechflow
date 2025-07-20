@@ -5,10 +5,10 @@
 */
 
 /*  standard dependencies  */
-import Stream           from "node:stream"
+import Stream from "node:stream"
 
 /*  external dependencies  */
-import * as DeepL       from "deepl-node"
+import * as DeepL from "deepl-node"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"

@@ -5,7 +5,7 @@
 */
 
 /*  standard dependencies  */
-import Stream           from "node:stream"
+import Stream from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"

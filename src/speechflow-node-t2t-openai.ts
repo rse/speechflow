@@ -5,10 +5,10 @@
 */
 
 /*  standard dependencies  */
-import Stream           from "node:stream"
+import Stream from "node:stream"
 
 /*  external dependencies  */
-import OpenAI           from "openai"
+import OpenAI from "openai"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"

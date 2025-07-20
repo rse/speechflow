@@ -5,7 +5,7 @@
 */
 
 /*  standard dependencies  */
-import Stream             from "node:stream"
+import Stream from "node:stream"
 
 /*  external dependencies  */
 import { getLUFS, getRMS, AudioData } from "audio-inspect"

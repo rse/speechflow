@@ -5,11 +5,11 @@
 */
 
 /*  standard dependencies  */
-import Stream                from "node:stream"
+import Stream from "node:stream"
 
 /*  external dependencies  */
-import { KokoroTTS }         from "kokoro-js"
-import SpeexResampler        from "speex-resampler"
+import { KokoroTTS }  from "kokoro-js"
+import SpeexResampler from "speex-resampler"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"

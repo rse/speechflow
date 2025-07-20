@@ -5,7 +5,9 @@
 */
 
 /*  standard dependencies  */
-import Stream       from "node:stream"
+import Stream from "node:stream"
+
+/*  external dependencies  */
 import { Duration } from "luxon"
 
 /*  internal dependencies  */

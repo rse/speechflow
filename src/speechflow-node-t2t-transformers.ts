@@ -5,8 +5,8 @@
 */
 
 /*  standard dependencies  */
-import path             from "node:path"
-import Stream           from "node:stream"
+import path   from "node:path"
+import Stream from "node:stream"
 
 /*  external dependencies  */
 import * as Transformers from "@huggingface/transformers"
