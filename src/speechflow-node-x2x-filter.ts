@@ -87,7 +87,6 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
             readableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                console.log("FUCK")
                 let val1: any
                 const val2: any = self.params.val
                 const m = self.params.var.match(/^meta:(.+)$/)
