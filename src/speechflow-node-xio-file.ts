@@ -23,9 +23,11 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            path: { type: "string", pos: 0, val: "" },
-            mode: { type: "string", pos: 1, val: "r",     match: /^(?:r|w|rw)$/ },
-            type: { type: "string", pos: 2, val: "audio", match: /^(?:audio|text)$/ }
+            path:   { type: "string", pos: 0, val: "" },
+            mode:   { type: "string", pos: 1, val: "r",     match: /^(?:r|w|rw)$/ },
+            type:   { type: "string", pos: 2, val: "audio", match: /^(?:audio|text)$/ },
+            chunka: { type: "number",         val: 200,     match: (n: number) => n >= 10 && n <= 1000 },
+            chunkt: { type: "number",         val: 65536,   match: (n: number) => n >= 1024 && n <= 131072 }
         })
 
         /*  declare node input/output format  */
@@ -46,12 +48,12 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  determine how many bytes we need per chunk when
-            the chunk should be 200ms in duration  */
+            the chunk should be of the required duration/size */
         const highWaterMarkAudio = (
             this.config.audioSampleRate *
             (this.config.audioBitDepth / 8)
-        ) / 5
-        const highWaterMarkText = 65536 /* default */
+        ) / (1000 / this.params.chunka)
+        const highWaterMarkText = this.params.chunkt
 
         /*  sanity check  */
         if (this.params.path === "")

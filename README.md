@@ -210,6 +210,8 @@ First a short overview of the available processing nodes:
   | **path**   | 0         | *none*   | *none*                |
   | **mode**   | 1         | "r"      | `/^(?:r\|w\|rw)$/`    |
   | **type**   | 2         | "audio"  | `/^(?:audio\|text)$/` |
+  | **chunka** |           | 200      | `10 <= n <= 1000`     |
+  | **chunkt** |           | 65536    | `1024 <= n <= 131072` |
 
 - Node: **device**<br/>
   Purpose: **Microphone/speaker device source/sink**<br/>
