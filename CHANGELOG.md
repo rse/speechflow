@@ -7,6 +7,8 @@ ChangeLog
 
 - IMPROVEMENT: rewrite "wav" node to be self-contained and preserve chunk information (time, meta)
 - IMPROVEMENT: the "trace" node now also outputs meta information
+- IMPROVEMENT: add "gender" node for male/female speaker detection (result is passed as meta information)
+- IMPROVEMENT: add "filter" node for filtering based on meta information
 - UPGRADE: upgrade NPM dependencies
 
 1.1.0 (2025-07-19)

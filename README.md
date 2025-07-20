@@ -175,9 +175,10 @@ First a short overview of the available processing nodes:
 - Audio-to-Audio nodes:
   **ffmpeg**,
   **wav**,
-  **mute**.
-  **meter**.
-  **vad**.
+  **mute**,
+  **meter**,
+  **vad**,
+  **gender**.
 - Audio-to-Text nodes:
   **deepgram**.
 - Text-to-Text nodes:
@@ -190,6 +191,7 @@ First a short overview of the available processing nodes:
 - Text-to-Audio nodes:
   **elevenlabs**.
 - Any-to-Any nodes:
+  **filter**,
   **trace**.
 
 ### Input/Output Nodes:
@@ -328,6 +330,19 @@ First a short overview of the available processing nodes:
   | **minSpeechFrames**    | *none* | 2     | *none* |
   | **redemptionFrames**   | *none* | 12    | *none* |
   | **preSpeechPadFrames** | *none* | 1     | *none* |
+
+- Node: **gender**<br/>
+  Purpose: **Gender Detection node**<br/>
+  Example: `gender()`
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **window**  | 0         | 500      | *none*                   |
 
 ### Audio-to-Text Nodes:
 
@@ -478,6 +493,22 @@ First a short overview of the available processing nodes:
   | **speed**    | 2         | 1.25     | 1.0...1.30  |
 
 ### Any-to-Any Nodes:
+
+- Node: **filter**<br/>
+  Purpose: **meta information based filter**<br/>
+  Example: `filter(type: "audio", var: "meta:gender", op: "==", val: "male")`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text, audio |
+  | output  | text, audio |
+
+  | Parameter    | Position  | Default  | Requirement           |
+  | ------------ | --------- | -------- | --------------------- |
+  | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
+  | **var**      | 1         | ""       | `/^(?:meta:.+|payload:(?:length|text)|time:(?:start|end))$/` |
+  | **op**       | 2         | "=="     | `/^(?:<|<=|==|!=|~~|!~|>=|>)$/` |
+  | **val**      | 3         | ""       | `/^.*$/` |
 
 - Node: **trace**<br/>
   Purpose: **data flow tracing**<br/>
