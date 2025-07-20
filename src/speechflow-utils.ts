@@ -71,6 +71,10 @@ export function createTransformStreamForWritableSide () {
         transform (chunk: SpeechFlowChunk, encoding, callback) {
             this.push(chunk.payload)
             callback()
+        },
+        final (callback) {
+            this.push(null)
+            callback()
         }
     })
 }
@@ -92,6 +96,10 @@ export function createTransformStreamForReadableSide (type: "text" | "audio", ge
             }
             const obj = new SpeechFlowChunk(start, end, "final", type, chunk)
             this.push(obj)
+            callback()
+        },
+        final (callback) {
+            this.push(null)
             callback()
         }
     })
