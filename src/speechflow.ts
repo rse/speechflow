@@ -711,10 +711,14 @@ type wsPeerInfo = {
         }
 
         /*  terminate process  */
-        if (signal === "finished")
+        if (signal === "finished") {
+            cli!.log("info", "terminate process (exit code 0)")
             process.exit(0)
-        else
+        }
+        else {
+            cli!.log("info", "terminate process (exit code 1)")
             process.exit(1)
+        }
     }
     finishEvents.on("finished", () => {
         shutdown("finished")
