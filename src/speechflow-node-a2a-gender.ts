@@ -102,7 +102,6 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         /*  classify a single large-enough concatenated audio frame  */
         const classify = async (data: Float32Array) => {
             const result = await this.classifier!(data)
-            console.log(result)
             const classified: Transformers.AudioClassificationOutput =
                 Array.isArray(result) ? result as Transformers.AudioClassificationOutput : [ result ]
             const c1 = classified.find((c: any) => c.label === "male")
