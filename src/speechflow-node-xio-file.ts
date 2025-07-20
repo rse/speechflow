@@ -113,65 +113,60 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
         else if (this.params.mode === "r") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
+                let chunker: Stream.PassThrough
                 if (this.params.type === "audio") {
                     process.stdin.setEncoding()
-                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
-                    process.stdin.pipe(stream)
-                    this.stream = stream
+                    chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
                 }
                 else {
                     process.stdin.setEncoding(this.config.textEncoding)
-                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
-                    process.stdin.pipe(stream)
-                    this.stream = stream
+                    chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
                 }
+                const wrapper = utils.createTransformStreamForReadableSide(
+                    this.params.type, () => this.timeZero)
+                this.stream = Stream.compose(process.stdin, chunker, wrapper)
             }
             else {
                 /*  file I/O  */
+                let readable: Stream.Readable
                 if (this.params.type === "audio")
-                    this.stream = fs.createReadStream(this.params.path,
+                    readable = fs.createReadStream(this.params.path,
                         { highWaterMark: highWaterMarkAudio })
                 else
-                    this.stream = fs.createReadStream(this.params.path,
+                    readable = fs.createReadStream(this.params.path,
                         { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
+                const wrapper = utils.createTransformStreamForReadableSide(
+                    this.params.type, () => this.timeZero)
+                this.stream = Stream.compose(readable, wrapper)
             }
-
-            /*  convert regular stream into object-mode stream  */
-            const wrapper = utils.createTransformStreamForReadableSide(
-                this.params.type, () => this.timeZero)
-            this.stream.pipe(wrapper)
-            this.stream = wrapper
         }
         else if (this.params.mode === "w") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
+                let chunker: Stream.PassThrough
                 if (this.params.type === "audio") {
                     process.stdout.setEncoding()
-                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
-                    stream.pipe(process.stdout)
-                    this.stream = stream
+                    chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
                 }
                 else {
                     process.stdout.setEncoding(this.config.textEncoding)
-                    const stream = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
-                    stream.pipe(process.stdout)
-                    this.stream = stream
+                    chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
                 }
+                const wrapper = utils.createTransformStreamForWritableSide()
+                this.stream = Stream.compose(wrapper, chunker, process.stdout)
             }
             else {
                 /*  file I/O  */
+                let writable: Stream.Writable
                 if (this.params.type === "audio")
-                    this.stream = fs.createWriteStream(this.params.path,
+                    writable = fs.createWriteStream(this.params.path,
                         { highWaterMark: highWaterMarkAudio })
                 else
-                    this.stream = fs.createWriteStream(this.params.path,
+                    writable = fs.createWriteStream(this.params.path,
                         { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
+                const wrapper = utils.createTransformStreamForWritableSide()
+                this.stream = Stream.compose(wrapper, writable)
             }
-
-            /*  convert regular stream into object-mode stream  */
-            const wrapper = utils.createTransformStreamForWritableSide()
-            wrapper.pipe(this.stream as Stream.Writable)
-            this.stream = wrapper
         }
         else
             throw new Error(`invalid file mode "${this.params.mode}"`)
