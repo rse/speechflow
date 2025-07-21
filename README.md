@@ -27,6 +27,10 @@ local file I/O,
 local audio device I/O,
 remote WebSocket network I/O,
 remote MQTT network I/O,
+local Voice Activity Detection (VAD),
+local voice gender recognition,
+local audio LUFS-S/RMS metering,
+remote-controlable local audio muting,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
 cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
@@ -36,7 +40,8 @@ local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translat
 local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding,
 local WAV speech-to-speech encoding,
 local text-to-text formatting,
-local text-to-text subtitle generation, and
+local text-to-text subtitle generation,
+local text or audio filter, and
 local text or audio tracing.
 
 Additional **SpeechFlow** graph nodes can be provided externally
