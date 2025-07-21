@@ -126,6 +126,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                 clearTimeout(workingOffTimer)
                 workingOffTimer = null
             }
+            this.queue.off("write", workOffQueue)
 
             let pos0 = this.queueAC.position()
             const posL = this.queueAC.maxPosition()
@@ -163,10 +164,10 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
 
             /*  re-initiate working off round  */
             workingOff = false
-            workingOffTimer = setTimeout(() => { workOffQueue() }, 100)
-            this.queue.once("write", () => { workOffQueue() })
+            workingOffTimer = setTimeout(workOffQueue, 100)
+            this.queue.once("write", workOffQueue)
         }
-        this.queue.once("write", () => { workOffQueue() })
+        this.queue.once("write", workOffQueue)
 
         /*  define sample rate required by model  */
         const sampleRateTarget = 16000
