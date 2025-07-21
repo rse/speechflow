@@ -380,6 +380,7 @@ First a short overview of the available processing nodes:
   | **minSpeechFrames**    | *none* | 2     | *none* |
   | **redemptionFrames**   | *none* | 12    | *none* |
   | **preSpeechPadFrames** | *none* | 1     | *none* |
+  | **postSpeechTail**     | *none* | 1500  | *none* |
 
 - Node: **gender**<br/>
   Purpose: **Gender Detection node**<br/>

@@ -47,12 +47,13 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            mode:               { type: "string", val: "unplugged", match: /^(?:silenced|unplugged)$/ },
+            mode:               { type: "string", val: "silenced", match: /^(?:silenced|unplugged)$/ },
             posSpeechThreshold: { type: "number", val: 0.50 },
             negSpeechThreshold: { type: "number", val: 0.35 },
             minSpeechFrames:    { type: "number", val: 2    },
             redemptionFrames:   { type: "number", val: 12   },
-            preSpeechPadFrames: { type: "number", val: 1    }
+            preSpeechPadFrames: { type: "number", val: 1    },
+            postSpeechTail:     { type: "number", val: 1500 }
         })
 
         /*  declare node input/output format  */
@@ -74,6 +75,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         const vadSamplesPerFrame  = 512   /* required for VAD v5 */
 
         /*  establish Voice Activity Detection (VAD) facility  */
+        let tail = false
+        let tailTimer: ReturnType<typeof setTimeout> | null = null
         this.vad = await RealTimeVAD.new({
             model:                   "v5",
             sampleRate:              this.config.audioSampleRate, /* before resampling to 16KHz */
@@ -85,13 +88,38 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
             preSpeechPadFrames:      this.params.preSpeechPadFrames,
             onSpeechStart: () => {
                 log("info", "VAD: speech start")
+                if (this.params.mode === "unlugged") {
+                    tail = false
+                    if (tailTimer !== null) {
+                        clearTimeout(tailTimer)
+                        tailTimer = null
+                    }
+                }
             },
             onSpeechEnd: (audio) => {
                 const duration = utils.audioArrayDuration(audio, vadSampleRateTarget)
                 log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
+                if (this.params.mode === "unlugged") {
+                    tail = true
+                    if (tailTimer !== null)
+                        clearTimeout(tailTimer)
+                    tailTimer = setTimeout(() => {
+                        tail = false
+                        tailTimer = null
+                    }, this.params.postSpeechTail)
+                }
             },
             onVADMisfire: () => {
                 log("info", "VAD: speech end (segment too short)")
+                if (this.params.mode === "unlugged") {
+                    tail = true
+                    if (tailTimer !== null)
+                        clearTimeout(tailTimer)
+                    tailTimer = setTimeout(() => {
+                        tail = false
+                        tailTimer = null
+                    }, this.params.postSpeechTail)
+                }
             },
             onFrameProcessed: (audio) => {
                 /*  annotate the current audio segment  */
@@ -99,7 +127,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                 if (element === undefined || element.type !== "audio-frame")
                     throw new Error("internal error which cannot happen: no more queued element")
                 const segment = element.segmentData[element.segmentIdx++]
-                segment.isSpeech = (audio.isSpeech > audio.notSpeech)
+                segment.isSpeech = (audio.isSpeech > audio.notSpeech) || tail
 
                 /*  annotate the entire audio chunk  */
                 if (element.segmentIdx >= element.segmentData.length) {
