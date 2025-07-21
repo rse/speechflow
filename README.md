@@ -14,13 +14,14 @@ SpeechFlow
 About
 -----
 
-**SpeechFlow** is a command-line interface based tool for establishing
-a directed data flow graph of audio and text processing nodes. This
-way, it allows to perform various speech processing tasks in a very
-flexible and configurable way. The usual supported tasks are capturing
-audio, generate narrations of text (aka text-to-speech), generate
-transcriptions or subtitles for audio (aka speech-to-text), and generate
-translations for audio (aka speech-to-speech).
+**SpeechFlow** is a command-line interface based tool for macOS,
+Windows and Linux, establishing a directed data flow graph of audio
+and text processing nodes. This way, it allows to perform various
+speech processing tasks in a very flexible and configurable way. The
+usual supported tasks are capturing audio, generate narrations of
+text (aka text-to-speech), generate transcriptions or subtitles for
+audio (aka speech-to-text), and generate translations for audio (aka
+speech-to-speech).
 
 **SpeechFlow** comes with built-in graph nodes for
 local file I/O,
@@ -44,7 +45,7 @@ local text-to-text subtitle generation,
 local text or audio filter, and
 local text or audio tracing.
 
-Additional **SpeechFlow** graph nodes can be provided externally
+Additional, **SpeechFlow** graph nodes can be provided externally
 by NPM packages named `speechflow-node-xxx` which expose a class
 derived from the exported `SpeechFlowNode` class of the `speechflow` package.
 
