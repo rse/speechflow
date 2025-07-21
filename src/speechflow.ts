@@ -257,7 +257,7 @@ type wsPeerInfo = {
         while (node.default !== undefined)
             node = node.default
         if (typeof node === "function" && typeof node.name === "string") {
-            cli.log("info", `loading SpeechFlow node "${node.name}" from internal module`)
+            cli.log("info", `loading SpeechFlow node <${node.name}> from internal module`)
             nodes[node.name] = node as typeof SpeechFlowNode
         }
     }
@@ -271,11 +271,11 @@ type wsPeerInfo = {
                 node = node.default
             if (typeof node === "function" && typeof node.name === "string") {
                 if (nodes[node.name] !== undefined) {
-                    cli.log("warning", `failed loading SpeechFlow node "${node.name}" ` +
+                    cli.log("warning", `failed loading SpeechFlow node <${node.name}> ` +
                         `from external module "${pkg}" -- node already exists`)
                     continue
                 }
-                cli.log("info", `loading SpeechFlow node "${node.name}" from external module "${pkg}"`)
+                cli.log("info", `loading SpeechFlow node <${node.name}> from external module "${pkg}"`)
                 nodes[node.name] = node as typeof SpeechFlowNode
             }
         }
@@ -353,7 +353,7 @@ type wsPeerInfo = {
             },
             createNode (id: string, opts: { [ id: string ]: any }, args: any[]) {
                 if (nodes[id] === undefined)
-                    throw new Error(`unknown node "${id}"`)
+                    throw new Error(`unknown node <${id}>`)
                 let node: SpeechFlowNode
                 try {
                     let num = nodeNums.get(nodes[id]) ?? 0
@@ -364,19 +364,19 @@ type wsPeerInfo = {
                 catch (err) {
                     /*  fatal error  */
                     if (err instanceof Error)
-                        cli!.log("error", `creation of <${id}> node failed: ${err.message}`)
+                        cli!.log("error", `creation of node <${id}> failed: ${err.message}`)
                     else
-                        cli!.log("error", `creation of <${id}> node failed: ${err}`)
+                        cli!.log("error", `creation of node <${id}> failed: ${err}`)
                     process.exit(1)
                 }
                 const params = Object.keys(node.params)
                     .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
-                cli!.log("info", `create node "${node.id}" (${params})`)
+                cli!.log("info", `create node <${node.id}> (${params})`)
                 graphNodes.add(node)
                 return node
             },
             connectNode (node1: SpeechFlowNode, node2: SpeechFlowNode) {
-                cli!.log("info", `connect node "${node1.id}" to node "${node2.id}"`)
+                cli!.log("info", `connect node <${node1.id}> to node <${node2.id}>`)
                 node1.connect(node2)
             }
         })
@@ -399,7 +399,7 @@ type wsPeerInfo = {
 
         /*  ensure necessary incoming links  */
         if (node.input !== "none" && connectionsIn.length === 0)
-            throw new Error(`node "${node.id}" requires input but has no input nodes connected`)
+            throw new Error(`node <${node.id}> requires input but has no input nodes connected`)
 
         /*  prune unnecessary incoming links  */
         if (node.input === "none" && connectionsIn.length > 0)
@@ -407,7 +407,7 @@ type wsPeerInfo = {
 
         /*  ensure necessary outgoing links  */
         if (node.output !== "none" && connectionsOut.length === 0)
-            throw new Error(`node "${node.id}" requires output but has no output nodes connected`)
+            throw new Error(`node <${node.id}> requires output but has no output nodes connected`)
 
         /*  prune unnecessary outgoing links  */
         if (node.output === "none" && connectionsOut.length > 0)
@@ -418,8 +418,8 @@ type wsPeerInfo = {
         connectionsOut = Array.from(node.connectionsOut)
         for (const other of connectionsOut)
             if (other.input !== node.output)
-                throw new Error(`${node.output} output node "${node.id}" cannot be ` +
-                    `connected to ${other.input} input node "${other.id}" (payload is incompatible)`)
+                throw new Error(`${node.output} output node <${node.id}> cannot be ` +
+                    `connected to ${other.input} input node <${other.id}> (payload is incompatible)`)
     }
 
     /*  graph processing: PASS 3: open nodes  */
@@ -433,34 +433,34 @@ type wsPeerInfo = {
         })
 
         /*  open node  */
-        cli!.log("info", `open node "${node.id}"`)
+        cli!.log("info", `open node <${node.id}>`)
         await node.open().catch((err: Error) => {
             cli!.log("error", `[${node.id}]: ${err.message}`)
-            throw new Error(`failed to open node "${node.id}"`)
+            throw new Error(`failed to open node <${node.id}>`)
         })
     }
 
     /*  graph processing: PASS 4: set time zero in all nodes  */
     const timeZero = DateTime.now()
     for (const node of graphNodes) {
-        cli!.log("info", `set time zero in node "${node.id}"`)
+        cli!.log("info", `set time zero in node <${node.id}>`)
         node.setTimeZero(timeZero)
     }
 
     /*  graph processing: PASS 5: connect node streams  */
     for (const node of graphNodes) {
         if (node.stream === null)
-            throw new Error(`stream of node "${node.id}" still not initialized`)
+            throw new Error(`stream of node <${node.id}> still not initialized`)
         for (const other of Array.from(node.connectionsOut)) {
             if (other.stream === null)
-                throw new Error(`stream of incoming node "${other.id}" still not initialized`)
-            cli!.log("info", `connect stream of node "${node.id}" to stream of node "${other.id}"`)
+                throw new Error(`stream of incoming node <${other.id}> still not initialized`)
+            cli!.log("info", `connect stream of node <${node.id}> to stream of node <${other.id}>`)
             if (!( node.stream instanceof Stream.Readable
                 || node.stream instanceof Stream.Duplex  ))
-                throw new Error(`stream of output node "${node.id}" is neither of Readable nor Duplex type`)
+                throw new Error(`stream of output node <${node.id}> is neither of Readable nor Duplex type`)
             if (!( other.stream instanceof Stream.Writable
                 || other.stream instanceof Stream.Duplex  ))
-                throw new Error(`stream of input node "${other.id}" is neither of Writable nor Duplex type`)
+                throw new Error(`stream of input node <${other.id}> is neither of Writable nor Duplex type`)
             node.stream.pipe(other.stream)
         }
     }
@@ -470,32 +470,26 @@ type wsPeerInfo = {
     const finishEvents = new EventEmitter()
     for (const node of graphNodes) {
         if (node.stream === null)
-            throw new Error(`stream of node "${node.id}" still not initialized`)
-        cli!.log("info", `observe stream of node "${node.id}" for finish event`)
+            throw new Error(`stream of node <${node.id}> still not initialized`)
+        cli!.log("info", `observe stream of node <${node.id}> for finish event`)
         activeNodes.add(node)
-        node.stream.on("end", () => {
+        const deactivateNode = (node: SpeechFlowNode, msg: string) => {
             if (activeNodes.has(node))
                 activeNodes.delete(node)
-            cli!.log("info", `readable stream of node "${node.id}" ended (${activeNodes.size} nodes remaining active)`)
+            cli!.log("info", `${msg} (${activeNodes.size} active nodes remaining)`)
             if (activeNodes.size === 0) {
                 const timeFinished = DateTime.now()
                 const duration = timeFinished.diff(timeZero)
-                cli!.log("info", "everything finished -- stream processing in SpeechFlow graph stops " +
-                    `(total duration: ${duration.toFormat("hh:mm:ss.SSS")})`)
+                cli!.log("info", "**** everything finished -- stream processing in SpeechFlow graph stops " +
+                    `(total duration: ${duration.toFormat("hh:mm:ss.SSS")}) ****`)
                 finishEvents.emit("finished")
             }
+        }
+        node.stream.on("end", () => {
+            deactivateNode(node, `readable stream side of node <${node.id}> raised "end" event`)
         })
         node.stream.on("finish", () => {
-            if (activeNodes.has(node))
-                activeNodes.delete(node)
-            cli!.log("info", `writable stream of node "${node.id}" finished (${activeNodes.size} nodes remaining active)`)
-            if (activeNodes.size === 0) {
-                const timeFinished = DateTime.now()
-                const duration = timeFinished.diff(timeZero)
-                cli!.log("info", "everything finished -- stream processing in SpeechFlow graph stops " +
-                    `(total duration: ${duration.toFormat("hh:mm:ss.SSS")})`)
-                finishEvents.emit("finished")
-            }
+            deactivateNode(node, `writable stream side of node <${node.id}> raised "finish" event`)
         })
     }
 
@@ -664,40 +658,40 @@ type wsPeerInfo = {
         /*  graph processing: PASS 1: disconnect node streams  */
         for (const node of graphNodes) {
             if (node.stream === null) {
-                cli!.log("warning", `stream of node "${node.id}" no longer initialized`)
+                cli!.log("warning", `stream of node <${node.id}> no longer initialized`)
                 continue
             }
             for (const other of Array.from(node.connectionsOut)) {
                 if (other.stream === null) {
-                    cli!.log("warning", `stream of incoming node "${other.id}" no longer initialized`)
+                    cli!.log("warning", `stream of incoming node <${other.id}> no longer initialized`)
                     continue
                 }
                 if (!( node.stream instanceof Stream.Readable
                     || node.stream instanceof Stream.Duplex  )) {
-                    cli!.log("warning", `stream of output node "${node.id}" is neither of Readable nor Duplex type`)
+                    cli!.log("warning", `stream of output node <${node.id}> is neither of Readable nor Duplex type`)
                     continue
                 }
                 if (!( other.stream instanceof Stream.Writable
                     || other.stream instanceof Stream.Duplex  )) {
-                    cli!.log("warning", `stream of input node "${other.id}" is neither of Writable nor Duplex type`)
+                    cli!.log("warning", `stream of input node <${other.id}> is neither of Writable nor Duplex type`)
                     continue
                 }
-                cli!.log("info", `disconnect stream of node "${node.id}" from stream of node "${other.id}"`)
+                cli!.log("info", `disconnect stream of node <${node.id}> from stream of node <${other.id}>`)
                 node.stream.unpipe(other.stream)
             }
         }
 
         /*  graph processing: PASS 2: close nodes  */
         for (const node of graphNodes) {
-            cli!.log("info", `close node "${node.id}"`)
+            cli!.log("info", `close node <${node.id}>`)
             await node.close().catch((err) => {
-                cli!.log("warning", `node "${node.id}" failed to close: ${err}`)
+                cli!.log("warning", `node <${node.id}> failed to close: ${err}`)
             })
         }
 
         /*  graph processing: PASS 3: disconnect nodes  */
         for (const node of graphNodes) {
-            cli!.log("info", `disconnect node "${node.id}"`)
+            cli!.log("info", `disconnect node <${node.id}>`)
             const connectionsIn  = Array.from(node.connectionsIn)
             const connectionsOut = Array.from(node.connectionsOut)
             connectionsIn.forEach((other) => { other.disconnect(node) })
@@ -706,7 +700,7 @@ type wsPeerInfo = {
 
         /*  graph processing: PASS 4: shutdown nodes  */
         for (const node of graphNodes) {
-            cli!.log("info", `destroy node "${node.id}"`)
+            cli!.log("info", `destroy node <${node.id}>`)
             graphNodes.delete(node)
         }
 
@@ -720,21 +714,11 @@ type wsPeerInfo = {
             process.exit(1)
         }
     }
-    finishEvents.on("finished", () => {
-        shutdown("finished")
-    })
-    process.on("SIGINT", () => {
-        shutdown("SIGINT")
-    })
-    process.on("SIGUSR1", () => {
-        shutdown("SIGUSR1")
-    })
-    process.on("SIGUSR2", () => {
-        shutdown("SIGUSR2")
-    })
-    process.on("SIGTERM", () => {
-        shutdown("SIGTERM")
-    })
+    finishEvents.on("finished", () => { shutdown("finished") })
+    process.on("SIGINT",        () => { shutdown("SIGINT")   })
+    process.on("SIGUSR1",       () => { shutdown("SIGUSR1")  })
+    process.on("SIGUSR2",       () => { shutdown("SIGUSR2")  })
+    process.on("SIGTERM",       () => { shutdown("SIGTERM")  })
 })().catch((err: Error) => {
     if (cli !== null)
         cli.log("error", err.message)

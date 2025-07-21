@@ -2,6 +2,12 @@
 ChangeLog
 =========
 
+1.2.1 (2025-07-21)
+------------------
+
+- CLEANUP: refactor main cleanup procedure
+- CLEANUP: consistenly use "<xxx>" for nodes in outputs
+
 1.2.0 (2025-07-21)
 ------------------
 
