@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - UPGRADE: upgrade NPM dependencies
+- CLEANUP: remove unused NPM dependencies
 
 1.2.2 (2025-07-21)
 ------------------
