@@ -21,7 +21,7 @@
         "flowlink":                         "0.9.11",
         "js-yaml":                          "4.1.0",
         "@gpeng/naudiodon":                 "2.4.1",
-        "@deepgram/sdk":                    "4.9.1",
+        "@deepgram/sdk":                    "4.11.0",
         "deepl-node":                       "1.19.0",
         "@elevenlabs/elevenlabs-js":        "2.7.0",
         "stream-transform":                 "3.4.0",
