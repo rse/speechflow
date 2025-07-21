@@ -111,9 +111,12 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             return (male > female ? "male" : "female")
         }
 
+        /*  define sample rate required by model  */
+        const sampleRateTarget = 16000
+
         /*  work off queued audio frames  */
         const frameWindowDuration = 0.5
-        const frameWindowSamples  = frameWindowDuration * this.config.audioSampleRate
+        const frameWindowSamples  = frameWindowDuration * sampleRateTarget
         let lastGender = ""
         let workingOffTimer: ReturnType<typeof setTimeout> | null = null
         let workingOff = false
@@ -169,9 +172,6 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         }
         this.queue.once("write", workOffQueue)
 
-        /*  define sample rate required by model  */
-        const sampleRateTarget = 16000
-
         /*  provide Duplex stream and internally attach to classifier  */
         const self = this
         this.stream = new Stream.Duplex({
@@ -213,46 +213,36 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             read (_size) {
                 /*  flush pending audio chunks  */
                 const flushPendingChunks = () => {
-                    while (true) {
-                        const element = self.queueSend.peek()
-                        if (element === undefined)
-                            break
-                        else if (element.type === "audio-eof") {
-                            this.push(null)
-                            break
-                        }
-                        else if (element.type === "audio-frame"
-                            && element.gender === undefined)
-                            break
-                        const duration = utils.audioArrayDuration(element.data)
-                        log("info", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
-                        element.chunk.meta.set("gender", element.gender)
-                        this.push(element.chunk)
-                        self.queueSend.walk(+1)
-                        self.queue.trim()
-                    }
-                }
-
-                /*  await forthcoming audio chunks  */
-                const awaitForthcomingChunks = () => {
                     const element = self.queueSend.peek()
                     if (element !== undefined
+                        && element.type === "audio-eof")
+                        this.push(null)
+                    else if (element !== undefined
                         && element.type === "audio-frame"
-                        && element.gender !== undefined)
-                        flushPendingChunks()
+                        && element.gender !== undefined) {
+                        while (true) {
+                            const element = self.queueSend.peek()
+                            if (element === undefined)
+                                break
+                            else if (element.type === "audio-eof") {
+                                this.push(null)
+                                break
+                            }
+                            else if (element.type === "audio-frame"
+                                && element.gender === undefined)
+                                break
+                            const duration = utils.audioArrayDuration(element.data)
+                            log("info", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
+                            element.chunk.meta.set("gender", element.gender)
+                            this.push(element.chunk)
+                            self.queueSend.walk(+1)
+                            self.queue.trim()
+                        }
+                    }
                     else
-                        self.queue.once("write", awaitForthcomingChunks)
+                        self.queue.once("write", flushPendingChunks)
                 }
-
-                const element = self.queueSend.peek()
-                if (element !== undefined && element.type === "audio-eof")
-                    this.push(null)
-                else if (element !== undefined
-                    && element.type === "audio-frame"
-                    && element.gender !== undefined)
-                    flushPendingChunks()
-                else
-                    self.queue.once("write", awaitForthcomingChunks)
+                flushPendingChunks()
             }
         })
     }
