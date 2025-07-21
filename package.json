@@ -1,7 +1,7 @@
 {
     "name":                                 "speechflow",
     "version":                              "1.2.5",
-    "x-stdver":                             "1.2.5-GA",
+    "x-stdver":                             "1.2.6-GA",
     "x-release":                            "2025-07-21",
     "homepage":                             "https://github.com/rse/speechflow",
     "description":                          "Speech Processing Flow Graph",
@@ -89,7 +89,7 @@
         "@yao-pkg/pkg":                     "6.6.0",
         "typescript":                       "5.8.3",
         "delay-cli":                        "2.0.0",
-        "@rse/stx":                         "1.0.5",
+        "@rse/stx":                         "1.0.6",
         "cross-env":                        "7.0.3"
     },
     "overrides": {
