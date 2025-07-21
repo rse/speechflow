@@ -63,6 +63,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
+            highWaterMark:      1,
 
             /*  transform audio chunk  */
             transform (chunk: SpeechFlowChunk, encoding, callback) {

@@ -178,6 +178,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
+            highWaterMark:      1,
 
             /*  receive audio chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {

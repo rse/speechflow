@@ -49,6 +49,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
+            highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 let error: Error | undefined
                 const fmtTime = (t: Duration) => t.toFormat("hh:mm:ss.SSS")

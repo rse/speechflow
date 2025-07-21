@@ -86,6 +86,7 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
+            highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 let val1: any
                 const val2: any = self.params.val

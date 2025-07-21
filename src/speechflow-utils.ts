@@ -68,6 +68,7 @@ export function createTransformStreamForWritableSide () {
         readableObjectMode: true,
         writableObjectMode: true,
         decodeStrings: false,
+        highWaterMark: 1,
         transform (chunk: SpeechFlowChunk, encoding, callback) {
             this.push(chunk.payload)
             callback()
@@ -86,6 +87,7 @@ export function createTransformStreamForReadableSide (type: "text" | "audio", ge
         readableObjectMode: true,
         writableObjectMode: true,
         decodeStrings: false,
+        highWaterMark: (type === "audio" ? 19200 : 65536),
         transform (chunk: Buffer | string, encoding, callback) {
             const timeZero = getTimeZero()
             const start = DateTime.now().diff(timeZero)

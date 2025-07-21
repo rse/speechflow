@@ -74,6 +74,7 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
             readableObjectMode: true,
             writableObjectMode: true,
             decodeStrings:      false,
+            highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))

@@ -111,6 +111,7 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
+            highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
                 if (mode === "r")
                     callback(new Error("write operation on read-only node"))

@@ -180,6 +180,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
+            highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
                 if (chunk.type !== "audio")
                     callback(new Error("expected audio input chunk"))
