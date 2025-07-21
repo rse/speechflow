@@ -423,6 +423,7 @@ type wsPeerInfo = {
     }
 
     /*  graph processing: PASS 3: open nodes  */
+    const timeZero = DateTime.now()
     for (const node of graphNodes) {
         /*  connect node events  */
         node.on("log", (level: string, msg: string, data?: any) => {
@@ -434,20 +435,14 @@ type wsPeerInfo = {
 
         /*  open node  */
         cli!.log("info", `open node <${node.id}>`)
+        node.setTimeZero(timeZero)
         await node.open().catch((err: Error) => {
             cli!.log("error", `[${node.id}]: ${err.message}`)
             throw new Error(`failed to open node <${node.id}>`)
         })
     }
 
-    /*  graph processing: PASS 4: set time zero in all nodes  */
-    const timeZero = DateTime.now()
-    for (const node of graphNodes) {
-        cli!.log("info", `set time zero in node <${node.id}>`)
-        node.setTimeZero(timeZero)
-    }
-
-    /*  graph processing: PASS 5: connect node streams  */
+    /*  graph processing: PASS 4: connect node streams  */
     for (const node of graphNodes) {
         if (node.stream === null)
             throw new Error(`stream of node <${node.id}> still not initialized`)
