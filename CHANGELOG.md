@@ -7,6 +7,7 @@ ChangeLog
 
 - CLEANUP: refactor main cleanup procedure
 - CLEANUP: consistenly use "<xxx>" for nodes in outputs
+- UPGRADE: upgrade NPM dependencies
 
 1.2.0 (2025-07-21)
 ------------------
