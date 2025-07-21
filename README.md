@@ -77,10 +77,47 @@ $ speechflow
   [<argument> [...]]
 ```
 
+Graph Expression Language
+-------------------------
+
+The **SpeechFlow** graph expression language is based on
+[**FlowLink**](https://npmjs.org/flowlink), which itself has a language
+following the following BNF-style grammar:
+
+```
+expr             ::= parallel
+                   | sequential
+                   | node
+                   | group
+parallel         ::= sequential ("," sequential)+
+sequential       ::= node ("|" node)+
+node             ::= id ("(" (param ("," param)*)? ")")?
+param            ::= array | object | variable | template | string | number | value
+group            ::= "{" expr "}"
+id               ::= /[a-zA-Z_][a-zA-Z0-9_-]*/
+variable         ::= id
+array            ::= "[" (param ("," param)*)? "]"
+object           ::= "{" (id ":" param ("," id ":" param)*)? "}"
+template         ::= "`" ("${" variable "}" / ("\\`"|.))* "`"
+string           ::= /"(\\"|.)*"/
+                   | /'(\\'|.)*'/
+number           ::= /[+-]?/ number-value
+number-value     ::= "0b" /[01]+/
+                   | "0o" /[0-7]+/
+                   | "0x" /[0-9a-fA-F]+/
+                   | /[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?/
+                   | /[0-9]+/
+value            ::= "true" | "false" | "null" | "NaN" | "undefined"
+```
+
+**SpeechFlow** makes available to **FlowLink** all **SpeechFlow** nodes as
+`node`, the CLI arguments under the array `variable` named `argv`, and all
+environment variables under the object `variable` named `env`.
+
 Processing Graph Examples
 -------------------------
 
-The following are examples of **SpeechFlow** processing graphs.
+The following are examples of particular **SpeechFlow** processing graphs.
 They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) file.
 
 - **Capturing**: Capture audio from microphone device into WAV audio file:
@@ -536,43 +573,6 @@ First a short overview of the available processing nodes:
   | ------------ | --------- | -------- | --------------------- |
   | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
   | **name**     | 1         | *none*   | *none*                |
-
-Graph Expression Language
--------------------------
-
-The **SpeechFlow** graph expression language is based on
-[**FlowLink**](https://npmjs.org/flowlink), which itself has a language
-following the following BNF-style grammar:
-
-```
-expr             ::= parallel
-                   | sequential
-                   | node
-                   | group
-parallel         ::= sequential ("," sequential)+
-sequential       ::= node ("|" node)+
-node             ::= id ("(" (param ("," param)*)? ")")?
-param            ::= array | object | variable | template | string | number | value
-group            ::= "{" expr "}"
-id               ::= /[a-zA-Z_][a-zA-Z0-9_-]*/
-variable         ::= id
-array            ::= "[" (param ("," param)*)? "]"
-object           ::= "{" (id ":" param ("," id ":" param)*)? "}"
-template         ::= "`" ("${" variable "}" / ("\\`"|.))* "`"
-string           ::= /"(\\"|.)*"/
-                   | /'(\\'|.)*'/
-number           ::= /[+-]?/ number-value
-number-value     ::= "0b" /[01]+/
-                   | "0o" /[0-7]+/
-                   | "0x" /[0-9a-fA-F]+/
-                   | /[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?/
-                   | /[0-9]+/
-value            ::= "true" | "false" | "null" | "NaN" | "undefined"
-```
-
-**SpeechFlow** makes available to **FlowLink** all **SpeechFlow** nodes as
-`node`, the CLI arguments under the array `variable` named `argv`, and all
-environment variables under the object `variable` named `env`.
 
 History
 -------
