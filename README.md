@@ -200,9 +200,9 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
                           password: env.SPEECHFLOW_MQTT_PASS,
                           topicWrite: "stream/studio/sender"),
                       {
-                          filter(type: "text", var: "meta:gender", op: "==", val: "male") |
+                          filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
                               elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
-                          filter(type: "text", var: "meta:gender", op: "==", val: "female") |
+                          filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
                               elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
                       } | {
                           wav(mode: "encode") |
@@ -564,9 +564,10 @@ First a short overview of the available processing nodes:
   | Parameter    | Position  | Default  | Requirement           |
   | ------------ | --------- | -------- | --------------------- |
   | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
-  | **var**      | 1         | ""       | `/^(?:meta:.+|payload:(?:length|text)|time:(?:start|end))$/` |
-  | **op**       | 2         | "=="     | `/^(?:<|<=|==|!=|~~|!~|>=|>)$/` |
-  | **val**      | 3         | ""       | `/^.*$/` |
+  | **name**     | 1         | "filter" | `/^.+$/` |
+  | **var**      | 2         | ""       | `/^(?:meta:.+|payload:(?:length|text)|time:(?:start|end))$/` |
+  | **op**       | 3         | "=="     | `/^(?:<|<=|==|!=|~~|!~|>=|>)$/` |
+  | **val**      | 4         | ""       | `/^.*$/` |
 
 - Node: **trace**<br/>
   Purpose: **data flow tracing**<br/>

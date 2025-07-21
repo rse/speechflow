@@ -87,9 +87,9 @@ studio-translation: |
                             password: env.SPEECHFLOW_MQTT_PASS,
                             topicWrite: "stream/studio/sender"),
                         {
-                            filter(type: "text", var: "meta:gender", op: "==", val: "male") |
+                            filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
                                 elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
-                            filter(type: "text", var: "meta:gender", op: "==", val: "female") |
+                            filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
                                 elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
                         } | {
                             wav(mode: "encode") |

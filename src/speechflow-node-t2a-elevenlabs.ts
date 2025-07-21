@@ -133,7 +133,6 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
-                    log("info", `ElevenLabs: send text: ${JSON.stringify(chunk.payload)}`)
                     speechStream(chunk.payload).then((stream) => {
                         getStreamAsBuffer(stream).then((buffer) => {
                             const bufferResampled = resampler.processChunk(buffer)

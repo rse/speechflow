@@ -21,10 +21,11 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            type: { type: "string", pos: 0, val: "audio", match: /^(?:audio|text)$/ },
-            var:  { type: "string", pos: 1, val: "",      match: /^(?:meta:.+|payload:(?:length|text)|time:(?:start|end))$/ },
-            op:   { type: "string", pos: 2, val: "==",    match: /^(?:<|<=|==|!=|~~|!~|>=|>)$/ },
-            val:  { type: "string", pos: 3, val: "",      match: /^.*$/ }
+            type: { type: "string", pos: 0, val: "audio",  match: /^(?:audio|text)$/ },
+            name: { type: "string", pos: 1, val: "filter", match: /^.+?$/ },
+            var:  { type: "string", pos: 2, val: "",       match: /^(?:meta:.+|payload:(?:length|text)|time:(?:start|end))$/ },
+            op:   { type: "string", pos: 3, val: "==",     match: /^(?:<|<=|==|!=|~~|!~|>=|>)$/ },
+            val:  { type: "string", pos: 4, val: "",       match: /^.*$/ }
         })
 
         /*  declare node input/output format  */
@@ -101,8 +102,10 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
                     val1 = chunk.timestampStart.toMillis()
                 else if (self.params.key === "time:end")
                     val1 = chunk.timestampEnd.toMillis()
-                if (comparison(val1, self.params.op, val2))
+                if (comparison(val1, self.params.op, val2)) {
+                    self.log("info", `[${self.params.name}]: passing through ${chunk.type} chunk`)
                     this.push(chunk)
+                }
                 callback()
             },
             final (callback) {
