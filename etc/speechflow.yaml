@@ -70,7 +70,7 @@ studio-transcription: |
 studio-translation: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
         mute() |
-            vad(mode: "unplugged") | {
+            vad(mode: "silenced") | {
                 gender() | {
                     trace(name: "audio", type: "audio") |
                         meter(interval: 250) |
