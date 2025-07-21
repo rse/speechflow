@@ -89,7 +89,7 @@
         "@yao-pkg/pkg":                     "6.6.0",
         "typescript":                       "5.8.3",
         "delay-cli":                        "2.0.0",
-        "@rse/stx":                         "1.0.6",
+        "@rse/stx":                         "1.0.7",
         "cross-env":                        "7.0.3"
     },
     "overrides": {
