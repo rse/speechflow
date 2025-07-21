@@ -23,7 +23,7 @@
         "@gpeng/naudiodon":                 "2.4.1",
         "@deepgram/sdk":                    "4.9.1",
         "deepl-node":                       "1.19.0",
-        "@elevenlabs/elevenlabs-js":        "2.6.0",
+        "@elevenlabs/elevenlabs-js":        "2.7.0",
         "stream-transform":                 "3.4.0",
         "get-stream":                       "9.0.1",
         "@dotenvx/dotenvx":                 "1.48.2",
@@ -90,7 +90,7 @@
         "@yao-pkg/pkg":                     "6.6.0",
         "typescript":                       "5.8.3",
         "delay-cli":                        "2.0.0",
-        "@rse/stx":                         "1.0.2",
+        "@rse/stx":                         "1.0.3",
         "cross-env":                        "7.0.3"
     },
     "overrides": {
