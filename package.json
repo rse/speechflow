@@ -87,6 +87,7 @@
         "stmux":                            "1.8.11",
         "nodemon":                          "3.1.10",
         "shx":                              "0.4.0",
+        "@yao-pkg/pkg":                     "6.6.0",
         "typescript":                       "5.8.3",
         "delay-cli":                        "2.0.0",
         "@rse/stx":                         "1.0.2",

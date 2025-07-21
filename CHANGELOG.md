@@ -5,6 +5,12 @@ ChangeLog
 1.2.1 (2025-07-21)
 ------------------
 
+- CLEANUP: cleanup usage information
+- IMPROVEMENT: add optional "build-pkg" build target for creating an all-in-one-package
+
+1.2.1 (2025-07-21)
+------------------
+
 - CLEANUP: refactor main cleanup procedure
 - CLEANUP: consistenly use "<xxx>" for nodes in outputs
 - UPGRADE: upgrade NPM dependencies
