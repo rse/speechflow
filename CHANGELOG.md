@@ -6,9 +6,10 @@ ChangeLog
 ------------------
 
 - UPGRADE: upgrade NPM dependencies
-- CLEANUP: remove unused NPM dependencies
 - BUGFIX: set highwatermark to 1 for all object-mode streams
 - BUGFIX: fix comparison in filter node
+- CLEANUP: remove unused NPM dependencies
+- CLEANUP: update studio-translation config
 
 1.2.2 (2025-07-21)
 ------------------
