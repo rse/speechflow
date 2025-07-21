@@ -80,7 +80,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                             `start=${fmtTime(chunk.timestampStart)} ` +
                             `end=${fmtTime(chunk.timestampEnd)} ` +
                             `payload-type=String payload-length=${chunk.payload.length} ` +
-                            `payload-encoding=${encoding} payload-content="${chunk.payload.toString()}" ` +
+                            `payload-content="${chunk.payload.toString()}" ` +
                             `meta=${fmtMeta(chunk.meta)}`)
                     else
                         error = new Error(`${type} chunk: seen String instead of Buffer chunk type`)
