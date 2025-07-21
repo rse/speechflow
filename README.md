@@ -60,7 +60,11 @@ Usage
 $ speechflow
   [-h|--help]
   [-V|--version]
+  [-S|--status]
   [-v|--verbose <level>]
+  [-a|--address <ip-address>]
+  [-p|--port <tcp-port>]
+  [-C|--cache <directory>]
   [-e|--expression <expression>]
   [-f|--file <file>]
   [-c|--config <id>@<yaml-config-file>]

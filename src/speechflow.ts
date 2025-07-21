@@ -61,11 +61,11 @@ type wsPeerInfo = {
             "Usage: $0 " +
             "[-h|--help] " +
             "[-V|--version] " +
+            "[-S|--status] " +
             "[-v|--verbose <level>] " +
             "[-a|--address <ip-address>] " +
             "[-p|--port <tcp-port>] " +
             "[-C|--cache <directory>] " +
-            "[-S|--status] " +
             "[-e|--expression <expression>] " +
             "[-f|--file <file>] " +
             "[-c|--config <id>@<yaml-config-file>] " +
@@ -79,6 +79,14 @@ type wsPeerInfo = {
             coerce,
             default:  false,
             describe: "show program version information"
+        })
+        .option("S", {
+            alias:    "status",
+            type:     "boolean",
+            array:    false,
+            coerce,
+            default:  false,
+            describe: "show one-time status of nodes"
         })
         .option("v", {
             alias:    "log-level",
@@ -115,14 +123,6 @@ type wsPeerInfo = {
             nargs:    1,
             default:  path.join(dataDir, "cache"),
             describe: "directory for cached files (primarily AI model files)"
-        })
-        .option("S", {
-            alias:    "status",
-            type:     "boolean",
-            array:    false,
-            coerce,
-            default:  false,
-            describe: "show one-time status of nodes"
         })
         .option("e", {
             alias:    "expression",
