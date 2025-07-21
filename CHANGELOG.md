@@ -2,6 +2,17 @@
 ChangeLog
 =========
 
+1.2.3 (2025-07-21)
+------------------
+
+- UPGRADE: upgrade NPM dependencies
+
+1.2.2 (2025-07-21)
+------------------
+
+- CLEANUP: cleanup usage information
+- UPGRADE: upgrade NPM dependencies
+
 1.2.1 (2025-07-21)
 ------------------
 
