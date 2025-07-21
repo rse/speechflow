@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.2.7 (2025-07-22)
+------------------
+
+- UPGRADE: upgrade NPM dependencies (to fix "stx" under Windows once again)
+
 1.2.6 (2025-07-21)
 ------------------
 
