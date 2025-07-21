@@ -199,6 +199,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
     async close () {
         /*  shutdown PortAudio  */
         if (this.io !== null) {
+            this.io.abort()
             this.io.quit()
             this.io = null
         }
