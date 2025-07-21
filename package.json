@@ -26,7 +26,7 @@
         "@elevenlabs/elevenlabs-js":        "2.6.0",
         "stream-transform":                 "3.4.0",
         "get-stream":                       "9.0.1",
-        "@dotenvx/dotenvx":                 "1.48.1",
+        "@dotenvx/dotenvx":                 "1.48.2",
         "speex-resampler":                  "3.0.1",
         "pcm-convert":                      "1.6.5",
         "object-path":                      "0.11.8",
