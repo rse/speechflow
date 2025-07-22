@@ -38,6 +38,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
     private queueRecv = this.queue.pointerUse("recv")
     private queueAC   = this.queue.pointerUse("ac")
     private queueSend = this.queue.pointerUse("send")
+    private shutdown  = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -122,7 +123,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         let workingOff = false
         const workOffQueue = async () => {
             /*  control working off round  */
-            if (workingOff)
+            if (workingOff || this.shutdown)
                 return
             workingOff = true
             if (workingOffTimer !== null) {
@@ -213,6 +214,8 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             read (_size) {
                 /*  flush pending audio chunks  */
                 const flushPendingChunks = () => {
+                    if (self.shutdown)
+                        return
                     const element = self.queueSend.peek()
                     if (element !== undefined
                         && element.type === "audio-eof")
@@ -232,7 +235,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                                 && element.gender === undefined)
                                 break
                             const duration = utils.audioArrayDuration(element.data)
-                            log("info", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
+                            log("debug", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
                             element.chunk.meta.set("gender", element.gender)
                             this.push(element.chunk)
                             self.queueSend.walk(+1)
@@ -249,6 +252,9 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate shutdown  */
+        this.shutdown = true
+
         /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
