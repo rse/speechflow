@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+1.2.9 (2025-07-22)
+------------------
+
+- BUGFIX: more robust shutdown in "gender" node
+- CLEANUP: log less under "info" log level
+- UPGRADE: upgrade NPM dependencies
+
 1.2.8 (2025-07-22)
 ------------------
 
