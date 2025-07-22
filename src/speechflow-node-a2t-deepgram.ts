@@ -98,9 +98,9 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
             const text = (data.channel?.alternatives[0]?.transcript as string) ?? ""
             if (text === "")
-                this.log("info", `Deepgram: empty/dummy text received (start: ${data.start}s, duration: ${data.duration}s)`)
+                this.log("info", `empty/dummy text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s)`)
             else {
-                this.log("info", `Deepgram: text received (start: ${data.start}s, duration: ${data.duration}s): "${text}"`)
+                this.log("info", `text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s): "${text}"`)
                 const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
                 const end   = start.plus({ seconds: data.duration })
                 const metas = metastore.fetch(start, end)
@@ -114,13 +114,13 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             }
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Metadata, (data) => {
-            this.log("info", "Deepgram: metadata received")
+            this.log("info", "metadata received")
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Close, () => {
-            this.log("info", "Deepgram: connection close")
+            this.log("info", "connection close")
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Error, (error: Error) => {
-            this.log("error", `Deepgram: ${error.message}`)
+            this.log("error", `error: ${error.message}`)
             this.emit("error")
         })
 
@@ -133,7 +133,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                 }
             }, 3000)
             this.dg!.once(Deepgram.LiveTranscriptionEvents.Open, () => {
-                this.log("info", "Deepgram: connection open")
+                this.log("info", "connection open")
                 if (timer !== null) {
                     clearTimeout(timer)
                     timer = null
@@ -155,7 +155,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                 if (initTimeout === null)
                     return
                 initTimeout = null
-                this.log("warning", "Deepgram: initialization timeout -- restarting service usage")
+                this.log("warning", "initialization timeout -- restarting service usage")
                 await this.close()
                 this.open()
             }, 3000)
@@ -188,7 +188,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     callback(new Error("expected Buffer input chunk"))
                 else {
                     if (chunk.payload.byteLength > 0) {
-                        log("debug", `Deepgram: send data (${chunk.payload.byteLength} bytes)`)
+                        log("debug", `send data (${chunk.payload.byteLength} bytes)`)
                         initTimeoutStart()
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
@@ -199,7 +199,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             },
             read (size) {
                 queue.read().then((chunk) => {
-                    log("info", `Deepgram: receive data (${chunk.payload.length} bytes)`)
+                    log("info", `receive data (${chunk.payload.length} bytes)`)
                     initTimeoutStop()
                     this.push(chunk, encoding)
                 })
