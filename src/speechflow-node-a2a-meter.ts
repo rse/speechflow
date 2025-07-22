@@ -52,7 +52,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
         /*  setup loudness emitting interval  */
         this.interval = setInterval(() => {
-            this.log("info", `LUFS-S: ${lufss.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
+            this.log("debug", `LUFS-S: ${lufss.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
             this.sendResponse([ "meter", "LUFS-S", lufss ])
             this.sendResponse([ "meter", "RMS", rms ])
         }, this.params.interval)

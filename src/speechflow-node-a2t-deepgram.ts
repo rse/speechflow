@@ -188,7 +188,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     callback(new Error("expected Buffer input chunk"))
                 else {
                     if (chunk.payload.byteLength > 0) {
-                        log("info", `Deepgram: send data (${chunk.payload.byteLength} bytes)`)
+                        log("debug", `Deepgram: send data (${chunk.payload.byteLength} bytes)`)
                         initTimeoutStart()
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
