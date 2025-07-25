@@ -644,12 +644,14 @@ type wsPeerInfo = {
         shuttingDown = true
         if (signal === "finished")
             cli!.log("info", "**** streams of all nodes finished -- shutting down service ****")
+        else if (signal === "exception")
+            cli!.log("warning", "**** exception occurred -- shutting down service ****")
         else
             cli!.log("warning", `**** received signal ${signal} -- shutting down service ****`)
 
         /*  shutdown HAPI service  */
         cli!.log("info", `HAPI: stopping REST/WebSocket network service: http://${args.address}:${args.port}`)
-        await hapi.stop()
+        await hapi.stop({ timeout: 2000 })
 
         /*  graph processing: PASS 1: disconnect node streams  */
         for (const node of graphNodes) {
@@ -715,6 +717,14 @@ type wsPeerInfo = {
     process.on("SIGUSR1",       () => { shutdown("SIGUSR1")  })
     process.on("SIGUSR2",       () => { shutdown("SIGUSR2")  })
     process.on("SIGTERM",       () => { shutdown("SIGTERM")  })
+    process.on("uncaughtException", (err) => {
+        cli!.log("error", `uncaught exception: ${err}`)
+        shutdown("exception")
+    })
+    process.on("unhandledRejection", (reason) => {
+        cli!.log("error", `unhandled rejection: ${reason}`)
+        shutdown("exception")
+    })
 })().catch((err: Error) => {
     if (cli !== null)
         cli.log("error", err.message)
