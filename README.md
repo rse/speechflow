@@ -378,7 +378,7 @@ First a short overview of the available processing nodes:
   Notice: this node has to be externally controlled via REST/WebSockets!
 
   > This node allows muting the audio stream by either silencing or even
-  > unplugging. It has to be externally controlled via REST/WebSocket, e.g.
+  > unplugging. It has to be externally controlled via REST/WebSocket (see below).
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -392,6 +392,10 @@ First a short overview of the available processing nodes:
   Purpose: **Loudness metering node**<br/>
   Example: `meter(250)`
 
+  > This node allows measuring the loudness of the audio stream. The
+  > results are emitted to both the logfile of **SpeechFlow** and the
+  > WebSockets API (see below).
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | audio       |
@@ -404,6 +408,10 @@ First a short overview of the available processing nodes:
 - Node: **vad**<br/>
   Purpose: **Voice Audio Detection (VAD) node**<br/>
   Example: `vad()`
+
+  > This node perform Voice Audio Detection (VAD), i.e., it detects
+  > voice in the audio stream and if not detected either silences or
+  > unplugs the audio stream.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -423,6 +431,10 @@ First a short overview of the available processing nodes:
 - Node: **gender**<br/>
   Purpose: **Gender Detection node**<br/>
   Example: `gender()`
+
+  > This node performs gender detection on the audio stream. It
+  > annotates the audio chunks with `gender=male` or `gender=female`
+  > meta information. Use this meta information with the "filter" node.
 
   | Port    | Payload     |
   | ------- | ----------- |
