@@ -251,7 +251,10 @@ First a short overview of the available processing nodes:
   **filter**,
   **trace**.
 
-### Input/Output Nodes:
+### Input/Output Nodes
+
+The following nodes are for external I/O, i.e, to read/write from
+external files, devices and network services.
 
 - Node:    **file**<br/>
   Purpose: **File and StdIO source/sink**<br/>
@@ -335,7 +338,9 @@ First a short overview of the available processing nodes:
   | **password** | 2         | *none*   | `/^.+$/` |
   | **topic**    | 3         | *none*   | `/^.+$/` |
 
-### Audio-to-Audio Nodes:
+### Audio-to-Audio Nodes
+
+The following nodes process audio chunks only.
 
 - Node: **ffmpeg**<br/>
   Purpose: **FFmpeg audio format conversion**<br/>
@@ -445,7 +450,9 @@ First a short overview of the available processing nodes:
   | ----------- | --------- | -------- | ------------------------ |
   | **window**  | 0         | 500      | *none*                   |
 
-### Audio-to-Text Nodes:
+### Audio-to-Text Nodes
+
+The following nodes convert audio to text chunks.
 
 - Node: **deepgram**<br/>
   Purpose: **Deepgram Speech-to-Text conversion**<br/>
@@ -469,7 +476,9 @@ First a short overview of the available processing nodes:
   | **version**  | 1         | "latest" | *none* |
   | **language** | 2         | "multi"  | *none* |
 
-### Text-to-Text Nodes:
+### Text-to-Text Nodes
+
+The following nodes process text chunks only.
 
 - Node: **deepl**<br/>
   Purpose: **DeepL Text-to-Text translation**<br/>
@@ -604,7 +613,9 @@ First a short overview of the available processing nodes:
   | ------------ | --------- | -------- | --------------------- |
   | **width**    | 0         | 80       | *none*                |
 
-### Text-to-Audio Nodes:
+### Text-to-Audio Nodes
+
+The following nodes convert text chunks to audio chunks.
 
 - Node: **elevenlabs**<br/>
   Purpose: **ElevenLabs Text-to-Speech conversion**<br/>
@@ -651,6 +662,8 @@ First a short overview of the available processing nodes:
   | **speed**    | 2         | 1.25     | 1.0...1.30  |
 
 ### Any-to-Any Nodes:
+
+The following nodes process any type of chunk, i.e., both audio and text chunks.
 
 - Node: **filter**<br/>
   Purpose: **meta information based filter**<br/>
