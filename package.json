@@ -21,7 +21,7 @@
         "flowlink":                         "0.9.11",
         "js-yaml":                          "4.1.0",
         "@gpeng/naudiodon":                 "2.4.1",
-        "@deepgram/sdk":                    "4.11.0",
+        "@deepgram/sdk":                    "4.11.1",
         "deepl-node":                       "1.19.0",
         "@elevenlabs/elevenlabs-js":        "2.7.0",
         "stream-transform":                 "3.4.0",
@@ -90,7 +90,7 @@
         "typescript":                       "5.8.3",
         "delay-cli":                        "2.0.0",
         "@rse/stx":                         "1.0.7",
-        "cross-env":                        "7.0.3"
+        "cross-env":                        "10.0.0"
     },
     "overrides": {
         "@huggingface/transformers":        { "onnxruntime-node": "1.23.0-dev.20250703-7fc6235861" }
