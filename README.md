@@ -56,14 +56,14 @@ ships as an installable package for the Node Package Manager (NPM).
 Installation
 ------------
 
-```
+```sh
 $ npm install -g speechflow
 ```
 
 Usage
 -----
 
-```
+```sh
 $ speechflow
   [-h|--help]
   [-V|--version]
