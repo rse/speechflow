@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.2.9 (2025-07-26)
+1.3.0 (2025-07-26)
 ------------------
 
 - IMPROVEMENT: add new "sentence" node for sentence splitting/merging
