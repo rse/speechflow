@@ -341,6 +341,10 @@ First a short overview of the available processing nodes:
   Purpose: **FFmpeg audio format conversion**<br/>
   Example: `ffmpeg(src: "pcm", dst: "mp3")`
 
+  > This node allows converting between audio formats. It is primarily
+  > intended to support the reading/writing of external MP3 and Opus
+  > format files, although SpeechFlow internally uses PCM format only.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | audio       |
@@ -355,6 +359,10 @@ First a short overview of the available processing nodes:
   Purpose: **WAV audio format conversion**<br/>
   Example: `wav(mode: "encode")`
 
+  > This node allows converting between PCM and WAV audio formats. It is
+  > primarily intended to support the reading/writing of external WAV
+  > format files, although SpeechFlow internally uses PCM format only.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | audio       |
@@ -368,6 +376,9 @@ First a short overview of the available processing nodes:
   Purpose: **volume muting node**<br/>
   Example: `mute()`
   Notice: this node has to be externally controlled via REST/WebSockets!
+
+  > This node allows muting the audio stream by either silencing or even
+  > unplugging. It has to be externally controlled via REST/WebSocket, e.g.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -615,10 +626,45 @@ First a short overview of the available processing nodes:
   | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
   | **name**     | 1         | *none*   | *none*                |
 
+REST/WebSocket API
+------------------
+
+**SpeechFlow** has an externally exposed REST/WebSockets API which can
+be used to control the nodes and to receive information from nodes.
+For controlling a node you have three possibilities (illustrated by
+controlling the mode of the "mute" node):
+
+```sh
+# use HTTP/REST/GET:
+$ curl http://127.0.0.1:8484/api/COMMAND/mute/mode/silenced
+```
+
+```sh
+# use HTTP/REST/POST:
+$ curl -H "Content-type: application/json" \
+  --data '{ "request": "COMMAND", "node": "mute", "args": [ "mode", "silenced" ] }' \
+  http://127.0.0.1:8484/api
+```
+
+```sh
+# use WebSockets:
+$ wscat -c ws://127.0.0.1:8484/api \
+> { "request": "COMMAND", "node": "mute", "args": [ "mode", "silenced" ] }
+```
+
+For receiving emitted information from nodes, you have to use the WebSockets
+API (illustrated by the emitted information of the "meter" node):
+
+```sh
+# use WebSockets:
+$ wscat -c ws://127.0.0.1:8484/api \
+< { "response": "NOTIFY", "node": "meter", "args": [ "meter", "LUFS-S", -35.75127410888672 ] }
+```
+
 History
 -------
 
-**Speechflow**, as a technical cut-through, was initially created in
+**SpeechFlow**, as a technical cut-through, was initially created in
 March 2024 for use in the msg Filmstudio context. It was later refined
 into a more complete toolkit in April 2025 and this way the first time
 could be used in production. It was fully refactored in July 2025 in
