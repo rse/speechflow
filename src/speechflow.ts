@@ -507,8 +507,10 @@ type wsPeerInfo = {
         const name = req.node as string
         const args = req.args as any[]
         const foundNode = Array.from(graphNodes).find((node) => node.id === name)
-        if (foundNode === undefined)
+        if (foundNode === undefined) {
             cli!.log("warning", `external request failed: no such node <${name}>`)
+            throw new Error(`external request failed: no such node <${name}>`)
+        }
         else {
             await foundNode.receiveRequest(args).catch((err: Error) => {
                 cli!.log("warning", `external request to node <${name}> failed: ${err}`)
