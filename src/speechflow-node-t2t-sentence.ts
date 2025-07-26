@@ -73,10 +73,7 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
             }
             this.queue.off("write", workOffQueue)
 
-            const position = this.queueSplit.position()
-            const maxPosition = this.queueSplit.maxPosition()
-            log("info", `SPLIT: ${maxPosition - position} elements in queue`)
-
+            /*  try to work off one or more chunks  */
             while (true) {
                 const element = this.queueSplit.peek()
                 if (element === undefined)
@@ -177,9 +174,6 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
             /*  send text chunk(s) (readable side of stream)  */
             read (_size) {
                 /*  flush pending audio chunks  */
-                const position = self.queueSend.position()
-                const maxPosition = self.queueSend.maxPosition()
-                log("info", `SEND: ${maxPosition - position} elements in queue`)
                 const flushPendingChunks = () => {
                     const element = self.queueSend.peek()
                     if (element !== undefined
