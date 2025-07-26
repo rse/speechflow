@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.3.1 (2025-07-26)
+------------------
+
+- BUGFIX: fix WebVTT format generation in "subtitle" node
+
 1.3.0 (2025-07-26)
 ------------------
 

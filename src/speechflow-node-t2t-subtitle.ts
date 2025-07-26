@@ -7,6 +7,9 @@
 /*  standard dependencies  */
 import Stream from "node:stream"
 
+/*  external dependencies  */
+import { Duration } from "luxon"
+
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
@@ -51,20 +54,29 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
             else if (this.params.format === "vtt") {
                 const start = chunk.timestampStart.toFormat("hh:mm:ss.SSS")
                 const end   = chunk.timestampEnd.toFormat("hh:mm:ss.SSS")
-                text = `${this.sequenceNo++}\n` +
-                    `${start} --> ${end}\n` +
+                text = `${start} --> ${end}\n` +
                     `${text}\n\n`
             }
             return text
         }
 
         /*  establish a duplex stream  */
+        const self = this
+        let firstChunk = true
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (firstChunk && self.params.format === "vtt") {
+                    this.push(new SpeechFlowChunk(
+                        Duration.fromMillis(0), Duration.fromMillis(0),
+                        "final", "text",
+                        "WEBVTT\n\n"
+                    ))
+                    firstChunk = false
+                }
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
