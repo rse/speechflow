@@ -256,6 +256,10 @@ First a short overview of the available processing nodes:
 - Node:    **file**<br/>
   Purpose: **File and StdIO source/sink**<br/>
   Example: `file(path: "capture.pcm", mode: "w", type: "audio")`
+  Description: |
+      This node allows the reading/writing from/to files or from StdIO.
+      It is intended to be used as source and sink nodes in batch
+      processing, and as sing nodes in real-time processing.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -273,6 +277,10 @@ First a short overview of the available processing nodes:
 - Node: **device**<br/>
   Purpose: **Microphone/speaker device source/sink**<br/>
   Example: `device(device: "wasapi:VoiceMeeter Out B1", mode: "r")`
+  Description: |
+      This node allows the reading/writing from/to audio devices. It is
+      intended to be used as source nodes for microphone devices and as
+      sink nodes for speaker devices.
 
   | Port    | Payload     |
   | ------- | ----------- |
