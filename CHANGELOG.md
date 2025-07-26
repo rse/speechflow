@@ -5,6 +5,7 @@ ChangeLog
 1.2.9 (2025-07-26)
 ------------------
 
+- IMPROVEMENT: add new "sentence" node for sentence splitting/merging
 - BUGFIX: more robust shutdown in main program
 - BUGFIX: more robust shutdown in "gender" node
 - CLEANUP: log less under "info" log level

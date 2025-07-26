@@ -41,6 +41,7 @@ local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translat
 local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding,
 local WAV speech-to-speech encoding,
 local text-to-text formatting,
+local text-to-text sentencing merging/splitting,
 local text-to-text subtitle generation,
 local text or audio filter, and
 local text or audio tracing.
@@ -489,6 +490,18 @@ First a short overview of the available processing nodes:
   | **model**    | *none*    | "OPUS"   | `/^(?:OPUS|SmolLM3)$/` |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+
+- Node: **sentence**<br/>
+  Purpose: **sentence splitting/merging**<br/>
+  Example: `sentence()`<br/>
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
 
 - Node: **subtitle**<br/>
   Purpose: **SRT/VTT Subtitle Generation**<br/>

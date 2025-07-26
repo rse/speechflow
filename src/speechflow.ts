@@ -244,6 +244,7 @@ type wsPeerInfo = {
         "./speechflow-node-t2t-format.js",
         "./speechflow-node-t2t-ollama.js",
         "./speechflow-node-t2t-openai.js",
+        "./speechflow-node-t2t-sentence.js",
         "./speechflow-node-t2t-subtitle.js",
         "./speechflow-node-t2t-transformers.js",
         "./speechflow-node-x2x-filter.js",
