@@ -2,7 +2,7 @@
 ##  sample.yaml -- Speechflow Sample Audio Processing Graphs
 ##
 
-#   Capture audio from microphone device into WAV audio file
+#   Capture and meter audio from microphone device into WAV audio file
 capturing: |
     device(device: "coreaudio:Elgato Wave:3", mode: "r") |
         vad() |
@@ -19,7 +19,7 @@ pass-through: |
         device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
     }
 
-#   Generate text file with German transcription of MP3 audio file
+#   Generate text file with German transcription of German MP3 audio file
 transcription: |
     file(path: argv.0, mode: "r", type: "audio") |
         ffmpeg(src: "mp3", dst: "pcm") |
@@ -27,15 +27,24 @@ transcription: |
                 format(width: 80) |
                     file(path: argv.1, mode: "w", type: "text")
 
-#  Generate text file with German subtitles of MP3 audio file
-subtitling: |
+#   Generate WebVTT file with German closed captions of German MP3 audio file
+captioning: |
     file(path: argv.0, mode: "r", type: "audio") |
         ffmpeg(src: "mp3", dst: "pcm") |
             deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
                 subtitle(format: "vtt") |
                     file(path: argv.1, mode: "w", type: "text")
 
-#  Ad-Hoc text translation from German to English
+#   Generate WebVTT file with English subtitles of German MP3 audio file
+subtitling: |
+    file(path: argv.0, mode: "r", type: "audio") |
+        ffmpeg(src: "mp3", dst: "pcm") |
+            deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
+                deepl(src: "de", dst: "en") |
+                    subtitle(format: "vtt") |
+                        file(path: argv.1, mode: "w", type: "text")
+
+#   Ad-Hoc text translation from German to English
 translation: |
     file(path: "-", mode: "r", type: "text") |
         deepl(src: "de", dst: "en") |
