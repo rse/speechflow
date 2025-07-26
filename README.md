@@ -452,6 +452,10 @@ First a short overview of the available processing nodes:
   Example: `deepgram(language: "de")`<br/>
   Notice: this node requires an API key!
 
+  > This node performs Speech-to-Text (S2T) conversion, i.e., it
+  > recognizes speech in the input audio stream and outputs a
+  > corresponding text stream.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | audio       |
@@ -472,6 +476,8 @@ First a short overview of the available processing nodes:
   Example: `deepl(src: "de", dst: "en")`<br/>
   Notice: this node requires an API key!
 
+  > This node performs translation between English and German languages.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text        |
@@ -487,6 +493,12 @@ First a short overview of the available processing nodes:
   Purpose: **OpenAI/GPT Text-to-Text translation and spelling correction**<br/>
   Example: `openai(src: "de", dst: "en")`<br/>
   Notice: this node requires an OpenAI API key!
+
+  > This node performs translation between English and German languages
+  > in the text stream or (if the source and destination language is
+  > the same) spellchecking of English or German languages in the text
+  > stream. It is based on the remote OpenAI cloud AI service and uses
+  > the GPT-4o-mini LLM.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -505,6 +517,12 @@ First a short overview of the available processing nodes:
   Purpose: **Ollama/Gemma Text-to-Text translation and spelling correction**<br/>
   Example: `ollama(src: "de", dst: "en")`<br/>
   Notice: this node requires the Ollama API!
+
+  > This node performs translation between English and German languages
+  > in the text stream or (if the source and destination language is
+  > the same) spellchecking of English or German languages in the text
+  > stream. It is based on the local Ollama AI service and uses the
+  > Google Gemma 3 LLM.
 
   | Port    | Payload     |
   | ------- | ----------- |
