@@ -378,7 +378,7 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         this.queue.emit("write", { start: this.index - 1, end: this.index - 1 })
     }
     insert (element: T) {
-        this.queue.elements.splice(this.index++, 0, element)
+        this.queue.elements.splice(this.index, 0, element)
         this.queue.emit("write", { start: this.index - 1, end: this.index })
     }
     delete () {
