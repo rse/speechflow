@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - BUGFIX: fix WebVTT format generation in "subtitle" node
+- UPGRADE: upgrade NPM dependencies
 
 1.3.0 (2025-07-26)
 ------------------
