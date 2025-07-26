@@ -661,7 +661,7 @@ The following nodes convert text chunks to audio chunks.
   | **language** | 1         | "en"     | `/^en$/`    |
   | **speed**    | 2         | 1.25     | 1.0...1.30  |
 
-### Any-to-Any Nodes:
+### Any-to-Any Nodes
 
 The following nodes process any type of chunk, i.e., both audio and text chunks.
 
