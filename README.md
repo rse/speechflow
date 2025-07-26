@@ -623,12 +623,12 @@ First a short overview of the available processing nodes:
   | Parameter      | Position  | Default   | Requirement        |
   | -------------- | --------- | --------- | ------------------ |
   | **key**        | *none*    | env.SPEECHFLOW\_ELEVENLABS\_KEY | *none* |
-  | **voice**      | 0         | "Brian"   | `/^(?:Brittney|Cassidy|Leonie|Mark|Brian)$/` |
-  | **language**   | 1         | "de"      | `/^(?:de|en)$/`  |
+  | **voice**      | 0         | "Brian"   | `/^(?:Brittney\|Cassidy\|Leonie\|Mark\|Brian)$/` |
+  | **language**   | 1         | "de"      | `/^(?:de\|en)$/`  |
   | **speed**      | 2         | 1.00      | `n >= 0`7 && n <= 1.2` |
   | **stability**  | 3         | 0.5       | `n >= 0.0 && n <= 1.0` |
   | **similarity** | 4         | 0.75      | `n >= 0.0 && n <= 1.0` |
-  | **optimize**   | 5         | "latency" | `/^(?:latency|quality)$/` |
+  | **optimize**   | 5         | "latency" | `/^(?:latency\|quality)$/` |
 
 - Node: **kokoro**<br/>
   Purpose: **Kokoro Text-to-Speech conversion**<br/>
@@ -646,7 +646,7 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement |
   | ------------ | --------- | -------- | ----------- |
-  | **voice**    | 0         | "Aoede"  | `/^(?:Aoede|Heart|Puck|Fenrir)$/` |
+  | **voice**    | 0         | "Aoede"  | `/^(?:Aoede\|Heart\|Puck\|Fenrir)$/` |
   | **language** | 1         | "en"     | `/^en$/`    |
   | **speed**    | 2         | 1.25     | 1.0...1.30  |
 
