@@ -298,6 +298,11 @@ First a short overview of the available processing nodes:
   Example: `websocket(connect: "ws://127.0.0.1:12345", type: "text")`
   Notice: this node requires a peer WebSocket service!
 
+  > This node allows reading/writing from/to WebSocket network services.
+  > It is primarily intended to be used for sending out the text of
+  > subtitles, but can be also used for receiving the text to be
+  > processed.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text, audio |
@@ -313,6 +318,10 @@ First a short overview of the available processing nodes:
   Purpose: **MQTT sink**<br/>
   Example: `mqtt(url: "mqtt://127.0.0.1:1883", username: "foo", password: "bar", topic: "quux")`
   Notice: this node requires a peer MQTT broker!
+
+  > This node allows reading/writing from/to MQTT broker topics. It is
+  > primarily intended to be used for sending out the text of subtitles,
+  > but can be also used for receiving the text to be processed.
 
   | Port    | Payload     |
   | ------- | ----------- |
