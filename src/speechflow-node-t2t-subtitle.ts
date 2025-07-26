@@ -27,7 +27,8 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            format:   { type: "string", pos: 0, val: "srt", match: /^(?:srt|vtt)$/ }
+            format: { type: "string", pos: 0, val: "srt", match: /^(?:srt|vtt)$/ },
+            words:  { type: "boolean", val: false }
         })
 
         /*  declare node input/output format  */
@@ -43,21 +44,55 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
         const convert = async (chunk: SpeechFlowChunk) => {
             if (typeof chunk.payload !== "string")
                 throw new Error("chunk payload type must be string")
-            let text = chunk.payload
-            if (this.params.format === "srt") {
-                const start = chunk.timestampStart.toFormat("hh:mm:ss,SSS")
-                const end   = chunk.timestampEnd.toFormat("hh:mm:ss,SSS")
-                text = `${this.sequenceNo++}\n` +
-                    `${start} --> ${end}\n` +
-                    `${text}\n\n`
+            const convertSingle = (
+                start:      Duration,
+                end:        Duration,
+                text:       string,
+                word?:      string,
+                occurence?: number
+            ) => {
+                if (word) {
+                    occurence ??= 1
+                    let match = 1
+                    word = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+                    text = text.replaceAll(new RegExp(`\\b${word}\\b`, "g"), (m) => {
+                        if (match++ === occurence)
+                            return `<b>${m}</b>`
+                        else
+                            return m
+                    })
+                }
+                if (this.params.format === "srt") {
+                    const startFmt = start.toFormat("hh:mm:ss,SSS")
+                    const endFmt   = end.toFormat("hh:mm:ss,SSS")
+                    text = `${this.sequenceNo++}\n` +
+                        `${startFmt} --> ${endFmt}\n` +
+                        `${text}\n\n`
+                }
+                else if (this.params.format === "vtt") {
+                    const startFmt = start.toFormat("hh:mm:ss.SSS")
+                    const endFmt   = end.toFormat("hh:mm:ss.SSS")
+                    text = `${startFmt} --> ${endFmt}\n` +
+                        `${text}\n\n`
+                }
+                return text
             }
-            else if (this.params.format === "vtt") {
-                const start = chunk.timestampStart.toFormat("hh:mm:ss.SSS")
-                const end   = chunk.timestampEnd.toFormat("hh:mm:ss.SSS")
-                text = `${start} --> ${end}\n` +
-                    `${text}\n\n`
+            let output = ""
+            if (this.params.words) {
+                output += convertSingle(chunk.timestampStart, chunk.timestampEnd, chunk.payload)
+                const words = (chunk.meta.get("words") ?? []) as
+                    { word: string, start: Duration, end: Duration }[]
+                const occurences = new Map<string, number>()
+                for (const word of words) {
+                    let occurence = occurences.get(word.word) ?? 0
+                    occurence++
+                    occurences.set(word.word, occurence)
+                    output += convertSingle(word.start, word.end, chunk.payload, word.word, occurence)
+                }
             }
-            return text
+            else
+                output += convertSingle(chunk.timestampStart, chunk.timestampEnd, chunk.payload)
+            return output
         }
 
         /*  establish a duplex stream  */

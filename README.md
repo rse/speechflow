@@ -595,6 +595,7 @@ The following nodes process text chunks only.
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **format**   | *none*    | "srt"    | /^(?:srt\|vtt)$/   |
+  | **words**    | *none*    | false    | *none*             |
 
 - Node: **format**<br/>
   Purpose: **text paragraph formatting**<br/>

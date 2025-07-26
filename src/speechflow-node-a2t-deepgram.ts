@@ -96,7 +96,9 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
-            const text = (data.channel?.alternatives[0]?.transcript as string) ?? ""
+            const text  = (data.channel?.alternatives[0]?.transcript ?? "") as string
+            const words = (data.channel?.alternatives[0]?.words ?? []) as
+                { word: string, punctuated_word?: string, start: number, end: number }[]
             if (text === "")
                 this.log("info", `empty/dummy text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s)`)
             else {
@@ -109,6 +111,11 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     return prev
                 }, new Map<string, any>())
                 metastore.prune(start)
+                meta.set("words", words.map((word) => {
+                    const start = Duration.fromMillis(word.start * 1000).plus(this.timeZeroOffset)
+                    const end   = Duration.fromMillis(word.end * 1000).plus(this.timeZeroOffset)
+                    return { word: word.punctuated_word ?? word.word, start, end }
+                }))
                 const chunk = new SpeechFlowChunk(start, end, "final", "text", text, meta)
                 queue.write(chunk)
             }
