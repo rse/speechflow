@@ -516,7 +516,7 @@ First a short overview of the available processing nodes:
 - Node: **ollama**<br/>
   Purpose: **Ollama/Gemma Text-to-Text translation and spelling correction**<br/>
   Example: `ollama(src: "de", dst: "en")`<br/>
-  Notice: this node requires the Ollama API!
+  Notice: this node requires Ollama to be installed!
 
   > This node performs translation between English and German languages
   > in the text stream or (if the source and destination language is
@@ -540,6 +540,9 @@ First a short overview of the available processing nodes:
   Purpose: **Transformers Text-to-Text translation**<br/>
   Example: `transformers(src: "de", dst: "en")`<br/>
 
+  > This node performs translation between English and German languages
+  > in the text stream. It is based on local OPUS or SmolLM3 LLMs.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text        |
@@ -555,6 +558,11 @@ First a short overview of the available processing nodes:
   Purpose: **sentence splitting/merging**<br/>
   Example: `sentence()`<br/>
 
+  > This node allows you to ensure that a text stream is split or merged
+  > into complete sentences. It is primarily intended to be used after
+  > the "deepgram" node and before "deepl" or "elevenlabs" nodes in
+  > order to improve overall quality.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text        |
@@ -566,6 +574,9 @@ First a short overview of the available processing nodes:
 - Node: **subtitle**<br/>
   Purpose: **SRT/VTT Subtitle Generation**<br/>
   Example: `subtitle(format: "srt")`<br/>
+
+  > This node generates subtitles from the text stream (and its embedded
+  > timestamps) in the formats SRT (SubRip) or VTT (WebVTT).
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -579,6 +590,10 @@ First a short overview of the available processing nodes:
 - Node: **format**<br/>
   Purpose: **text paragraph formatting**<br/>
   Example: `format(width: 80)`<br/>
+
+  > This node formats the text stream into lines no longer than a
+  > certain width. It is primarily intended for use before writing text
+  > chunks to files.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -594,23 +609,35 @@ First a short overview of the available processing nodes:
 - Node: **elevenlabs**<br/>
   Purpose: **ElevenLabs Text-to-Speech conversion**<br/>
   Example: `elevenlabs(language: "en")`<br/>
-  Notice: this node requires an API key!
+  Notice: this node requires an ElevenLabs API key!
+
+  > This node perform Text-to-Speech (T2S) conversion, i.e., it converts
+  > the input text stream into an output audio stream. It is intended to
+  > generate speech.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text        |
   | output  | audio       |
 
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **key**      | *none*    | env.SPEECHFLOW\_ELEVENLABS\_KEY | *none* |
-  | **voice**    | 0         | "Brian"  | *none* |
-  | **language** | 1         | "de"     | *none* |
+  | Parameter      | Position  | Default   | Requirement        |
+  | -------------- | --------- | --------- | ------------------ |
+  | **key**        | *none*    | env.SPEECHFLOW\_ELEVENLABS\_KEY | *none* |
+  | **voice**      | 0         | "Brian"   | `/^(?:Brittney|Cassidy|Leonie|Mark|Brian)$/` |
+  | **language**   | 1         | "de"      | `/^(?:de|en)$/`  |
+  | **speed**      | 2         | 1.00      | `n >= 0`7 && n <= 1.2` |
+  | **stability**  | 3         | 0.5       | `n >= 0.0 && n <= 1.0` |
+  | **similarity** | 4         | 0.75      | `n >= 0.0 && n <= 1.0` |
+  | **optimize**   | 5         | "latency" | `/^(?:latency|quality)$/` |
 
 - Node: **kokoro**<br/>
   Purpose: **Kokoro Text-to-Speech conversion**<br/>
   Example: `kokoro(language: "en")`<br/>
   Notice: this currently support English language only!
+
+  > This node perform Text-to-Speech (T2S) conversion, i.e., it converts
+  > the input text stream into an output audio stream. It is intended to
+  > generate speech.
 
   | Port    | Payload     |
   | ------- | ----------- |
