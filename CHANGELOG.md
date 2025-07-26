@@ -5,6 +5,8 @@ ChangeLog
 1.3.1 (2025-07-26)
 ------------------
 
+- IMPROVEMENT: keep word information as meta information in "deepgram" node
+- IMPROVEMENT: support words in subtitle generation in "subtitle" node
 - BUGFIX: fix WebVTT format generation in "subtitle" node
 - UPGRADE: upgrade NPM dependencies
 
