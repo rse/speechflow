@@ -188,27 +188,29 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
               wav(mode: "encode") |
                   file(path: "program-de.wav", mode: "w", type: "audio"),
           deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) | {
-              format(width: 80) |
-                  file(path: "program-de.txt", mode: "w", type: "text"),
-              deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) | {
-                  trace(name: "text", type: "text") | {
-                      format(width: 80) |
-                          file(path: "program-en.txt", mode: "w", type: "text"),
-                      subtitle(format: "srt") |
-                          file(path: "program-en.srt", mode: "w", type: "text"),
-                      mqtt(url: "mqtt://10.1.0.10:1883",
-                          username: env.SPEECHFLOW_MQTT_USER,
-                          password: env.SPEECHFLOW_MQTT_PASS,
-                          topicWrite: "stream/studio/sender"),
-                      {
-                          filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
-                              elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
-                          filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
-                              elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
-                      } | {
-                          wav(mode: "encode") |
-                              file(path: "program-en.wav", mode: "w", type: "audio"),
-                          device(device: "coreaudio:USBAudio2.0", mode: "w")
+              sentence() | {
+                  format(width: 80) |
+                      file(path: "program-de.txt", mode: "w", type: "text"),
+                  deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) | {
+                      trace(name: "text", type: "text") | {
+                          format(width: 80) |
+                              file(path: "program-en.txt", mode: "w", type: "text"),
+                          subtitle(format: "srt") |
+                              file(path: "program-en.srt", mode: "w", type: "text"),
+                          mqtt(url: "mqtt://10.1.0.10:1883",
+                              username: env.SPEECHFLOW_MQTT_USER,
+                              password: env.SPEECHFLOW_MQTT_PASS,
+                              topicWrite: "stream/studio/sender"),
+                          {
+                              filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
+                                  elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
+                              filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
+                                  elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
+                          } | {
+                              wav(mode: "encode") |
+                                  file(path: "program-en.wav", mode: "w", type: "audio"),
+                              device(device: "coreaudio:USBAudio2.0", mode: "w")
+                          }
                       }
                   }
               }
