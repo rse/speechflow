@@ -330,7 +330,7 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement           |
   | ------------ | --------- | -------- | --------------------- |
-  | **url**      | 0         | *none*   | `/^(?:\|(?:ws|mqtt):\/\/(.+?):(\d+))$/` |
+  | **url**      | 0         | *none*   | `/^(?:\|(?:ws\|mqtt):\/\/(.+?):(\d+))$/` |
   | **username** | 1         | *none*   | `/^.+$/` |
   | **password** | 2         | *none*   | `/^.+$/` |
   | **topic**    | 3         | *none*   | `/^.+$/` |
@@ -420,7 +420,7 @@ First a short overview of the available processing nodes:
 
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
-  | **mode**               | *none* | "unplugged" | `/^(?:silenced|unplugged)$/` |
+  | **mode**               | *none* | "unplugged" | `/^(?:silenced\|unplugged)$/` |
   | **posSpeechThreshold** | *none* | 0.50  | *none* |
   | **negSpeechThreshold** | *none* | 0.35  | *none* |
   | **minSpeechFrames**    | *none* | 2     | *none* |
@@ -550,7 +550,7 @@ First a short overview of the available processing nodes:
 
   | Parameter    | Position  | Default  | Requirement      |
   | ------------ | --------- | -------- | ---------------- |
-  | **model**    | *none*    | "OPUS"   | `/^(?:OPUS|SmolLM3)$/` |
+  | **model**    | *none*    | "OPUS"   | `/^(?:OPUS\|SmolLM3)$/` |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
