@@ -678,6 +678,10 @@ First a short overview of the available processing nodes:
   Purpose: **data flow tracing**<br/>
   Example: `trace(type: "audio")`<br/>
 
+  > This node allows you to trace the audio and text chunk flow through
+  > the **SpeechFlow** graph. It just passes through its chunks, but
+  > sends information about the chunks to the log.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text, audio |
