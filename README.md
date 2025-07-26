@@ -656,6 +656,11 @@ First a short overview of the available processing nodes:
   Purpose: **meta information based filter**<br/>
   Example: `filter(type: "audio", var: "meta:gender", op: "==", val: "male")`<br/>
 
+  > This node allows you to filter nodes based on certain criteria. It
+  > is primarily intended to be used in conjunction with the "gender"
+  > node and in front of the `elevenlabs` or `kokoro` nodes in order to
+  > translate with a corresponding voice.
+
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text, audio |
@@ -665,8 +670,8 @@ First a short overview of the available processing nodes:
   | ------------ | --------- | -------- | --------------------- |
   | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
   | **name**     | 1         | "filter" | `/^.+$/` |
-  | **var**      | 2         | ""       | `/^(?:meta:.+|payload:(?:length|text)|time:(?:start|end))$/` |
-  | **op**       | 3         | "=="     | `/^(?:<|<=|==|!=|~~|!~|>=|>)$/` |
+  | **var**      | 2         | ""       | `/^(?:meta:.+\|payload:(?:length\|text)\|time:(?:start\|end))$/` |
+  | **op**       | 3         | "=="     | `/^(?:<\|<=\|==\|!=\|~~\|!~\|>=\|>)$/` |
   | **val**      | 4         | ""       | `/^.*$/` |
 
 - Node: **trace**<br/>
