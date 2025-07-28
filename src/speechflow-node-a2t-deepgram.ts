@@ -138,7 +138,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     timer = null
                     reject(new Error("Deepgram: timeout waiting for connection open"))
                 }
-            }, 3000)
+            }, 8000)
             this.dg!.once(Deepgram.LiveTranscriptionEvents.Open, () => {
                 this.log("info", "connection open")
                 if (timer !== null) {
