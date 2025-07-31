@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.3.1 (2025-07-26)
+1.3.1 (2025-07-31)
 ------------------
 
 - BUGFIX: wait a longer time for "deepgram" node to open
