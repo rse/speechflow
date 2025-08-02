@@ -185,21 +185,6 @@ type wsPeerInfo = {
         for (const key of Object.keys(result.parsed))
             cli.log("info", `loaded environment variable "${key}" from ".env" files`)
 
-    /*  handle uncaught exceptions  */
-    process.on("uncaughtException", async (err: Error) => {
-        cli!.log("warning", `process crashed with a fatal error: ${err} ${err.stack}`)
-        process.exit(1)
-    })
-
-    /*  handle unhandled promise rejections  */
-    process.on("unhandledRejection", async (reason, promise) => {
-        if (reason instanceof Error)
-            cli!.log("error", `promise rejection not handled: ${reason.message}: ${reason.stack}`)
-        else
-            cli!.log("error", `promise rejection not handled: ${reason}`)
-        process.exit(1)
-    })
-
     /*  sanity check usage  */
     let n = 0
     if (typeof args.e === "string" && args.e !== "") n++
@@ -337,9 +322,9 @@ type wsPeerInfo = {
     }
     catch (err) {
         if (err instanceof Error && err.name === "FlowLinkError")
-            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.toString()}"`)
+            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.toString()}`)
         else if (err instanceof Error)
-            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.message}"`)
+            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.message}`)
         else
             cli!.log("error", "failed to parse SpeechFlow configuration: internal error")
         process.exit(1)
@@ -721,11 +706,17 @@ type wsPeerInfo = {
     process.on("SIGUSR2",       () => { shutdown("SIGUSR2")  })
     process.on("SIGTERM",       () => { shutdown("SIGTERM")  })
     process.on("uncaughtException", (err) => {
-        cli!.log("error", `uncaught exception: ${err}`)
+        if (reason instanceof Error)
+            cli!.log("error", `uncaught exception: ${err.message}`)
+        else
+            cli!.log("error", `uncaught exception: ${err}`)
         shutdown("exception")
     })
     process.on("unhandledRejection", (reason) => {
-        cli!.log("error", `unhandled rejection: ${reason}`)
+        if (reason instanceof Error)
+            cli!.log("error", `unhandled rejection: ${reason.message}`)
+        else
+            cli!.log("error", `unhandled rejection: ${reason}`)
         shutdown("exception")
     })
 })().catch((err: Error) => {
