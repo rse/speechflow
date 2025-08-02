@@ -104,7 +104,7 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        let model: string = ""
+        let model = ""
 
         /*  track download progress when instantiating Transformers engine and model  */
         const progressState = new Map<string, number>()
