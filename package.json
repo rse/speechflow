@@ -51,7 +51,7 @@
         "pure-uuid":                        "1.8.1",
         "wavefile":                         "11.0.0",
         "audio-inspect":                    "0.0.3",
-        "@huggingface/transformers":        "3.7.0",
+        "@huggingface/transformers":        "3.7.1",
         "kokoro-js":                        "1.2.1",
         "@ericedouard/vad-node-realtime":   "0.2.0",
         "luxon":                            "3.7.1",
@@ -71,7 +71,7 @@
         "oxlint":                           "1.9.0",
         "eslint-plugin-oxlint":             "1.9.0",
         "@biomejs/biome":                   "2.0.6",
-        "eslint-config-biome":              "1.9.4",
+        "eslint-config-biome":              "2.1.3",
 
         "@types/node":                      "24.1.0",
         "@types/yargs":                     "17.0.33",
@@ -96,7 +96,7 @@
     "overrides": {
         "@huggingface/transformers":        { "onnxruntime-node": "1.23.0-dev.20250703-7fc6235861" }
     },
-    "upd":                                  [ "!@biomejs/biome" ],
+    "upd":                                  [ "!@biomejs/biome", "!typescript" ],
     "engines": {
         "node":                             ">=22.0.0"
     },
