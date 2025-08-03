@@ -482,7 +482,7 @@ type wsPeerInfo = {
         }
     }
 
-    /*  graph processing: PASS 6: track stream finishing  */
+    /*  graph processing: PASS 5: track stream finishing  */
     const activeNodes  = new Set<SpeechFlowNode>()
     const finishEvents = new EventEmitter()
     finishEvents.setMaxListeners(graphNodes.size + 10)
@@ -647,7 +647,7 @@ type wsPeerInfo = {
         }
     })
     await hapi.start()
-    cli!.log("info", `HAPI: started REST/WebSocket network service: http://${args.address}:${args.port}`)
+    cli!.log("info", `HAPI: started REST/WebSocket network service: http://${args.a}:${args.p}`)
 
     /*  hook for sendResponse method of nodes  */
     for (const node of graphNodes) {
@@ -678,7 +678,7 @@ type wsPeerInfo = {
             cli!.log("warning", `**** received signal ${signal} -- shutting down service ****`)
 
         /*  shutdown HAPI service  */
-        cli!.log("info", `HAPI: stopping REST/WebSocket network service: http://${args.address}:${args.port}`)
+        cli!.log("info", `HAPI: stopping REST/WebSocket network service: http://${args.a}:${args.p}`)
         await hapi.stop({ timeout: 2000 })
 
         /*  clear WebSocket connections  */
@@ -809,9 +809,9 @@ type wsPeerInfo = {
 })().catch((err: Error) => {
     /*  top-level exception handling  */
     if (cli !== null)
-        cli.log("error", `${err.message}: ${err.stack}`)
+        cli.log("error", `${err.message}:\n${err.stack}`)
     else
-        process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}: ${err.stack}\n`)
+        process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}\n${err.stack}\n`)
     process.exit(1)
 })
 
