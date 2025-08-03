@@ -23,6 +23,8 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
     /*  internal state  */
     private elevenlabs: ElevenLabs.ElevenLabsClient | null = null
     private static speexInitialized = false
+    private destroyed = false
+    private resampler: SpeexResampler | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -54,6 +56,9 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        /*  clear destruction flag  */
+        this.destroyed = false
+
         /*  establish ElevenLabs API connection  */
         this.elevenlabs = new ElevenLabs.ElevenLabsClient({
             apiKey: this.params.key
@@ -120,37 +125,61 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             await SpeexResampler.initPromise
             SpeechFlowNodeElevenlabs.speexInitialized = true
         }
-        const resampler = new SpeexResampler(1, maxSampleRate, this.config.audioSampleRate, 7)
+        this.resampler = new SpeexResampler(1, maxSampleRate, this.config.audioSampleRate, 7)
 
         /*  create transform stream and connect it to the ElevenLabs API  */
-        const log = (level: string, msg: string) => { this.log(level, msg) }
+        const self = this
         this.stream = new Stream.Transform({
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.destroyed) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
-                    speechStream(chunk.payload).then((stream) => {
-                        getStreamAsBuffer(stream).then((buffer) => {
-                            const bufferResampled = resampler.processChunk(buffer)
-                            log("info", `ElevenLabs: received audio (buffer length: ${buffer.byteLength})`)
+                    (async () => {
+                        const processTimeout = setTimeout(() => {
+                            callback(new Error("ElevenLabs API timeout"))
+                        }, 60 * 1000)
+                        try {
+                            const stream = await speechStream(chunk.payload as string)
+                            if (self.destroyed) {
+                                clearTimeout(processTimeout)
+                                callback(new Error("stream destroyed during processing"))
+                                return
+                            }
+                            const buffer = await getStreamAsBuffer(stream)
+                            if (self.destroyed) {
+                                clearTimeout(processTimeout)
+                                callback(new Error("stream destroyed during processing"))
+                                return
+                            }
+                            const bufferResampled = self.resampler!.processChunk(buffer)
+                            self.log("info", `ElevenLabs: received audio (buffer length: ${buffer.byteLength})`)
                             const chunkNew = chunk.clone()
                             chunkNew.type = "audio"
                             chunkNew.payload = bufferResampled
+                            clearTimeout(processTimeout)
                             this.push(chunkNew)
                             callback()
-                        }).catch((error) => {
-                            callback(error)
-                        })
-                    }).catch((error) => {
-                        callback(error)
-                    })
+                        }
+                        catch (error) {
+                            clearTimeout(processTimeout)
+                            callback(error instanceof Error ? error : new Error("ElevenLabs processing failed"))
+                        }
+                    })()
                 }
             },
             final (callback) {
+                if (self.destroyed) {
+                    callback()
+                    return
+                }
                 this.push(null)
                 callback()
             }
@@ -159,11 +188,18 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate destruction  */
+        this.destroyed = true
+
         /*  destroy stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
         }
+
+        /*  destroy resampler  */
+        if (this.resampler !== null)
+            this.resampler = null
 
         /*  destroy ElevenLabs API  */
         if (this.elevenlabs !== null)
