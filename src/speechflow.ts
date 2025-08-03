@@ -176,6 +176,21 @@ type wsPeerInfo = {
         logPrefix: pkg.name
     })
 
+    /*  catch uncaught exceptions  */
+    process.on("uncaughtException", (err) => {
+        cli!.log("error", `uncaught exception: ${err.message}`)
+        process.exit(1)
+    })
+
+    /*  catch unhandled promise rejections  */
+    process.on("unhandledRejection", (reason) => {
+        if (reason instanceof Error)
+            cli!.log("error", `unhandled rejection: ${reason.message}`)
+        else
+            cli!.log("error", `unhandled rejection: ${reason}`)
+        process.exit(1)
+    })
+
     /*  provide startup information  */
     cli.log("info", `starting SpeechFlow ${pkg["x-stdver"]} (${pkg["x-release"]})`)
 
@@ -293,7 +308,14 @@ type wsPeerInfo = {
         for (const name of Object.keys(nodes)) {
             cli!.log("info", `gathering status of node <${name}>`)
             const node = new nodes[name](name, cfg, {}, [])
-            const status = await node.status()
+            const status = await Promise.race<{ [ key: string ]: string | number }>([
+                node.status(),
+                new Promise((resolve, reject) => setTimeout(() =>
+                    reject(new Error("timeout")), 10 * 1000))
+            ]).catch((err: Error) => {
+                cli!.log("warning", `[${node.id}]: failed to gather status of node <${node.id}>: ${err.message}`)
+                return {}
+            })
             if (Object.keys(status).length > 0) {
                 let first = true
                 for (const key of Object.keys(status)) {
@@ -423,9 +445,13 @@ type wsPeerInfo = {
         /*  open node  */
         cli!.log("info", `open node <${node.id}>`)
         node.setTimeZero(timeZero)
-        await node.open().catch((err: Error) => {
-            cli!.log("error", `[${node.id}]: ${err.message}`)
-            throw new Error(`failed to open node <${node.id}>`)
+        await Promise.race<void>([
+            node.open(),
+            new Promise((resolve, reject) => setTimeout(() =>
+                reject(new Error("timeout")), 10 * 1000))
+        ]).catch((err: Error) => {
+            cli!.log("error", `[${node.id}]: failed to open node <${node.id}>: ${err.message}`)
+            throw new Error(`failed to open node <${node.id}>: ${err.message}`)
         })
     }
 
@@ -450,6 +476,7 @@ type wsPeerInfo = {
     /*  graph processing: PASS 6: track stream finishing  */
     const activeNodes  = new Set<SpeechFlowNode>()
     const finishEvents = new EventEmitter()
+    finishEvents.setMaxListeners(graphNodes.size + 10)
     for (const node of graphNodes) {
         if (node.stream === null)
             throw new Error(`stream of node <${node.id}> still not initialized`)
@@ -497,9 +524,12 @@ type wsPeerInfo = {
             throw new Error(`external request failed: no such node <${name}>`)
         }
         else {
-            await foundNode.receiveRequest(args).catch((err: Error) => {
-                cli!.log("warning", `external request to node <${name}> failed: ${err}`)
-                throw new Error(`external request to node <${name}> failed: ${err}`)
+            await Promise.race<void>([
+                foundNode.receiveRequest(args),
+                new Promise((resolve, reject) => setTimeout(() =>
+                    reject(new Error("timeout")), 10 * 1000))
+            ]).catch((err: Error) => {
+                cli!.log("warning", `external request to node <${name}> failed: ${err.message}`)
             })
         }
     }
@@ -616,7 +646,8 @@ type wsPeerInfo = {
             const data = JSON.stringify({ response: "NOTIFY", node: node.id, args })
             for (const [ peer, info ] of wsPeers.entries()) {
                 cli!.log("info", `HAPI: peer ${peer}: ${data}`)
-                info.ws.send(data)
+                if (info.ws.readyState === WebSocket.OPEN)
+                    info.ws.send(data)
             }
         })
     }
@@ -640,6 +671,36 @@ type wsPeerInfo = {
         /*  shutdown HAPI service  */
         cli!.log("info", `HAPI: stopping REST/WebSocket network service: http://${args.address}:${args.port}`)
         await hapi.stop({ timeout: 2000 })
+
+        /*  clear WebSocket connections  */
+        if (wsPeers.size > 0) {
+            cli!.log("info", "HAPI: closing WebSocket connections")
+            const closePromises: Promise<void>[] = []
+            for (const [ peer, info ] of wsPeers.entries()) {
+                closePromises.push(new Promise<void>((resolve, reject) => {
+                    if (info.ws.readyState !== WebSocket.OPEN)
+                        resolve()
+                    else {
+                        const timeout = setTimeout(() => {
+                            reject(new Error(`timeout for peer ${peer}`))
+                        }, 2 * 1000)
+                        info.ws.once("close", () => {
+                            clearTimeout(timeout)
+                            resolve()
+                        })
+                        info.ws.close()
+                    }
+                }))
+            }
+            await Promise.race([
+                Promise.all(closePromises),
+                new Promise((resolve, reject) =>
+                    setTimeout(() => reject(new Error("timeout for all peers")), 5 * 1000))
+            ]).catch((err) => {
+                cli!.log("warning", `HAPI: WebSockets failed to close: ${err}`)
+            })
+            wsPeers.clear()
+        }
 
         /*  graph processing: PASS 1: disconnect node streams  */
         for (const node of graphNodes) {
@@ -670,8 +731,12 @@ type wsPeerInfo = {
         /*  graph processing: PASS 2: close nodes  */
         for (const node of graphNodes) {
             cli!.log("info", `close node <${node.id}>`)
-            await node.close().catch((err) => {
-                cli!.log("warning", `node <${node.id}> failed to close: ${err}`)
+            await Promise.race<void>([
+                node.close(),
+                new Promise((resolve, reject) => setTimeout(() =>
+                    reject(new Error("timeout")), 10 * 1000))
+            ]).catch((err: Error) => {
+                cli!.log("warning", `node <${node.id}> failed to close: ${err.message}`)
             })
         }
 
@@ -690,6 +755,12 @@ type wsPeerInfo = {
             graphNodes.delete(node)
         }
 
+        /*  clear event emitters  */
+        finishEvents.removeAllListeners()
+
+        /*  clear active nodes  */
+        activeNodes.clear()
+
         /*  terminate process  */
         if (signal === "finished") {
             cli!.log("info", "terminate process (exit code 0)")
@@ -700,18 +771,25 @@ type wsPeerInfo = {
             process.exit(1)
         }
     }
+
+    /*  hook into regular finish  */
     finishEvents.on("finished", () => { shutdown("finished") })
+
+    /*  hook into process signals  */
     process.on("SIGINT",        () => { shutdown("SIGINT")   })
     process.on("SIGUSR1",       () => { shutdown("SIGUSR1")  })
     process.on("SIGUSR2",       () => { shutdown("SIGUSR2")  })
     process.on("SIGTERM",       () => { shutdown("SIGTERM")  })
+
+    /*  re-hook into uncaught exception handler  */
+    process.removeAllListeners("uncaughtException")
     process.on("uncaughtException", (err) => {
-        if (reason instanceof Error)
-            cli!.log("error", `uncaught exception: ${err.message}`)
-        else
-            cli!.log("error", `uncaught exception: ${err}`)
+        cli!.log("error", `uncaught exception: ${err.message}`)
         shutdown("exception")
     })
+
+    /*  re-hook into unhandled promise rejection handler  */
+    process.removeAllListeners("unhandledRejection")
     process.on("unhandledRejection", (reason) => {
         if (reason instanceof Error)
             cli!.log("error", `unhandled rejection: ${reason.message}`)
@@ -720,10 +798,11 @@ type wsPeerInfo = {
         shutdown("exception")
     })
 })().catch((err: Error) => {
+    /*  top-level exception handling  */
     if (cli !== null)
-        cli.log("error", err.message)
+        cli.log("error", `${err.message}: ${err.stack}`)
     else
-        process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message} ${err.stack}\n`)
+        process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}: ${err.stack}\n`)
     process.exit(1)
 })
 
