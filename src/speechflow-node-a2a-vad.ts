@@ -42,6 +42,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
     private queueSend = this.queue.pointerUse("send")
     private destroyed = false
     private tailTimer: ReturnType<typeof setTimeout> | null = null
+    private activeEventListeners = new Set<() => void>()
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -218,8 +219,13 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
                         /*  push segments through Voice Activity Detection (VAD)  */
                         if (self.vad && !self.destroyed) {
-                            for (const segment of segmentData)
-                                self.vad.processAudio(segment.data)
+                            try {
+                                for (const segment of segmentData)
+                                    self.vad.processAudio(segment.data)
+                            }
+                            catch (error) {
+                                self.log("error", `VAD processAudio error: ${error}`)
+                            }
                         }
 
                         callback()
@@ -249,17 +255,12 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     return
                 }
 
-                /*  recursion depth limit to prevent stack overflow  */
-                let recursionDepth = 0
-                const recursionDepthMax = 100
-
                 /*  try to perform read operation from scratch  */
                 const tryToRead = () => {
-                    if (self.destroyed || recursionDepth > recursionDepthMax) {
+                    if (self.destroyed) {
                         this.push(null)
                         return
                     }
-                    recursionDepth++
 
                     /*  flush pending audio chunks  */
                     const flushPendingChunks = () => {
@@ -299,7 +300,6 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                                 setTimeout(() => {
                                     if (self.destroyed)
                                         return
-                                    recursionDepth = 0
                                     tryToRead()
                                 }, 0)
                                 return
@@ -316,8 +316,10 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                             && element.type === "audio-frame"
                             && element.isSpeech !== undefined)
                             flushPendingChunks()
-                        else if (!self.destroyed)
+                        else if (!self.destroyed) {
+                            self.activeEventListeners.add(awaitForthcomingChunks)
                             self.queue.once("write", awaitForthcomingChunks)
+                        }
                     }
 
                     const element = self.queueSend.peek()
@@ -327,8 +329,10 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         && element.type === "audio-frame"
                         && element.isSpeech !== undefined)
                         flushPendingChunks()
-                    else if (!self.destroyed)
+                    else if (!self.destroyed) {
+                        self.activeEventListeners.add(awaitForthcomingChunks)
                         self.queue.once("write", awaitForthcomingChunks)
+                    }
                 }
                 tryToRead()
             }
@@ -347,7 +351,10 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         }
 
         /*  remove all event listeners  */
-        this.queue.removeAllListeners("write")
+        this.activeEventListeners.forEach((listener) => {
+            this.queue.removeListener("write", listener)
+        })
+        this.activeEventListeners.clear()
 
         /*  close stream  */
         if (this.stream !== null) {
