@@ -323,8 +323,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                             && element.isSpeech !== undefined)
                             flushPendingChunks()
                         else if (!self.destroyed) {
-                            self.activeEventListeners.add(awaitForthcomingChunks)
                             self.queue.once("write", awaitForthcomingChunks)
+                            self.activeEventListeners.add(awaitForthcomingChunks)
                         }
                     }
 
@@ -336,8 +336,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         && element.isSpeech !== undefined)
                         flushPendingChunks()
                     else if (!self.destroyed) {
-                        self.activeEventListeners.add(awaitForthcomingChunks)
                         self.queue.once("write", awaitForthcomingChunks)
+                        self.activeEventListeners.add(awaitForthcomingChunks)
                     }
                 }
                 tryToRead()
@@ -368,6 +368,11 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
             this.stream = null
         }
 
+        /*  cleanup queue pointers before closing VAD to prevent callback access  */
+        this.queue.pointerDelete("recv")
+        this.queue.pointerDelete("vad")
+        this.queue.pointerDelete("send")
+
         /*  close VAD  */
         if (this.vad !== null) {
             try {
@@ -382,10 +387,5 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
             this.vad.destroy()
             this.vad = null
         }
-
-        /*  cleanup queue pointers  */
-        this.queue.pointerDelete("recv")
-        this.queue.pointerDelete("vad")
-        this.queue.pointerDelete("send")
     }
 }
