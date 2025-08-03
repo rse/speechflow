@@ -21,7 +21,11 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
     public static name = "deepgram"
 
     /*  internal state  */
-    private dg: Deepgram.LiveClient | null = null
+    private dg:                Deepgram.LiveClient | null                       = null
+    private destroyed                                                           = false
+    private initTimeout:       ReturnType<typeof setTimeout> | null             = null
+    private connectionTimeout: ReturnType<typeof setTimeout> | null             = null
+    private queue:             utils.SingleQueue<SpeechFlowChunk | null> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -62,8 +66,11 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
             throw new Error("Deepgram node currently supports PCM-S16LE audio only")
 
+        /*  clear destruction flag  */
+        this.destroyed = false
+
         /*  create queue for results  */
-        const queue = new utils.SingleQueue<SpeechFlowChunk>()
+        this.queue = new utils.SingleQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
         const metastore = new utils.TimeStore<Map<string, any>>()
@@ -96,6 +103,8 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
+            if (this.destroyed || this.queue === null)
+                return
             const text  = (data.channel?.alternatives[0]?.transcript ?? "") as string
             const words = (data.channel?.alternatives[0]?.words ?? []) as
                 { word: string, punctuated_word?: string, start: number, end: number }[]
@@ -117,7 +126,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     return { word: word.punctuated_word ?? word.word, start, end }
                 }))
                 const chunk = new SpeechFlowChunk(start, end, "final", "text", text, meta)
-                queue.write(chunk)
+                this.queue.write(chunk)
             }
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Metadata, (data) => {
@@ -125,25 +134,29 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Close, () => {
             this.log("info", "connection close")
+            if (!this.destroyed && this.queue !== null)
+                this.queue.write(null)
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Error, (error: Error) => {
             this.log("error", `error: ${error.message}`)
+            if (!this.destroyed && this.queue !== null)
+                this.queue.write(null)
             this.emit("error")
         })
 
         /*  wait for Deepgram API to be available  */
         await new Promise((resolve, reject) => {
-            let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
-                if (timer !== null) {
-                    timer = null
+            this.connectionTimeout = setTimeout(() => {
+                if (this.connectionTimeout !== null) {
+                    this.connectionTimeout = null
                     reject(new Error("Deepgram: timeout waiting for connection open"))
                 }
             }, 8000)
             this.dg!.once(Deepgram.LiveTranscriptionEvents.Open, () => {
                 this.log("info", "connection open")
-                if (timer !== null) {
-                    clearTimeout(timer)
-                    timer = null
+                if (this.connectionTimeout !== null) {
+                    clearTimeout(this.connectionTimeout)
+                    this.connectionTimeout = null
                 }
                 resolve(true)
             })
@@ -154,66 +167,104 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  workaround Deepgram initialization problems  */
         let initDone = false
-        let initTimeout: ReturnType<typeof setTimeout> | null = null
         const initTimeoutStart = () => {
-            if (initDone)
+            if (initDone || this.destroyed)
                 return
-            setTimeout(async () => {
-                if (initTimeout === null)
+            this.initTimeout = setTimeout(async () => {
+                if (this.initTimeout === null || this.destroyed)
                     return
-                initTimeout = null
+                this.initTimeout = null
                 this.log("warning", "initialization timeout -- restarting service usage")
                 await this.close()
-                this.open()
-            }, 3000)
+                if (!this.destroyed)
+                    await this.open()
+            }, 3 * 1000)
         }
         const initTimeoutStop = () => {
             if (initDone)
                 return
             initDone = true
-            if (initTimeout !== null) {
-                clearTimeout(initTimeout)
-                initTimeout = null
+            if (this.initTimeout !== null) {
+                clearTimeout(this.initTimeout)
+                this.initTimeout = null
             }
         }
 
         /*  provide Duplex stream and internally attach to Deepgram API  */
-        const dg = this.dg
-        const log = (level: string, msg: string) => {
-            this.log(level, msg)
-        }
-        const encoding = this.config.textEncoding
+        const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
             highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.destroyed || self.dg === null) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (chunk.type !== "audio")
                     callback(new Error("expected audio input chunk"))
                 else if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected Buffer input chunk"))
                 else {
                     if (chunk.payload.byteLength > 0) {
-                        log("debug", `send data (${chunk.payload.byteLength} bytes)`)
+                        self.log("debug", `send data (${chunk.payload.byteLength} bytes)`)
                         initTimeoutStart()
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
-                        dg.send(chunk.payload.buffer) /* intentionally discard all time information  */
+                        try {
+                            self.dg.send(chunk.payload.buffer) /* intentionally discard all time information */
+                        }
+                        catch (error) {
+                            callback(error instanceof Error ? error : new Error("failed to send to Deepgram"))
+                            return
+                        }
                     }
                     callback()
                 }
             },
             read (size) {
-                queue.read().then((chunk) => {
-                    log("info", `receive data (${chunk.payload.length} bytes)`)
-                    initTimeoutStop()
-                    this.push(chunk, encoding)
+                if (self.destroyed || self.queue === null) {
+                    this.push(null)
+                    return
+                }
+                const readTimeout = setTimeout(() => {
+                    self.log("warning", "read timeout - pushing null to prevent hanging")
+                    this.push(null)
+                }, 30 * 1000)
+                self.queue.read().then((chunk) => {
+                    clearTimeout(readTimeout)
+                    if (self.destroyed) {
+                        this.push(null)
+                        return
+                    }
+                    if (chunk === null) {
+                        self.log("info", "received EOF signal")
+                        this.push(null)
+                    }
+                    else {
+                        self.log("info", `received data (${chunk.payload.length} bytes)`)
+                        initTimeoutStop()
+                        this.push(chunk, self.config.textEncoding)
+                    }
+                }).catch((error) => {
+                    clearTimeout(readTimeout)
+                    self.log("error", `queue read error: ${error.message}`)
+                    this.push(null)
                 })
             },
             final (callback) {
-                dg.requestClose()
-                this.push(null)
+                if (self.destroyed || self.dg === null) {
+                    callback()
+                    return
+                }
+                try {
+                    self.dg.requestClose()
+                }
+                catch (error) {
+                    self.log("warning", `error closing Deepgram connection: ${error}`)
+                }
+                /*  NOTICE: do not push null here -- let the Deepgram close event handle it  */
                 callback()
             }
         })
@@ -221,14 +272,41 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate destruction first to stop all async operations  */
+        this.destroyed = true
+
+        /*  cleanup all timers  */
+        if (this.initTimeout !== null) {
+            clearTimeout(this.initTimeout)
+            this.initTimeout = null
+        }
+        if (this.connectionTimeout !== null) {
+            clearTimeout(this.connectionTimeout)
+            this.connectionTimeout = null
+        }
+
         /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
         }
 
-        /*  shutdown Deepgram API  */
-        if (this.dg !== null)
-            this.dg.requestClose()
+        /*  close Deepgram connection and remove listeners  */
+        if (this.dg !== null) {
+            try {
+                this.dg.removeAllListeners()
+                this.dg.requestClose()
+            }
+            catch (error) {
+                this.log("warning", `error during Deepgram cleanup: ${error}`)
+            }
+            this.dg = null
+        }
+
+        /*  signal EOF to any pending read operations  */
+        if (this.queue !== null) {
+            this.queue.write(null)
+            this.queue = null
+        }
     }
 }
