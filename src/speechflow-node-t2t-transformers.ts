@@ -138,7 +138,6 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
                 progress_callback: progressCallback
             })
             this.translator = await pipeline
-            clearInterval(interval)
             if (this.translator === null)
                 throw new Error("failed to instantiate translator pipeline")
         }
@@ -151,12 +150,14 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
                 progress_callback: progressCallback
             })
             this.generator = await pipeline
-            clearInterval(interval)
             if (this.generator === null)
                 throw new Error("failed to instantiate generator pipeline")
         }
         else
             throw new Error("invalid model")
+
+        /*  clear progress interval again  */
+        clearInterval(interval)
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
