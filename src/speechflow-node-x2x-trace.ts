@@ -75,7 +75,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 }
                 else {
                     if (type === "text")
-                        log("debug", `${type} chunk: type=${chunk.type} ` +
+                        log("debug", `chunk: type=${chunk.type} ` +
                             `kind=${chunk.kind} ` +
                             `start=${fmtTime(chunk.timestampStart)} ` +
                             `end=${fmtTime(chunk.timestampEnd)} ` +
