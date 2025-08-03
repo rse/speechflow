@@ -83,7 +83,10 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
         this.broker.on("connect", (packet: MQTT.IConnackPacket) => {
             this.log("info", `connection opened to MQTT ${this.params.url}`)
             if (this.params.mode !== "w" && !packet.sessionPresent)
-                this.broker!.subscribe([ this.params.topicRead ], () => {})
+                this.broker!.subscribe([ this.params.topicRead ], (err) => {
+                    if (err)
+                        this.log("error", `failed to subscribe to MQTT topic "${this.params.topicRead}": ${err.message}`)
+                })
         })
         this.broker.on("reconnect", () => {
             this.log("info", `connection re-opened to MQTT ${this.params.url}`)
@@ -141,7 +144,7 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close Websocket server  */
+        /*  close MQTT broker  */
         if (this.broker !== null) {
             if (this.broker.connected)
                 this.broker.end()
