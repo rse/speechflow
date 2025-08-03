@@ -24,11 +24,19 @@ export function audioBufferDuration (
     channels     = 1,
     littleEndian = true
 ) {
+    /*  sanity check parameters  */
     if (!Buffer.isBuffer(buffer))
         throw new Error("invalid input (Buffer expected)")
     if (littleEndian !== true)
         throw new Error("only Little Endian supported")
+    if (sampleRate <= 0)
+        throw new Error("sample rate must be positive")
+    if (bitDepth <= 0 || bitDepth % 8 !== 0)
+        throw new Error("bit depth must be positive and multiple of 8")
+    if (channels <= 0)
+        throw new Error("channels must be positive")
 
+    /*  calculate duration  */
     const bytesPerSample = bitDepth / 8
     const totalSamples = buffer.length / (bytesPerSample * channels)
     return totalSamples / sampleRate
@@ -40,12 +48,23 @@ export function audioArrayDuration (
     sampleRate   = 48000,
     channels     = 1
 ) {
+    /*  sanity check parameters  */
+    if (arr.length === 0)
+        return 0
+    if (sampleRate <= 0)
+        throw new Error("sample rate must be positive")
+    if (channels <= 0)
+        throw new Error("channels must be positive")
+
+    /*  calculate duration  */
     const totalSamples = arr.length / channels
     return totalSamples / sampleRate
 }
 
 /*  helper function: convert Buffer in PCM/I16 to Float32Array in PCM/F32 format  */
 export function convertBufToF32 (buf: Buffer, littleEndian = true) {
+    if (buf.length % 2 !== 0)
+        throw new Error("buffer length must be even for 16-bit samples")
     const dataView = new DataView(buf.buffer)
     const arr = new Float32Array(buf.length / 2)
     for (let i = 0; i < arr.length; i++)
@@ -55,9 +74,15 @@ export function convertBufToF32 (buf: Buffer, littleEndian = true) {
 
 /*  helper function: convert Float32Array in PCM/F32 to Buffer in PCM/I16 format  */
 export function convertF32ToBuf (arr: Float32Array) {
+    if (arr.length === 0)
+        return Buffer.alloc(0)
     const int16Array = new Int16Array(arr.length)
-    for (let i = 0; i < arr.length; i++)
-        int16Array[i] = Math.max(-32768, Math.min(32767, Math.round(arr[i] * 32768)))
+    for (let i = 0; i < arr.length; i++) {
+        let sample = arr[i]
+        if (Number.isNaN(sample))
+            sample = 0
+        int16Array[i] = Math.max(-32768, Math.min(32767, Math.round(sample * 32768)))
+    }
     return Buffer.from(int16Array.buffer)
 }
 
@@ -274,26 +299,19 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
     }
     position (index?: number): number {
         if (index !== undefined) {
-            this.index = index
-            if (this.index < 0)
-                this.index = 0
-            else if (this.index >= this.queue.elements.length)
-                this.index = this.queue.elements.length
+            this.index = Math.max(0, Math.min(index, this.queue.elements.length))
             this.emit("position", this.index)
         }
         return this.index
     }
     walk (num: number) {
-        if (num > 0) {
-            for (let i = 0; i < num && this.index < this.queue.elements.length; i++)
-                this.index++
+        const indexOld = this.index
+        if (num > 0)
+            this.index = Math.min(this.index + num, this.queue.elements.length)
+        else if (num < 0)
+            this.index = Math.max(this.index + num, 0)
+        if (this.index !== indexOld)
             this.emit("position", { start: this.index })
-        }
-        else if (num < 0) {
-            for (let i = 0; i < Math.abs(num) && this.index > 0; i++)
-                this.index--
-            this.emit("position", { start: this.index })
-        }
     }
     walkForwardUntil (type: T["type"]) {
         while (this.index < this.queue.elements.length
@@ -330,12 +348,7 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
     peek (position?: number) {
         if (position === undefined)
             position = this.index
-        else {
-            if (position < 0)
-                position = 0
-            else if (position > this.queue.elements.length)
-                position = this.queue.elements.length
-        }
+        position = Math.max(0, Math.min(position, this.queue.elements.length))
         const element = this.queue.elements[position]
         this.queue.emit("read", { start: position, end: position })
         return element
@@ -351,11 +364,8 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         let slice: T[]
         const start = this.index
         if (size !== undefined) {
-            if (size < 0)
-                size = 0
-            else if (size > this.queue.elements.length - this.index)
-                size = this.queue.elements.length - this.index
-            slice = this.queue.elements.slice(this.index, size)
+            size = Math.max(0, Math.min(size, this.queue.elements.length - this.index))
+            slice = this.queue.elements.slice(this.index, this.index + size)
             this.index += size
         }
         else {
@@ -415,45 +425,58 @@ export class Queue<T extends QueueElement> extends EventEmitter {
                 min = pointer.position()
 
         /*  trim the maximum amount of first elements  */
-        this.elements.splice(0, min)
+        if (min > 0) {
+            this.elements.splice(0, min)
 
-        /*  shift all pointers  */
-        for (const pointer of this.pointers.values())
-            pointer.position(pointer.position() - min)
+            /*  shift all pointers  */
+            for (const pointer of this.pointers.values())
+                pointer.position(pointer.position() - min)
+        }
     }
 }
 
 /*  utility class for wrapping a custom stream into a regular Transform stream  */
 export class StreamWrapper extends Stream.Transform {
     private foreignStream: any
+    private onData  = (chunk: any) => { this.push(chunk) }
+    private onError = (err: Error) => { this.emit("error", err) }
+    private onEnd   = ()           => { this.push(null) }
     constructor (foreignStream: any, options: Stream.TransformOptions = {}) {
         options.readableObjectMode = true
         options.writableObjectMode = true
         super(options)
         this.foreignStream = foreignStream
-        this.foreignStream.on("data", (chunk: any) => {
-            this.push(chunk)
-        })
-        this.foreignStream.on("error", (err: Error) => {
-            this.emit("error", err)
-        })
-        this.foreignStream.on("end", () => {
-            this.push(null)
-        })
+        if (typeof this.foreignStream.on === "function") {
+            this.foreignStream.on("data",  this.onData)
+            this.foreignStream.on("error", this.onError)
+            this.foreignStream.on("end",   this.onEnd)
+        }
     }
     _transform (chunk: any, encoding: BufferEncoding, callback: Stream.TransformCallback): void {
+        if (this.destroyed) {
+            callback(new Error("stream already destroyed"))
+            return
+        }
         try {
-            const canContinue = this.foreignStream.write(chunk)
-            if (canContinue)
-                callback()
+            if (typeof this.foreignStream.write === "function") {
+                const canContinue = this.foreignStream.write(chunk)
+                if (canContinue)
+                    callback()
+                else
+                    this.foreignStream.once("drain", callback)
+            }
             else
-                this.foreignStream.once("drain", callback)
+                throw new Error("foreign stream lacks write method")
         }
         catch (err) {
             callback(err as Error)
         }
     }
     _flush (callback: Stream.TransformCallback): void {
+        if (this.destroyed) {
+            callback(new Error("stream already destroyed"))
+            return
+        }
         try {
             if (typeof this.foreignStream.end === "function")
                 this.foreignStream.end()
@@ -462,6 +485,14 @@ export class StreamWrapper extends Stream.Transform {
         catch (err) {
             callback(err as Error)
         }
+    }
+    _destroy (error: Error | null, callback: Stream.TransformCallback): void {
+        if (typeof this.foreignStream.removeListener === "function") {
+            this.foreignStream.removeListener("data",  this.onData)
+            this.foreignStream.removeListener("error", this.onError)
+            this.foreignStream.removeListener("end",   this.onEnd)
+        }
+        super._destroy(error, callback)
     }
 }
 
@@ -484,5 +515,8 @@ export class TimeStore<T> extends EventEmitter {
         for (const interval of intervals)
             if (interval.low < before && interval.high < before)
                 this.tree.remove(interval)
+    }
+    clear (): void {
+        this.tree = new IntervalTree.IntervalTree<TimeStoreInterval<T>>()
     }
 }
