@@ -39,6 +39,8 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
     private queueAC   = this.queue.pointerUse("ac")
     private queueSend = this.queue.pointerUse("send")
     private shutdown  = false
+    private workingOffTimer:  ReturnType<typeof setTimeout>  | null = null
+    private progressInterval: ReturnType<typeof setInterval> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -60,6 +62,9 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
             throw new Error("Gender node currently supports PCM-S16LE audio only")
 
+        /*  clear shutdown flag  */
+        this.shutdown = false
+
         /*  pass-through logging  */
         const log = (level: string, msg: string) => { this.log(level, msg) }
 
@@ -69,6 +74,8 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         /*  track download progress when instantiating Transformers engine and model  */
         const progressState = new Map<string, number>()
         const progressCallback: Transformers.ProgressCallback = (progress: any) => {
+            if (this.shutdown)
+                return
             let artifact = model
             if (typeof progress.file === "string")
                 artifact += `:${progress.file}`
@@ -80,31 +87,54 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             if (percent > 0)
                 progressState.set(artifact, percent)
         }
-        const interval = setInterval(() => {
+        this.progressInterval = setInterval(() => {
+            if (this.shutdown)
+                return
             for (const [ artifact, percent ] of progressState) {
                 this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
                 if (percent >= 1.0)
                     progressState.delete(artifact)
             }
         }, 1000)
-
-        /*  instantiate Transformers engine and model  */
-        const pipeline = Transformers.pipeline("audio-classification", model, {
-            cache_dir: path.join(this.config.cacheDir, "gender"),
-            dtype:     "q4",
-            device:    "auto",
-            progress_callback: progressCallback
-        })
-        this.classifier = await pipeline
-        clearInterval(interval)
+        try {
+            const pipelinePromise = Transformers.pipeline("audio-classification", model, {
+                cache_dir: path.join(this.config.cacheDir, "gender"),
+                dtype:     "q4",
+                device:    "auto",
+                progress_callback: progressCallback
+            })
+            const timeoutPromise = new Promise((resolve, reject) => setTimeout(() =>
+                reject(new Error("model initialization timeout")), 30 * 1000))
+            this.classifier = await Promise.race([
+                pipelinePromise, timeoutPromise
+            ]) as Transformers.AudioClassificationPipeline
+        }
+        catch (error) {
+            if (this.progressInterval) {
+                clearInterval(this.progressInterval)
+                this.progressInterval = null
+            }
+            throw new Error(`failed to initialize classifier pipeline: ${error}`)
+        }
+        if (this.progressInterval) {
+            clearInterval(this.progressInterval)
+            this.progressInterval = null
+        }
         if (this.classifier === null)
             throw new Error("failed to instantiate classifier pipeline")
 
         /*  classify a single large-enough concatenated audio frame  */
         const classify = async (data: Float32Array) => {
-            const result = await this.classifier!(data)
-            const classified: Transformers.AudioClassificationOutput =
-                Array.isArray(result) ? result as Transformers.AudioClassificationOutput : [ result ]
+            if (this.shutdown || this.classifier === null)
+                throw new Error("classifier shutdown during operation")
+            const classifyPromise = this.classifier(data)
+            const timeoutPromise = new Promise((resolve, reject) => setTimeout(() =>
+                reject(new Error("classification timeout")), 30 * 1000))
+            const result = await Promise.race([ classifyPromise, timeoutPromise ]) as
+                Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
+            const classified = Array.isArray(result) ?
+                result as Transformers.AudioClassificationOutput :
+                [ result ]
             const c1 = classified.find((c: any) => c.label === "male")
             const c2 = classified.find((c: any) => c.label === "female")
             const male   = c1 ? c1.score : 0.0
@@ -119,57 +149,65 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         const frameWindowDuration = 0.5
         const frameWindowSamples  = frameWindowDuration * sampleRateTarget
         let lastGender = ""
-        let workingOffTimer: ReturnType<typeof setTimeout> | null = null
         let workingOff = false
         const workOffQueue = async () => {
             /*  control working off round  */
             if (workingOff || this.shutdown)
                 return
             workingOff = true
-            if (workingOffTimer !== null) {
-                clearTimeout(workingOffTimer)
-                workingOffTimer = null
+            if (this.workingOffTimer !== null) {
+                clearTimeout(this.workingOffTimer)
+                this.workingOffTimer = null
             }
             this.queue.off("write", workOffQueue)
 
-            let pos0 = this.queueAC.position()
-            const posL = this.queueAC.maxPosition()
-            const data = new Float32Array(frameWindowSamples)
-            data.fill(0)
-            let samples = 0
-            let pos = pos0
-            while (pos < posL && samples < frameWindowSamples) {
-                const element = this.queueAC.peek(pos)
-                if (element === undefined || element.type !== "audio-frame")
-                    break
-                if ((samples + element.data.length) < frameWindowSamples) {
-                    data.set(element.data, samples)
-                    samples += element.data.length
-                }
-                pos++
-            }
-            if (pos0 < pos && samples > frameWindowSamples * 0.75) {
-                const gender = await classify(data)
-                const posM = pos0 + Math.trunc((pos - pos0) * 0.25)
-                while (pos0 < posM && pos0 < posL) {
-                    const element = this.queueAC.peek(pos0)
+            try {
+                let pos0 = this.queueAC.position()
+                const posL = this.queueAC.maxPosition()
+                const data = new Float32Array(frameWindowSamples)
+                data.fill(0)
+                let samples = 0
+                let pos = pos0
+                while (pos < posL && samples < frameWindowSamples && !this.shutdown) {
+                    const element = this.queueAC.peek(pos)
                     if (element === undefined || element.type !== "audio-frame")
                         break
-                    element.gender = gender
-                    this.queueAC.touch()
-                    this.queueAC.walk(+1)
-                    pos0++
+                    if ((samples + element.data.length) < frameWindowSamples) {
+                        data.set(element.data, samples)
+                        samples += element.data.length
+                    }
+                    pos++
                 }
-                if (lastGender !== gender) {
-                    log("info", `gender now recognized as <${gender}>`)
-                    lastGender = gender
+                if (pos0 < pos && samples > frameWindowSamples * 0.75 && !this.shutdown) {
+                    const gender = await classify(data)
+                    if (this.shutdown)
+                        return
+                    const posM = pos0 + Math.trunc((pos - pos0) * 0.25)
+                    while (pos0 < posM && pos0 < posL && !this.shutdown) {
+                        const element = this.queueAC.peek(pos0)
+                        if (element === undefined || element.type !== "audio-frame")
+                            break
+                        element.gender = gender
+                        this.queueAC.touch()
+                        this.queueAC.walk(+1)
+                        pos0++
+                    }
+                    if (lastGender !== gender && !this.shutdown) {
+                        log("info", `gender now recognized as <${gender}>`)
+                        lastGender = gender
+                    }
                 }
+            }
+            catch (error) {
+                log("error", `gender classification error: ${error}`)
             }
 
             /*  re-initiate working off round  */
             workingOff = false
-            workingOffTimer = setTimeout(workOffQueue, 100)
-            this.queue.once("write", workOffQueue)
+            if (!this.shutdown) {
+                this.workingOffTimer = setTimeout(workOffQueue, 100)
+                this.queue.once("write", workOffQueue)
+            }
         }
         this.queue.once("write", workOffQueue)
 
@@ -183,28 +221,41 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
 
             /*  receive audio chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.shutdown) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected audio input as Buffer chunks"))
                 else if (chunk.payload.byteLength === 0)
                     callback()
                 else {
-                    /*  convert audio samples from PCM/I16/48KHz to PCM/F32/16KHz  */
-                    let data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
-                    const wav = new WaveFile()
-                    wav.fromScratch(self.config.audioChannels, self.config.audioSampleRate, "32f", data)
-                    wav.toSampleRate(sampleRateTarget, { method: "cubic" })
-                    data = wav.getSamples(false, Float32Array<ArrayBuffer>) as
-                        any as Float32Array<ArrayBuffer>
+                    try {
+                        /*  convert audio samples from PCM/I16/48KHz to PCM/F32/16KHz  */
+                        let data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
+                        const wav = new WaveFile()
+                        wav.fromScratch(self.config.audioChannels, self.config.audioSampleRate, "32f", data)
+                        wav.toSampleRate(sampleRateTarget, { method: "cubic" })
+                        data = wav.getSamples(false, Float32Array<ArrayBuffer>) as
+                            any as Float32Array<ArrayBuffer>
 
-                    /*  queue chunk and converted data  */
-                    self.queueRecv.append({ type: "audio-frame", chunk, data })
-
-                    callback()
+                        /*  queue chunk and converted data  */
+                        self.queueRecv.append({ type: "audio-frame", chunk, data })
+                        callback()
+                    }
+                    catch (error) {
+                        callback(error instanceof Error ? error : new Error("audio processing failed"))
+                    }
                 }
             },
 
             /*  receive no more audio chunks (writable side of stream)  */
             final (callback) {
+                if (self.shutdown) {
+                    callback()
+                    return
+                }
+
                 /*  signal end of file  */
                 self.queueRecv.append({ type: "audio-eof" })
                 callback()
@@ -214,8 +265,10 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             read (_size) {
                 /*  flush pending audio chunks  */
                 const flushPendingChunks = () => {
-                    if (self.shutdown)
+                    if (self.shutdown) {
+                        this.push(null)
                         return
+                    }
                     const element = self.queueSend.peek()
                     if (element !== undefined
                         && element.type === "audio-eof")
@@ -224,6 +277,10 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                         && element.type === "audio-frame"
                         && element.gender !== undefined) {
                         while (true) {
+                            if (self.shutdown) {
+                                this.push(null)
+                                return
+                            }
                             const element = self.queueSend.peek()
                             if (element === undefined)
                                 break
@@ -242,7 +299,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                             self.queue.trim()
                         }
                     }
-                    else
+                    else if (!self.shutdown)
                         self.queue.once("write", flushPendingChunks)
                 }
                 flushPendingChunks()
@@ -255,16 +312,43 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         /*  indicate shutdown  */
         this.shutdown = true
 
+        /*  cleanup working-off timer  */
+        if (this.workingOffTimer !== null) {
+            clearTimeout(this.workingOffTimer)
+            this.workingOffTimer = null
+        }
+
+        /*  cleanup progress interval  */
+        if (this.progressInterval !== null) {
+            clearInterval(this.progressInterval)
+            this.progressInterval = null
+        }
+
+        /*  remove all event listeners  */
+        this.queue.removeAllListeners("write")
+
         /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
         }
 
-        /*  close classifier  */
+        /*  cleanup classifier  */
         if (this.classifier !== null) {
-            this.classifier.dispose()
+            try {
+                const disposePromise = this.classifier.dispose()
+                const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 5000))
+                await Promise.race([ disposePromise, timeoutPromise ])
+            }
+            catch (error) {
+                this.log("warning", `error during classifier cleanup: ${error}`)
+            }
             this.classifier = null
         }
+
+        /*  cleanup queue pointers  */
+        this.queue.pointerDelete("recv")
+        this.queue.pointerDelete("ac")
+        this.queue.pointerDelete("send")
     }
 }
