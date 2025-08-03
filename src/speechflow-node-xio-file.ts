@@ -178,9 +178,15 @@ export default class SpeechFlowNodeFile extends SpeechFlowNode {
     async close () {
         /*  shutdown stream  */
         if (this.stream !== null) {
-            await new Promise<void>((resolve) => {
-                if (this.stream instanceof Stream.Writable || this.stream instanceof Stream.Duplex)
-                    this.stream.end(() => { resolve() })
+            await new Promise<void>((resolve, reject) => {
+                if (this.stream instanceof Stream.Writable || this.stream instanceof Stream.Duplex) {
+                    this.stream.end((err?: Error) => {
+                        if (err)
+                            reject(err)
+                        else
+                            resolve()
+                    })
+                }
                 else
                     resolve()
             })
