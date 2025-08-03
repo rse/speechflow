@@ -23,6 +23,7 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
 
     /*  internal state  */
     private muteMode: MuteMode = "none"
+    private destroyed = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -38,25 +39,40 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
 
     /*  receive external request  */
     async receiveRequest (params: any[]) {
-        if (params.length === 2 && params[0] === "mode") {
-            if (!params[1].match(/^(?:none|silenced|unplugged)$/))
-                throw new Error("mute: invalid mode argument in external request")
-            const muteMode: MuteMode = params[1] as MuteMode
-            this.setMuteMode(muteMode)
-            this.sendResponse([ "mute", "mode", muteMode ])
+        if (this.destroyed)
+            throw new Error("mute: node already destroyed")
+        try {
+            if (params.length === 2 && params[0] === "mode") {
+                if (!params[1].match(/^(?:none|silenced|unplugged)$/))
+                    throw new Error("mute: invalid mode argument in external request")
+                const muteMode: MuteMode = params[1] as MuteMode
+                this.setMuteMode(muteMode)
+                this.sendResponse([ "mute", "mode", muteMode ])
+            }
+            else
+                throw new Error("mute: invalid arguments in external request")
         }
-        else
-            throw new Error("mute: invalid arguments in external request")
+        catch (error) {
+            this.log("error", `receive request error: ${error}`)
+            throw error
+        }
     }
 
     /*  change mute mode  */
     setMuteMode (mode: MuteMode) {
+        if (this.destroyed) {
+            this.log("warning", "attempted to set mute mode on destroyed node")
+            return
+        }
         this.log("info", `setting mute mode to "${mode}"`)
         this.muteMode = mode
     }
 
     /*  open node  */
     async open () {
+        /*  clear destruction flag  */
+        this.destroyed = false
+
         /*  establish a transform stream  */
         const self = this
         this.stream = new Stream.Transform({
@@ -64,6 +80,10 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.destroyed) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else if (self.muteMode === "unplugged")
@@ -71,10 +91,11 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
                     callback()
                 else if (self.muteMode === "silenced") {
                     /*  pass-through a silenced chunk  */
-                    chunk = chunk.clone()
-                    chunk.meta.set("muted", true)
-                    const buffer = chunk.payload as Buffer
+                    const chunkSilenced = chunk.clone()
+                    chunkSilenced.meta.set("muted", true)
+                    const buffer = chunkSilenced.payload as Buffer
                     buffer.fill(0)
+                    this.push(chunkSilenced)
                     callback()
                 }
                 else {
@@ -84,6 +105,10 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
                 }
             },
             final (callback) {
+                if (self.destroyed) {
+                    callback()
+                    return
+                }
                 this.push(null)
                 callback()
             }
@@ -92,6 +117,9 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate destruction  */
+        this.destroyed = true
+
         /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
