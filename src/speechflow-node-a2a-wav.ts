@@ -103,8 +103,10 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (!Buffer.isBuffer(chunk.payload))
+                if (!Buffer.isBuffer(chunk.payload)) {
                     callback(new Error("invalid chunk payload type"))
+                    return
+                }
                 else if (firstChunk) {
                     if (self.params.mode === "encode") {
                         /*  convert raw/PCM to WAV/PCM
@@ -127,6 +129,10 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
                     }
                     else if (self.params.mode === "decode") {
                         /*  convert WAV/PCM to raw/PCM  */
+                        if (chunk.payload.length < 44) {
+                            callback(new Error("WAV header too short, expected at least 44 bytes"))
+                            return
+                        }
                         const header = readWavHeader(chunk.payload)
                         self.log("info", "WAV audio stream: " +
                             `audioFormat=${header.audioFormat === 0x0001 ? "PCM" :
@@ -134,20 +140,30 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
                             `channels=${header.channels} ` +
                             `sampleRate=${header.sampleRate} ` +
                             `bitDepth=${header.bitDepth}`)
-                        if (header.audioFormat !== 0x0001 /* PCM */)
-                            throw new Error("WAV not based on PCM format")
-                        if (header.bitDepth !== 16)
-                            throw new Error("WAV not based on 16 bit samples")
-                        if (header.sampleRate !== 48000)
-                            throw new Error("WAV not based on 48Khz sample rate")
-                        if (header.channels !== 1)
-                            throw new Error("WAV not based on mono channel")
+                        if (header.audioFormat !== 0x0001 /* PCM */) {
+                            callback(new Error("WAV not based on PCM format"))
+                            return
+                        }
+                        if (header.bitDepth !== self.config.audioBitDepth) {
+                            callback(new Error(`WAV not based on ${self.config.audioBitDepth} bit samples`))
+                            return
+                        }
+                        if (header.sampleRate !== self.config.audioSampleRate) {
+                            callback(new Error(`WAV not based on ${self.config.audioSampleRate}Hz sample rate`))
+                            return
+                        }
+                        if (header.channels !== self.config.audioChannels) {
+                            callback(new Error(`WAV not based on ${self.config.audioChannels} channel(s)`))
+                            return
+                        }
                         chunk.payload = chunk.payload.subarray(44)
                         this.push(chunk)
                         callback()
                     }
-                    else
-                        throw new Error(`invalid operation mode "${self.params.mode}"`)
+                    else {
+                        callback(new Error(`invalid operation mode "${self.params.mode}"`))
+                        return
+                    }
                 }
                 else {
                     /*  pass-through original chunk  */
