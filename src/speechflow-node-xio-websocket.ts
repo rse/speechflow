@@ -64,15 +64,15 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             const url = new URL(this.params.listen)
             const websockets = new Set<ws.WebSocket>()
             const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
-            const server = new ws.WebSocketServer({
+            this.server = new ws.WebSocketServer({
                 host: url.hostname,
                 port: Number.parseInt(url.port),
                 path: url.pathname
             })
-            server.on("listening", () => {
+            this.server.on("listening", () => {
                 this.log("info", `listening on URL ${this.params.listen}`)
             })
-            server.on("connection", (ws, request) => {
+            this.server.on("connection", (ws, request) => {
                 const peer = `${request.socket.remoteAddress}:${request.socket.remotePort}`
                 this.log("info", `connection opened on URL ${this.params.listen} by peer ${peer}`)
                 websockets.add(ws)
@@ -105,7 +105,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                     chunkQueue.write(chunk)
                 })
             })
-            server.on("error", (error) => {
+            this.server.on("error", (error) => {
                 this.log("error", `error of some connection on URL ${this.params.listen}: ${error.message}`)
             })
             const type = this.params.type
@@ -124,7 +124,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                         callback(new Error("still no Websocket connections available"))
                     else {
                         const data = utils.streamChunkEncode(chunk)
-                        const results = []
+                        const results: Promise<void>[] = []
                         for (const websocket of websockets.values()) {
                             results.push(new Promise<void>((resolve, reject) => {
                                 websocket.send(data, (error) => {
@@ -175,12 +175,12 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
             this.client.addEventListener("message", (ev: MessageEvent) => {
                 if (this.params.mode === "w") {
-                    this.log("warning", `connection to URL ${this.params.listen}: ` +
+                    this.log("warning", `connection to URL ${this.params.connect}: ` +
                         "received remote data on write-only node")
                     return
                 }
                 if (!(ev.data instanceof ArrayBuffer)) {
-                    this.log("warning", `connection to URL ${this.params.listen}: ` +
+                    this.log("warning", `connection to URL ${this.params.connect}: ` +
                         "received non-binary message")
                     return
                 }
@@ -204,15 +204,15 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                         callback(new Error(`written chunk is not of ${type} type`))
                     else if (!client.OPEN)
                         callback(new Error("still no Websocket connection available"))
-                    const data = utils.streamChunkEncode(chunk)
-                    client.send(data)
-                    callback()
+                    else {
+                        const data = utils.streamChunkEncode(chunk)
+                        client.send(data)
+                        callback()
+                    }
                 },
                 read (size: number) {
                     if (mode === "w")
                         throw new Error("read operation on write-only node")
-                    if (!client.OPEN)
-                        throw new Error("still no Websocket connection available")
                     chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
                     })
