@@ -40,6 +40,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
     private queueRecv = this.queue.pointerUse("recv")
     private queueVAD  = this.queue.pointerUse("vad")
     private queueSend = this.queue.pointerUse("send")
+    private destroyed = false
+    private tailTimer: ReturnType<typeof setTimeout> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -67,8 +69,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
             throw new Error("VAD node currently supports PCM-S16LE audio only")
 
-        /*  pass-through logging  */
-        const log = (level: string, msg: string) => { this.log(level, msg) }
+        /*  clear destruction flag  */
+        this.destroyed = false
 
         /*  internal processing constants  */
         const vadSampleRateTarget = 16000 /* internal target of VAD */
@@ -76,75 +78,95 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
         /*  establish Voice Activity Detection (VAD) facility  */
         let tail = false
-        let tailTimer: ReturnType<typeof setTimeout> | null = null
-        this.vad = await RealTimeVAD.new({
-            model:                   "v5",
-            sampleRate:              this.config.audioSampleRate, /* before resampling to 16KHz */
-            frameSamples:            vadSamplesPerFrame,          /* after  resampling to 16KHz */
-            positiveSpeechThreshold: this.params.posSpeechThreshold,
-            negativeSpeechThreshold: this.params.negSpeechThreshold,
-            minSpeechFrames:         this.params.minSpeechFrames,
-            redemptionFrames:        this.params.redemptionFrames,
-            preSpeechPadFrames:      this.params.preSpeechPadFrames,
-            onSpeechStart: () => {
-                log("info", "VAD: speech start")
-                if (this.params.mode === "unlugged") {
-                    tail = false
-                    if (tailTimer !== null) {
-                        clearTimeout(tailTimer)
-                        tailTimer = null
-                    }
-                }
-            },
-            onSpeechEnd: (audio) => {
-                const duration = utils.audioArrayDuration(audio, vadSampleRateTarget)
-                log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
-                if (this.params.mode === "unlugged") {
-                    tail = true
-                    if (tailTimer !== null)
-                        clearTimeout(tailTimer)
-                    tailTimer = setTimeout(() => {
+        try {
+            this.vad = await RealTimeVAD.new({
+                model:                   "v5",
+                sampleRate:              this.config.audioSampleRate, /* before resampling to 16KHz */
+                frameSamples:            vadSamplesPerFrame,          /* after  resampling to 16KHz */
+                positiveSpeechThreshold: this.params.posSpeechThreshold,
+                negativeSpeechThreshold: this.params.negSpeechThreshold,
+                minSpeechFrames:         this.params.minSpeechFrames,
+                redemptionFrames:        this.params.redemptionFrames,
+                preSpeechPadFrames:      this.params.preSpeechPadFrames,
+                onSpeechStart: () => {
+                    if (this.destroyed)
+                        return
+                    this.log("info", "VAD: speech start")
+                    if (this.params.mode === "unplugged") {
                         tail = false
-                        tailTimer = null
-                    }, this.params.postSpeechTail)
-                }
-            },
-            onVADMisfire: () => {
-                log("info", "VAD: speech end (segment too short)")
-                if (this.params.mode === "unlugged") {
-                    tail = true
-                    if (tailTimer !== null)
-                        clearTimeout(tailTimer)
-                    tailTimer = setTimeout(() => {
-                        tail = false
-                        tailTimer = null
-                    }, this.params.postSpeechTail)
-                }
-            },
-            onFrameProcessed: (audio) => {
-                /*  annotate the current audio segment  */
-                const element = this.queueVAD.peek()
-                if (element === undefined || element.type !== "audio-frame")
-                    throw new Error("internal error which cannot happen: no more queued element")
-                const segment = element.segmentData[element.segmentIdx++]
-                segment.isSpeech = (audio.isSpeech > audio.notSpeech) || tail
-
-                /*  annotate the entire audio chunk  */
-                if (element.segmentIdx >= element.segmentData.length) {
-                    let isSpeech = false
-                    for (const segment of element.segmentData) {
-                        if (segment.isSpeech) {
-                            isSpeech = true
-                            break
+                        if (this.tailTimer !== null) {
+                            clearTimeout(this.tailTimer)
+                            this.tailTimer = null
                         }
                     }
-                    element.isSpeech = isSpeech
-                    this.queueVAD.touch()
-                    this.queueVAD.walk(+1)
+                },
+                onSpeechEnd: (audio) => {
+                    if (this.destroyed)
+                        return
+                    const duration = utils.audioArrayDuration(audio, vadSampleRateTarget)
+                    this.log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
+                    if (this.params.mode === "unplugged") {
+                        tail = true
+                        if (this.tailTimer !== null)
+                            clearTimeout(this.tailTimer)
+                        this.tailTimer = setTimeout(() => {
+                            if (this.destroyed)
+                                return
+                            tail = false
+                            this.tailTimer = null
+                        }, this.params.postSpeechTail)
+                    }
+                },
+                onVADMisfire: () => {
+                    if (this.destroyed) return
+                    this.log("info", "VAD: speech end (segment too short)")
+                    if (this.params.mode === "unplugged") {
+                        tail = true
+                        if (this.tailTimer !== null)
+                            clearTimeout(this.tailTimer)
+                        this.tailTimer = setTimeout(() => {
+                            if (this.destroyed)
+                                return
+                            tail = false
+                            this.tailTimer = null
+                        }, this.params.postSpeechTail)
+                    }
+                },
+                onFrameProcessed: (audio) => {
+                    if (this.destroyed)
+                        return
+                    try {
+                        /*  annotate the current audio segment  */
+                        const element = this.queueVAD.peek()
+                        if (element === undefined || element.type !== "audio-frame")
+                            throw new Error("internal error which cannot happen: no more queued element")
+                        const segment = element.segmentData[element.segmentIdx++]
+                        segment.isSpeech = (audio.isSpeech > audio.notSpeech) || tail
+
+                        /*  annotate the entire audio chunk  */
+                        if (element.segmentIdx >= element.segmentData.length) {
+                            let isSpeech = false
+                            for (const segment of element.segmentData) {
+                                if (segment.isSpeech) {
+                                    isSpeech = true
+                                    break
+                                }
+                            }
+                            element.isSpeech = isSpeech
+                            this.queueVAD.touch()
+                            this.queueVAD.walk(+1)
+                        }
+                    }
+                    catch (error) {
+                        this.log("error", `VAD frame processing error: ${error}`)
+                    }
                 }
-            }
-        })
-        this.vad.start()
+            })
+            this.vad.start()
+        }
+        catch (error) {
+            throw new Error(`failed to initialize VAD: ${error}`)
+        }
 
         /*  provide Duplex stream and internally attach to VAD  */
         const self = this
@@ -156,47 +178,65 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
             /*  receive audio chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.destroyed) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected audio input as Buffer chunks"))
                 else if (chunk.payload.byteLength === 0)
                     callback()
                 else {
-                    /*  convert audio samples from PCM/I16 to PCM/F32  */
-                    const data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
+                    try {
+                        /*  convert audio samples from PCM/I16 to PCM/F32  */
+                        const data = utils.convertBufToF32(chunk.payload,
+                            self.config.audioLittleEndian)
 
-                    /*  segment audio samples as individual VAD-sized frames  */
-                    const segmentData: AudioQueueElementSegment[] = []
-                    const chunkSize = vadSamplesPerFrame * (self.config.audioSampleRate / vadSampleRateTarget)
-                    const chunks = Math.trunc(data.length / chunkSize)
-                    for (let i = 0; i < chunks; i++) {
-                        const frame = data.slice(i * chunkSize, (i + 1) * chunkSize)
-                        const segment: AudioQueueElementSegment = { data: frame }
-                        segmentData.push(segment)
+                        /*  segment audio samples as individual VAD-sized frames  */
+                        const segmentData: AudioQueueElementSegment[] = []
+                        const chunkSize = vadSamplesPerFrame *
+                            (self.config.audioSampleRate / vadSampleRateTarget)
+                        const chunks = Math.trunc(data.length / chunkSize)
+                        for (let i = 0; i < chunks; i++) {
+                            const frame = data.slice(i * chunkSize, (i + 1) * chunkSize)
+                            const segment: AudioQueueElementSegment = { data: frame }
+                            segmentData.push(segment)
+                        }
+                        if ((chunks * chunkSize) < data.length) {
+                            const frame = new Float32Array(chunkSize)
+                            frame.fill(0)
+                            frame.set(data.slice(chunks * chunkSize, data.length))
+                            const segment: AudioQueueElementSegment = { data: frame }
+                            segmentData.push(segment)
+                        }
+
+                        /*  queue the results  */
+                        self.queueRecv.append({
+                            type: "audio-frame", chunk,
+                            segmentIdx: 0, segmentData
+                        })
+
+                        /*  push segments through Voice Activity Detection (VAD)  */
+                        if (self.vad && !self.destroyed) {
+                            for (const segment of segmentData)
+                                self.vad.processAudio(segment.data)
+                        }
+
+                        callback()
                     }
-                    if ((chunks * chunkSize) < data.length) {
-                        const frame = new Float32Array(chunkSize)
-                        frame.fill(0)
-                        frame.set(data.slice(chunks * chunkSize, data.length))
-                        const segment: AudioQueueElementSegment = { data: frame }
-                        segmentData.push(segment)
+                    catch (error) {
+                        callback(error instanceof Error ? error : new Error("VAD processing failed"))
                     }
-
-                    /*  queue the results  */
-                    self.queueRecv.append({
-                        type: "audio-frame", chunk,
-                        segmentIdx: 0, segmentData
-                    })
-
-                    /*  push segments through Voice Activity Detection (VAD)  */
-                    for (const segment of segmentData)
-                        self.vad!.processAudio(segment.data)
-
-                    callback()
                 }
             },
 
             /*  receive no more audio chunks (writable side of stream)  */
             final (callback) {
+                if (self.destroyed) {
+                    callback()
+                    return
+                }
+
                 /*  signal end of file  */
                 self.queueRecv.append({ type: "audio-eof" })
                 callback()
@@ -204,12 +244,31 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
             /*  send audio chunk(s) (readable side of stream)  */
             read (_size) {
+                if (self.destroyed) {
+                    this.push(null)
+                    return
+                }
+
+                /*  recursion depth limit to prevent stack overflow  */
+                let recursionDepth = 0
+                const recursionDepthMax = 100
+
                 /*  try to perform read operation from scratch  */
                 const tryToRead = () => {
+                    if (self.destroyed || recursionDepth > recursionDepthMax) {
+                        this.push(null)
+                        return
+                    }
+                    recursionDepth++
+
                     /*  flush pending audio chunks  */
                     const flushPendingChunks = () => {
                         let pushed = 0
                         while (true) {
+                            if (self.destroyed) {
+                                this.push(null)
+                                return
+                            }
                             const element = self.queueSend.peek()
                             if (element === undefined)
                                 break
@@ -233,22 +292,31 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                                 this.push(chunk)
                                 pushed++
                             }
-                            else if (self.params.mode === "unplugged" && pushed === 0)
+                            else if (self.params.mode === "unplugged" && pushed === 0) {
                                 /*  we have to await chunks now, as in unplugged
                                     mode we else would be never called again until
                                     we at least once push a new chunk as the result  */
-                                tryToRead()
+                                setTimeout(() => {
+                                    if (self.destroyed)
+                                        return
+                                    recursionDepth = 0
+                                    tryToRead()
+                                }, 0)
+                                return
+                            }
                         }
                     }
 
                     /*  await forthcoming audio chunks  */
                     const awaitForthcomingChunks = () => {
+                        if (self.destroyed)
+                            return
                         const element = self.queueSend.peek()
                         if (element !== undefined
                             && element.type === "audio-frame"
                             && element.isSpeech !== undefined)
                             flushPendingChunks()
-                        else
+                        else if (!self.destroyed)
                             self.queue.once("write", awaitForthcomingChunks)
                     }
 
@@ -259,7 +327,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         && element.type === "audio-frame"
                         && element.isSpeech !== undefined)
                         flushPendingChunks()
-                    else
+                    else if (!self.destroyed)
                         self.queue.once("write", awaitForthcomingChunks)
                 }
                 tryToRead()
@@ -269,6 +337,18 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate destruction  */
+        this.destroyed = true
+
+        /*  cleanup tail timer  */
+        if (this.tailTimer !== null) {
+            clearTimeout(this.tailTimer)
+            this.tailTimer = null
+        }
+
+        /*  remove all event listeners  */
+        this.queue.removeAllListeners("write")
+
         /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
@@ -277,9 +357,17 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
         /*  close VAD  */
         if (this.vad !== null) {
-            await this.vad.flush()
+            const flushPromise = this.vad.flush()
+            const timeoutPromise = new Promise((resolve) =>
+                setTimeout(resolve, 5000))
+            await Promise.race([ flushPromise, timeoutPromise ])
             this.vad.destroy()
             this.vad = null
         }
+
+        /*  cleanup queue pointers  */
+        this.queue.pointerDelete("recv")
+        this.queue.pointerDelete("vad")
+        this.queue.pointerDelete("send")
     }
 }
