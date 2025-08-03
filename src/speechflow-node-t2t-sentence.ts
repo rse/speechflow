@@ -29,7 +29,6 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
     public static name = "sentence"
 
     /*  internal state  */
-    private static speexInitialized = false
     private queue      = new utils.Queue<TextQueueElement>()
     private queueRecv  = this.queue.pointerUse("recv")
     private queueSplit = this.queue.pointerUse("split")
