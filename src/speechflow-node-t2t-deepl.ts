@@ -27,11 +27,15 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            key:      { type: "string", val: process.env.SPEECHFLOW_DEEPL_KEY },
+            key:      { type: "string", val: process.env.SPEECHFLOW_DEEPL_KEY ?? "" },
             src:      { type: "string", pos: 0, val: "de",      match: /^(?:de|en)$/ },
             dst:      { type: "string", pos: 1, val: "en",      match: /^(?:de|en)$/ },
             optimize: { type: "string", pos: 2, val: "latency", match: /^(?:latency|quality)$/ }
         })
+
+        /*  validate API key  */
+        if (this.params.key === "")
+            throw new Error("DeepL API key is required")
 
         /*  sanity check situation  */
         if (this.params.src === this.params.dst)
@@ -44,9 +48,10 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
 
     /*  one-time status of node  */
     async status () {
-        this.deepl = new DeepL.Translator(this.params.key)
-        const usage = await this.deepl.getUsage()
-        const percent = (usage?.character?.count ?? 0) / (usage?.character?.limit ?? 0) * 100
+        const deepl = new DeepL.Translator(this.params.key)
+        const usage = await deepl.getUsage()
+        const limit = usage?.character?.limit ?? 1
+        const percent = limit > 0 ? ((usage?.character?.count ?? 0) / limit * 100) : 0
         return { usage: `${percent.toFixed(8)}%` }
     }
 
