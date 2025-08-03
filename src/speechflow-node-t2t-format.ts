@@ -41,7 +41,7 @@ export default class SpeechFlowNodeFormat extends SpeechFlowNode {
             return text
         }
 
-        /*  establish a duplex stream and connect it to DeepL translation  */
+        /*  establish a duplex stream and connect it to text formatting  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
@@ -74,7 +74,7 @@ export default class SpeechFlowNodeFormat extends SpeechFlowNode {
         })
     }
 
-    /*  open node  */
+    /*  close node  */
     async close () {
         /*  close stream  */
         if (this.stream !== null) {
