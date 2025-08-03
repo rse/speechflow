@@ -20,7 +20,9 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
     public static name = "meter"
 
     /*  internal state  */
-    interval: ReturnType<typeof setInterval> | null = null
+    private interval: ReturnType<typeof setInterval> | null = null
+    private destroyed = false
+    private pendingCalculations = new Set<ReturnType<typeof setTimeout>>()
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -42,6 +44,9 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
         if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
             throw new Error("meter node currently supports PCM-S16LE audio only")
 
+        /*  clear destruction flag  */
+        this.destroyed = false
+
         /*  internal state  */
         const sampleWindowDuration = 3 /* LUFS-S requires 3s */
         const sampleWindowSize = this.config.audioSampleRate * sampleWindowDuration
@@ -52,12 +57,14 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
         /*  setup loudness emitting interval  */
         this.interval = setInterval(() => {
+            if (this.destroyed)
+                return
             this.log("debug", `LUFS-S: ${lufss.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
             this.sendResponse([ "meter", "LUFS-S", lufss ])
             this.sendResponse([ "meter", "RMS", rms ])
         }, this.params.interval)
 
-        /*  provide Duplex stream and internally attach to VAD  */
+        /*  provide Duplex stream and internally attach to meter  */
         const self = this
         this.stream = new Stream.Transform({
             writableObjectMode: true,
@@ -67,46 +74,78 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
             /*  transform audio chunk  */
             transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.destroyed) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected audio input as Buffer chunks"))
                 else if (chunk.payload.byteLength === 0)
                     callback()
                 else {
-                    /*  convert audio samples from PCM/I16 to PCM/F32  */
-                    const data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
+                    try {
+                        /*  convert audio samples from PCM/I16 to PCM/F32  */
+                        const data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
 
-                    /*  update internal audio sample sliding window  */
-                    const fusion = new Float32Array(sampleWindow.length + data.length)
-                    fusion.set(sampleWindow, 0)
-                    fusion.set(data, sampleWindow.length)
-                    sampleWindow = fusion.slice(fusion.length - sampleWindowSize)
+                        /*  update internal audio sample sliding window  */
+                        if (data.length >= sampleWindowSize)
+                            /*  new data is larger than window, so just use the tail  */
+                            sampleWindow = data.slice(data.length - sampleWindowSize)
+                        else {
+                            /*  shift existing data and append new data  */
+                            const newWindow = new Float32Array(sampleWindowSize)
+                            const keepSize = sampleWindowSize - data.length
+                            newWindow.set(sampleWindow.slice(sampleWindow.length - keepSize), 0)
+                            newWindow.set(data, keepSize)
+                            sampleWindow = newWindow
+                        }
 
-                    /*  asynchronously calculate the LUFS-S metric  */
-                    setTimeout(() => {
-                        const audioData = {
-                            sampleRate:       self.config.audioSampleRate,
-                            numberOfChannels: self.config.audioChannels,
-                            channelData:      [ sampleWindow ],
-                            duration:         sampleWindowDuration,
-                            length:           sampleWindow.length
-                        } satisfies AudioData
-                        const lufs = getLUFS(audioData, {
-                            channelMode: self.config.audioChannels === 1 ? "mono" : "stereo",
-                            calculateShortTerm:     true,
-                            calculateMomentary:     false,
-                            calculateLoudnessRange: false,
-                            calculateTruePeak:      false
-                        })
-                        lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
-                        rms = getRMS(audioData, { asDB: true })
-                    }, 0)
+                        /*  asynchronously calculate the LUFS-S metric  */
+                        const calculator = setTimeout(() => {
+                            if (self.destroyed)
+                                return
+                            try {
+                                self.pendingCalculations.delete(calculator)
+                                const audioData = {
+                                    sampleRate:       self.config.audioSampleRate,
+                                    numberOfChannels: self.config.audioChannels,
+                                    channelData:      [ sampleWindow ],
+                                    duration:         sampleWindowDuration,
+                                    length:           sampleWindow.length
+                                } satisfies AudioData
+                                const lufs = getLUFS(audioData, {
+                                    channelMode: self.config.audioChannels === 1 ? "mono" : "stereo",
+                                    calculateShortTerm:     true,
+                                    calculateMomentary:     false,
+                                    calculateLoudnessRange: false,
+                                    calculateTruePeak:      false
+                                })
+                                if (!self.destroyed) {
+                                    lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
+                                    rms = getRMS(audioData, { asDB: true })
+                                }
+                            }
+                            catch (error) {
+                                if (!self.destroyed)
+                                    self.log("warning", `meter calculation error: ${error}`)
+                            }
+                        }, 0)
+                        self.pendingCalculations.add(calculator)
 
-                    /*  pass-through original audio chunk  */
-                    this.push(chunk)
-                    callback()
+                        /*  pass-through original audio chunk  */
+                        this.push(chunk)
+                        callback()
+                    }
+                    catch (error) {
+                        callback(error instanceof Error ? error : new Error("Meter processing failed"))
+                    }
                 }
             },
             final (callback) {
+                if (self.destroyed) {
+                    callback()
+                    return
+                }
                 this.push(null)
                 callback()
             }
@@ -115,16 +154,24 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close stream  */
-        if (this.stream !== null) {
-            this.stream.destroy()
-            this.stream = null
-        }
+        /*  indicate destruction  */
+        this.destroyed = true
+
+        /*  clear all pending calculations  */
+        for (const timeout of this.pendingCalculations)
+            clearTimeout(timeout)
+        this.pendingCalculations.clear()
 
         /*  stop interval  */
         if (this.interval !== null) {
             clearInterval(this.interval)
             this.interval = null
+        }
+
+        /*  close stream  */
+        if (this.stream !== null) {
+            this.stream.destroy()
+            this.stream = null
         }
     }
 }
