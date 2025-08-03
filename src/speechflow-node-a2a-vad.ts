@@ -108,10 +108,12 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     this.log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
                     if (this.params.mode === "unplugged") {
                         tail = true
-                        if (this.tailTimer !== null)
+                        if (this.tailTimer !== null) {
                             clearTimeout(this.tailTimer)
+                            this.tailTimer = null
+                        }
                         this.tailTimer = setTimeout(() => {
-                            if (this.destroyed)
+                            if (this.destroyed || this.tailTimer === null)
                                 return
                             tail = false
                             this.tailTimer = null
@@ -123,10 +125,12 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     this.log("info", "VAD: speech end (segment too short)")
                     if (this.params.mode === "unplugged") {
                         tail = true
-                        if (this.tailTimer !== null)
+                        if (this.tailTimer !== null) {
                             clearTimeout(this.tailTimer)
+                            this.tailTimer = null
+                        }
                         this.tailTimer = setTimeout(() => {
-                            if (this.destroyed)
+                            if (this.destroyed || this.tailTimer === null)
                                 return
                             tail = false
                             this.tailTimer = null
@@ -141,6 +145,8 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         const element = this.queueVAD.peek()
                         if (element === undefined || element.type !== "audio-frame")
                             throw new Error("internal error which cannot happen: no more queued element")
+                        if (element.segmentIdx >= element.segmentData.length)
+                            throw new Error("segment index out of bounds")
                         const segment = element.segmentData[element.segmentIdx++]
                         segment.isSpeech = (audio.isSpeech > audio.notSpeech) || tail
 
@@ -364,10 +370,15 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
         /*  close VAD  */
         if (this.vad !== null) {
-            const flushPromise = this.vad.flush()
-            const timeoutPromise = new Promise((resolve) =>
-                setTimeout(resolve, 5000))
-            await Promise.race([ flushPromise, timeoutPromise ])
+            try {
+                const flushPromise = this.vad.flush()
+                const timeoutPromise = new Promise((resolve) =>
+                    setTimeout(resolve, 5000))
+                await Promise.race([ flushPromise, timeoutPromise ])
+            }
+            catch (error) {
+                this.log("warning", `VAD flush error during close: ${error}`)
+            }
             this.vad.destroy()
             this.vad = null
         }
