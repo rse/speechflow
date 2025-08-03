@@ -94,13 +94,13 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
                 const m = self.params.var.match(/^meta:(.+)$/)
                 if (m !== null)
                     val1 = chunk.meta.get(m[1]) ?? ""
-                else if (self.params.key === "payload:length")
+                else if (self.params.var === "payload:length")
                     val1 = chunk.payload.length
-                else if (self.params.key === "payload:text")
+                else if (self.params.var === "payload:text")
                     val1 = (self.params.type === "text" ? chunk.payload as string : "")
-                else if (self.params.key === "time:start")
+                else if (self.params.var === "time:start")
                     val1 = chunk.timestampStart.toMillis()
-                else if (self.params.key === "time:end")
+                else if (self.params.var === "time:end")
                     val1 = chunk.timestampEnd.toMillis()
                 if (comparison(val1, self.params.op, val2)) {
                     self.log("info", `[${self.params.name}]: passing through ${chunk.type} chunk`)
