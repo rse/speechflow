@@ -21,6 +21,7 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
 
     /*  internal state  */
     private kokoro: KokoroTTS | null = null
+    private resampler: SpeexResampler | null = null
     private static speexInitialized = false
 
     /*  construct node  */
@@ -59,9 +60,11 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
         const interval = setInterval(() => {
             for (const [ artifact, percent ] of progressState) {
                 this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
-                if (percent >= 1.0)
+                if (percent >= 100.0)
                     progressState.delete(artifact)
             }
+            if (progressState.size === 0)
+                clearInterval(interval)
         }, 1000)
         this.kokoro = await KokoroTTS.from_pretrained(model, {
             dtype: "q4f16",
@@ -78,7 +81,7 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
             await SpeexResampler.initPromise
             SpeechFlowNodeKokoro.speexInitialized = true
         }
-        const resampler = new SpeexResampler(1, 24000, this.config.audioSampleRate, 7)
+        this.resampler = new SpeexResampler(1, 24000, this.config.audioSampleRate, 7)
 
         /*  determine voice for text-to-speech operation  */
         const voices = {
@@ -91,7 +94,7 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
         if (voice === undefined)
             throw new Error(`invalid Kokoro voice "${this.params.voice}"`)
 
-        /*  perform text-to-speech operation with Elevenlabs API  */
+        /*  perform text-to-speech operation with Kokoro API  */
         const text2speech = async (text: string) => {
             this.log("info", `Kokoro: input: "${text}"`)
             const audio = await this.kokoro!.generate(text, {
@@ -110,7 +113,7 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
             }
 
             /*  resample audio samples from PCM/I16/24Khz to PCM/I16/48KHz  */
-            const buffer2 = resampler.processChunk(buffer1)
+            const buffer2 = this.resampler!.processChunk(buffer1)
 
             return buffer2
         }
@@ -152,6 +155,10 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
             this.stream.destroy()
             this.stream = null
         }
+
+        /*  destroy resampler  */
+        if (this.resampler !== null)
+            this.resampler = null
 
         /*  destroy Kokoro API  */
         if (this.kokoro !== null)
