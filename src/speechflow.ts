@@ -220,7 +220,16 @@ type wsPeerInfo = {
             throw new Error("invalid configuration file specification (expected \"<id>@<yaml-config-file>\")")
         const [ , id, file ] = m
         const yaml = await cli.input(file, { encoding: "utf8" })
-        const obj: any = jsYAML.load(yaml)
+        let obj: any
+        try {
+            obj = jsYAML.load(yaml)
+        }
+        catch (err) {
+            if (err instanceof Error)
+                throw new Error(`failed to parse YAML configuration: ${err.message}`)
+            else
+                throw new Error(`failed to parse YAML configuration: ${err}`)
+        }
         if (obj[id] === undefined)
             throw new Error(`no such id "${id}" found in configuration file`)
         config = obj[id] as string
@@ -314,7 +323,7 @@ type wsPeerInfo = {
                     reject(new Error("timeout")), 10 * 1000))
             ]).catch((err: Error) => {
                 cli!.log("warning", `[${node.id}]: failed to gather status of node <${node.id}>: ${err.message}`)
-                return {}
+                return {} as { [ key: string ]: string | number }
             })
             if (Object.keys(status).length > 0) {
                 let first = true
