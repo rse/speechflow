@@ -39,7 +39,7 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
                 "Do NOT give any preamble.\n" +
                 "Do NOT give any prolog.\n" +
                 "Do NOT give any epilog.\n" +
-                "Do NOT change the gammar.\n" +
+                "Do NOT change the grammar.\n" +
                 "Do NOT use synonyms for words.\n" +
                 "Keep all words.\n" +
                 "Fill in missing commas.\n" +
