@@ -159,8 +159,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
 
             /*  convert regular stream into object-mode stream  */
             const wrapper = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
-            this.stream.pipe(wrapper)
-            this.stream = wrapper
+            this.stream = Stream.compose(this.stream, wrapper)
         }
         else if (this.params.mode === "w") {
             /*  output device  */
@@ -180,8 +179,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
 
             /*  convert regular stream into object-mode stream  */
             const wrapper = utils.createTransformStreamForWritableSide()
-            wrapper.pipe(this.stream)
-            this.stream = wrapper
+            this.stream = Stream.compose(wrapper, this.stream)
         }
         else
             throw new Error(`device "${device.id}" does not have any input or output channels`)
@@ -200,13 +198,19 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         /*  shutdown PortAudio  */
         if (this.io !== null) {
             await new Promise<void>((resolve, reject) => {
-                this.io!.abort(() => {
-                    resolve()
+                this.io!.abort((err?: Error) => {
+                    if (err)
+                        reject(err)
+                    else
+                        resolve()
                 })
             })
             await new Promise<void>((resolve, reject) => {
-                this.io!.quit(() => {
-                    resolve()
+                this.io!.quit((err?: Error) => {
+                    if (err)
+                        reject(err)
+                    else
+                        resolve()
                 })
             })
             this.io = null
