@@ -35,6 +35,7 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
     private queueSplit = this.queue.pointerUse("split")
     private queueSend  = this.queue.pointerUse("send")
     private destroyed  = false
+    private workingOffTimer: ReturnType<typeof setTimeout> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -57,7 +58,6 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
         const log = (level: string, msg: string) => { this.log(level, msg) }
 
         /*  work off queued audio frames  */
-        let workingOffTimer: ReturnType<typeof setTimeout> | null = null
         let workingOff = false
         const workOffQueue = async () => {
             if (this.destroyed)
@@ -67,14 +67,14 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
             if (workingOff)
                 return
             workingOff = true
-            if (workingOffTimer !== null) {
-                clearTimeout(workingOffTimer)
-                workingOffTimer = null
+            if (this.workingOffTimer !== null) {
+                clearTimeout(this.workingOffTimer)
+                this.workingOffTimer = null
             }
             this.queue.off("write", workOffQueue)
 
             /*  try to work off one or more chunks  */
-            while (true) {
+            while (!this.destroyed) {
                 const element = this.queueSplit.peek()
                 if (element === undefined)
                     break
@@ -136,10 +136,12 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
                 }
             }
 
-            /*  re-initiate working off round  */
+            /*  re-initiate working off round (if still not destroyed)  */
             workingOff = false
-            workingOffTimer = setTimeout(workOffQueue, 100)
-            this.queue.once("write", workOffQueue)
+            if (!this.destroyed) {
+                this.workingOffTimer = setTimeout(workOffQueue, 100)
+                this.queue.once("write", workOffQueue)
+            }
         }
         this.queue.once("write", workOffQueue)
 
@@ -153,6 +155,10 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
 
             /*  receive text chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.destroyed) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected text input as string chunks"))
                 else if (chunk.payload.length === 0)
@@ -166,6 +172,10 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
 
             /*  receive no more text chunks (writable side of stream)  */
             final (callback) {
+                if (self.destroyed) {
+                    callback()
+                    return
+                }
                 /*  signal end of file  */
                 self.queueRecv.append({ type: "text-eof" })
                 callback()
@@ -173,8 +183,12 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
 
             /*  send text chunk(s) (readable side of stream)  */
             read (_size) {
-                /*  flush pending audio chunks  */
+                /*  flush pending text chunks  */
                 const flushPendingChunks = () => {
+                    if (self.destroyed) {
+                        this.push(null)
+                        return
+                    }
                     const element = self.queueSend.peek()
                     if (element !== undefined
                         && element.type === "text-eof") {
@@ -202,7 +216,7 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
                             self.queue.trim()
                         }
                     }
-                    else
+                    else if (!self.destroyed)
                         self.queue.once("write", flushPendingChunks)
                 }
                 flushPendingChunks()
@@ -212,13 +226,22 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate destruction  */
+        this.destroyed = true
+
+        /*  clean up timer  */
+        if (this.workingOffTimer !== null) {
+            clearTimeout(this.workingOffTimer)
+            this.workingOffTimer = null
+        }
+
+        /*  remove any pending event listeners  */
+        this.queue.removeAllListeners("write")
+
         /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
         }
-
-        /*  indicate destruction  */
-        this.destroyed = true
     }
 }
