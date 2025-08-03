@@ -47,15 +47,20 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
     /*  one-time status of node  */
     async status () {
-        let balance  = 0
-        const deepgram = Deepgram.createClient(this.params.keyAdm)
-        const response = await deepgram.manage.getProjects()
-        if (response !== null && response.error === null) {
-            for (const project of response.result.projects) {
-                const response = await deepgram.manage.getProjectBalances(project.project_id)
-                if (response !== null && response.error === null)
-                    balance += response.result.balances[0]?.amount ?? 0
+        let balance = 0
+        try {
+            const deepgram = Deepgram.createClient(this.params.keyAdm)
+            const response = await deepgram.manage.getProjects()
+            if (response !== null && response.error === null) {
+                for (const project of response.result.projects) {
+                    const response = await deepgram.manage.getProjectBalances(project.project_id)
+                    if (response !== null && response.error === null)
+                        balance += response.result.balances[0]?.amount ?? 0
+                }
             }
+        }
+        catch (error) {
+            this.log("warning", `failed to fetch balance: ${error}`)
         }
         return { balance: balance.toFixed(2) }
     }
@@ -228,12 +233,20 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     this.push(null)
                     return
                 }
-                const readTimeout = setTimeout(() => {
-                    self.log("warning", "read timeout - pushing null to prevent hanging")
-                    this.push(null)
+                let readTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+                    if (readTimeout !== null) {
+                        readTimeout = null
+                        if (!self.destroyed) {
+                            self.log("warning", "read timeout - pushing null to prevent hanging")
+                            this.push(null)
+                        }
+                    }
                 }, 30 * 1000)
                 self.queue.read().then((chunk) => {
-                    clearTimeout(readTimeout)
+                    if (readTimeout !== null) {
+                        clearTimeout(readTimeout)
+                        readTimeout = null
+                    }
                     if (self.destroyed) {
                         this.push(null)
                         return
@@ -248,9 +261,14 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                         this.push(chunk, self.config.textEncoding)
                     }
                 }).catch((error) => {
-                    clearTimeout(readTimeout)
-                    self.log("error", `queue read error: ${error.message}`)
-                    this.push(null)
+                    if (readTimeout !== null) {
+                        clearTimeout(readTimeout)
+                        readTimeout = null
+                    }
+                    if (!self.destroyed) {
+                        self.log("error", `queue read error: ${error.message}`)
+                        this.push(null)
+                    }
                 })
             },
             final (callback) {
