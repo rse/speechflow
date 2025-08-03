@@ -41,6 +41,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             optimize:   { type: "string", val: "latency", pos: 5, match: /^(?:latency|quality)$/ }
         })
 
+        /*  sanity check parameters  */
+        if (!this.params.key)
+            throw new Error("ElevenLabs API key not configured")
+
         /*  declare node input/output format  */
         this.input  = "text"
         this.output = "audio"
@@ -143,19 +147,26 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     (async () => {
-                        const processTimeout = setTimeout(() => {
+                        let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+                            processTimeout = null
                             callback(new Error("ElevenLabs API timeout"))
                         }, 60 * 1000)
                         try {
                             const stream = await speechStream(chunk.payload as string)
                             if (self.destroyed) {
-                                clearTimeout(processTimeout)
+                                if (processTimeout !== null) {
+                                    clearTimeout(processTimeout)
+                                    processTimeout = null
+                                }
                                 callback(new Error("stream destroyed during processing"))
                                 return
                             }
                             const buffer = await getStreamAsBuffer(stream)
                             if (self.destroyed) {
-                                clearTimeout(processTimeout)
+                                if (processTimeout !== null) {
+                                    clearTimeout(processTimeout)
+                                    processTimeout = null
+                                }
                                 callback(new Error("stream destroyed during processing"))
                                 return
                             }
@@ -164,12 +175,18 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                             const chunkNew = chunk.clone()
                             chunkNew.type = "audio"
                             chunkNew.payload = bufferResampled
-                            clearTimeout(processTimeout)
+                            if (processTimeout !== null) {
+                                clearTimeout(processTimeout)
+                                processTimeout = null
+                            }
                             this.push(chunkNew)
                             callback()
                         }
                         catch (error) {
-                            clearTimeout(processTimeout)
+                            if (processTimeout !== null) {
+                                clearTimeout(processTimeout)
+                                processTimeout = null
+                            }
                             callback(error instanceof Error ? error : new Error("ElevenLabs processing failed"))
                         }
                     })()
