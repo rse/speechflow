@@ -31,11 +31,10 @@ export default [
         files:   [ "**/*.ts" ],
         ignores: [ "dst/" ],
         languageOptions: {
-            ecmaVersion: 2022,
+            ecmaVersion: 2024,
             sourceType:  "module",
             parser: parserTS,
             parserOptions: {
-                parser: parserTS,
                 extraFileExtensions: [],
                 ecmaFeatures: {
                     jsx: false
