@@ -53,9 +53,6 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
         /*  clear destruction flag  */
         this.destroyed = false
 
-        /*  pass-through logging  */
-        const log = (level: string, msg: string) => { this.log(level, msg) }
-
         /*  work off queued audio frames  */
         let workingOff = false
         const workOffQueue = async () => {
@@ -154,16 +151,14 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
 
             /*  receive text chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed) {
+                if (self.destroyed)
                     callback(new Error("stream already destroyed"))
-                    return
-                }
-                if (Buffer.isBuffer(chunk.payload))
+                else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected text input as string chunks"))
                 else if (chunk.payload.length === 0)
                     callback()
                 else {
-                    log("info", `received text: ${JSON.stringify(chunk.payload)}`)
+                    self.log("info", `received text: ${JSON.stringify(chunk.payload)}`)
                     self.queueRecv.append({ type: "text-frame", chunk })
                     callback()
                 }
@@ -209,7 +204,7 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
                             else if (element.type === "text-frame"
                                 && element.complete !== true)
                                 break
-                            log("info", `send text: ${JSON.stringify(element.chunk.payload)}`)
+                            self.log("info", `send text: ${JSON.stringify(element.chunk.payload)}`)
                             this.push(element.chunk)
                             self.queueSend.walk(+1)
                             self.queue.trim()
