@@ -151,22 +151,22 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                             processTimeout = null
                             callback(new Error("ElevenLabs API timeout"))
                         }, 60 * 1000)
+                        const clearProcessTimeout = () => {
+                            if (processTimeout !== null) {
+                                clearTimeout(processTimeout)
+                                processTimeout = null
+                            }
+                        }
                         try {
                             const stream = await speechStream(chunk.payload as string)
                             if (self.destroyed) {
-                                if (processTimeout !== null) {
-                                    clearTimeout(processTimeout)
-                                    processTimeout = null
-                                }
+                                clearProcessTimeout()
                                 callback(new Error("stream destroyed during processing"))
                                 return
                             }
                             const buffer = await getStreamAsBuffer(stream)
                             if (self.destroyed) {
-                                if (processTimeout !== null) {
-                                    clearTimeout(processTimeout)
-                                    processTimeout = null
-                                }
+                                clearProcessTimeout()
                                 callback(new Error("stream destroyed during processing"))
                                 return
                             }
@@ -175,18 +175,12 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                             const chunkNew = chunk.clone()
                             chunkNew.type = "audio"
                             chunkNew.payload = bufferResampled
-                            if (processTimeout !== null) {
-                                clearTimeout(processTimeout)
-                                processTimeout = null
-                            }
+                            clearProcessTimeout()
                             this.push(chunkNew)
                             callback()
                         }
                         catch (error) {
-                            if (processTimeout !== null) {
-                                clearTimeout(processTimeout)
-                                processTimeout = null
-                            }
+                            clearProcessTimeout()
                             callback(error instanceof Error ? error : new Error("ElevenLabs processing failed"))
                         }
                     })()
