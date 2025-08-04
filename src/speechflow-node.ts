@@ -96,6 +96,13 @@ export default class SpeechFlowNode extends Events.EventEmitter {
         this.emit("send-response", args)
     }
 
+    /*  emit dashboard information  */
+    dashboardInfo (type: "audio", name: string, kind: "final" | "intermediate", value: number): void
+    dashboardInfo (type: "text", name: string, kind: "final" | "intermediate", value: string): void
+    dashboardInfo (type: "audio" | "text", name: string, kind: "final" | "intermediate", value: number | string): void {
+        this.emit("dashboard-info", { type, name, kind, value })
+    }
+
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */
     configure (spec: { [ id: string ]: { type: string, pos?: number, val?: any, match?: RegExp | ((x: any) => boolean) } }) {
         for (const name of Object.keys(spec)) {
