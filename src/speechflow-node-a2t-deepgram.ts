@@ -175,6 +175,8 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         const initTimeoutStart = () => {
             if (initDone || this.destroyed)
                 return
+            if (this.initTimeout !== null)
+                clearTimeout(this.initTimeout)
             this.initTimeout = setTimeout(async () => {
                 if (this.initTimeout === null || this.destroyed)
                     return
