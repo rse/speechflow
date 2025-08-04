@@ -11,6 +11,7 @@ import Stream            from "node:stream"
 import { EventEmitter }  from "node:events"
 import http              from "node:http"
 import * as HAPI         from "@hapi/hapi"
+import Inert             from "@hapi/inert"
 import WebSocket         from "ws"
 import HAPIWebSocket     from "hapi-plugin-websocket"
 import HAPIHeader        from "hapi-plugin-header"
@@ -67,6 +68,7 @@ type wsPeerInfo = {
             "[-a|--address <ip-address>] " +
             "[-p|--port <tcp-port>] " +
             "[-C|--cache <directory>] " +
+            "[-d|--dashboard <type>:<name>[,...]] " +
             "[-e|--expression <expression>] " +
             "[-f|--file <file>] " +
             "[-c|--config <id>@<yaml-config-file>] " +
@@ -124,6 +126,15 @@ type wsPeerInfo = {
             nargs:    1,
             default:  path.join(dataDir, "cache"),
             describe: "directory for cached files (primarily AI model files)"
+        })
+        .option("d", {
+            alias:    "dashboard",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  "",
+            describe: "list of dashboard block types and names"
         })
         .option("e", {
             alias:    "expression",
@@ -544,6 +555,7 @@ type wsPeerInfo = {
         address: args.a,
         port:    args.p
     })
+    await hapi.register({ plugin: Inert })
     await hapi.register({ plugin: HAPIHeader, options: { Server: `${pkg.name}/${pkg.version}` } })
     await hapi.register({ plugin: HAPIWebSocket })
     hapi.events.on("response", (request: HAPI.Request) => {
@@ -575,6 +587,29 @@ type wsPeerInfo = {
                 cli!.log("error", `HAPI: log: ${err.message}`)
             else
                 cli!.log("error", `HAPI: log: ${err}`)
+        }
+    })
+    hapi.route({
+        method: "GET",
+        path: "/{param*}",
+        handler: {
+            directory: {
+                path: path.join(__dirname, "../dashboard/dst"),
+                redirectToSlash: true,
+                index: true
+            }
+        }
+    })
+    hapi.route({
+        method: "GET",
+        path:   "/api/dashboard",
+        handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
+            const config = []
+            for (const block of args.d.split(",")) {
+                const [ type, name ] = block.split(":")
+                config.push({ type, name })
+            }
+            return h.response(config).code(200)
         }
     })
     hapi.route({
@@ -658,6 +693,26 @@ type wsPeerInfo = {
                 cli!.log("info", `HAPI: peer ${peer}: ${data}`)
                 if (info.ws.readyState === WebSocket.OPEN)
                     info.ws.send(data)
+            }
+        })
+    }
+
+    /*  hook for dashboardInfo method of nodes  */
+    for (const node of graphNodes) {
+        node.on("dashboard-info", (info: {
+            type: string,
+            name: string,
+            kind: "final" | "intermediate",
+            value: string | number
+        }) => {
+            const data = JSON.stringify({
+                response: "DASHBOARD",
+                node:     "",
+                args:     [ info.type, info.name, info.kind, info.value ]
+            })
+            for (const [ peer, info ] of wsPeers.entries()) {
+                cli!.log("info", `HAPI: peer ${peer}: ${data}`)
+                info.ws.send(data)
             }
         })
     }

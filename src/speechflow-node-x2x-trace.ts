@@ -24,9 +24,14 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            type: { type: "string", pos: 0, val: "audio", match: /^(?:audio|text)$/ },
-            name: { type: "string", pos: 1, val: "trace" }
+            type:      { type: "string", pos: 0, val: "audio", match: /^(?:audio|text)$/ },
+            name:      { type: "string", pos: 1, val: "trace" },
+            dashboard: { type: "string",         val: "" }
         })
+
+        /*  sanity check parameters  */
+        if (this.params.dashboard !== "" && this.params.type === "audio")
+            throw new Error("only trace nodes of type \"text\" can export to dashboard")
 
         /*  declare node input/output format  */
         this.input  = this.params.type
@@ -44,7 +49,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
         }
 
         /*  provide Transform stream  */
-        const type = this.params.type
+        const self = this
         this.stream = new Stream.Transform({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -63,7 +68,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                         } }`
                 }
                 if (Buffer.isBuffer(chunk.payload)) {
-                    if (type === "audio")
+                    if (self.params.type === "audio")
                         log("debug", `chunk: type=${chunk.type} ` +
                             `kind=${chunk.kind} ` +
                             `start=${fmtTime(chunk.timestampStart)} ` +
@@ -71,10 +76,10 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                             `payload-type=Buffer payload-length=${chunk.payload.byteLength} ` +
                             `meta=${fmtMeta(chunk.meta)}`)
                     else
-                        error = new Error(`${type} chunk: seen Buffer instead of String chunk type`)
+                        error = new Error(`${self.params.type} chunk: seen Buffer instead of String chunk type`)
                 }
                 else {
-                    if (type === "text")
+                    if (self.params.type === "text") {
                         log("debug", `chunk: type=${chunk.type} ` +
                             `kind=${chunk.kind} ` +
                             `start=${fmtTime(chunk.timestampStart)} ` +
@@ -82,8 +87,11 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                             `payload-type=String payload-length=${chunk.payload.length} ` +
                             `payload-content="${chunk.payload.toString()}" ` +
                             `meta=${fmtMeta(chunk.meta)}`)
+                        if (self.params.dashboard !== "")
+                            self.dashboardInfo("text", self.params.dashboard, chunk.kind, chunk.payload.toString())
+                    }
                     else
-                        error = new Error(`${type} chunk: seen String instead of Buffer chunk type`)
+                        error = new Error(`${self.params.type} chunk: seen String instead of Buffer chunk type`)
                 }
                 if (error !== undefined)
                     callback(error)

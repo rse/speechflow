@@ -30,7 +30,8 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            interval: { type: "number", pos: 0, val: 250 }
+            interval:  { type: "number", pos: 0, val: 250 },
+            dashboard: { type: "string",         val: "" }
         })
 
         /*  declare node input/output format  */
@@ -62,6 +63,8 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
             this.log("debug", `LUFS-S: ${lufss.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
             this.sendResponse([ "meter", "LUFS-S", lufss ])
             this.sendResponse([ "meter", "RMS", rms ])
+            if (this.params.dashboard !== "")
+                this.dashboardInfo("audio", this.params.dashboard, "final", lufss)
         }, this.params.interval)
 
         /*  provide Duplex stream and internally attach to meter  */
