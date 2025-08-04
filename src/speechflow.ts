@@ -319,7 +319,7 @@ type wsPeerInfo = {
             const node = new nodes[name](name, cfg, {}, [])
             const status = await Promise.race<{ [ key: string ]: string | number }>([
                 node.status(),
-                new Promise((resolve, reject) => setTimeout(() =>
+                new Promise<never>((resolve, reject) => setTimeout(() =>
                     reject(new Error("timeout")), 10 * 1000))
             ]).catch((err: Error) => {
                 cli!.log("warning", `[${node.id}]: failed to gather status of node <${node.id}>: ${err.message}`)
@@ -352,12 +352,9 @@ type wsPeerInfo = {
         ast = flowlink.compile(config)
     }
     catch (err) {
-        if (err instanceof Error && err.name === "FlowLinkError")
-            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.toString()}`)
-        else if (err instanceof Error)
-            cli!.log("error", `failed to parse SpeechFlow configuration: ${err.message}`)
-        else
-            cli!.log("error", "failed to parse SpeechFlow configuration: internal error")
+        const errorMsg = err instanceof Error && err.name === "FlowLinkError"
+            ? err.toString() : (err instanceof Error ? err.message : "internal error")
+        cli!.log("error", `failed to parse SpeechFlow configuration: ${errorMsg}`)
         process.exit(1)
     }
     try {
@@ -374,10 +371,11 @@ type wsPeerInfo = {
                     throw new Error(`unknown node <${id}>`)
                 let node: SpeechFlowNode
                 try {
-                    let num = nodeNums.get(nodes[id]) ?? 0
-                    nodeNums.set(nodes[id], ++num)
+                    const nodeClass = nodes[id]
+                    let num = nodeNums.get(nodeClass) ?? 0
+                    nodeNums.set(nodeClass, ++num)
                     const name = num === 1 ? id : `${id}:${num}`
-                    node = new nodes[id](name, cfg, opts, args)
+                    node = new nodeClass(name, cfg, opts, args)
                 }
                 catch (err) {
                     /*  fatal error  */
@@ -400,12 +398,9 @@ type wsPeerInfo = {
         })
     }
     catch (err) {
-        if (err instanceof Error && err.name === "FlowLinkError")
-            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.toString()}`)
-        else if (err instanceof Error)
-            cli!.log("error", `failed to materialize SpeechFlow configuration: ${err.message}`)
-        else
-            cli!.log("error", "failed to materialize SpeechFlow configuration: internal error")
+        const errorMsg = err instanceof Error && err.name === "FlowLinkError"
+            ? err.toString() : (err instanceof Error ? err.message : "internal error")
+        cli!.log("error", `failed to materialize SpeechFlow configuration: ${errorMsg}`)
         process.exit(1)
     }
 
@@ -456,7 +451,7 @@ type wsPeerInfo = {
         node.setTimeZero(timeZero)
         await Promise.race<void>([
             node.open(),
-            new Promise((resolve, reject) => setTimeout(() =>
+            new Promise<never>((resolve, reject) => setTimeout(() =>
                 reject(new Error("timeout")), 10 * 1000))
         ]).catch((err: Error) => {
             cli!.log("error", `[${node.id}]: failed to open node <${node.id}>: ${err.message}`)
@@ -535,7 +530,7 @@ type wsPeerInfo = {
         else {
             await Promise.race<void>([
                 foundNode.receiveRequest(args),
-                new Promise((resolve, reject) => setTimeout(() =>
+                new Promise<never>((resolve, reject) => setTimeout(() =>
                     reject(new Error("timeout")), 10 * 1000))
             ]).catch((err: Error) => {
                 cli!.log("warning", `external request to node <${name}> failed: ${err.message}`)
@@ -589,10 +584,13 @@ type wsPeerInfo = {
         },
         handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
             const peer = request.info.remoteAddress
+            const params = request.params.params as string ?? ""
+            if (params.length > 1000)
+                return h.response({ response: "ERROR", data: "parameters too long" }).code(400)
             const req = {
                 request: request.params.req,
                 node:    request.params.node,
-                args:    (request.params.params as string ?? "").split("/").filter((seg) => seg !== "")
+                args:    params.split("/").filter((seg) => seg !== "")
             }
             cli!.log("info", `HAPI: peer ${peer}: GET: ${JSON.stringify(req)}`)
             return consumeExternalRequest(req).then(() => {
@@ -607,9 +605,10 @@ type wsPeerInfo = {
         path:   "/api",
         options: {
             payload: {
-                output: "data",
-                parse:  true,
-                allow:  "application/json"
+                output:   "data",
+                parse:    true,
+                allow:    "application/json",
+                maxBytes: 1 * 1024 * 1024
             },
             plugins: {
                 websocket: {
@@ -625,8 +624,10 @@ type wsPeerInfo = {
                     },
                     disconnect: (args: any) => {
                         const ctx: wsPeerCtx = args.ctx
+                        const ws: WebSocket = args.ws
                         const peer = ctx.peer
                         wsPeers.delete(peer)
+                        ws.removeAllListeners()
                         cli!.log("info", `HAPI: WebSocket: disconnect: peer ${peer}`)
                     }
                 }
@@ -742,7 +743,7 @@ type wsPeerInfo = {
             cli!.log("info", `close node <${node.id}>`)
             await Promise.race<void>([
                 node.close(),
-                new Promise((resolve, reject) => setTimeout(() =>
+                new Promise<never>((resolve, reject) => setTimeout(() =>
                     reject(new Error("timeout")), 10 * 1000))
             ]).catch((err: Error) => {
                 cli!.log("warning", `node <${node.id}> failed to close: ${err.message}`)
