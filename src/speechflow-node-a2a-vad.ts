@@ -77,6 +77,14 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
         const vadSampleRateTarget = 16000 /* internal target of VAD */
         const vadSamplesPerFrame  = 512   /* required for VAD v5 */
 
+        /*  helper function for timer cleanup  */
+        const clearTailTimer = () => {
+            if (this.tailTimer !== null) {
+                clearTimeout(this.tailTimer)
+                this.tailTimer = null
+            }
+        }
+
         /*  establish Voice Activity Detection (VAD) facility  */
         let tail = false
         try {
@@ -95,10 +103,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     this.log("info", "VAD: speech start")
                     if (this.params.mode === "unplugged") {
                         tail = false
-                        if (this.tailTimer !== null) {
-                            clearTimeout(this.tailTimer)
-                            this.tailTimer = null
-                        }
+                        clearTailTimer()
                     }
                 },
                 onSpeechEnd: (audio) => {
@@ -108,10 +113,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     this.log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
                     if (this.params.mode === "unplugged") {
                         tail = true
-                        if (this.tailTimer !== null) {
-                            clearTimeout(this.tailTimer)
-                            this.tailTimer = null
-                        }
+                        clearTailTimer()
                         this.tailTimer = setTimeout(() => {
                             if (this.destroyed || this.tailTimer === null)
                                 return
@@ -121,14 +123,12 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                     }
                 },
                 onVADMisfire: () => {
-                    if (this.destroyed) return
+                    if (this.destroyed)
+                        return
                     this.log("info", "VAD: speech end (segment too short)")
                     if (this.params.mode === "unplugged") {
                         tail = true
-                        if (this.tailTimer !== null) {
-                            clearTimeout(this.tailTimer)
-                            this.tailTimer = null
-                        }
+                        clearTailTimer()
                         this.tailTimer = setTimeout(() => {
                             if (this.destroyed || this.tailTimer === null)
                                 return
@@ -152,14 +152,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
 
                         /*  annotate the entire audio chunk  */
                         if (element.segmentIdx >= element.segmentData.length) {
-                            let isSpeech = false
-                            for (const segment of element.segmentData) {
-                                if (segment.isSpeech) {
-                                    isSpeech = true
-                                    break
-                                }
-                            }
-                            element.isSpeech = isSpeech
+                            element.isSpeech = element.segmentData.some(segment => segment.isSpeech)
                             this.queueVAD.touch()
                             this.queueVAD.walk(+1)
                         }
