@@ -63,7 +63,7 @@ $ npm install -g speechflow
 Usage
 -----
 
-```sh
+```txt
 $ speechflow
   [-h|--help]
   [-V|--version]
@@ -85,7 +85,7 @@ The **SpeechFlow** graph expression language is based on
 [**FlowLink**](https://npmjs.org/flowlink), which itself has a language
 following the following BNF-style grammar:
 
-```
+```txt
 expr             ::= parallel
                    | sequential
                    | node
