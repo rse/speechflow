@@ -97,10 +97,10 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     }
 
     /*  emit dashboard information  */
-    dashboardInfo (type: "audio", name: string, kind: "final" | "intermediate", value: number): void
-    dashboardInfo (type: "text", name: string, kind: "final" | "intermediate", value: string): void
-    dashboardInfo (type: "audio" | "text", name: string, kind: "final" | "intermediate", value: number | string): void {
-        this.emit("dashboard-info", { type, name, kind, value })
+    dashboardInfo (type: "audio", id: string, kind: "final" | "intermediate", value: number): void
+    dashboardInfo (type: "text", id: string, kind: "final" | "intermediate", value: string): void
+    dashboardInfo (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string): void {
+        this.emit("dashboard-info", { type, id, kind, value })
     }
 
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */
