@@ -23,7 +23,7 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
         this.configure({
             type: { type: "string", pos: 0, val: "audio",  match: /^(?:audio|text)$/ },
             name: { type: "string", pos: 1, val: "filter", match: /^.+?$/ },
-            var:  { type: "string", pos: 2, val: "",       match: /^(?:meta:.+|payload:(?:length|text)|time:(?:start|end))$/ },
+            var:  { type: "string", pos: 2, val: "",       match: /^(?:meta:.+|payload:(?:length|text)|time:(?:start|end)|kind|type)$/ },
             op:   { type: "string", pos: 3, val: "==",     match: /^(?:<|<=|==|!=|~~|!~|>=|>)$/ },
             val:  { type: "string", pos: 4, val: "",       match: /^.*$/ }
         })
@@ -94,6 +94,10 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
                 const m = self.params.var.match(/^meta:(.+)$/)
                 if (m !== null)
                     val1 = chunk.meta.get(m[1]) ?? ""
+                else if (self.params.var === "kind")
+                    val1 = chunk.kind
+                else if (self.params.var === "type")
+                    val1 = chunk.type
                 else if (self.params.var === "payload:length")
                     val1 = chunk.payload.length
                 else if (self.params.var === "payload:text")

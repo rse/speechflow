@@ -594,7 +594,7 @@ type wsPeerInfo = {
         path: "/{param*}",
         handler: {
             directory: {
-                path: path.join(__dirname, "../dashboard/dst"),
+                path: path.join(__dirname, "../../speechflow-ui-db/dst"),
                 redirectToSlash: true,
                 index: true
             }

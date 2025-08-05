@@ -6,6 +6,11 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: add dashboard infrastructure and expose information from "meter" and "trace" nodes
+- IMPROVEMENT: add subtitle web interface for real-time subtitle display
+- IMPROVEMENT: allow "deepgram" node to optionally provide "interim" results (primarily for subtitle)
+- IMPROVEMENT: allow "filter" node to filter on chunk kind and type
+- CLEANUP: simplify codebase structure and remove redundancy
+- UPGRADE: upgrade NPM dependencies
 
 1.3.2 (2025-08-04)
 ------------------

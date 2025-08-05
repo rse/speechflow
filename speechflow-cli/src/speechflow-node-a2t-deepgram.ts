@@ -33,11 +33,12 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            key:      { type: "string", val: process.env.SPEECHFLOW_DEEPGRAM_KEY },
-            keyAdm:   { type: "string", val: process.env.SPEECHFLOW_DEEPGRAM_KEY_ADM },
-            model:    { type: "string", val: "nova-3", pos: 0 },
-            version:  { type: "string", val: "latest", pos: 1 },
-            language: { type: "string", val: "multi",  pos: 2 }
+            key:      { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY },
+            keyAdm:   { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY_ADM },
+            model:    { type: "string",  val: "nova-3", pos: 0 },
+            version:  { type: "string",  val: "latest", pos: 1 },
+            language: { type: "string",  val: "multi",  pos: 2 },
+            interim:  { type: "boolean", val: false,    pos: 3 }
         })
 
         /*  declare node input/output format  */
@@ -97,7 +98,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             encoding:         "linear16",
             multichannel:     false,
             endpointing:      10,
-            interim_results:  false,
+            interim_results:  this.params.interim,
             smart_format:     true,
             punctuate:        true,
             filler_words:     true,
@@ -113,6 +114,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             const text  = (data.channel?.alternatives[0]?.transcript ?? "") as string
             const words = (data.channel?.alternatives[0]?.words ?? []) as
                 { word: string, punctuated_word?: string, start: number, end: number }[]
+            const isFinal = (data.is_final ?? false) as boolean
             if (text === "")
                 this.log("info", `empty/dummy text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s)`)
             else {
@@ -130,7 +132,8 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     const end   = Duration.fromMillis(word.end * 1000).plus(this.timeZeroOffset)
                     return { word: word.punctuated_word ?? word.word, start, end }
                 }))
-                const chunk = new SpeechFlowChunk(start, end, "final", "text", text, meta)
+                const chunk = new SpeechFlowChunk(start, end,
+                    isFinal ? "final" : "intermediate", "text", text, meta)
                 this.queue.write(chunk)
             }
         })
