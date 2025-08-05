@@ -53,8 +53,8 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
         const sampleWindowSize = this.config.audioSampleRate * sampleWindowDuration
         let sampleWindow = new Float32Array(sampleWindowSize)
         sampleWindow.fill(0, 0, sampleWindowSize)
-        let lufss = 0
-        let rms = 0
+        let lufss = -60
+        let rms = -60
 
         /*  setup loudness emitting interval  */
         this.interval = setInterval(() => {
@@ -69,6 +69,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
         /*  provide Duplex stream and internally attach to meter  */
         const self = this
+        let timer: ReturnType<typeof setTimeout> | null = null
         this.stream = new Stream.Transform({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -124,8 +125,16 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
                                     calculateTruePeak:      false
                                 })
                                 if (!self.destroyed) {
+                                    if (timer !== null) {
+                                        clearTimeout(timer)
+                                        timer = null
+                                    }
                                     lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
                                     rms = getRMS(audioData, { asDB: true })
+                                    timer = setTimeout(() => {
+                                        lufss = -60
+                                        rms   = -60
+                                    }, 500)
                                 }
                             }
                             catch (error) {
