@@ -1,4 +1,2 @@
 node_modules
-.env
-sample.txt
-sample.wav
+speechflow-cli/.env
