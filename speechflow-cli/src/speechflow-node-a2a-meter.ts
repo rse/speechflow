@@ -20,9 +20,11 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
     public static name = "meter"
 
     /*  internal state  */
-    private interval: ReturnType<typeof setInterval> | null = null
-    private destroyed = false
+    private emitInterval: ReturnType<typeof setInterval> | null = null
+    private calcInterval: ReturnType<typeof setInterval> | null = null
     private pendingCalculations = new Set<ReturnType<typeof setTimeout>>()
+    private chunkBuffer = new Float32Array(0)
+    private destroyed = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -50,14 +52,82 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
         /*  internal state  */
         const sampleWindowDuration = 3 /* LUFS-S requires 3s */
-        const sampleWindowSize = this.config.audioSampleRate * sampleWindowDuration
+        const sampleWindowSize = Math.floor(this.config.audioSampleRate * sampleWindowDuration)
         let sampleWindow = new Float32Array(sampleWindowSize)
         sampleWindow.fill(0, 0, sampleWindowSize)
         let lufss = -60
         let rms = -60
 
+        /*  chunk processing state  */
+        const chunkDuration = 0.050 /* meter update frequency is about 50ms */
+        const samplesPerChunk = Math.floor(this.config.audioSampleRate * chunkDuration)
+        this.chunkBuffer = new Float32Array(0)
+
+        /*  define chunk processing function  */
+        const processChunk = (chunkData: Float32Array) => {
+            /*  update internal audio sample sliding window  */
+            const newWindow = new Float32Array(sampleWindowSize)
+            const keepSize = sampleWindowSize - chunkData.length
+            newWindow.set(sampleWindow.slice(sampleWindow.length - keepSize), 0)
+            newWindow.set(chunkData, keepSize)
+            sampleWindow = newWindow
+
+            /*  asynchronously calculate the LUFS-S metric  */
+            const calculator = setTimeout(() => {
+                if (this.destroyed)
+                    return
+                try {
+                    this.pendingCalculations.delete(calculator)
+                    const audioData = {
+                        sampleRate:       this.config.audioSampleRate,
+                        numberOfChannels: this.config.audioChannels,
+                        channelData:      [ sampleWindow ],
+                        duration:         sampleWindowDuration,
+                        length:           sampleWindow.length
+                    } satisfies AudioData
+                    const lufs = getLUFS(audioData, {
+                        channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
+                        calculateShortTerm:     true,
+                        calculateMomentary:     false,
+                        calculateLoudnessRange: false,
+                        calculateTruePeak:      false
+                    })
+                    if (!this.destroyed) {
+                        if (timer !== null) {
+                            clearTimeout(timer)
+                            timer = null
+                        }
+                        lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
+                        rms = getRMS(audioData, { asDB: true })
+                        timer = setTimeout(() => {
+                            lufss = -60
+                            rms   = -60
+                        }, 500)
+                    }
+                }
+                catch (error) {
+                    if (!this.destroyed)
+                        this.log("warning", `meter calculation error: ${error}`)
+                }
+            }, 0)
+            this.pendingCalculations.add(calculator)
+        }
+
+        /*  setup chunking interval  */
+        this.calcInterval = setInterval(() => {
+            if (this.destroyed)
+                return
+
+            /*  process one single 50ms chunk if available  */
+            if (this.chunkBuffer.length >= samplesPerChunk) {
+                const chunkData = this.chunkBuffer.slice(0, samplesPerChunk)
+                processChunk(chunkData)
+                this.chunkBuffer = this.chunkBuffer.slice(samplesPerChunk)
+            }
+        }, chunkDuration * 1000)
+
         /*  setup loudness emitting interval  */
-        this.interval = setInterval(() => {
+        this.emitInterval = setInterval(() => {
             if (this.destroyed)
                 return
             this.log("debug", `LUFS-S: ${lufss.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
@@ -91,58 +161,12 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
                         /*  convert audio samples from PCM/I16 to PCM/F32  */
                         const data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
 
-                        /*  update internal audio sample sliding window  */
-                        if (data.length >= sampleWindowSize)
-                            /*  new data is larger than window, so just use the tail  */
-                            sampleWindow = data.slice(data.length - sampleWindowSize)
-                        else {
-                            /*  shift existing data and append new data  */
-                            const newWindow = new Float32Array(sampleWindowSize)
-                            const keepSize = sampleWindowSize - data.length
-                            newWindow.set(sampleWindow.slice(sampleWindow.length - keepSize), 0)
-                            newWindow.set(data, keepSize)
-                            sampleWindow = newWindow
-                        }
-
-                        /*  asynchronously calculate the LUFS-S metric  */
-                        const calculator = setTimeout(() => {
-                            if (self.destroyed)
-                                return
-                            try {
-                                self.pendingCalculations.delete(calculator)
-                                const audioData = {
-                                    sampleRate:       self.config.audioSampleRate,
-                                    numberOfChannels: self.config.audioChannels,
-                                    channelData:      [ sampleWindow ],
-                                    duration:         sampleWindowDuration,
-                                    length:           sampleWindow.length
-                                } satisfies AudioData
-                                const lufs = getLUFS(audioData, {
-                                    channelMode: self.config.audioChannels === 1 ? "mono" : "stereo",
-                                    calculateShortTerm:     true,
-                                    calculateMomentary:     false,
-                                    calculateLoudnessRange: false,
-                                    calculateTruePeak:      false
-                                })
-                                if (!self.destroyed) {
-                                    if (timer !== null) {
-                                        clearTimeout(timer)
-                                        timer = null
-                                    }
-                                    lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
-                                    rms = getRMS(audioData, { asDB: true })
-                                    timer = setTimeout(() => {
-                                        lufss = -60
-                                        rms   = -60
-                                    }, 500)
-                                }
-                            }
-                            catch (error) {
-                                if (!self.destroyed)
-                                    self.log("warning", `meter calculation error: ${error}`)
-                            }
-                        }, 0)
-                        self.pendingCalculations.add(calculator)
+                        /*  append new data to buffer  */
+                        const combinedLength = self.chunkBuffer.length + data.length
+                        const newBuffer = new Float32Array(combinedLength)
+                        newBuffer.set(self.chunkBuffer, 0)
+                        newBuffer.set(data, self.chunkBuffer.length)
+                        self.chunkBuffer = newBuffer
 
                         /*  pass-through original audio chunk  */
                         this.push(chunk)
@@ -174,10 +198,14 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
             clearTimeout(timeout)
         this.pendingCalculations.clear()
 
-        /*  stop interval  */
-        if (this.interval !== null) {
-            clearInterval(this.interval)
-            this.interval = null
+        /*  stop intervals  */
+        if (this.emitInterval !== null) {
+            clearInterval(this.emitInterval)
+            this.emitInterval = null
+        }
+        if (this.calcInterval !== null) {
+            clearInterval(this.calcInterval)
+            this.calcInterval = null
         }
 
         /*  close stream  */
