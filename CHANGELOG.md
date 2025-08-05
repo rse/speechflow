@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - CLEANUP: fix logo references
+- BUGFIX: fix top-level exports after refactoring
 
 1.4.0 (2025-08-05)
 ------------------

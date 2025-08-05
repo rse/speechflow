@@ -28,6 +28,16 @@
         "npm":          ">=10.0.0",
         "node":         ">=22.0.0"
     },
+    "bin":              { "speechflow": "speechflow-cli/dst/speechflow.js" },
+    "types":            "./speechflow-cli/dst/speechflow-node.d.ts",
+    "module":           "./speechflow-cli/dst/speechflow-node.js",
+    "main":             "./speechflow-cli/dst/speechflow-node.js",
+    "exports": {
+        ".": {
+            "import":   { "types": "./speechflow-cli/dst/speechflow-node.d.ts", "default": "./speechflow-cli/dst/speechflow-node.js" },
+            "require":  { "types": "./speechflow-cli/dst/speechflow-node.d.ts", "default": "./speechflow-cli/dst/speechflow-node.js" }
+        }
+    },
     "scripts": {
         "postinstall":  "npm start post-install",
         "start":        "stx -v4 -c etc/stx.conf",
