@@ -11,6 +11,9 @@ ChangeLog
 - IMPROVEMENT: allow "filter" node to filter on chunk kind and type
 - IMPROVEMENT: disable endpointing in "deepgram" node as it makes no sense for us
 - IMPROVEMENT: allow -d (dashboard) option to accept a name which is displayed below the dashboard columns
+- IMPROVEMENT: display names below the dashboard columns in UI
+- IMPROVEMENT: move text columns in dashboard UI always to the bottom of the screen
+- IMPROVEMENT: in dashboard UI adjust all colors to be blue as the main theme and make font sizes more eligible
 - BUGFIX: switch back "deepgram" node to use "nova-2" model (as it supports numerals feature, etc)
 - CLEANUP: in "deepgram" node remove ancient initialization workaround
 - CLEANUP: simplify codebase structure and remove redundancy
