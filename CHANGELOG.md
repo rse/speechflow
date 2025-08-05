@@ -10,6 +10,7 @@ ChangeLog
 - IMPROVEMENT: allow "deepgram" node to optionally provide "interim" results (primarily for subtitle)
 - IMPROVEMENT: allow "filter" node to filter on chunk kind and type
 - IMPROVEMENT: disable endpointing in "deepgram" node as it makes no sense for us
+- IMPROVEMENT: allow -d (dashboard) option to accept a name which is displayed below the dashboard columns
 - BUGFIX: switch back "deepgram" node to use "nova-2" model (as it supports numerals feature, etc)
 - CLEANUP: in "deepgram" node remove ancient initialization workaround
 - CLEANUP: simplify codebase structure and remove redundancy
