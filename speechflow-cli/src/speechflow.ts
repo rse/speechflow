@@ -68,7 +68,7 @@ type wsPeerInfo = {
             "[-a|--address <ip-address>] " +
             "[-p|--port <tcp-port>] " +
             "[-C|--cache <directory>] " +
-            "[-d|--dashboard <type>:<name>[,...]] " +
+            "[-d|--dashboard <type>:<id>:<name>[,...]] " +
             "[-e|--expression <expression>] " +
             "[-f|--file <file>] " +
             "[-c|--config <id>@<yaml-config-file>] " +
@@ -382,11 +382,11 @@ type wsPeerInfo = {
                     throw new Error(`unknown node <${id}>`)
                 let node: SpeechFlowNode
                 try {
-                    const nodeClass = nodes[id]
-                    let num = nodeNums.get(nodeClass) ?? 0
-                    nodeNums.set(nodeClass, ++num)
+                    const NodeClass = nodes[id]
+                    let num = nodeNums.get(NodeClass) ?? 0
+                    nodeNums.set(NodeClass, ++num)
                     const name = num === 1 ? id : `${id}:${num}`
-                    node = new nodeClass(name, cfg, opts, args)
+                    node = new NodeClass(name, cfg, opts, args)
                 }
                 catch (err) {
                     /*  fatal error  */
@@ -606,8 +606,8 @@ type wsPeerInfo = {
         handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
             const config = []
             for (const block of args.d.split(",")) {
-                const [ type, name ] = block.split(":")
-                config.push({ type, name })
+                const [ type, id, name ] = block.split(":")
+                config.push({ type, id, name })
             }
             return h.response(config).code(200)
         }
@@ -690,7 +690,7 @@ type wsPeerInfo = {
         node.on("send-response", (args: any[]) => {
             const data = JSON.stringify({ response: "NOTIFY", node: node.id, args })
             for (const [ peer, info ] of wsPeers.entries()) {
-                cli!.log("info", `HAPI: peer ${peer}: ${data}`)
+                cli!.log("debug", `HAPI: remote peer ${peer}: sending ${data}`)
                 if (info.ws.readyState === WebSocket.OPEN)
                     info.ws.send(data)
             }
@@ -701,17 +701,17 @@ type wsPeerInfo = {
     for (const node of graphNodes) {
         node.on("dashboard-info", (info: {
             type: string,
-            name: string,
+            id:   string,
             kind: "final" | "intermediate",
             value: string | number
         }) => {
             const data = JSON.stringify({
                 response: "DASHBOARD",
                 node:     "",
-                args:     [ info.type, info.name, info.kind, info.value ]
+                args:     [ info.type, info.id, info.kind, info.value ]
             })
             for (const [ peer, info ] of wsPeers.entries()) {
-                cli!.log("info", `HAPI: peer ${peer}: ${data}`)
+                cli!.log("debug", `HAPI: dashboard peer ${peer}: send ${data}`)
                 info.ws.send(data)
             }
         })
