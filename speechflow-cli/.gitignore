@@ -1,0 +1,5 @@
+node_modules
+dst
+.env
+sample.txt
+sample.wav
