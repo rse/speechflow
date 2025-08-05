@@ -20,7 +20,8 @@
         "axios":                            "1.11.0",
         "typopro-web":                      "4.2.7",
         "@fortawesome/fontawesome-free":    "7.0.0",
-        "patch-package":                    "8.0.0"
+        "patch-package":                    "8.0.0",
+        "@rse/stx":                         "1.0.7"
     },
     "devDependencies": {
         "vite":                             "7.0.6",
@@ -57,7 +58,6 @@
         "typescript":                       "5.9.2",
         "vue-tsc":                          "3.0.5",
         "delay-cli":                        "2.0.0",
-        "@rse/stx":                         "1.0.7",
         "cross-env":                        "10.0.0",
         "serve":                            "14.2.4"
     },
