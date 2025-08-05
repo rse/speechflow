@@ -35,7 +35,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         this.configure({
             key:      { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY },
             keyAdm:   { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY_ADM },
-            model:    { type: "string",  val: "nova-3", pos: 0 },
+            model:    { type: "string",  val: "nova-2", pos: 0 },
             version:  { type: "string",  val: "latest", pos: 1 },
             language: { type: "string",  val: "multi",  pos: 2 },
             interim:  { type: "boolean", val: false,    pos: 3 }
@@ -97,14 +97,15 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
             sample_rate:      this.config.audioSampleRate,
             encoding:         "linear16",
             multichannel:     false,
-            endpointing:      10,
+            endpointing:      false,
             interim_results:  this.params.interim,
             smart_format:     true,
             punctuate:        true,
             filler_words:     true,
-            diarize:          false,
             numerals:         true,
-            profanity_filter: false
+            diarize:          false,
+            profanity_filter: false,
+            redact:           false
         })
 
         /*  hook onto Deepgram API events  */
@@ -136,6 +137,12 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     isFinal ? "final" : "intermediate", "text", text, meta)
                 this.queue.write(chunk)
             }
+        })
+        this.dg.on(Deepgram.LiveTranscriptionEvents.SpeechStarted, (data) => {
+            this.log("info", "speech started", data)
+        })
+        this.dg.on(Deepgram.LiveTranscriptionEvents.UtteranceEnd, (data) => {
+            this.log("info", "utterance end received", data)
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Metadata, (data) => {
             this.log("info", "metadata received")
@@ -173,33 +180,6 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         /*  remember opening time to receive time zero offset  */
         this.timeOpen = DateTime.now()
 
-        /*  workaround Deepgram initialization problems  */
-        let initDone = false
-        const initTimeoutStart = () => {
-            if (initDone || this.destroyed)
-                return
-            if (this.initTimeout !== null)
-                clearTimeout(this.initTimeout)
-            this.initTimeout = setTimeout(async () => {
-                if (this.initTimeout === null || this.destroyed)
-                    return
-                this.initTimeout = null
-                this.log("warning", "initialization timeout -- restarting service usage")
-                await this.close()
-                if (!this.destroyed)
-                    await this.open()
-            }, 3 * 1000)
-        }
-        const initTimeoutStop = () => {
-            if (initDone)
-                return
-            initDone = true
-            if (this.initTimeout !== null) {
-                clearTimeout(this.initTimeout)
-                this.initTimeout = null
-            }
-        }
-
         /*  provide Duplex stream and internally attach to Deepgram API  */
         const self = this
         this.stream = new Stream.Duplex({
@@ -219,7 +199,6 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                 else {
                     if (chunk.payload.byteLength > 0) {
                         self.log("debug", `send data (${chunk.payload.byteLength} bytes)`)
-                        initTimeoutStart()
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         try {
@@ -261,8 +240,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                         this.push(null)
                     }
                     else {
-                        self.log("info", `received data (${chunk.payload.length} bytes)`)
-                        initTimeoutStop()
+                        self.log("debug", `received data (${chunk.payload.length} bytes)`)
                         this.push(chunk, self.config.textEncoding)
                     }
                 }).catch((error) => {

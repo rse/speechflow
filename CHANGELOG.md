@@ -9,6 +9,9 @@ ChangeLog
 - IMPROVEMENT: add subtitle web interface for real-time subtitle display
 - IMPROVEMENT: allow "deepgram" node to optionally provide "interim" results (primarily for subtitle)
 - IMPROVEMENT: allow "filter" node to filter on chunk kind and type
+- IMPROVEMENT: disable endpointing in "deepgram" node as it makes no sense for us
+- BUGFIX: switch back "deepgram" node to use "nova-2" model (as it supports numerals feature, etc)
+- CLEANUP: in "deepgram" node remove ancient initialization workaround
 - CLEANUP: simplify codebase structure and remove redundancy
 - UPGRADE: upgrade NPM dependencies
 
