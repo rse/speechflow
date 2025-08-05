@@ -1,7 +1,7 @@
 {
     "private":                              "true",
-    "name":                                 "speechflow-web",
-    "description":                          "SpeechFlow Web",
+    "name":                                 "speechflow-ui-st",
+    "description":                          "SpeechFlow User Interface (Subtitle)",
     "keywords":                             [ "speechflow" ],
     "homepage":                             "https://github.com/rse/speechflow",
     "repository":                           { "url": "git+https://github.com/rse/speechflow.git", "type": "git" },
@@ -26,8 +26,8 @@
     },
     "devDependencies": {
         "vite":                             "7.0.6",
-        "@typescript-eslint/eslint-plugin": "8.38.0",
-        "@typescript-eslint/parser":        "8.38.0",
+        "@typescript-eslint/eslint-plugin": "8.39.0",
+        "@typescript-eslint/parser":        "8.39.0",
         "@vitejs/plugin-vue":               "6.0.1",
         "@rollup/plugin-yaml":              "4.1.2",
         "vite-plugin-node-polyfills":       "0.24.0",
@@ -41,27 +41,29 @@
         "@eslint/js":                       "9.32.0",
         "neostandard":                      "0.12.2",
         "eslint-plugin-import":             "2.32.0",
-        "eslint-plugin-vue":                "10.3.0",
+        "eslint-plugin-vue":                "10.4.0",
 
         "htmllint":                         "0.8.0",
         "htmllint-cli":                     "0.0.7",
 
         "nodemon":                          "3.1.10",
         "shx":                              "0.4.0",
-        "stylelint":                        "16.22.0",
+        "stylelint":                        "16.23.0",
         "stylelint-config-html":            "1.1.0",
         "stylelint-config-recommended-vue": "1.6.1",
-        "stylelint-config-standard":        "38.0.0",
+        "stylelint-config-standard":        "39.0.0",
         "stylelint-config-standard-vue":    "1.0.0",
         "stylelint-stylus":                 "1.0.0",
         "postcss-html":                     "1.8.0",
         "stylus":                           "0.64.0",
-        "typescript":                       "5.8.3",
-        "vue-tsc":                          "3.0.4",
+        "typescript":                       "5.9.2",
+        "vue-tsc":                          "3.0.5",
         "delay-cli":                        "2.0.0",
         "@rse/stx":                         "1.0.7",
         "cross-env":                        "10.0.0",
-        "serve":                            "14.2.4"
+        "serve":                            "14.2.4",
+
+        "@types/luxon":                     "3.7.1"
     },
     "overrides": {
         "@liuli-util/vite-plugin-node":     { "vite": ">=6.0.0" }
