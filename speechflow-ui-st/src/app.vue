@@ -57,7 +57,7 @@
                 font-size: 2vw
                 padding: 0.5vw 1.0vw
                 margin-bottom: 0.5vw
-                word-wrap: break-word
+                overflow-wrap: break-word
                 .cursor
                     display: inline-block
                     margin-left: 10px

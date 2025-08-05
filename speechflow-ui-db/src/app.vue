@@ -9,7 +9,7 @@
 <template>
     <div class="app">
         <div class="dashboard">
-            <div v-bind:key="block.name" v-for="block of info" class="block">
+            <div v-bind:key="block.id" v-for="block of info" class="block">
                 <div v-if="block.type === 'audio'" class="audio-col">
                     <div class="audio-meter" v-bind:style="{
                         height: (100 * (1 - ((block.value as number) / - 60.0))) + '%'
@@ -18,15 +18,21 @@
                             {{ (block.value as number).toFixed(1) }}
                         </div>
                     </div>
+                    <div class="audio-name">
+                        {{ block.name }}
+                    </div>
                 </div>
                 <div ref="textCol"
                     v-if="block.type === 'text'"
                     class="text-col"
-                    v-bind:class="{ intermediate: lastTextBlockKind === 'intermediate' }">
+                    v-bind:class="{ intermediate: block.lastKind === 'intermediate' }">
                     <div v-bind:key="value"
                         v-for="value of block.value"
                         class="text-value">
                         {{ value as unknown as string }}
+                    </div>
+                    <div class="text-name">
+                        {{ block.name }}
                     </div>
                 </div>
             </div>
@@ -68,7 +74,7 @@
                 flex-direction: column
                 align-items: flex-end
                 justify-content: flex-end
-                background-color: var(--color-acc-fg-0)
+                background-color: var(--color-acc-bg-3)
                 .audio-meter
                     width: 100%
                     display: flex
@@ -81,23 +87,40 @@
                         font-size: 3vw
                         text-align: center
                         color: var(--color-std-bg-0)
+                .audio-name
+                    width: 100%
+                    text-align: center
+                    background-color: var(--color-acc-bg-1)
+                    color: var(--color-acc-fg-3)
+                    font-size: 2vw
             .text-col
                 width: 100%
                 height: 100vh
                 overflow-x: hidden
                 overflow-y: scroll
+                display: flex
+                flex-direction: column
+                align-items: flex-end
+                justify-content: flex-end
                 .text-value
                     width: calc(100% - 2 * 1.0vw)
-                    background-color: var(--color-sig-bg-3)
-                    color: var(--color-sig-fg-3)
+                    background-color: var(--color-acc-bg-3)
+                    color: var(--color-acc-fg-3)
                     border-radius: 1vw
-                    font-size: 2vw
+                    font-size: 1.5vw
                     padding: 0.5vw 1.0vw
                     margin-bottom: 0.5vw
-                    word-wrap: break-word
+                    overflow-wrap: break-word
+                .text-name
+                    width: 100%
+                    text-align: center
+                    background-color: var(--color-acc-bg-1)
+                    color: var(--color-acc-fg-3)
+                    font-size: 2vw
             .text-col.intermediate
-                .text-value:last-child
-                    background-color: var(--color-sig-bg-5)
+                .text-value:nth-last-child(2)
+                    background-color: var(--color-sig-bg-3)
+                    color: var(--color-sig-fg-3)
 </style>
 
 <script setup lang="ts">
@@ -109,17 +132,18 @@ import axios                 from "axios"
 
 <script lang="ts">
 type Info = {
-    type:  string,
-    name:  string,
-    value: number | string[]
+    type:     string,
+    id:       string,
+    name:     string,
+    value:    number | string[],
+    lastKind: string
 }
 export default defineComponent({
     name: "app",
     components: {
     },
     data: () => ({
-        info: [] as Info[],
-        lastTextBlockKind: ""
+        info: [] as Info[]
     }),
     created () {
     },
@@ -134,9 +158,9 @@ export default defineComponent({
         const response = await axios.get(`${url}/dashboard`)
         for (const block of response.data) {
             if (block.type === "audio")
-                this.info.push({ type: block.type, name: block.name, value: 0 })
+                this.info.push({ type: block.type, id: block.id, name: block.name, value: 0, lastKind: "" })
             else if (block.type === "text")
-                this.info.push({ type: block.type, name: block.name, value: [] })
+                this.info.push({ type: block.type, id: block.id, name: block.name, value: [], lastKind: "" })
         }
 
         /*  connect to WebSocket API for receiving dashboard information  */
@@ -153,15 +177,15 @@ export default defineComponent({
             const event = JSON.parse(ev.data)
             if (event.response !== "DASHBOARD")
                 return
-            const [ type, name, kind, value ] = event.args
+            const [ type, id, kind, value ] = event.args
             for (const block of this.info) {
-                if (block.type === type && block.name === name) {
+                if (block.type === type && block.id === id) {
                     if (block.type === "audio") {
                         if (kind === "final")
                             block.value = value
                     }
                     else {
-                        if (this.lastTextBlockKind === "intermediate") {
+                        if (block.lastKind === "intermediate") {
                             const arr = block.value as string[]
                             arr[arr.length - 1] = value
                         }
@@ -170,11 +194,11 @@ export default defineComponent({
                             arr.push(value)
                             block.value = arr.slice(-20)
                         }
-                        this.lastTextBlockKind = kind
-                        for (const textCol of this.$refs.textCol as HTMLDivElement[]) {
-                            console.log("FUCK", textCol, textCol.scrollTop, textCol.scrollHeight)
-                            textCol.scrollTop = textCol.scrollHeight
-                        }
+                        block.lastKind = kind
+                        this.$nextTick(() => {
+                            for (const textCol of this.$refs.textCol as HTMLDivElement[])
+                                textCol.scrollTop = textCol.scrollHeight
+                        })
                     }
                 }
             }
