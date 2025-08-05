@@ -33,7 +33,7 @@ import chalk             from "chalk"
 
 /*  internal dependencies  */
 import SpeechFlowNode    from "./speechflow-node"
-import pkg               from "../package.json"
+import pkg               from "../../package.json"
 
 /*  central CLI context  */
 let cli: CLIio | null = null

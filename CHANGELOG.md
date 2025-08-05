@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.4.0 (2025-08-xx)
+1.4.0 (2025-08-05)
 ------------------
 
 - IMPROVEMENT: add dashboard infrastructure and expose information from "meter" and "trace" nodes
