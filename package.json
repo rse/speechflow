@@ -15,8 +15,10 @@
         "type":         "git",
         "url":          "git+https://github.com/rse/speechflow.git"
     },
+    "dependencies": {
+        "@rse/stx":     "1.0.7"
+    },
     "devDependencies": {
-        "@rse/stx":     "1.0.7",
         "nodemon":      "3.1.10",
         "watch":        "1.0.2",
         "concurrently": "9.2.0",
