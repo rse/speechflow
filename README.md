@@ -1,5 +1,5 @@
 
-<img src="https://raw.githubusercontent.com/rse/speechflow/master/src/speechflow-logo.svg" width="400" align="right" alt=""/>
+<img src="https://raw.githubusercontent.com/rse/speechflow/master/speechflow-cli/src/speechflow-logo.svg" width="400" align="right" alt=""/>
 
 SpeechFlow
 ==========
