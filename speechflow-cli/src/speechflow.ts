@@ -242,7 +242,7 @@ type wsPeerInfo = {
                 throw new Error(`failed to parse YAML configuration: ${err}`)
         }
         if (obj[id] === undefined)
-            throw new Error(`no such id "${id}" found in configuration file`)
+            throw new Error(`no such id "${id}" found in configuration file "${file}"`)
         config = obj[id] as string
     }
 
