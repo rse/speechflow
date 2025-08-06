@@ -189,14 +189,14 @@ type wsPeerInfo = {
 
     /*  catch uncaught exceptions  */
     process.on("uncaughtException", (err) => {
-        cli!.log("error", `uncaught exception: ${err.message}`)
+        cli!.log("error", `uncaught exception: ${err.message}\n${err.stack}`)
         process.exit(1)
     })
 
     /*  catch unhandled promise rejections  */
     process.on("unhandledRejection", (reason) => {
         if (reason instanceof Error)
-            cli!.log("error", `unhandled rejection: ${reason.message}`)
+            cli!.log("error", `unhandled rejection: ${reason.message}\n${reason.stack}`)
         else
             cli!.log("error", `unhandled rejection: ${reason}`)
         process.exit(1)
@@ -849,7 +849,7 @@ type wsPeerInfo = {
     /*  re-hook into uncaught exception handler  */
     process.removeAllListeners("uncaughtException")
     process.on("uncaughtException", (err) => {
-        cli!.log("error", `uncaught exception: ${err.message}`)
+        cli!.log("error", `uncaught exception: ${err.message}\n${err.stack}`)
         shutdown("exception")
     })
 
@@ -857,7 +857,7 @@ type wsPeerInfo = {
     process.removeAllListeners("unhandledRejection")
     process.on("unhandledRejection", (reason) => {
         if (reason instanceof Error)
-            cli!.log("error", `unhandled rejection: ${reason.message}`)
+            cli!.log("error", `unhandled rejection: ${reason.message}\n${reason.stack}`)
         else
             cli!.log("error", `unhandled rejection: ${reason}`)
         shutdown("exception")
