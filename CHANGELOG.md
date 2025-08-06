@@ -2,6 +2,18 @@
 ChangeLog
 =========
 
+1.4.3 (2025-08-06)
+------------------
+
+- IMPROVEMENT: better fatal error handling in main program
+- IMPROVEMENT: better optical appearance of dashboard
+- IMPROVEMENT: better reporting of STX build CWD
+
+1.4.2 (2025-08-05)
+------------------
+
+- CLEANUP: various code cleanups
+
 1.4.1 (2025-08-05)
 ------------------
 
