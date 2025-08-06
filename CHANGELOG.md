@@ -8,6 +8,7 @@ ChangeLog
 - IMPROVEMENT: better fatal error handling in main program
 - IMPROVEMENT: better optical appearance of dashboard
 - IMPROVEMENT: better reporting of STX build CWD
+- UPGRADE: upgrade NPM dependencies
 
 1.4.2 (2025-08-05)
 ------------------
