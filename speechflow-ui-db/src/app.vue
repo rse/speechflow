@@ -16,6 +16,7 @@
                     }">
                         <div class="audio-value">
                             {{ (block.value as number).toFixed(1) }}
+                            <div class="audio-unit">LUFS-S</div>
                         </div>
                     </div>
                     <div class="audio-name">
@@ -43,10 +44,10 @@
 <style lang="stylus">
 .app
     position: relative
-    width:   100vw
-    height:  100vh
+    width:   calc(100vw - 2 * 1vw)
+    height:  calc(100vh - 2 * 1vw)
     margin:  0
-    padding: 0
+    padding: 1vw
     display: flex
     flex-direction: column
     justify-content: center
@@ -61,6 +62,8 @@
         .block
             height: calc(100% - 0.5vw)
             margin-right: 0.5vw
+            &:last-child
+                margin-right: 0
             &:has(.audio-col)
                 width: 10vw
             &:has(.text-col)
@@ -69,7 +72,7 @@
                 flex-basis: 0
             .audio-col
                 width: 10vw
-                height: 100vh
+                height: 100%
                 display: flex
                 flex-direction: column
                 align-items: flex-end
@@ -84,9 +87,13 @@
                     background-color: var(--color-acc-fg-3)
                     .audio-value
                         width: 100%
-                        font-size: 3vw
+                        font-size: 2.5vw
                         text-align: center
                         color: var(--color-std-bg-0)
+                        .audio-unit
+                            font-size: 1.5vw
+                            margin-top: -0.5vw
+                            margin-bottom: 0.5vw
                 .audio-name
                     width: 100%
                     text-align: center
@@ -95,7 +102,7 @@
                     font-size: 2vw
             .text-col
                 width: 100%
-                height: 100vh
+                height: 100%
                 overflow-x: hidden
                 overflow-y: scroll
                 display: flex
@@ -106,7 +113,7 @@
                     width: calc(100% - 2 * 1.0vw)
                     background-color: var(--color-acc-bg-3)
                     color: var(--color-acc-fg-3)
-                    border-radius: 1vw
+                    border-radius: 0.5vw
                     font-size: 1.5vw
                     padding: 0.5vw 1.0vw
                     margin-bottom: 0.5vw
