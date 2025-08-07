@@ -68,9 +68,8 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
         const processChunk = (chunkData: Float32Array) => {
             /*  update internal audio sample sliding window  */
             const newWindow = new Float32Array(sampleWindowSize)
-            const keepSize = sampleWindowSize - chunkData.length
-            newWindow.set(sampleWindow.slice(sampleWindow.length - keepSize), 0)
-            newWindow.set(chunkData, keepSize)
+            newWindow.set(sampleWindow.slice(chunkData.length), 0)
+            newWindow.set(chunkData, sampleWindowSize - chunkData.length)
             sampleWindow = newWindow
 
             /*  asynchronously calculate the LUFS-S metric  */
