@@ -66,12 +66,12 @@ First, the used configuration was a straight linear pipeline in file `sample.con
 ```txt
 device(device: "coreaudio:Elgato Wave:3", mode: "r") |
 meter(interval: 50, dashboard: "meter1") |
-deepgram(language: "de", model: "nova-2", key: env.SPEECHFLOW_DEEPGRAM_KEY, interim: true) |
+deepgram(language: "de", model: "nova-2", interim: true) |
 trace(type: "text", dashboard: "text1") |
 filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
 sentence() |
 trace(type: "text", dashboard: "text2") |
-deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) |
+deepl(src: "de", dst: "en") |
 trace(type: "text", dashboard: "text3") |
 elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
 meter(interval: 50, dashboard: "meter2") |
