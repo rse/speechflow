@@ -56,7 +56,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
         let sampleWindow = new Float32Array(sampleWindowSize)
         sampleWindow.fill(0, 0, sampleWindowSize)
         let lufss = -60
-        let rms = -60
+        let rms   = -60
 
         /*  chunk processing state  */
         const chunkDuration = 0.050 /* meter update frequency is about 50ms */
@@ -64,6 +64,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
         this.chunkBuffer = new Float32Array(0)
 
         /*  define chunk processing function  */
+        let timer: ReturnType<typeof setTimeout> | null = null
         const processChunk = (chunkData: Float32Array) => {
             /*  update internal audio sample sliding window  */
             const newWindow = new Float32Array(sampleWindowSize)
@@ -78,27 +79,25 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
                     return
                 try {
                     this.pendingCalculations.delete(calculator)
-                    const audioData = {
-                        sampleRate:       this.config.audioSampleRate,
-                        numberOfChannels: this.config.audioChannels,
-                        channelData:      [ sampleWindow ],
-                        duration:         sampleWindowDuration,
-                        length:           sampleWindow.length
-                    } satisfies AudioData
-                    const lufs = getLUFS(audioData, {
-                        channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
-                        calculateShortTerm:     true,
-                        calculateMomentary:     false,
-                        calculateLoudnessRange: false,
-                        calculateTruePeak:      false
-                    })
                     if (!this.destroyed) {
-                        if (timer !== null) {
-                            clearTimeout(timer)
-                            timer = null
-                        }
+                        const audioData = {
+                            sampleRate:       this.config.audioSampleRate,
+                            numberOfChannels: this.config.audioChannels,
+                            channelData:      [ sampleWindow ],
+                            duration:         sampleWindowDuration,
+                            length:           sampleWindow.length
+                        } satisfies AudioData
+                        const lufs = getLUFS(audioData, {
+                            channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
+                            calculateShortTerm:     true,
+                            calculateMomentary:     false,
+                            calculateLoudnessRange: false,
+                            calculateTruePeak:      false
+                        })
                         lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
                         rms = getRMS(audioData, { asDB: true })
+                        if (timer !== null)
+                            clearTimeout(timer)
                         timer = setTimeout(() => {
                             lufss = -60
                             rms   = -60
@@ -121,8 +120,8 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
             /*  process one single 50ms chunk if available  */
             if (this.chunkBuffer.length >= samplesPerChunk) {
                 const chunkData = this.chunkBuffer.slice(0, samplesPerChunk)
-                processChunk(chunkData)
                 this.chunkBuffer = this.chunkBuffer.slice(samplesPerChunk)
+                processChunk(chunkData)
             }
         }, chunkDuration * 1000)
 
@@ -139,7 +138,6 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
         /*  provide Duplex stream and internally attach to meter  */
         const self = this
-        let timer: ReturnType<typeof setTimeout> | null = null
         this.stream = new Stream.Transform({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -173,7 +171,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
                         callback()
                     }
                     catch (error) {
-                        callback(error instanceof Error ? error : new Error("Meter processing failed"))
+                        callback(error instanceof Error ? error : new Error("meter processing failed"))
                     }
                 }
             },
