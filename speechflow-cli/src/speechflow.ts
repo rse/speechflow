@@ -216,8 +216,10 @@ type wsPeerInfo = {
     if (typeof args.e === "string" && args.e !== "") n++
     if (typeof args.f === "string" && args.f !== "") n++
     if (typeof args.c === "string" && args.c !== "") n++
-    if (n !== 1)
-        throw new Error("cannot use more than one FlowLink specification source (either option -e, -f or -c)")
+    if (n === 0)
+        throw new Error("need at least one FlowLink specification source (use one of the options -e, -f or -c)")
+    else if (n !== 1)
+        throw new Error("cannot use more than one FlowLink specification source (use only one of the options -e, -f or -c)")
 
     /*  read configuration  */
     let config = ""
