@@ -97,6 +97,10 @@ results of the text-to-text translation (`deepl`) and then finally on
 the right you can see the volume meter of the text-to-speech conversion
 (`elevenlabs`).
 
+The entire **SpeechFlow** processing pipeline runs in real-time and
+the latency between input and output audio is about 2-3 seconds, very
+similar to the usual latency human live translators also cause.
+
 Installation
 ------------
 
