@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.4.4 (2025-08-07)
+------------------
+
+- BUGFIX: do not ignore "dst" files in NPM distribution
+
 1.4.3 (2025-08-06)
 ------------------
 
