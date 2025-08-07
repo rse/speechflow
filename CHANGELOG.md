@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: better CLI option handling
 - BUGFIX: do not complain if no .env file is found
+- BUGFIX: avoid read-timeouts in "deepgram" node
 
 1.4.4 (2025-08-07)
 ------------------
