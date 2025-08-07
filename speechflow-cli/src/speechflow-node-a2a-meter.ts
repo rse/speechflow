@@ -22,7 +22,6 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
     /*  internal state  */
     private emitInterval: ReturnType<typeof setInterval> | null = null
     private calcInterval: ReturnType<typeof setInterval> | null = null
-    private pendingCalculations = new Set<ReturnType<typeof setTimeout>>()
     private chunkBuffer = new Float32Array(0)
     private destroyed = false
 
@@ -72,43 +71,29 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
             newWindow.set(chunkData, sampleWindowSize - chunkData.length)
             sampleWindow = newWindow
 
-            /*  asynchronously calculate the LUFS-S metric  */
-            const calculator = setTimeout(() => {
-                if (this.destroyed)
-                    return
-                try {
-                    this.pendingCalculations.delete(calculator)
-                    if (!this.destroyed) {
-                        const audioData = {
-                            sampleRate:       this.config.audioSampleRate,
-                            numberOfChannels: this.config.audioChannels,
-                            channelData:      [ sampleWindow ],
-                            duration:         sampleWindowDuration,
-                            length:           sampleWindow.length
-                        } satisfies AudioData
-                        const lufs = getLUFS(audioData, {
-                            channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
-                            calculateShortTerm:     true,
-                            calculateMomentary:     false,
-                            calculateLoudnessRange: false,
-                            calculateTruePeak:      false
-                        })
-                        lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
-                        rms = getRMS(audioData, { asDB: true })
-                        if (timer !== null)
-                            clearTimeout(timer)
-                        timer = setTimeout(() => {
-                            lufss = -60
-                            rms   = -60
-                        }, 500)
-                    }
-                }
-                catch (error) {
-                    if (!this.destroyed)
-                        this.log("warning", `meter calculation error: ${error}`)
-                }
-            }, 0)
-            this.pendingCalculations.add(calculator)
+            /*  calculate the LUFS-S and RMS metric  */
+            const audioData = {
+                sampleRate:       this.config.audioSampleRate,
+                numberOfChannels: this.config.audioChannels,
+                channelData:      [ sampleWindow ],
+                duration:         sampleWindowDuration,
+                length:           sampleWindow.length
+            } satisfies AudioData
+            const lufs = getLUFS(audioData, {
+                channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
+                calculateShortTerm:     true,
+                calculateMomentary:     false,
+                calculateLoudnessRange: false,
+                calculateTruePeak:      false
+            })
+            lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
+            rms = getRMS(audioData, { asDB: true })
+            if (timer !== null)
+                clearTimeout(timer)
+            timer = setTimeout(() => {
+                lufss = -60
+                rms   = -60
+            }, 500)
         }
 
         /*  setup chunking interval  */
@@ -189,11 +174,6 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
     async close () {
         /*  indicate destruction  */
         this.destroyed = true
-
-        /*  clear all pending calculations  */
-        for (const timeout of this.pendingCalculations)
-            clearTimeout(timeout)
-        this.pendingCalculations.clear()
 
         /*  stop intervals  */
         if (this.emitInterval !== null) {
