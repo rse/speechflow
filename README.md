@@ -61,7 +61,7 @@ is no exciting screenshot possible from its CLI appearance, of course.
 Instead, here is a sample of a fictive training which is held in German
 and real-time translated to English.
 
-First, the used configuration was a straight linear pipleline in file `sample.conf`:
+First, the used configuration was a straight linear pipeline in file `sample.conf`:
 
 ```txt
 device(device: "coreaudio:Elgato Wave:3", mode: "r") |
