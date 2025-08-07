@@ -99,7 +99,12 @@ the right you can see the volume meter of the text-to-speech conversion
 
 The entire **SpeechFlow** processing pipeline runs in real-time and
 the latency between input and output audio is about 2-3 seconds, very
-similar to the usual latency human live translators also cause.
+similar to the usual latency human live translators also cause. The
+latency primarily comes from the speech-to-text part in the pipeline,
+as the end of sentences have to be awaited -- especially in the German
+language where the verb can come very late in a sentence. So, the
+latency is primarily not caused by any technical aspects, but by the
+nature of live translation.
 
 Installation
 ------------
