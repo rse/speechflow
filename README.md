@@ -53,6 +53,17 @@ derived from the exported `SpeechFlowNode` class of the `speechflow` package.
 **SpeechFlow** is written in TypeScript and
 ships as an installable package for the Node Package Manager (NPM).
 
+Screenshot
+----------
+
+**SpeechFlow** is a command-line interface (CLI) based tool, so there
+is no exciting screenshot possible from its CLI appearance, of course.
+Instead, here is its Web dashboard user interface during the start of
+a fictive training which is held in German and real-time translated to
+English.
+
+![dashboard](etc/speechflow.png)
+
 Installation
 ------------
 
