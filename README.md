@@ -64,6 +64,32 @@ English.
 
 ![dashboard](etc/speechflow.png)
 
+The used configuration in file `sample.conf` was:
+
+```txt
+device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+    meter(interval: 50, dashboard: "meter1") |
+        deepgram(language: "de", model: "nova-2", key: env.SPEECHFLOW_DEEPGRAM_KEY, interim: true) |
+            trace(type: "text", dashboard: "text1") | {
+                subtitle(mode: "render", addr: "127.0.0.1", port: 8585),
+                filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
+                    sentence() |
+                        trace(type: "text", dashboard: "text2") |
+                            deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) |
+                                trace(type: "text", dashboard: "text3") |
+                                    elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
+                                        meter(interval: 50, dashboard: "meter2") |
+                                            device(device: "coreaudio:USBAudio2.0", mode: "w")
+            }
+```
+
+The corresponding used command was:
+
+```sh
+$ speechflow -v info -c sample.conf \
+  -d audio:meter1:DE,text:text1:DE-Interim,text:text2:DE-Final,text:text3:EN,audio:meter2:EN
+```
+
 Installation
 ------------
 
