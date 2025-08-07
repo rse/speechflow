@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - BUGFIX: do not ignore "dst" files in NPM distribution
+- UPGRADE: upgrade NPM dependencies
 
 1.4.3 (2025-08-06)
 ------------------
