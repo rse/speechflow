@@ -61,21 +61,21 @@ is no exciting screenshot possible from its CLI appearance, of course.
 Instead, here is a sample of a fictive training which is held in German
 and real-time translated to English.
 
-First, the used configuration in file `sample.conf` was:
+First, the used configuration was a straight linear pipleline in file `sample.conf`:
 
 ```txt
 device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-    meter(interval: 50, dashboard: "meter1") |
-        deepgram(language: "de", model: "nova-2", key: env.SPEECHFLOW_DEEPGRAM_KEY, interim: true) |
-            trace(type: "text", dashboard: "text1") |
-                filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
-                    sentence() |
-                        trace(type: "text", dashboard: "text2") |
-                            deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) |
-                                trace(type: "text", dashboard: "text3") |
-                                    elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
-                                        meter(interval: 50, dashboard: "meter2") |
-                                            device(device: "coreaudio:USBAudio2.0", mode: "w")
+meter(interval: 50, dashboard: "meter1") |
+deepgram(language: "de", model: "nova-2", key: env.SPEECHFLOW_DEEPGRAM_KEY, interim: true) |
+trace(type: "text", dashboard: "text1") |
+filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
+sentence() |
+trace(type: "text", dashboard: "text2") |
+deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) |
+trace(type: "text", dashboard: "text3") |
+elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
+meter(interval: 50, dashboard: "meter2") |
+device(device: "coreaudio:USBAudio2.0", mode: "w")
 ```
 
 Second, the corresponding **SpeechFlow** command was:
