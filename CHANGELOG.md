@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: better CLI option handling
+- IMPROVEMENT: better optical appearance of dashboard
 - BUGFIX: do not complain if no .env file is found
 - BUGFIX: avoid read-timeouts in "deepgram" node
 - CLEANUP: output stack traces only for "info" and "debug" verbosity levels

@@ -10,31 +10,30 @@
     <div class="app">
         <div class="dashboard">
             <div v-bind:key="block.id" v-for="block of info" class="block">
-                <div v-if="block.type === 'audio'" class="audio-col">
-                    <div class="audio-meter" v-bind:style="{
-                        height: (100 * (1 - ((block.value as number) / - 60.0))) + '%'
-                    }">
-                        <div class="audio-value">
-                            {{ (block.value as number).toFixed(1) }}
-                            <div class="audio-unit">LUFS-S</div>
+                <div class="block-content">
+                    <div v-if="block.type === 'audio'" class="audio-col">
+                        <div class="audio-meter" v-bind:style="{
+                            height: (100 * (1 - ((block.value as number) / - 60.0))) + '%'
+                        }">
+                            <div class="audio-value">
+                                {{ (block.value as number).toFixed(1) }}
+                                <div class="audio-unit">LUFS-S</div>
+                            </div>
                         </div>
                     </div>
-                    <div class="audio-name">
-                        {{ block.name }}
+                    <div ref="textCol"
+                        v-if="block.type === 'text'"
+                        class="text-col"
+                        v-bind:class="{ intermediate: block.lastKind === 'intermediate' }">
+                        <div v-bind:key="value"
+                            v-for="value of block.value"
+                            class="text-value">
+                            {{ value as unknown as string }}
+                        </div>
                     </div>
                 </div>
-                <div ref="textCol"
-                    v-if="block.type === 'text'"
-                    class="text-col"
-                    v-bind:class="{ intermediate: block.lastKind === 'intermediate' }">
-                    <div v-bind:key="value"
-                        v-for="value of block.value"
-                        class="text-value">
-                        {{ value as unknown as string }}
-                    </div>
-                    <div class="text-name">
-                        {{ block.name }}
-                    </div>
+                <div class="block-name">
+                    {{ block.name }}
                 </div>
             </div>
         </div>
@@ -62,6 +61,9 @@
         .block
             height: calc(100% - 0.5vw)
             margin-right: 0.5vw
+            flex-direction: column
+            align-items: flex-end
+            justify-content: flex-end
             &:last-child
                 margin-right: 0
             &:has(.audio-col)
@@ -70,64 +72,66 @@
                 flex-grow: 1
                 flex-shrink: 1
                 flex-basis: 0
-            .audio-col
-                width: 10vw
-                height: 100%
-                display: flex
-                flex-direction: column
-                align-items: flex-end
-                justify-content: flex-end
-                background-color: var(--color-acc-bg-3)
-                .audio-meter
-                    width: 100%
+            .block-name
+                width: 100%
+                height: 2.5vw
+                text-align: center
+                background-color: var(--color-std-bg-3)
+                color: var(--color-std-fg-3)
+                font-size: 1.5vw
+                margin-top: 0.5vw
+                border-radius: 0.5vw
+            .block-content
+                background-color: var(--color-std-bg-3)
+                height: calc(100% - 3.0vw)
+                border-radius: 0.5vw
+                overflow: hidden
+                .audio-col
+                    width: 10vw
+                    height: 100%
                     display: flex
                     flex-direction: column
                     align-items: flex-end
                     justify-content: flex-end
-                    background-color: var(--color-acc-fg-3)
-                    .audio-value
+                    background-color: var(--color-std-bg-3)
+                    .audio-meter
                         width: 100%
-                        font-size: 2.5vw
-                        text-align: center
-                        color: var(--color-std-bg-0)
-                        .audio-unit
-                            font-size: 1.5vw
-                            margin-top: -0.5vw
-                            margin-bottom: 0.5vw
-                .audio-name
+                        display: flex
+                        flex-direction: column
+                        align-items: flex-end
+                        justify-content: flex-end
+                        background-color: var(--color-acc-bg-5)
+                        .audio-value
+                            width: 100%
+                            font-size: 2.5vw
+                            text-align: center
+                            color: var(--color-std-fg-5)
+                            .audio-unit
+                                font-size: 1.5vw
+                                margin-top: -0.5vw
+                                margin-bottom: 0.5vw
+                .text-col
                     width: 100%
-                    text-align: center
-                    background-color: var(--color-acc-bg-1)
-                    color: var(--color-acc-fg-3)
-                    font-size: 2vw
-            .text-col
-                width: 100%
-                height: 100%
-                overflow-x: hidden
-                overflow-y: scroll
-                display: flex
-                flex-direction: column
-                align-items: flex-end
-                justify-content: flex-end
-                .text-value
-                    width: calc(100% - 2 * 1.0vw)
-                    background-color: var(--color-acc-bg-3)
-                    color: var(--color-acc-fg-3)
-                    border-radius: 0.5vw
-                    font-size: 1.5vw
-                    padding: 0.5vw 1.0vw
-                    margin-bottom: 0.5vw
-                    overflow-wrap: break-word
-                .text-name
-                    width: 100%
-                    text-align: center
-                    background-color: var(--color-acc-bg-1)
-                    color: var(--color-acc-fg-3)
-                    font-size: 2vw
-            .text-col.intermediate
-                .text-value:nth-last-child(2)
-                    background-color: var(--color-sig-bg-3)
-                    color: var(--color-sig-fg-3)
+                    height: 100%
+                    overflow-x: hidden
+                    overflow-y: scroll
+                    display: flex
+                    flex-direction: column
+                    align-items: flex-end
+                    justify-content: flex-end
+                    .text-value
+                        width: calc(100% - 2 * 1.0vw)
+                        background-color: var(--color-acc-bg-3)
+                        color: var(--color-acc-fg-5)
+                        border-radius: 0.5vw
+                        font-size: 1.5vw
+                        padding: 0.5vw 1.0vw
+                        margin-top: 0.5vw
+                        overflow-wrap: break-word
+                .text-col.intermediate
+                    .text-value:last-child
+                        background-color: var(--color-sig-bg-3)
+                        color: var(--color-sig-fg-5)
 </style>
 
 <script setup lang="ts">
