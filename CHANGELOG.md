@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.4.5 (2025-08-07)
+------------------
+
+- IMPROVEMENT: better CLI option handling
+
 1.4.4 (2025-08-07)
 ------------------
 
