@@ -53,7 +53,7 @@ derived from the exported `SpeechFlowNode` class of the `speechflow` package.
 **SpeechFlow** is written in TypeScript and
 ships as an installable package for the Node Package Manager (NPM).
 
-Screenshot
+Impression
 ----------
 
 **SpeechFlow** is a command-line interface (CLI) based tool, so there
