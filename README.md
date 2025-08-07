@@ -58,11 +58,10 @@ Impression
 
 **SpeechFlow** is a command-line interface (CLI) based tool, so there
 is no exciting screenshot possible from its CLI appearance, of course.
-Instead, here is its Web dashboard user interface during the start of
-a fictive training which is held in German and real-time translated to
-English.
+Instead, here is a sample of a fictive training which is held in German
+and real-time translated to English.
 
-The used configuration in file `sample.conf` was:
+First, the used configuration in file `sample.conf` was:
 
 ```txt
 device(device: "coreaudio:Elgato Wave:3", mode: "r") |
@@ -79,16 +78,24 @@ device(device: "coreaudio:Elgato Wave:3", mode: "r") |
                                             device(device: "coreaudio:USBAudio2.0", mode: "w")
 ```
 
-The corresponding used command was:
+Second, the corresponding **SpeechFlow** command was:
 
 ```sh
 $ speechflow -v info -c sample.conf \
   -d audio:meter1:DE,text:text1:DE-Interim,text:text2:DE-Final,text:text3:EN,audio:meter2:EN
 ```
 
-The resulting dashboard under URL `http://127.0.0.1:8484/` then was:
+Finally, the resulting dashboard under URL `http://127.0.0.1:8484/` was:
 
 ![dashboard](etc/speechflow.png)
+
+On the left you can see the volume meter of the microphone (`device`),
+followed by the German result of the speech-to-text conversion
+(`deepgram`), followed by the still German results of the text-to-text
+sentence splitting/aggregation (`sentence`), followed by the English
+results of the text-to-text translation (`deepl`) and then finally on
+the right you can see the volume meter of the text-to-speech conversion
+(`elevenlabs`).
 
 Installation
 ------------
