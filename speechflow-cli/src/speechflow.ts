@@ -206,7 +206,11 @@ type wsPeerInfo = {
     cli.log("info", `starting SpeechFlow ${pkg["x-stdver"]} (${pkg["x-release"]})`)
 
     /*  load .env files  */
-    const result = dotenvx.config({ encoding: "utf8", quiet: true })
+    const result = dotenvx.config({
+        encoding: "utf8",
+        ignore:   [ "MISSING_ENV_FILE" ],
+        quiet:    true
+    })
     if (result?.parsed !== undefined)
         for (const key of Object.keys(result.parsed))
             cli.log("info", `loaded environment variable "${key}" from ".env" files`)
