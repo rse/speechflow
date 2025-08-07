@@ -48,6 +48,7 @@ type wsPeerInfo = {
 }
 
 /*  establish asynchronous environment  */
+let debug = false
 ;(async () => {
     /*  determine system paths  */
     const { dataDir } = syspath({
@@ -186,17 +187,26 @@ type wsPeerInfo = {
         logTime:   true,
         logPrefix: pkg.name
     })
+    if (args.v.match(/^(?:info|debug)$/))
+        debug = true
 
     /*  catch uncaught exceptions  */
     process.on("uncaughtException", (err) => {
-        cli!.log("error", `uncaught exception: ${err.message}\n${err.stack}`)
+        if (debug)
+            cli!.log("error", `uncaught exception: ${err.message}\n${err.stack}`)
+        else
+            cli!.log("error", `uncaught exception: ${err.message}`)
         process.exit(1)
     })
 
     /*  catch unhandled promise rejections  */
     process.on("unhandledRejection", (reason) => {
-        if (reason instanceof Error)
-            cli!.log("error", `unhandled rejection: ${reason.message}\n${reason.stack}`)
+        if (reason instanceof Error) {
+            if (debug)
+                cli!.log("error", `unhandled rejection: ${reason.message}\n${reason.stack}`)
+            else
+                cli!.log("error", `unhandled rejection: ${reason.message}`)
+        }
         else
             cli!.log("error", `unhandled rejection: ${reason}`)
         process.exit(1)
@@ -855,25 +865,40 @@ type wsPeerInfo = {
     /*  re-hook into uncaught exception handler  */
     process.removeAllListeners("uncaughtException")
     process.on("uncaughtException", (err) => {
-        cli!.log("error", `uncaught exception: ${err.message}\n${err.stack}`)
+        if (debug)
+            cli!.log("error", `uncaught exception: ${err.message}\n${err.stack}`)
+        else
+            cli!.log("error", `uncaught exception: ${err.message}`)
         shutdown("exception")
     })
 
     /*  re-hook into unhandled promise rejection handler  */
     process.removeAllListeners("unhandledRejection")
     process.on("unhandledRejection", (reason) => {
-        if (reason instanceof Error)
-            cli!.log("error", `unhandled rejection: ${reason.message}\n${reason.stack}`)
+        if (reason instanceof Error) {
+            if (debug)
+                cli!.log("error", `unhandled rejection: ${reason.message}\n${reason.stack}`)
+            else
+                cli!.log("error", `unhandled rejection: ${reason.message}`)
+        }
         else
             cli!.log("error", `unhandled rejection: ${reason}`)
         shutdown("exception")
     })
 })().catch((err: Error) => {
     /*  top-level exception handling  */
-    if (cli !== null)
-        cli.log("error", `${err.message}:\n${err.stack}`)
-    else
-        process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}\n${err.stack}\n`)
+    if (cli !== null) {
+        if (debug)
+            cli.log("error", `${err.message}\n${err.stack}`)
+        else
+            cli.log("error", `${err.message}`)
+    }
+    else {
+        if (debug)
+            process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}\n${err.stack}\n`)
+        else
+            process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}`)
+    }
     process.exit(1)
 })
 
