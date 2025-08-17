@@ -713,10 +713,10 @@ let debug = false
         })
     }
 
-    /*  hook for dashboardInfo method of nodes  */
+    /*  hook for send-dashboard method of nodes  */
     for (const node of graphNodes) {
-        node.on("dashboard-info", (info: {
-            type: string,
+        node.on("send-dashboard", (info: {
+            type: "audio" | "text",
             id:   string,
             kind: "final" | "intermediate",
             value: string | number
@@ -729,6 +729,15 @@ let debug = false
             for (const [ peer, info ] of wsPeers.entries()) {
                 cli!.log("debug", `HAPI: dashboard peer ${peer}: send ${data}`)
                 info.ws.send(data)
+            }
+            for (const node of graphNodes) {
+                Promise.race<void>([
+                    node.receiveDashboard(info.type, info.id, info.kind, info.value),
+                    new Promise<never>((resolve, reject) => setTimeout(() =>
+                        reject(new Error("timeout")), 10 * 1000))
+                ]).catch((err: Error) => {
+                    cli!.log("warning", `sending dashboard info to node <${node.id}> failed: ${err.message}`)
+                })
             }
         })
     }
