@@ -32,7 +32,9 @@ local Voice Activity Detection (VAD),
 local voice gender recognition,
 local audio LUFS-S/RMS metering,
 local audio Speex noise suppression,
+local audio RNNoise noise suppression,
 remote-controlable local audio muting,
+cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-text conversion,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
 cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
@@ -290,7 +292,8 @@ First a short overview of the available processing nodes:
   **meter**,
   **vad**,
   **gender**,
-  **speex**.
+  **speex**,
+  **rrnoise**.
 - Audio-to-Text nodes:
   **deepgram**.
 - Text-to-Text nodes:
@@ -521,6 +524,21 @@ The following nodes process audio chunks only.
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
   | **attentuate** | 0 | -18  | *none* | `-60 <= n <= 0` |
+
+- Node: **rnnoise**<br/>
+  Purpose: **RNNoise Noise Suppression node**<br/>
+  Example: `rnnoise()`
+
+  > This node uses RNNoise to perform noise suppression, i.e., it
+  > detects and attenuates the noise in the audio stream.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
 
 ### Audio-to-Text Nodes
 
