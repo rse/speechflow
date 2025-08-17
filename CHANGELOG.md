@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - UPGRADE: upgrade NPM dependencies
+- IMPROVEMENT: allow nodes to publish dashboard info to other nodes, too
 
 1.4.5 (2025-08-07)
 ------------------
