@@ -271,6 +271,7 @@ let debug = false
         "./speechflow-node-a2a-gender.js",
         "./speechflow-node-a2a-meter.js",
         "./speechflow-node-a2a-mute.js",
+        "./speechflow-node-a2a-speex.js",
         "./speechflow-node-a2a-vad.js",
         "./speechflow-node-a2a-wav.js",
         "./speechflow-node-a2t-deepgram.js",

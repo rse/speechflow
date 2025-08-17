@@ -1,0 +1,152 @@
+/*
+**  SpeechFlow - Speech Processing Flow Graph
+**  Copyright (c) 2024-2025 Dr. Ralf S. Engelschall <rse@engelschall.com>
+**  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
+*/
+
+/*  standard dependencies  */
+import path                 from "node:path"
+import fs                   from "node:fs"
+import Stream               from "node:stream"
+
+/*  external dependencies  */
+import { loadSpeexModule, SpeexPreprocessor } from "@sapphi-red/speex-preprocess-wasm"
+
+/*  internal dependencies  */
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
+
+/*  SpeechFlow node for Speex based noise suppression in audio-to-audio passing  */
+export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "speex"
+
+    /*  internal state  */
+    private destroyed = false
+    private sampleSize = 480 /* = 10ms at 48KHz */
+    private speexProcessor: SpeexPreprocessor | null = null
+
+    /*  construct node  */
+    constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
+        super(id, cfg, opts, args)
+
+        /*  declare node configuration parameters  */
+        this.configure({
+            attenuate: { type: "number", val: -18, pos: 0, match: (n: number) => n >= -60 && n <= 0 },
+        })
+
+        /*  declare node input/output format  */
+        this.input  = "audio"
+        this.output = "audio"
+    }
+
+    /*  open node  */
+    async open () {
+        /*  clear destruction flag  */
+        this.destroyed = false
+
+        /*  initialize and configure Speex pre-processor  */
+        const wasmBinary = await fs.promises.readFile(
+            path.join(__dirname, "../node_modules/@sapphi-red/speex-preprocess-wasm/dist/speex.wasm"))
+        const speexModule = await loadSpeexModule({
+            wasmBinary: wasmBinary.buffer as ArrayBuffer
+        })
+        this.speexProcessor = new SpeexPreprocessor(
+            speexModule, this.sampleSize, this.config.audioSampleRate)
+        this.speexProcessor.denoise            = true
+        this.speexProcessor.noiseSuppress      = this.params.attenuate
+        this.speexProcessor.agc                = false
+        this.speexProcessor.vad                = false
+        this.speexProcessor.echoSuppress       = 0
+        this.speexProcessor.echoSuppressActive = 0
+
+        /*  process data in fixed-size segments  */
+        const processInSegments = async (
+            data: Int16Array<ArrayBuffer>,
+            segmentSize: number,
+            processor: (segment: Int16Array<ArrayBuffer>) => Promise<Int16Array<ArrayBuffer>>
+        ): Promise<Int16Array<ArrayBuffer>> => {
+            /*  process full segments  */
+            let i = 0
+            while ((i + segmentSize) <= data.length) {
+                const segment = data.slice(i, i + segmentSize)
+                const result = await processor(segment)
+                data.set(result, i)
+                i += segmentSize
+            }
+
+            /*  process final partial segment if it exists  */
+            if (i < data.length) {
+                const len = data.length - i
+                const segment = new Int16Array(segmentSize)
+                segment.set(data.slice(i), 0)
+                segment.fill(0, len, segmentSize)
+                const result = await processor(segment)
+                data.set(result.slice(0, len), i)
+            }
+            return data
+        }
+
+        /*  establish a transform stream  */
+        const self = this
+        this.stream = new Stream.Transform({
+            readableObjectMode: true,
+            writableObjectMode: true,
+            decodeStrings:      false,
+            transform (chunk: SpeechFlowChunk & { payload: Buffer }, encoding, callback) {
+                if (self.destroyed) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
+                if (!Buffer.isBuffer(chunk.payload))
+                    callback(new Error("invalid chunk payload type"))
+                else {
+                    /*  convert Buffer into Int16Array  */
+                    const payload = utils.convertBufToI16(chunk.payload)
+
+                    /*  process Int16Array in necessary fixed-size segments  */
+                    processInSegments(payload, self.sampleSize, (segment) => {
+                        self.speexProcessor!.processInt16(segment)
+                        return Promise.resolve(segment)
+                    }).then((payload: Int16Array<ArrayBuffer>) => {
+                        /*  convert Int16Array back into Buffer  */
+                        const buf = utils.convertI16ToBuf(payload)
+
+                        /*  update chunk  */
+                        chunk.payload = buf
+
+                        /*  forward updated chunk  */
+                        this.push(chunk)
+                        callback()
+                    })
+                }
+            },
+            final (callback) {
+                if (self.destroyed) {
+                    callback()
+                    return
+                }
+                this.push(null)
+                callback()
+            }
+        })
+    }
+
+    /*  close node  */
+    async close () {
+        /*  indicate destruction  */
+        this.destroyed = true
+
+        /*  destroy processor  */
+        if (this.speexProcessor !== null) {
+            this.speexProcessor.destroy()
+            this.speexProcessor = null
+        }
+
+        /*  close stream  */
+        if (this.stream !== null) {
+            this.stream.destroy()
+            this.stream = null
+        }
+    }
+}

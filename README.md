@@ -31,6 +31,7 @@ remote MQTT network I/O,
 local Voice Activity Detection (VAD),
 local voice gender recognition,
 local audio LUFS-S/RMS metering,
+local audio Speex noise suppression,
 remote-controlable local audio muting,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
 cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
@@ -288,7 +289,8 @@ First a short overview of the available processing nodes:
   **mute**,
   **meter**,
   **vad**,
-  **gender**.
+  **gender**,
+  **speex**.
 - Audio-to-Text nodes:
   **deepgram**.
 - Text-to-Text nodes:
@@ -502,6 +504,23 @@ The following nodes process audio chunks only.
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
   | **window**  | 0         | 500      | *none*                   |
+
+- Node: **speex**<br/>
+  Purpose: **Speex Noise Suppression node**<br/>
+  Example: `speex(attentuate: -18)`
+
+  > This node uses the Speex DSP pre-processor to perform noise
+  > suppression, i.e., it detects and attenuates (by a certain level of
+  > dB) the noise in the audio stream.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **attentuate** | 0 | -18  | *none* | `-60 <= n <= 0` |
 
 ### Audio-to-Text Nodes
 
