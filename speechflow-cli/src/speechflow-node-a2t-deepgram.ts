@@ -228,7 +228,7 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
                     }
                     else {
                         self.log("debug", `received data (${chunk.payload.length} bytes)`)
-                        this.push(chunk, self.config.textEncoding)
+                        this.push(chunk)
                     }
                 }).catch((error) => {
                     if (!self.destroyed)
