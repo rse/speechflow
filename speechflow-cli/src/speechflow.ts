@@ -481,7 +481,7 @@ let debug = false
             new Promise<never>((resolve, reject) => setTimeout(() =>
                 reject(new Error("timeout")), 10 * 1000))
         ]).catch((err: Error) => {
-            cli!.log("error", `[${node.id}]: failed to open node <${node.id}>: ${err.message}`)
+            cli!.log("error", `<${node.id}>: failed to open node <${node.id}>: ${err.message}`)
             throw new Error(`failed to open node <${node.id}>: ${err.message}`)
         })
     }
