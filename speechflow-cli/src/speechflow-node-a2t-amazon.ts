@@ -133,7 +133,7 @@ export default class SpeechFlowNodeAmazon extends SpeechFlowNode {
 
         /*  start streaming  */
         const ensureAudioStreamActive = async () => {
-            if (this.clientStream !== null)
+            if (this.clientStream !== null || this.destroyed)
                 return
             let language: LanguageCode = "en-US"
             if (this.params.language === "de")
@@ -219,7 +219,9 @@ export default class SpeechFlowNodeAmazon extends SpeechFlowNode {
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         audioQueue.push(new Uint8Array(chunk.payload)) /* intentionally discard all time information */
-                        ensureAudioStreamActive()
+                        ensureAudioStreamActive().catch((err) => {
+                            self.log("error", `failed to start audio stream: ${err}`)
+                        })
                     }
                     callback()
                 }
