@@ -86,6 +86,31 @@ export function convertF32ToBuf (arr: Float32Array) {
     return Buffer.from(int16Array.buffer)
 }
 
+/*  helper function: convert Buffer in PCM/I16 to Int16Array  */
+export function convertBufToI16 (buf: Buffer, littleEndian = true) {
+    if (buf.length % 2 !== 0)
+        throw new Error("buffer length must be even for 16-bit samples")
+    const dataView = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
+    const arr = new Int16Array(buf.length / 2)
+    for (let i = 0; i < buf.length / 2; i++)
+        arr[i] = dataView.getInt16(i * 2, littleEndian)
+    return arr
+}
+
+/*  helper function: convert In16Array in PCM/I16 to Buffer  */
+export function convertI16ToBuf (arr: Int16Array, littleEndian = true) {
+    if (arr.length === 0)
+        return Buffer.alloc(0)
+    const buf = Buffer.allocUnsafe(arr.length * 2)
+    for (let i = 0; i < arr.length; i++) {
+        if (littleEndian)
+            buf.writeInt16LE(arr[i], i * 2)
+        else
+            buf.writeInt16BE(arr[i], i * 2)
+    }
+    return buf
+}
+
 /*  create a Duplex/Transform stream which has
     object-mode on Writable side and buffer/string-mode on Readable side  */
 export function createTransformStreamForWritableSide () {
@@ -518,5 +543,30 @@ export class TimeStore<T> extends EventEmitter {
     }
     clear (): void {
         this.tree = new IntervalTree.IntervalTree<TimeStoreInterval<T>>()
+    }
+}
+
+/*  asynchronous queue  */
+export class AsyncQueue<T> {
+    private queue: Array<T | null> = []
+    private resolvers: ((v: T | null) => void)[] = []
+    write (v: T | null) {
+        const resolve = this.resolvers.shift()
+        if (resolve)
+            resolve(v)
+        else
+            this.queue.push(v)
+    }
+    async read () {
+        if (this.queue.length > 0)
+            return this.queue.shift()!
+        else
+            return new Promise<T | null>((resolve) => this.resolvers.push(resolve))
+    }
+    destroy () {
+        for (const resolve of this.resolvers)
+            resolve(null)
+        this.resolvers = []
+        this.queue = []
     }
 }
