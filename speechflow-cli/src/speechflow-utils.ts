@@ -570,3 +570,30 @@ export class AsyncQueue<T> {
         this.queue = []
     }
 }
+
+/*  process Int16Array in fixed-size segments  */
+export async function processInt16ArrayInSegments (
+    data: Int16Array<ArrayBuffer>,
+    segmentSize: number,
+    processor: (segment: Int16Array<ArrayBuffer>) => Promise<Int16Array<ArrayBuffer>>
+): Promise<Int16Array<ArrayBuffer>> {
+    /*  process full segments  */
+    let i = 0
+    while ((i + segmentSize) <= data.length) {
+        const segment = data.slice(i, i + segmentSize)
+        const result = await processor(segment)
+        data.set(result, i)
+        i += segmentSize
+    }
+
+    /*  process final partial segment if it exists  */
+    if (i < data.length) {
+        const len = data.length - i
+        const segment = new Int16Array(segmentSize)
+        segment.set(data.slice(i), 0)
+        segment.fill(0, len, segmentSize)
+        const result = await processor(segment)
+        data.set(result.slice(0, len), i)
+    }
+    return data
+}
