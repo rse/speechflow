@@ -29,6 +29,7 @@
         "speex-resampler":                      "3.0.1",
         "@sapphi-red/speex-preprocess-wasm":    "0.4.0",
         "@shiguredo/rnnoise-wasm":              "2025.1.5",
+        "@aws-sdk/client-transcribe-streaming": "3.866.0",
         "object-path":                          "0.11.8",
         "ws":                                   "8.18.3",
         "bufferutil":                           "4.0.9",
