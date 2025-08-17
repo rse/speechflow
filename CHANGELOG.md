@@ -9,6 +9,7 @@ ChangeLog
 - IMPROVEMENT: allow nodes to publish dashboard info to other nodes, too
 - IMPROVEMENT: add "speex" noise suppression node
 - IMPROVEMENT: add "rnnoise" noise suppression node
+- IMPROVEMENT: add "amazon" speech to text node
 
 1.4.5 (2025-08-07)
 ------------------
