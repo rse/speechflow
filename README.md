@@ -295,6 +295,7 @@ First a short overview of the available processing nodes:
   **speex**,
   **rrnoise**.
 - Audio-to-Text nodes:
+  **amazon**,
   **deepgram**.
 - Text-to-Text nodes:
   **deepl**,
@@ -543,6 +544,28 @@ The following nodes process audio chunks only.
 ### Audio-to-Text Nodes
 
 The following nodes convert audio to text chunks.
+
+- Node: **amazon**<br/>
+  Purpose: **Amazon Transcribe Speech-to-Text conversion**<br/>
+  Example: `amazon(language: "de")`<br/>
+  Notice: this node requires an API key!
+
+  > This node performs Speech-to-Text (S2T) conversion, i.e., it
+  > recognizes speech in the input audio stream and outputs a
+  > corresponding text stream.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **key**      | *none*    | env.SPEECHFLOW\_AMAZON\_KEY | *none* |
+  | **secKey**   | *none*    | env.SPEECHFLOW\_AMAZON\_KEY\_SEC | *none* |
+  | **region**   | *none*    | "eu-central-1" | *none* |
+  | **language** | *none*    | "en" | `/^(?:en|de)$/` |
+  | **interim**  | *none*    | false | *none* |
 
 - Node: **deepgram**<br/>
   Purpose: **Deepgram Speech-to-Text conversion**<br/>
