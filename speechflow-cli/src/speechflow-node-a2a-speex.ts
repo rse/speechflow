@@ -60,33 +60,6 @@ export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
         this.speexProcessor.echoSuppress       = 0
         this.speexProcessor.echoSuppressActive = 0
 
-        /*  process data in fixed-size segments  */
-        const processInSegments = async (
-            data: Int16Array<ArrayBuffer>,
-            segmentSize: number,
-            processor: (segment: Int16Array<ArrayBuffer>) => Promise<Int16Array<ArrayBuffer>>
-        ): Promise<Int16Array<ArrayBuffer>> => {
-            /*  process full segments  */
-            let i = 0
-            while ((i + segmentSize) <= data.length) {
-                const segment = data.slice(i, i + segmentSize)
-                const result = await processor(segment)
-                data.set(result, i)
-                i += segmentSize
-            }
-
-            /*  process final partial segment if it exists  */
-            if (i < data.length) {
-                const len = data.length - i
-                const segment = new Int16Array(segmentSize)
-                segment.set(data.slice(i), 0)
-                segment.fill(0, len, segmentSize)
-                const result = await processor(segment)
-                data.set(result.slice(0, len), i)
-            }
-            return data
-        }
-
         /*  establish a transform stream  */
         const self = this
         this.stream = new Stream.Transform({
@@ -105,7 +78,7 @@ export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
                     const payload = utils.convertBufToI16(chunk.payload)
 
                     /*  process Int16Array in necessary fixed-size segments  */
-                    processInSegments(payload, self.sampleSize, (segment) => {
+                    utils.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
                         self.speexProcessor!.processInt16(segment)
                         return Promise.resolve(segment)
                     }).then((payload: Int16Array<ArrayBuffer>) => {
