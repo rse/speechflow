@@ -418,7 +418,7 @@ let debug = false
                 graphNodes.add(node)
                 return node
             },
-            connectNode (node1: SpeechFlowNode, node2: SpeechFlowNode) {
+            connectNodes (node1: SpeechFlowNode, node2: SpeechFlowNode) {
                 cli!.log("info", `connect node <${node1.id}> to node <${node2.id}>`)
                 node1.connect(node2)
             }
