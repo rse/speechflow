@@ -87,20 +87,25 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     }
 
     /*  receive external request  */
-    async receiveRequest (args: any[]) {
+    async receiveRequest (args: any[]): Promise<void> {
         /*  no-op  */
     }
 
     /*  send external response  */
-    sendResponse (args: any[]) {
+    sendResponse (args: any[]): void {
         this.emit("send-response", args)
     }
 
-    /*  emit dashboard information  */
-    dashboardInfo (type: "audio", id: string, kind: "final" | "intermediate", value: number): void
-    dashboardInfo (type: "text", id: string, kind: "final" | "intermediate", value: string): void
-    dashboardInfo (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string): void {
-        this.emit("dashboard-info", { type, id, kind, value })
+    /*  receive dashboard information  */
+    async receiveDashboard (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string): Promise<void> {
+        /*  no-op  */
+    }
+
+    /*  send dashboard information  */
+    sendDashboard (type: "audio", id: string, kind: "final" | "intermediate", value: number): void
+    sendDashboard (type: "text", id: string, kind: "final" | "intermediate", value: string): void
+    sendDashboard (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string): void {
+        this.emit("send-dashboard", { type, id, kind, value })
     }
 
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */

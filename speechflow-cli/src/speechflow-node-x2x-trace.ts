@@ -88,7 +88,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                             `payload-content="${chunk.payload.toString()}" ` +
                             `meta=${fmtMeta(chunk.meta)}`)
                         if (self.params.dashboard !== "")
-                            self.dashboardInfo("text", self.params.dashboard, chunk.kind, chunk.payload.toString())
+                            self.sendDashboard("text", self.params.dashboard, chunk.kind, chunk.payload.toString())
                     }
                     else
                         error = new Error(`${self.params.type} chunk: seen String instead of Buffer chunk type`)
