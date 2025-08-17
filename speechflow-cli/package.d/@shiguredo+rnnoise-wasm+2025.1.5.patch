@@ -1,0 +1,25 @@
+diff --git a/node_modules/@shiguredo/rnnoise-wasm/package.json b/node_modules/@shiguredo/rnnoise-wasm/package.json
+index d058c32..ea768f0 100644
+--- a/node_modules/@shiguredo/rnnoise-wasm/package.json
++++ a/node_modules/@shiguredo/rnnoise-wasm/package.json
+@@ -8,7 +8,8 @@
+   "exports": {
+     ".": {
+       "types": "./dist/rnnoise.d.ts",
+-      "import": "./dist/rnnoise.js"
++      "import": "./dist/rnnoise.js",
++      "require": "./dist/rnnoise.js"
+     }
+   },
+   "scripts": {
+diff --git a/node_modules/@shiguredo/rnnoise-wasm/dist/rnnoise.js b/node_modules/@shiguredo/rnnoise-wasm/dist/rnnoise.js
+--- a/node_modules/@shiguredo/rnnoise-wasm/dist/rnnoise.js
++++ b/node_modules/@shiguredo/rnnoise-wasm/dist/rnnoise.js
+@@ -14,7 +14,6 @@ var bA = async function(h = {}) {
+       $ = new URL(".", _).href;
+     } catch {
+     }
+-    if (!(typeof window == "object" || typeof WorkerGlobalScope < "u")) throw new Error("not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)");
+   }
+   var AA = console.log.bind(console), I = console.error.bind(console);
+   v(!0, "worker environment detected but not enabled at build time.  Add `worker` to `-sENVIRONMENT` to enable."), v(!0, "node environment detected but not enabled at build time.  Add `node` to `-sENVIRONMENT` to enable."), v(!0, "shell environment detected but not enabled at build time.  Add `shell` to `-sENVIRONMENT` to enable.");
