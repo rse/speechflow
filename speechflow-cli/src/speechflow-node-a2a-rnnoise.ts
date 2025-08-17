@@ -20,7 +20,6 @@ export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
 
     /*  internal state  */
     private destroyed = false
-    private static speexInitialized = false
     private sampleSize = 480 /* = 10ms at 48KHz, as required by RNNoise! */
     private worker: Worker | null = null
 
@@ -55,11 +54,19 @@ export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
                 this.log("info", `rnnoise worker thread exited with regular code ${code}`)
         })
         await new Promise<void>((resolve, reject) => {
+            const timeout = setTimeout(() => {
+                reject(new Error("rnnoise worker thread initialization timeout"))
+            }, 5000)
             this.worker!.once("message", (msg: any) => {
+                clearTimeout(timeout)
                 if (typeof msg === "object" && msg !== null && msg.type === "ready")
                     resolve()
                 else
                     reject(new Error(`rnnoise worker thread sent unexpected message on startup`))
+            })
+            this.worker!.once("error", (err) => {
+                clearTimeout(timeout)
+                reject(err)
             })
         })
 
