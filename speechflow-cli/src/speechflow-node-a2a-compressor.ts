@@ -135,6 +135,9 @@ class AudioCompressor {
                     }
                 }
             })
+
+            /*  start worklet ports  */
+            this.sourceNode.port.start()
             this.captureNode.port.start()
 
             this.isInitialized = true
