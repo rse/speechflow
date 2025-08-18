@@ -267,6 +267,7 @@ let debug = false
 
     /*  load internal SpeechFlow nodes  */
     const pkgsI = [
+        "./speechflow-node-a2a-compressor.js",
         "./speechflow-node-a2a-ffmpeg.js",
         "./speechflow-node-a2a-gender.js",
         "./speechflow-node-a2a-meter.js",

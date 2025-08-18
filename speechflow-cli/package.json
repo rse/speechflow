@@ -30,6 +30,7 @@
         "@sapphi-red/speex-preprocess-wasm":    "0.4.0",
         "@shiguredo/rnnoise-wasm":              "2025.1.5",
         "@aws-sdk/client-transcribe-streaming": "3.866.0",
+        "node-web-audio-api":                   "1.0.4",
         "object-path":                          "0.11.8",
         "ws":                                   "8.18.3",
         "bufferutil":                           "4.0.9",

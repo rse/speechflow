@@ -10,6 +10,7 @@ ChangeLog
 - IMPROVEMENT: add "speex" noise suppression node
 - IMPROVEMENT: add "rnnoise" noise suppression node
 - IMPROVEMENT: add "amazon" speech to text node
+- IMPROVEMENT: add "compressor" audio processing node
 
 1.4.5 (2025-08-07)
 ------------------
