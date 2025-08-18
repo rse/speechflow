@@ -186,7 +186,8 @@ class AudioCompressor {
         })
     }
     public getGainReduction(): number {
-        return this.isInitialized ? (this.compressorNode.reduction ?? 0) : 0
+        const decibel = this.isInitialized ? (this.compressorNode.reduction ?? 0) : 0
+        return decibel
     }
     public setGain(decibel: number): void {
         if (!this.isInitialized)
