@@ -168,5 +168,5 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
 }
 
 /*  register the new audio nodes  */
-registerProcessor("audio-source-processor",  AudioSourceProcessor)
-registerProcessor("audio-capture-processor", AudioCaptureProcessor)
+registerProcessor("audio-source",  AudioSourceProcessor)
+registerProcessor("audio-capture", AudioCaptureProcessor)

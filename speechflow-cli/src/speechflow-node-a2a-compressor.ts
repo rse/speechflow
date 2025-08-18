@@ -18,12 +18,12 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  internal types  */
-interface CompressorConfig {
-    threshold?: number
-    knee?:      number
-    ratio?:     number
-    attack?:    number
-    release?:   number
+interface AudioCompressorConfig {
+    thresholdDb?: number
+    ratio?:       number
+    attackMs?:    number
+    releaseMs?:   number
+    kneeDb?:      number
 }
 interface ProcessingResult {
     data: Int16Array
@@ -32,15 +32,15 @@ interface ProcessingResult {
 
 /*  audio compressor class  */
 class AudioCompressor {
+    /*  internal state  */
     private audioContext:      AudioContext
     private readonly channels: number
-    private compressor!:       DynamicsCompressorNode
-    private gainNode!:         GainNode
-    private sourceNode!:       AudioWorkletNode
-    private captureNode!:      AudioWorkletNode
-    private config:            Required<CompressorConfig>
+    private config:            Required<AudioCompressorConfig>
     private isInitialized    = false
-    private workletUrl       = ""
+    private sourceNode!:       AudioWorkletNode
+    private compressorNode!:   DynamicsCompressorNode
+    private gainNode!:         GainNode
+    private captureNode!:      AudioWorkletNode
     private pendingPromises  = new Map<string, {
         resolve: (value: ProcessingResult) => void
         reject: (error: Error) => void
@@ -51,21 +51,28 @@ class AudioCompressor {
     constructor(
         sampleRate = 48000,
         channels   = 1,
-        compressorConfig: CompressorConfig = {}
+        config:    AudioCompressorConfig = {}
     ) {
-        this.audioContext = new AudioContext({ sampleRate, latencyHint: "interactive" })
-        this.channels = channels
+        /*  store configuration  */
         this.config = {
-            threshold: compressorConfig.threshold ?? -24,
-            knee:      compressorConfig.knee      ?? 30,
-            ratio:     compressorConfig.ratio     ?? 12,
-            attack:    compressorConfig.attack    ?? 0.003,
-            release:   compressorConfig.release   ?? 0.25
+            thresholdDb: config.thresholdDb ?? -23,
+            ratio:       config.ratio       ?? 12,
+            attackMs:    config.attackMs    ?? 0.010,
+            releaseMs:   config.releaseMs   ?? 0.050,
+            kneeDb:      config.kneeDb      ?? 6
         }
-        this.workletUrl = path.resolve(__dirname, "speechflow-node-a2a-compressor-wt.js")
+
+        /*  store number of channels  */
+        this.channels = channels
+
+        /*  create new audio context  */
+        this.audioContext = new AudioContext({
+            sampleRate,
+            latencyHint: "interactive"
+        })
     }
 
-    /*  initialize the object  */
+    /*  initialize object  */
     public async initialize(): Promise<void> {
         if (this.isInitialized)
             return
@@ -75,33 +82,40 @@ class AudioCompressor {
                 await this.audioContext.resume()
 
             /*  add audio worklet module  */
-            await this.audioContext.audioWorklet.addModule(this.workletUrl)
+            const url = path.resolve(__dirname, "speechflow-node-a2a-compressor-wt.js")
+            await this.audioContext.audioWorklet.addModule(url)
 
-            /*  create nodes  */
-            this.sourceNode = new AudioWorkletNode(this.audioContext, "audio-source-processor", {
+            /*  create source node  */
+            this.sourceNode = new AudioWorkletNode(this.audioContext, "audio-source", {
                 numberOfInputs:  0,
                 numberOfOutputs: 1,
                 outputChannelCount: [ this.channels ]
             })
-            this.gainNode   = this.audioContext.createGain()
-            this.compressor = this.audioContext.createDynamicsCompressor()
-            this.captureNode = new AudioWorkletNode(this.audioContext, "audio-capture-processor", {
+
+            /*  create gain node  */
+            this.gainNode = this.audioContext.createGain()
+
+            /*  create compressor node  */
+            this.compressorNode = this.audioContext.createDynamicsCompressor()
+
+            /*  create capture node  */
+            this.captureNode = new AudioWorkletNode(this.audioContext, "audio-capture", {
                 numberOfInputs:  1,
                 numberOfOutputs: 0
             })
 
             /*  connect nodes  */
-            this.sourceNode.connect(this.gainNode)
-            this.gainNode.connect(this.compressor)
-            this.compressor.connect(this.captureNode)
+            this.sourceNode.connect(this.compressorNode)
+            this.compressorNode.connect(this.gainNode)
+            this.gainNode.connect(this.captureNode)
 
             /*  configure compressor node  */
             const currentTime = this.audioContext.currentTime
-            this.compressor.threshold.setValueAtTime(this.config.threshold, currentTime)
-            this.compressor.knee.setValueAtTime(this.config.knee, currentTime)
-            this.compressor.ratio.setValueAtTime(this.config.ratio, currentTime)
-            this.compressor.attack.setValueAtTime(this.config.attack, currentTime)
-            this.compressor.release.setValueAtTime(this.config.release, currentTime)
+            this.compressorNode.threshold.setValueAtTime(this.config.thresholdDb, currentTime)
+            this.compressorNode.ratio.setValueAtTime(this.config.ratio, currentTime)
+            this.compressorNode.attack.setValueAtTime(this.config.attackMs, currentTime)
+            this.compressorNode.release.setValueAtTime(this.config.releaseMs, currentTime)
+            this.compressorNode.knee.setValueAtTime(this.config.kneeDb, currentTime)
 
             /*  setup message handler for capture node  */
             this.captureNode.port.addEventListener("message", (event) => {
@@ -116,7 +130,7 @@ class AudioCompressor {
                             int16Data[i] = Math.max(-32768, Math.min(32767, Math.round(data[i] * 32767)))
                         promise.resolve({
                             data: int16Data,
-                            gainReduction: this.compressor.reduction ?? 0
+                            gainReduction: this.compressorNode.reduction ?? 0
                         })
                     }
                 }
@@ -169,7 +183,7 @@ class AudioCompressor {
         })
     }
     public getGainReduction(): number {
-        return this.isInitialized ? (this.compressor.reduction ?? 0) : 0
+        return this.isInitialized ? (this.compressorNode.reduction ?? 0) : 0
     }
     public setGain(decibel: number): void {
         if (!this.isInitialized)
@@ -196,7 +210,7 @@ class AudioCompressor {
         /*  disconnect nodes  */
         this.sourceNode?.disconnect()
         this.gainNode?.disconnect()
-        this.compressor?.disconnect()
+        this.compressorNode?.disconnect()
         this.captureNode?.disconnect()
 
         /*  stop context  */
@@ -222,8 +236,8 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            thresholdDb: { type: "number", val: -18, match: (n: number) => n <= 0 && n >= -60 },
-            ratio:       { type: "number", val: 4,   match: (n: number) => n >= 1 && n <= 20  },
+            thresholdDb: { type: "number", val: -23, match: (n: number) => n <= 0 && n >= -60 },
+            ratio:       { type: "number", val: 12,  match: (n: number) => n >= 1 && n <= 20  },
             attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0 && n <= 100 },
             releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0 && n <= 100 },
             kneeDb:      { type: "number", val: 6,   match: (n: number) => n >= 0 && n <= 100 },
@@ -252,11 +266,11 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
         this.compressor = new AudioCompressor(
             this.config.audioSampleRate,
             this.config.audioChannels, {
-                threshold: this.params.thresholdDb,
-                ratio:     this.params.ratio,
-                attack:    this.params.attackMs  / 1000,
-                release:   this.params.releaseMs / 1000,
-                knee:      this.params.kneeDb,
+                thresholdDb: this.params.thresholdDb,
+                ratio:       this.params.ratio,
+                attackMs:    this.params.attackMs  / 1000,
+                releaseMs:   this.params.releaseMs / 1000,
+                kneeDb:      this.params.kneeDb
             }
         )
         await this.compressor.initialize()
