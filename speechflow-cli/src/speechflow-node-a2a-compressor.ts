@@ -4,18 +4,17 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-// FIXME autogain
-
 /*  standard dependencies  */
-import path   from "node:path"
-import Stream from "node:stream"
+import Stream           from "node:stream"
+import { EventEmitter } from "node:events"
 
 /*  external dependencies  */
-import { AudioContext, AudioWorkletNode, GainNode, DynamicsCompressorNode } from "node-web-audio-api"
+import { GainNode, DynamicsCompressorNode } from "node-web-audio-api"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
+import { WebAudio }                        from "./speechflow-utils-audio"
 
 /*  internal types  */
 interface AudioCompressorConfig {
@@ -24,203 +23,112 @@ interface AudioCompressorConfig {
     attackMs?:    number
     releaseMs?:   number
     kneeDb?:      number
-}
-interface ProcessingResult {
-    data: Int16Array
-    gainReduction: number
+    makeupDb?:    number
 }
 
 /*  audio compressor class  */
-class AudioCompressor {
+class AudioCompressor extends WebAudio {
     /*  internal state  */
-    private audioContext:      AudioContext
-    private readonly channels: number
+    private type:              "standalone" | "sidechain"
+    private mode:              "compress" | "measure" | "adjust"
     private config:            Required<AudioCompressorConfig>
-    private isInitialized    = false
-    private sourceNode!:       AudioWorkletNode
-    private compressorNode!:   DynamicsCompressorNode
-    private gainNode!:         GainNode
-    private captureNode!:      AudioWorkletNode
-    private pendingPromises  = new Map<string, {
-        resolve: (value: ProcessingResult) => void
-        reject: (error: Error) => void
-        timeout: ReturnType<typeof setTimeout>
-    }>()
+    public compressorNode:    DynamicsCompressorNode | null = null
+    private gainNode:          GainNode | null = null
 
     /*  construct object  */
     constructor(
-        sampleRate = 48000,
-        channels   = 1,
-        config:    AudioCompressorConfig = {}
+        sampleRate: number,
+        channels:   number,
+        type:       "standalone" | "sidechain" = "standalone",
+        mode:       "compress" | "measure" | "adjust" = "compress",
+        config:     AudioCompressorConfig = {}
     ) {
+        super(sampleRate, channels)
+
+        /*  store type and mode  */
+        this.type = type
+        this.mode = mode
+
         /*  store configuration  */
         this.config = {
             thresholdDb: config.thresholdDb ?? -23,
-            ratio:       config.ratio       ?? 12,
-            attackMs:    config.attackMs    ?? 0.010,
-            releaseMs:   config.releaseMs   ?? 0.050,
-            kneeDb:      config.kneeDb      ?? 6
+            ratio:       config.ratio       ?? 4,
+            attackMs:    config.attackMs    ?? 3,
+            releaseMs:   config.releaseMs   ?? 250,
+            kneeDb:      config.kneeDb      ?? 9,
+            makeupDb:    config.makeupDb    ?? 0
         }
-
-        /*  store number of channels  */
-        this.channels = channels
-
-        /*  create new audio context  */
-        this.audioContext = new AudioContext({
-            sampleRate,
-            latencyHint: "interactive"
-        })
     }
 
-    /*  initialize object  */
-    public async initialize(): Promise<void> {
-        if (this.isInitialized)
-            return
-        try {
-            /*  ensure audio context is not suspended  */
-            if (this.audioContext.state === "suspended")
-                await this.audioContext.resume()
+    /*  setup object  */
+    public async setup (): Promise<void> {
+        await super.setup()
 
-            /*  add audio worklet module  */
-            const url = path.resolve(__dirname, "speechflow-node-a2a-compressor-wt.js")
-            await this.audioContext.audioWorklet.addModule(url)
-
-            /*  create source node  */
-            this.sourceNode = new AudioWorkletNode(this.audioContext, "audio-source", {
-                numberOfInputs:  0,
-                numberOfOutputs: 1,
-                outputChannelCount: [ this.channels ]
-            })
-
-            /*  create gain node  */
-            this.gainNode = this.audioContext.createGain()
-
-            /*  create compressor node  */
+        /*  create compressor node  */
+        if ((this.type === "standalone" && this.mode === "compress") ||
+            (this.type === "sidechain"  && this.mode === "measure")    )
             this.compressorNode = this.audioContext.createDynamicsCompressor()
 
-            /*  create capture node  */
-            this.captureNode = new AudioWorkletNode(this.audioContext, "audio-capture", {
-                numberOfInputs:  1,
-                numberOfOutputs: 0
-            })
+        /*  create gain node  */
+        if ((this.type === "standalone" && this.mode === "compress") ||
+            (this.type === "sidechain"  && this.mode === "adjust")     )
+            this.gainNode = this.audioContext.createGain()
 
-            /*  connect nodes  */
-            this.sourceNode.connect(this.compressorNode)
-            this.compressorNode.connect(this.gainNode)
-            this.gainNode.connect(this.captureNode)
+        /*  connect nodes (according to type and mode)  */
+        if (this.type === "standalone" && this.mode === "compress") {
+            this.sourceNode!.connect(this.compressorNode!)
+            this.compressorNode!.connect(this.gainNode!)
+            this.gainNode!.connect(this.captureNode!)
+        }
+        else if (this.type === "sidechain" && this.mode === "measure") {
+            this.sourceNode!.connect(this.compressorNode!)
+        }
+        else if (this.type === "sidechain" && this.mode === "adjust") {
+            this.sourceNode!.connect(this.gainNode!)
+            this.gainNode!.connect(this.captureNode!)
+        }
 
-            /*  configure compressor node  */
+        /*  configure compressor node  */
+        if ((this.type === "standalone" && this.mode === "compress") ||
+            (this.type === "sidechain"  && this.mode === "measure")    ) {
             const currentTime = this.audioContext.currentTime
-            this.compressorNode.threshold.setValueAtTime(this.config.thresholdDb, currentTime)
-            this.compressorNode.ratio.setValueAtTime(this.config.ratio, currentTime)
-            this.compressorNode.attack.setValueAtTime(this.config.attackMs, currentTime)
-            this.compressorNode.release.setValueAtTime(this.config.releaseMs, currentTime)
-            this.compressorNode.knee.setValueAtTime(this.config.kneeDb, currentTime)
-
-            /*  setup message handler for capture node  */
-            this.captureNode.port.addEventListener("message", (event) => {
-                const { type, chunkId, data } = event.data ?? {}
-                if (type === "capture-complete") {
-                    const promise = this.pendingPromises.get(chunkId)
-                    if (promise) {
-                        clearTimeout(promise.timeout)
-                        this.pendingPromises.delete(chunkId)
-                        const int16Data = new Int16Array(data.length)
-                        for (let i = 0; i < data.length; i++)
-                            int16Data[i] = Math.max(-32768, Math.min(32767, Math.round(data[i] * 32767)))
-                        promise.resolve({
-                            data: int16Data,
-                            gainReduction: this.compressorNode.reduction ?? 0
-                        })
-                    }
-                }
-            })
-
-            /*  start worklet ports  */
-            this.sourceNode.port.start()
-            this.captureNode.port.start()
-
-            this.isInitialized = true
+            this.compressorNode!.threshold.setValueAtTime(this.config.thresholdDb, currentTime)
+            this.compressorNode!.ratio.setValueAtTime(this.config.ratio, currentTime)
+            this.compressorNode!.attack.setValueAtTime(this.config.attackMs / 1000, currentTime)
+            this.compressorNode!.release.setValueAtTime(this.config.releaseMs / 1000, currentTime)
+            this.compressorNode!.knee.setValueAtTime(this.config.kneeDb, currentTime)
         }
-        catch (error) {
-            throw new Error(`failed to initialize AudioCompressor: ${error}`)
+
+        /*  configure gain node  */
+        if ((this.type === "standalone" && this.mode === "compress") ||
+            (this.type === "sidechain"  && this.mode === "adjust")     ) {
+            const currentTime = this.audioContext.currentTime
+            const gain = Math.pow(10, this.config.makeupDb / 20)
+            this.gainNode!.gain.setValueAtTime(gain, currentTime)
         }
     }
-    public async processChunk(int16Array: Int16Array): Promise<ProcessingResult> {
-        if (!this.isInitialized)
-            await this.initialize()
-        const chunkId = `chunk_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
-        return new Promise<ProcessingResult>((resolve, reject) => {
-            const timeout = setTimeout(() => {
-                this.pendingPromises.delete(chunkId)
-                reject(new Error("processing timeout"))
-            }, (int16Array.length / this.audioContext.sampleRate) * 1000 + 250)
-            this.pendingPromises.set(chunkId, { resolve, reject, timeout })
-            try {
-                const float32Data = new Float32Array(int16Array.length)
-                for (let i = 0; i < int16Array.length; i++)
-                    float32Data[i] = int16Array[i] / 32768.0
 
-                /*  start capture first  */
-                this.captureNode.port.postMessage({
-                    type: "start-capture",
-                    chunkId,
-                    expectedSamples: int16Array.length
-                })
-
-                /*  small delay to ensure capture is ready before sending data  */
-                setTimeout(() => {
-                    /*  send input to source node  */
-                    this.sourceNode.port.postMessage({
-                        type: "input-chunk",
-                        chunkId,
-                        data: { pcmData: float32Data, channels: this.channels }
-                    }, [ float32Data.buffer ])
-                }, 5)
-            }
-            catch (error) {
-                clearTimeout(timeout)
-                this.pendingPromises.delete(chunkId)
-                reject(new Error(`failed to process chunk: ${error}`))
-            }
-        })
-    }
     public getGainReduction(): number {
-        const decibel = this.isInitialized ? (this.compressorNode.reduction ?? 0) : 0
+        const decibel = this.compressorNode?.reduction ?? 0
         return decibel
     }
+
     public setGain(decibel: number): void {
-        if (!this.isInitialized)
-            throw new Error("not initialized")
         const gain = Math.pow(10, decibel / 20)
-        this.gainNode.gain.setValueAtTime(gain, this.audioContext.currentTime)
+        this.gainNode?.gain.setTargetAtTime(gain, this.audioContext.currentTime, 0.002)
     }
-    public async stop(): Promise<void> {
-        if (!this.isInitialized)
-            return
+    public async destroy(): Promise<void> {
+        await super.destroy()
 
-        /*  reject all pending promises  */
-        try {
-            this.pendingPromises.forEach(({ reject, timeout }) => {
-                clearTimeout(timeout)
-                reject(new Error("compressor stopped"))
-            })
-            this.pendingPromises.clear()
+        /*  destroy nodes  */
+        if (this.compressorNode !== null) {
+            this.compressorNode?.disconnect()
+            this.compressorNode = null
         }
-        catch (_err) {
-            /* ignored - cleanup during shutdown */
+        if (this.gainNode !== null) {
+            this.gainNode.disconnect()
+            this.gainNode = null
         }
-
-        /*  disconnect nodes  */
-        this.sourceNode?.disconnect()
-        this.gainNode?.disconnect()
-        this.compressorNode?.disconnect()
-        this.captureNode?.disconnect()
-
-        /*  stop context  */
-        await this.audioContext.close()
-
-        this.isInitialized = false
     }
 }
 
@@ -231,8 +139,8 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
 
     /*  internal state  */
     private destroyed = false
-    private sidechain = 0 // FIXME
     private compressor: AudioCompressor | null = null
+    private bus: EventEmitter | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -240,25 +148,26 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            thresholdDb: { type: "number", val: -23, match: (n: number) => n <= 0 && n >= -60 },
-            ratio:       { type: "number", val: 12,  match: (n: number) => n >= 1 && n <= 20  },
-            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0 && n <= 100 },
-            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0 && n <= 100 },
-            kneeDb:      { type: "number", val: 6,   match: (n: number) => n >= 0 && n <= 100 },
-            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 100 }
+            type:        { type: "string", val: "standalone", match: /^(?:standalone|sidechain)$/ },
+            mode:        { type: "string", val: "compress",   match: /^(?:compress|measure|adjust)$/ },
+            bus:         { type: "string", val: "compressor", match: /^.+$/ },
+            thresholdDb: { type: "number", val: -23, match: (n: number) => n <= 0 && n >= -100 },
+            ratio:       { type: "number", val: 4,   match: (n: number) => n >= 1 && n <= 20   },
+            attackMs:    { type: "number", val: 3,   match: (n: number) => n >= 0 && n <= 1000 },
+            releaseMs:   { type: "number", val: 250, match: (n: number) => n >= 0 && n <= 1000 },
+            kneeDb:      { type: "number", val: 9,   match: (n: number) => n >= 0 && n <= 40   },
+            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 100  }
         })
+
+        /*  sanity check mode and role  */
+        if (this.params.type === "standalone" && this.params.mode !== "compress")
+            throw new Error("type \"standalone\" implies mode \"compress\"")
+        if (this.params.type === "sidechain" && this.params.mode === "compress")
+            throw new Error("type \"sidechain\" implies mode \"measure\" or \"adjust\"")
 
         /*  declare node input/output format  */
         this.input  = "audio"
         this.output = "audio"
-    }
-
-    /*  receive dashboard information  */
-    async receiveDashboard (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string): Promise<void> {
-        if (this.params.sidechain === "")
-            return
-        if (type === "audio" && id === this.params.sidechain)
-            this.sidechain = value as number
     }
 
     /*  open node  */
@@ -269,16 +178,34 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
         /*  setup compressor  */
         this.compressor = new AudioCompressor(
             this.config.audioSampleRate,
-            this.config.audioChannels, {
+            this.config.audioChannels,
+            this.params.type,
+            this.params.mode, {
                 thresholdDb: this.params.thresholdDb,
                 ratio:       this.params.ratio,
-                attackMs:    this.params.attackMs  / 1000,
-                releaseMs:   this.params.releaseMs / 1000,
-                kneeDb:      this.params.kneeDb
+                attackMs:    this.params.attackMs,
+                releaseMs:   this.params.releaseMs,
+                kneeDb:      this.params.kneeDb,
+                makeupDb:    this.params.makeupDb
             }
         )
-        await this.compressor.initialize()
-        this.compressor.setGain(this.params.makeupDb)
+        await this.compressor.setup()
+
+        /*  optionally establish sidechain processing  */
+        if (this.params.type === "sidechain") {
+            this.bus = this.accessBus(`${this.params.bus}:${this.params.role}`)
+            if (this.params.mode === "measure") {
+                setInterval(() => {
+                    const decibel = this.compressor?.getGainReduction()
+                    this.bus?.emit("sidechain-decibel", decibel)
+                }, 10)
+            }
+            else if (this.params.mode === "adjust") {
+                this.bus.on("sidechain-decibel", (decibel: number) => {
+                    this.compressor?.setGain(decibel)
+                })
+            }
+        }
 
         /*  establish a transform stream  */
         const self = this
@@ -296,9 +223,13 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
                 else {
                     /*  compress chunk  */
                     const payload = utils.convertBufToI16(chunk.payload)
-                    self.compressor?.processChunk(payload).then((result) => {
-                        const payload = utils.convertI16ToBuf(result.data)
-                        chunk.payload = payload
+                    self.compressor?.process(payload).then((result) => {
+                        if ((self.params.type === "standalone" && self.params.mode === "compress") ||
+                            (self.params.type === "sidechain"  && self.params.mode === "adjust")     ) {
+                            /*  take over compressed data  */
+                            const payload = utils.convertI16ToBuf(result)
+                            chunk.payload = payload
+                        }
                         this.push(chunk)
                         callback()
                     }).catch((error) => {
@@ -322,9 +253,13 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
         /*  indicate destruction  */
         this.destroyed = true
 
+        /*  destroy bus  */
+        if (this.bus !== null)
+            this.bus = null
+
         /*  destroy compressor  */
         if (this.compressor !== null) {
-            await this.compressor.stop()
+            await this.compressor.destroy()
             this.compressor = null
         }
 
