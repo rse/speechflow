@@ -10,10 +10,10 @@ declare module "node:stream" {
 }
 
 /*  type definitions for AudioWorkletProcessor  */
-interface AudioWorkletProcessor {
+declare interface AudioWorkletProcessor {
     readonly port: MessagePort
     process(
-        inputs: Float32Array[][],
+        inputs:  Float32Array[][],
         outputs: Float32Array[][],
         parameters: Record<string, Float32Array>
     ): boolean
@@ -22,7 +22,14 @@ declare const AudioWorkletProcessor: {
     prototype: AudioWorkletProcessor
     new(): AudioWorkletProcessor
 }
+declare interface AudioParamDescriptor {
+    name:            string
+    defaultValue?:   number
+    minValue?:       number
+    maxValue?:       number
+    automationRate?: "a-rate" | "k-rate"
+}
 declare function registerProcessor(
     name: string,
-    processorCtor: new () => AudioWorkletProcessor
+    processorCtor: new (...args: any[]) => AudioWorkletProcessor
 ): void
