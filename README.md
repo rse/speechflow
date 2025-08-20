@@ -39,6 +39,7 @@ cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-te
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
 cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
+cloud-based [Amazon Translate](https://aws.amazon.com/translate/) text-to-text translation,
 cloud-based [OpenAI/GPT](https://openai.com) text-to-text translation (or spelling correction),
 local [Ollama/Gemma](https://ollama.com) text-to-text translation (or spelling correction),
 local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translation,
@@ -301,6 +302,7 @@ First a short overview of the available processing nodes:
   **deepgram**.
 - Text-to-Text nodes:
   **deepl**,
+  **awstranslate**,
   **openai**,
   **ollama**,
   **transformers**,
@@ -631,6 +633,26 @@ The following nodes process text chunks only.
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **key**      | *none*    | env.SPEECHFLOW\_DEEPL\_KEY | *none* |
+  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
+  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+
+- Node: **awstranslate**<br/>
+  Purpose: **AWS Translate Text-to-Text translation**<br/>
+  Example: `awstranslate(src: "de", dst: "en")`<br/>
+  Notice: this node requires an API key!
+
+  > This node performs translation between English and German languages.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **key**      | *none*    | env.SPEECHFLOW\_AMAZON\_KEY | *none* |
+  | **secKey**   | *none*    | env.SPEECHFLOW\_AMAZON\_KEY\_SEC | *none* |
+  | **region**   | *none*    | "eu-central-1" | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
