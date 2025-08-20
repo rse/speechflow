@@ -17,7 +17,7 @@
     "dependencies": {
         "cli-io":                               "0.9.13",
         "yargs":                                "18.0.0",
-        "flowlink":                             "1.2.0",
+        "flowlink":                             "1.2.1",
         "js-yaml":                              "4.1.0",
         "@gpeng/naudiodon":                     "2.4.1",
         "@deepgram/sdk":                        "4.11.2",
@@ -42,7 +42,7 @@
         "hapi-plugin-websocket":                "2.4.11",
         "@opensumi/reconnecting-websocket":     "4.4.0",
         "ollama":                               "0.5.17",
-        "openai":                               "5.12.2",
+        "openai":                               "5.13.1",
         "@rse/ffmpeg":                          "1.4.2",
         "ffmpeg-stream":                        "1.0.1",
         "installed-packages":                   "1.0.13",
