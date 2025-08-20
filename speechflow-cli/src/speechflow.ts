@@ -268,6 +268,7 @@ let debug = false
     /*  load internal SpeechFlow nodes  */
     const pkgsI = [
         "./speechflow-node-a2a-compressor.js",
+        "./speechflow-node-a2a-expander.js",
         "./speechflow-node-a2a-ffmpeg.js",
         "./speechflow-node-a2a-gender.js",
         "./speechflow-node-a2a-meter.js",
@@ -333,6 +334,19 @@ let debug = false
         cacheDir:          args.C
     }
 
+    /*  provide access to internal communication busses  */
+    const busses = new Map<string, EventEmitter>()
+    const accessBus = (name: string): EventEmitter => {
+        let bus: EventEmitter
+        if (busses.has(name))
+            bus = busses.get(name)!
+        else {
+            bus = new EventEmitter()
+            busses.set(name, bus)
+        }
+        return bus
+    }
+
     /*  handle one-time status query of nodes  */
     if (args.S) {
         const table = new Table({
@@ -348,6 +362,7 @@ let debug = false
         for (const name of Object.keys(nodes)) {
             cli!.log("info", `gathering status of node <${name}>`)
             const node = new nodes[name](name, cfg, {}, [])
+            node._accessBus = accessBus
             const status = await Promise.race<{ [ key: string ]: string | number }>([
                 node.status(),
                 new Promise<never>((resolve, reject) => setTimeout(() =>
@@ -407,6 +422,7 @@ let debug = false
                     nodeNums.set(NodeClass, ++num)
                     const name = num === 1 ? id : `${id}:${num}`
                     node = new NodeClass(name, cfg, opts, args)
+                    node._accessBus = accessBus
                 }
                 catch (err) {
                     /*  fatal error  */

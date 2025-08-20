@@ -5,7 +5,7 @@
 */
 
 /*  standard dependencies  */
-import Events from "node:events"
+import Events, { EventEmitter } from "node:events"
 import Stream from "node:stream"
 
 /*  external dependencies  */
@@ -62,6 +62,7 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     timeOpen:       DateTime<boolean> | undefined
     timeZero:       DateTime<boolean> = DateTime.fromMillis(0)
     timeZeroOffset: Duration<boolean> = Duration.fromMillis(0)
+    _accessBus: ((name: string) => EventEmitter) | null = null
 
     /*  the default constructor  */
     constructor (
@@ -106,6 +107,13 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     sendDashboard (type: "text", id: string, kind: "final" | "intermediate", value: string): void
     sendDashboard (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string): void {
         this.emit("send-dashboard", { type, id, kind, value })
+    }
+
+    /*  access communication bus  */
+    accessBus (name: string): EventEmitter {
+        if (this._accessBus === null)
+            throw new Error("access to communication bus still not possible")
+        return this._accessBus(name)
     }
 
     /*  INTERNAL: utility function: create "params" attribute from constructor of sub-classes  */
