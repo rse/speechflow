@@ -9,7 +9,7 @@ ChangeLog
 - IMPROVEMENT: allow nodes to publish dashboard info to other nodes, too
 - IMPROVEMENT: add "speex" noise suppression node
 - IMPROVEMENT: add "rnnoise" noise suppression node
-- IMPROVEMENT: add "amazon" speech to text node
+- IMPROVEMENT: add "awstranscribe" speech to text node
 - IMPROVEMENT: add "compressor" audio processing node
 - IMPROVEMENT: add "awstranslate" text translation node
 - IMPROVEMENT: add "awspolly" test to speech generation node

@@ -299,7 +299,7 @@ First a short overview of the available processing nodes:
   **rrnoise**,
   **compressor**.
 - Audio-to-Text nodes:
-  **amazon**,
+  **awstranscribe**,
   **deepgram**.
 - Text-to-Text nodes:
   **deepl**,
@@ -573,9 +573,9 @@ The following nodes process audio chunks only.
 
 The following nodes convert audio to text chunks.
 
-- Node: **amazon**<br/>
+- Node: **awstranscribe**<br/>
   Purpose: **Amazon Transcribe Speech-to-Text conversion**<br/>
-  Example: `amazon(language: "de")`<br/>
+  Example: `awstranscribe(language: "de")`<br/>
   Notice: this node requires an API key!
 
   > This node performs Speech-to-Text (S2T) conversion, i.e., it
