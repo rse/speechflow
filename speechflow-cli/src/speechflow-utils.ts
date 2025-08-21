@@ -597,3 +597,11 @@ export async function processInt16ArrayInSegments (
     }
     return data
 }
+
+/*  helper functions for linear/decibel conversions  */
+export function lin2dB (x: number): number {
+    return 20 * Math.log10(Math.max(x, 1e-12))
+}
+export function dB2lin (db: number): number {
+    return Math.pow(10, db / 20)
+}

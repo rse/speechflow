@@ -4,6 +4,8 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+import * as utils from "./speechflow-utils"
+
 /*  downward expander with soft knee  */
 class ExpanderProcessor extends AudioWorkletProcessor {
     /*  internal state  */
@@ -29,14 +31,6 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         super()
         const { sampleRate } = options.processorOptions
         this.sampleRate = sampleRate as number
-    }
-
-    /*  helper functions for linear/decibel conversions  */
-    private lin2dB(x: number): number {
-        return 20 * Math.log10(Math.max(x, 1e-12))
-    }
-    private dB2lin(db: number): number {
-        return Math.pow(10, db / 20)
     }
 
     /*  determine gain difference (downward expansion)  */
@@ -135,25 +129,25 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         /*  determine decibel levels  */
         const detLevelsDB: number[] = new Array(nCh)
         for (let ch = 0; ch < nCh; ch++)
-            detLevelsDB[ch] = this.lin2dB(this.env[ch])
+            detLevelsDB[ch] = utils.lin2dB(this.env[ch])
 
         /*  for stereo linking, calculate maximum decibel  */
         const linkedLevelDB = Math.max(...detLevelsDB)
 
         /*  determine linear value from decibel makeup value */
-        const makeUpLin = this.dB2lin(makeup)
+        const makeUpLin = utils.dB2lin(makeup)
 
         /*  iterate over all channels  */
         for (let ch = 0; ch < nCh; ch++) {
             const levelDB = linkStereo ? linkedLevelDB : detLevelsDB[ch]
             const gainDB  = this.gainDBFor(levelDB, thrDB, ratio, kneeDB)
-            let gainLin = this.dB2lin(gainDB) * makeUpLin
+            let gainLin = utils.dB2lin(gainDB) * makeUpLin
 
             /*  expander decision: attenuate below gate threshold  */
             const expectedOutLevelDB = levelDB + gainDB + makeup
             if (expectedOutLevelDB < gateDB) {
                 const neededLiftDB = gateDB - expectedOutLevelDB
-                gainLin /= this.dB2lin(neededLiftDB)
+                gainLin /= utils.dB2lin(neededLiftDB)
             }
 
             /*  apply gain change to channel  */
