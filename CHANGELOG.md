@@ -17,6 +17,7 @@ ChangeLog
 - IMPROVEMENT: add "expander" audio node
 - IMPROVEMENT: add "gain" audio node
 - IMPROVEMENT: add "filler" audio node
+- IMPROVEMENT: add CLI option for exporting dashboard info via OSC
 
 1.4.5 (2025-08-07)
 ------------------

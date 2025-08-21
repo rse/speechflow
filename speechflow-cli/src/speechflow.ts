@@ -15,6 +15,7 @@ import Inert             from "@hapi/inert"
 import WebSocket         from "ws"
 import HAPIWebSocket     from "hapi-plugin-websocket"
 import HAPIHeader        from "hapi-plugin-header"
+import OSC               from "osc-js"
 
 /*  external dependencies  */
 import { DateTime }      from "luxon"
@@ -70,6 +71,7 @@ let debug = false
             "[-p|--port <tcp-port>] " +
             "[-C|--cache <directory>] " +
             "[-d|--dashboard <type>:<id>:<name>[,...]] " +
+            "[-o|--osc <ip-address>:<udp-port> " +
             "[-e|--expression <expression>] " +
             "[-f|--file <file>] " +
             "[-c|--config <id>@<yaml-config-file>] " +
@@ -136,6 +138,15 @@ let debug = false
             nargs:    1,
             default:  "",
             describe: "list of dashboard block types and names"
+        })
+        .option("o", {
+            alias:    "osc",
+            type:     "string",
+            array:    false,
+            coerce,
+            nargs:    1,
+            default:  "",
+            describe: "OSC/UDP endpoint to send dashboard information"
         })
         .option("e", {
             alias:    "expression",
@@ -738,6 +749,21 @@ let debug = false
         })
     }
 
+    /*  establish OSC event emission  */
+    let sendOSC: (url: string, ...args: any[]) => void
+    if (args.o !== "") {
+        const osc = new OSC({ plugin: new OSC.DatagramPlugin({ type: "udp4" }) })
+        const m = args.o.match(/^(.+?):(\d+)$/)
+        if (m === null)
+            throw new Error("invalid OSC/UDP endpoint (expected <ip-adress>:<udp-port>)")
+        const host = m[1]
+        const port = m[2]
+        sendOSC = (url: string, ...args: any[]) => {
+            const msg = new OSC.Message(url, ...args)
+            osc.send(msg, { host, port })
+        }
+    }
+
     /*  hook for send-dashboard method of nodes  */
     for (const node of graphNodes) {
         node.on("send-dashboard", (info: {
@@ -764,6 +790,8 @@ let debug = false
                     cli!.log("warning", `sending dashboard info to node <${node.id}> failed: ${err.message}`)
                 })
             }
+            if (args.o !== "")
+                sendOSC("/speechflow/dashboard", info.type, info.id, info.kind, info.value)
         })
     }
 

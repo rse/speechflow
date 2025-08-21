@@ -59,6 +59,7 @@
         "@huggingface/transformers":            "3.7.2",
         "kokoro-js":                            "1.2.1",
         "@ericedouard/vad-node-realtime":       "0.2.0",
+        "osc-js":                               "2.4.1",
         "luxon":                                "3.7.1",
         "node-interval-tree":                   "2.1.2",
         "wrap-text":                            "1.0.10",
