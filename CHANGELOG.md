@@ -14,6 +14,7 @@ ChangeLog
 - IMPROVEMENT: add "awstranslate" text translation node
 - IMPROVEMENT: add "awspolly" test to speech generation node
 - IMPROVEMENT: add "openaitranscribe" speech to text node
+- IMPROVEMENT: add "expander" audio node
 
 1.4.5 (2025-08-07)
 ------------------

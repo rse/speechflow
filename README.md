@@ -34,6 +34,7 @@ local audio LUFS-S/RMS metering,
 local audio Speex noise suppression,
 local audio RNNoise noise suppression,
 local audio compressor processing,
+local audio expander processing,
 remote-controlable local audio muting,
 cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-text conversion,
 cloud-based [OpenAI GPT Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe) speech-to-text conversion,
@@ -299,6 +300,7 @@ First a short overview of the available processing nodes:
   **speex**,
   **rrnoise**,
   **compressor**.
+  **expander**.
 - Audio-to-Text nodes:
   **openaitranscribe**,
   **awstranscribe**,
@@ -555,7 +557,7 @@ The following nodes process audio chunks only.
   Example: `compressor(thresholdDb: -18)`
 
   > This node applies a dynamics compressor, i.e., it attenuates the
-  > volume by a certain ratio whenever the volume crosses the threshold.
+  > volume by a certain ratio whenever the volume is above the threshold.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -565,6 +567,27 @@ The following nodes process audio chunks only.
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
   | **thresholdDb** | *none* | -18 | `n <= 0 && n >= -60` |
+  | **ratio**       | *none* | 4   | `n >= 1 && n <= 20`  |
+  | **attackMs**    | *none* | 10  | `n >= 0 && n <= 100` |
+  | **releaseMs**   | *none* | 50  | `n >= 0 && n <= 100` |
+  | **kneeDb**      | *none* | 6   | `n >= 0 && n <= 100` |
+  | **makeupDb**    | *none* | 0   | `n >= 0 && n <= 100` |
+
+- Node: **expander**<br/>
+  Purpose: **audio expander node**<br/>
+  Example: `expander(thresholdDb: -46)`
+
+  > This node applies a dynamics expander, i.e., it attenuates the
+  > volume by a certain ratio whenever the volume is below the threshold.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **thresholdDb** | *none* | -45 | `n <= 0 && n >= -60` |
   | **ratio**       | *none* | 4   | `n >= 1 && n <= 20`  |
   | **attackMs**    | *none* | 10  | `n >= 0 && n <= 100` |
   | **releaseMs**   | *none* | 50  | `n >= 0 && n <= 100` |
