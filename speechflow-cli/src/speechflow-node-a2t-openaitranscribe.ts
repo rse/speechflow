@@ -58,7 +58,7 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
     async open () {
         /*  sanity check situation  */
         if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
-            throw new Error("Deepgram node currently supports PCM-S16LE audio only")
+            throw new Error("OpenAI transcribe node currently supports PCM-S16LE audio only")
 
         /*  clear destruction flag  */
         this.destroyed = false
@@ -97,7 +97,7 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
             this.ws?.send(JSON.stringify(obj))
         }
 
-        /*  wait for Deepgram API to be available  */
+        /*  wait for OpenAI API to be available  */
         await new Promise((resolve, reject) => {
             this.connectionTimeout = setTimeout(() => {
                 if (this.connectionTimeout !== null) {
@@ -112,6 +112,13 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
                     this.connectionTimeout = null
                 }
                 resolve(true)
+            })
+            this.ws!.once("error", (err) => {
+                if (this.connectionTimeout !== null) {
+                    clearTimeout(this.connectionTimeout)
+                    this.connectionTimeout = null
+                }
+                reject(err)
             })
         })
 
@@ -204,7 +211,7 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
         /*  remember opening time to receive time zero offset  */
         this.timeOpen = DateTime.now()
 
-        /*  provide Duplex stream and internally attach to Deepgram API  */
+        /*  provide Duplex stream and internally attach to OpenAI API  */
         const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
@@ -286,6 +293,12 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
     async close () {
         /*  indicate destruction first to stop all async operations  */
         this.destroyed = true
+
+        /*  clear connection timeout  */
+        if (this.connectionTimeout !== null) {
+            clearTimeout(this.connectionTimeout)
+            this.connectionTimeout = null
+        }
 
         /*  signal EOF to any pending read operations  */
         if (this.queue !== null) {
