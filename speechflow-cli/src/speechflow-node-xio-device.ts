@@ -198,19 +198,13 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         /*  shutdown PortAudio  */
         if (this.io !== null) {
             await new Promise<void>((resolve, reject) => {
-                this.io!.abort((err?: Error) => {
-                    if (err)
-                        reject(err)
-                    else
-                        resolve()
+                this.io!.abort(() => {
+                    resolve()
                 })
             })
             await new Promise<void>((resolve, reject) => {
-                this.io!.quit((err?: Error) => {
-                    if (err)
-                        reject(err)
-                    else
-                        resolve()
+                this.io!.quit(() => {
+                    resolve()
                 })
             })
             this.io = null
