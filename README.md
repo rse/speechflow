@@ -36,6 +36,7 @@ local audio RNNoise noise suppression,
 local audio compressor processing,
 remote-controlable local audio muting,
 cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-text conversion,
+cloud-based [OpenAI GPT Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe) speech-to-text conversion,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
 cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
 cloud-based [Amazon Polly](https://aws.amazon.com/polly/) text-to-speech conversion,
@@ -299,6 +300,7 @@ First a short overview of the available processing nodes:
   **rrnoise**,
   **compressor**.
 - Audio-to-Text nodes:
+  **openaitranscribe**,
   **awstranscribe**,
   **deepgram**.
 - Text-to-Text nodes:
@@ -573,14 +575,36 @@ The following nodes process audio chunks only.
 
 The following nodes convert audio to text chunks.
 
+- Node: **openaitranscribe**<br/>
+  Purpose: **OpenAI/GPT Speech-to-Text conversion**<br/>
+  Example: `openaitranscribe(language: "de")`<br/>
+  Notice: this node requires an OpenAI API key!
+
+  > This node uses OpenAI GPT to perform Speech-to-Text (S2T)
+  > conversion, i.e., it recognizes speech in the input audio stream and
+  > outputs a corresponding text stream.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **key**      | *none*    | env.SPEECHFLOW\_OPENAI\_KEY | *none* |
+  | **api**      | *none*    | "https://api.openai.com" | `/^https?:\/\/.+?:\d+$/` |
+  | **model**    | *none*    | "gpt-4o-mini-transcribe" | *none* |
+  | **language** | *none*    | "en"     | `/^(?:de\|en)$/` |
+  | **interim**  | *none*    | false    | *none* |
+
 - Node: **awstranscribe**<br/>
   Purpose: **Amazon Transcribe Speech-to-Text conversion**<br/>
   Example: `awstranscribe(language: "de")`<br/>
   Notice: this node requires an API key!
 
-  > This node performs Speech-to-Text (S2T) conversion, i.e., it
-  > recognizes speech in the input audio stream and outputs a
-  > corresponding text stream.
+  > This node uses Amazon Trancribe to perform Speech-to-Text (S2T)
+  > conversion, i.e., it recognizes speech in the input audio stream and
+  > outputs a corresponding text stream.
 
   | Port    | Payload     |
   | ------- | ----------- |
