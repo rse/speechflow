@@ -38,6 +38,7 @@ remote-controlable local audio muting,
 cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-text conversion,
 cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
 cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
+cloud-based [Amazon Polly](https://aws.amazon.com/polly/) text-to-speech conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
 cloud-based [Amazon Translate](https://aws.amazon.com/translate/) text-to-text translation,
 cloud-based [OpenAI/GPT](https://openai.com) text-to-text translation (or spelling correction),
@@ -309,7 +310,9 @@ First a short overview of the available processing nodes:
   **subtitle**,
   **format**.
 - Text-to-Audio nodes:
+  **awspolly**.
   **elevenlabs**.
+  **kokoro**.
 - Any-to-Any nodes:
   **filter**,
   **trace**.
@@ -776,14 +779,36 @@ The following nodes process text chunks only.
 
 The following nodes convert text chunks to audio chunks.
 
+- Node: **awspolly**<br/>
+  Purpose: **Amazon Polly Text-to-Speech conversion**<br/>
+  Example: `awspolly(language: "en", voice: "Danielle)`<br/>
+  Notice: this node requires an Amazon API key!
+
+  > This node uses Amazon Polly to perform Text-to-Speech (T2S)
+  > conversion, i.e., it converts the input text stream into an output
+  > audio stream. It is intended to generate speech.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | audio       |
+
+  | Parameter      | Position  | Default   | Requirement        |
+  | -------------- | --------- | --------- | ------------------ |
+  | **key**        | *none*    | env.SPEECHFLOW\_AMAZON\_KEY | *none* |
+  | **secKey**     | *none*    | env.SPEECHFLOW\_AMAZON\_KEY\_SEC | *none* |
+  | **region**     | *none*    | "eu-central-1" | *none* |
+  | **voice**      | 0         | "Amy"     | `^(?:Amy|Danielle|Joanna|Matthew|Ruth|Stephen|Viki|Daniel)$/` |
+  | **language**   | 1         | "en"      | `/^(?:de\|en)$/`  |
+
 - Node: **elevenlabs**<br/>
   Purpose: **ElevenLabs Text-to-Speech conversion**<br/>
   Example: `elevenlabs(language: "en")`<br/>
   Notice: this node requires an ElevenLabs API key!
 
-  > This node perform Text-to-Speech (T2S) conversion, i.e., it converts
-  > the input text stream into an output audio stream. It is intended to
-  > generate speech.
+  > This node uses ElevenLabs to perform Text-to-Speech (T2S)
+  > conversion, i.e., it converts the input text stream into an output
+  > audio stream. It is intended to generate speech.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -805,9 +830,9 @@ The following nodes convert text chunks to audio chunks.
   Example: `kokoro(language: "en")`<br/>
   Notice: this currently support English language only!
 
-  > This node perform Text-to-Speech (T2S) conversion, i.e., it converts
-  > the input text stream into an output audio stream. It is intended to
-  > generate speech.
+  > This node uses Kokoro to perform Text-to-Speech (T2S) conversion,
+  > i.e., it converts the input text stream into an output audio stream.
+  > It is intended to generate speech.
 
   | Port    | Payload     |
   | ------- | ----------- |

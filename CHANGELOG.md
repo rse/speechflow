@@ -12,6 +12,7 @@ ChangeLog
 - IMPROVEMENT: add "amazon" speech to text node
 - IMPROVEMENT: add "compressor" audio processing node
 - IMPROVEMENT: add "awstranslate" text translation node
+- IMPROVEMENT: add "awspolly" test to speech generation node
 
 1.4.5 (2025-08-07)
 ------------------

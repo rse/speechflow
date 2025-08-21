@@ -279,6 +279,7 @@ let debug = false
         "./speechflow-node-a2a-wav.js",
         "./speechflow-node-a2t-amazon.js",
         "./speechflow-node-a2t-deepgram.js",
+        "./speechflow-node-t2a-awspolly.js",
         "./speechflow-node-t2a-elevenlabs.js",
         "./speechflow-node-t2a-kokoro.js",
         "./speechflow-node-t2t-awstranslate.js",
