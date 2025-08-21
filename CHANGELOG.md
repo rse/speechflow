@@ -16,6 +16,7 @@ ChangeLog
 - IMPROVEMENT: add "openaitranscribe" speech to text node
 - IMPROVEMENT: add "expander" audio node
 - IMPROVEMENT: add "gain" audio node
+- IMPROVEMENT: add "filler" audio node
 
 1.4.5 (2025-08-07)
 ------------------

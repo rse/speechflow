@@ -36,6 +36,7 @@ local audio RNNoise noise suppression,
 local audio compressor processing,
 local audio expander processing,
 local audio gain processing,
+local audio filler processing,
 remote-controlable local audio muting,
 cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-text conversion,
 cloud-based [OpenAI GPT Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe) speech-to-text conversion,
@@ -300,9 +301,10 @@ First a short overview of the available processing nodes:
   **gender**,
   **speex**,
   **rrnoise**,
-  **compressor**.
-  **expander**.
-  **gain**.
+  **compressor**,
+  **expander**,
+  **gain**,
+  **filler**.
 - Audio-to-Text nodes:
   **openaitranscribe**,
   **awstranscribe**,
@@ -611,6 +613,22 @@ The following nodes process audio chunks only.
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
   | **db** | *none* | 12 | `n >= -60 && n <= -60` |
+
+- Node: **filler**<br/>
+  Purpose: **audio filler node**<br/>
+  Example: `filler()`
+
+  > This node adds missing audio frames of silence in order to fill
+  > the chronological gaps between generated audio frames (from
+  > text-to-speech).
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
 
 ### Audio-to-Text Nodes
 
