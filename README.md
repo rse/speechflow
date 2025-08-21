@@ -35,6 +35,7 @@ local audio Speex noise suppression,
 local audio RNNoise noise suppression,
 local audio compressor processing,
 local audio expander processing,
+local audio gain processing,
 remote-controlable local audio muting,
 cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-text conversion,
 cloud-based [OpenAI GPT Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe) speech-to-text conversion,
@@ -301,6 +302,7 @@ First a short overview of the available processing nodes:
   **rrnoise**,
   **compressor**.
   **expander**.
+  **gain**.
 - Audio-to-Text nodes:
   **openaitranscribe**,
   **awstranscribe**,
@@ -593,6 +595,22 @@ The following nodes process audio chunks only.
   | **releaseMs**   | *none* | 50  | `n >= 0 && n <= 100` |
   | **kneeDb**      | *none* | 6   | `n >= 0 && n <= 100` |
   | **makeupDb**    | *none* | 0   | `n >= 0 && n <= 100` |
+
+- Node: **gain**<br/>
+  Purpose: **audio gain adjustment node**<br/>
+  Example: `gain(db: 12)`
+
+  > This node applies a gain adjustment to audio, i.e., it increases or
+  > decreases the volume by certain decibels
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default  | Requirement              |
+  | ----------- | --------- | -------- | ------------------------ |
+  | **db** | *none* | 12 | `n >= -60 && n <= -60` |
 
 ### Audio-to-Text Nodes
 

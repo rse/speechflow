@@ -269,6 +269,7 @@ let debug = false
     const pkgsI = [
         "./speechflow-node-a2a-compressor.js",
         "./speechflow-node-a2a-expander.js",
+        "./speechflow-node-a2a-gain.js",
         "./speechflow-node-a2a-ffmpeg.js",
         "./speechflow-node-a2a-gender.js",
         "./speechflow-node-a2a-meter.js",
