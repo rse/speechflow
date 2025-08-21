@@ -31,6 +31,7 @@
         "@shiguredo/rnnoise-wasm":              "2025.1.5",
         "@aws-sdk/client-transcribe-streaming": "3.872.0",
         "@aws-sdk/client-translate":            "3.872.0",
+        "@aws-sdk/client-polly":                "3.872.0",
         "node-web-audio-api":                   "1.0.4",
         "object-path":                          "0.11.8",
         "ws":                                   "8.18.3",
