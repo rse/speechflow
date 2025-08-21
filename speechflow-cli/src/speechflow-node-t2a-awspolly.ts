@@ -133,21 +133,21 @@ export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
                 }
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
-                else {
-                    if (chunk.payload.length > 0) {
-                        self.log("debug", `send data (${chunk.payload.length} bytes): "${chunk.payload}"`)
-                        textToSpeech(chunk.payload as string).then((buffer) => {
-                            const chunkNew = chunk.clone()
-                            chunkNew.type = "audio"
-                            chunkNew.payload = buffer
-                            this.push(chunkNew)
-                            callback()
-                        }).catch((error) => {
-                            callback(error instanceof Error ?
-                                error : new Error("failed to send to AWS Polly"))
-                        })
-                    }
+                else if (chunk.payload.length > 0) {
+                    self.log("debug", `send data (${chunk.payload.length} bytes): "${chunk.payload}"`)
+                    textToSpeech(chunk.payload as string).then((buffer) => {
+                        const chunkNew = chunk.clone()
+                        chunkNew.type = "audio"
+                        chunkNew.payload = buffer
+                        this.push(chunkNew)
+                        callback()
+                    }).catch((error) => {
+                        callback(error instanceof Error ?
+                            error : new Error("failed to send to AWS Polly"))
+                    })
                 }
+                else
+                    callback()
             },
             final (callback) {
                 if (self.destroyed) {

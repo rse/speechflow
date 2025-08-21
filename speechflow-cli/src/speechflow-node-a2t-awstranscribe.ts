@@ -186,7 +186,7 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
                         }
                         metastore.prune(tsStart)
                         const chunk = new SpeechFlowChunk(tsStart, tsEnd, kind, "text", text, meta)
-                        this.queue!.write(chunk)
+                        this.queue?.write(chunk)
                     }
                 }
             })().catch((err: Error) => {

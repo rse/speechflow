@@ -66,7 +66,7 @@ export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
             }
         })
         if (this.client === null)
-            throw new Error("failed to establish Amazon Transcribe client")
+            throw new Error("failed to establish Amazon Translate client")
 
         /*  provide text-to-text translation  */
         const maxRetries = 10
@@ -104,7 +104,7 @@ export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
             throw lastError instanceof Error ? lastError : new Error(String(lastError))
         }
 
-        /*  establish a duplex stream and connect it to DeepL translation  */
+        /*  establish a duplex stream and connect it to AWS Translate  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
