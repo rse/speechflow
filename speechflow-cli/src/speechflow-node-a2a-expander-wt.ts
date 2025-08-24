@@ -21,8 +21,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
             { name: "attack",     defaultValue: 0.010, minValue: 0.0005, maxValue: 1,   automationRate: "k-rate" }, // seconds
             { name: "release",    defaultValue: 0.050, minValue: 0.005,  maxValue: 2,   automationRate: "k-rate" }, // seconds
             { name: "knee",       defaultValue: 6.0,   minValue: 0.0,    maxValue: 40,  automationRate: "k-rate" }, // dB
-            { name: "makeup",     defaultValue: 0.0,   minValue: -24,    maxValue: 24,  automationRate: "k-rate" }, // dB
-            { name: "stereoLink", defaultValue: 1.0,   minValue: 0.0,    maxValue: 1.0, automationRate: "k-rate" }, // 0=dual mono, 1=linked
+            { name: "makeup",     defaultValue: 0.0,   minValue: -24,    maxValue: 24,  automationRate: "k-rate" }  // dB
         ]
     }
 
@@ -120,26 +119,17 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         const attackS     = Math.max(parameters["attack"][0],  1 / this.sampleRate)
         const releaseS    = Math.max(parameters["release"][0], 1 / this.sampleRate)
         const makeupDB    = parameters["makeup"][0]
-        const linkStereo  = parameters["stereoLink"][0] >= 0.5
 
         /*  update envelope per channel  */
         for (let ch = 0; ch < nCh; ch++)
             this.updateEnvelopeForChannel(ch, input[ch], attackS, releaseS)
-
-        /*  determine decibel levels  */
-        const detLevelsDB: number[] = new Array(nCh)
-        for (let ch = 0; ch < nCh; ch++)
-            detLevelsDB[ch] = utils.lin2dB(this.env[ch])
-
-        /*  for stereo linking, calculate maximum decibel  */
-        const linkedLevelDB = Math.max(...detLevelsDB)
 
         /*  determine linear value from decibel makeup value */
         const makeUpLin = utils.dB2lin(makeupDB)
 
         /*  iterate over all channels  */
         for (let ch = 0; ch < nCh; ch++) {
-            const levelDB = linkStereo ? linkedLevelDB : detLevelsDB[ch]
+            const levelDB = utils.lin2dB(this.env[ch])
             const gainDB  = this.gainDBFor(levelDB, thresholdDB, ratio, kneeDB)
             let gainLin = utils.dB2lin(gainDB) * makeUpLin
 
