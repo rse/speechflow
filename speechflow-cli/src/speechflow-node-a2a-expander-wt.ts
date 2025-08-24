@@ -16,7 +16,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
     static get parameterDescriptors(): AudioParamDescriptor[] {
         return [
             { name: "threshold",  defaultValue: -45,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS
-            { name: "gateFloor",  defaultValue: -60,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS minimum output level
+            { name: "floor",      defaultValue: -64,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS minimum output level
             { name: "ratio",      defaultValue: 4.0,   minValue: 1.0,    maxValue: 20,  automationRate: "k-rate" }, // expansion ratio
             { name: "attack",     defaultValue: 0.010, minValue: 0.0005, maxValue: 1,   automationRate: "k-rate" }, // seconds
             { name: "release",    defaultValue: 0.050, minValue: 0.005,  maxValue: 2,   automationRate: "k-rate" }, // seconds
@@ -34,15 +34,15 @@ class ExpanderProcessor extends AudioWorkletProcessor {
     }
 
     /*  determine gain difference (downward expansion)  */
-    private gainDBFor (levelDB: number, thrDB: number, ratio: number, kneeDB: number): number {
+    private gainDBFor (levelDB: number, thresholdDB: number, ratio: number, kneeDB: number): number {
         /*  short-circuit for unreasonable ratio  */
         if (ratio <= 1.0)
             return 0
 
         /*  determine thresholds  */
         const halfKnee  = kneeDB * 0.5
-        const belowKnee = levelDB < (thrDB - halfKnee)
-        const aboveThr  = levelDB >= thrDB
+        const belowKnee = levelDB < (thresholdDB - halfKnee)
+        const aboveThr  = levelDB >= thresholdDB
 
         /*  short-circuit for no expansion (above threshold)  */
         if (aboveThr)
@@ -50,13 +50,13 @@ class ExpanderProcessor extends AudioWorkletProcessor {
 
         /*  apply soft-knee  */
         if (kneeDB > 0 && !belowKnee) {
-            const x = (levelDB - (thrDB - halfKnee)) / kneeDB
-            const idealGainDB = (thrDB + (levelDB - thrDB) * ratio) - levelDB
+            const x = (levelDB - (thresholdDB - halfKnee)) / kneeDB
+            const idealGainDB = (thresholdDB + (levelDB - thresholdDB) * ratio) - levelDB
             return idealGainDB * x * x
         }
 
         /*  determine target level  */
-        const targetOut = thrDB + (levelDB - thrDB) / ratio
+        const targetOut = thresholdDB + (levelDB - thresholdDB) / ratio
 
         /*  return gain difference  */
         return targetOut - levelDB
@@ -113,14 +113,14 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         }
 
         /*  fetch parameters  */
-        const thrDB      = parameters["threshold"][0]
-        const ratio      = parameters["ratio"][0]
-        const kneeDB     = parameters["knee"][0]
-        const attackS    = Math.max(parameters["attack"][0],  1 / this.sampleRate)
-        const releaseS   = Math.max(parameters["release"][0], 1 / this.sampleRate)
-        const makeup     = parameters["makeup"][0]
-        const gateDB     = parameters["gateFloor"][0]
-        const linkStereo = parameters["stereoLink"][0] >= 0.5
+        const thresholdDB = parameters["threshold"][0]
+        const floorDB     = parameters["floor"][0]
+        const ratio       = parameters["ratio"][0]
+        const kneeDB      = parameters["knee"][0]
+        const attackS     = Math.max(parameters["attack"][0],  1 / this.sampleRate)
+        const releaseS    = Math.max(parameters["release"][0], 1 / this.sampleRate)
+        const makeupDB    = parameters["makeup"][0]
+        const linkStereo  = parameters["stereoLink"][0] >= 0.5
 
         /*  update envelope per channel  */
         for (let ch = 0; ch < nCh; ch++)
@@ -135,18 +135,18 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         const linkedLevelDB = Math.max(...detLevelsDB)
 
         /*  determine linear value from decibel makeup value */
-        const makeUpLin = utils.dB2lin(makeup)
+        const makeUpLin = utils.dB2lin(makeupDB)
 
         /*  iterate over all channels  */
         for (let ch = 0; ch < nCh; ch++) {
             const levelDB = linkStereo ? linkedLevelDB : detLevelsDB[ch]
-            const gainDB  = this.gainDBFor(levelDB, thrDB, ratio, kneeDB)
+            const gainDB  = this.gainDBFor(levelDB, thresholdDB, ratio, kneeDB)
             let gainLin = utils.dB2lin(gainDB) * makeUpLin
 
-            /*  expander decision: attenuate below gate threshold  */
-            const expectedOutLevelDB = levelDB + gainDB + makeup
-            if (expectedOutLevelDB < gateDB) {
-                const neededLiftDB = gateDB - expectedOutLevelDB
+            /*  do not attenuate below floor  */
+            const expectedOutLevelDB = levelDB + gainDB + makeupDB
+            if (expectedOutLevelDB < floorDB) {
+                const neededLiftDB = floorDB - expectedOutLevelDB
                 gainLin /= utils.dB2lin(neededLiftDB)
             }
 
