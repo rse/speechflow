@@ -18,8 +18,8 @@ class ExpanderProcessor extends AudioWorkletProcessor {
             { name: "threshold",  defaultValue: -45,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS
             { name: "floor",      defaultValue: -64,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS minimum output level
             { name: "ratio",      defaultValue: 4.0,   minValue: 1.0,    maxValue: 20,  automationRate: "k-rate" }, // expansion ratio
-            { name: "attack",     defaultValue: 0.010, minValue: 0.0005, maxValue: 1,   automationRate: "k-rate" }, // seconds
-            { name: "release",    defaultValue: 0.050, minValue: 0.005,  maxValue: 2,   automationRate: "k-rate" }, // seconds
+            { name: "attack",     defaultValue: 0.010, minValue: 0.0,    maxValue: 1,   automationRate: "k-rate" }, // seconds
+            { name: "release",    defaultValue: 0.050, minValue: 0.0,    maxValue: 1,   automationRate: "k-rate" }, // seconds
             { name: "knee",       defaultValue: 6.0,   minValue: 0.0,    maxValue: 40,  automationRate: "k-rate" }, // dB
             { name: "makeup",     defaultValue: 0.0,   minValue: -24,    maxValue: 24,  automationRate: "k-rate" }  // dB
         ]
