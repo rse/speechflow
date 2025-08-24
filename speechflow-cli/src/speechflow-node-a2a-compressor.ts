@@ -52,10 +52,10 @@ class AudioCompressor extends WebAudio {
         /*  store configuration  */
         this.config = {
             thresholdDb: config.thresholdDb ?? -23,
-            ratio:       config.ratio       ?? 4,
-            attackMs:    config.attackMs    ?? 3,
-            releaseMs:   config.releaseMs   ?? 250,
-            kneeDb:      config.kneeDb      ?? 9,
+            ratio:       config.ratio       ?? 4.0,
+            attackMs:    config.attackMs    ?? 10,
+            releaseMs:   config.releaseMs   ?? 50,
+            kneeDb:      config.kneeDb      ?? 6.0,
             makeupDb:    config.makeupDb    ?? 0
         }
     }
@@ -152,11 +152,11 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
             mode:        { type: "string", val: "compress",   match: /^(?:compress|measure|adjust)$/ },
             bus:         { type: "string", val: "compressor", match: /^.+$/ },
             thresholdDb: { type: "number", val: -23, match: (n: number) => n <= 0 && n >= -100 },
-            ratio:       { type: "number", val: 4,   match: (n: number) => n >= 1 && n <= 20   },
-            attackMs:    { type: "number", val: 3,   match: (n: number) => n >= 0 && n <= 1000 },
-            releaseMs:   { type: "number", val: 250, match: (n: number) => n >= 0 && n <= 1000 },
-            kneeDb:      { type: "number", val: 9,   match: (n: number) => n >= 0 && n <= 40   },
-            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 100  }
+            ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1 && n <= 20   },
+            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0 && n <= 1000 },
+            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0 && n <= 1000 },
+            kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0 && n <= 40   },
+            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 40   }
         })
 
         /*  sanity check mode and role  */
