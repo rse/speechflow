@@ -74,7 +74,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
             this.env[chan] = 1e-12
         let env = this.env[chan]
 
-        /*  calculate alpha/release alpha values  */
+        /*  calculate attack/release alpha values  */
         const alphaA = Math.exp(-1 / (attack  * this.sampleRate))
         const alphaR = Math.exp(-1 / (release * this.sampleRate))
 
