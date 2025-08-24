@@ -112,13 +112,13 @@ export default class SpeechFlowNodeExpander extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            thresholdDb: { type: "number", val: -45, match: (n: number) => n <= 0 && n >= -100 },
-            floorDB:     { type: "number", val: -64, match: (n: number) => n <= 0 && n >= -100 },
-            ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1 && n <= 20   },
-            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0 && n <= 1000 },
-            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0 && n <= 1000 },
-            kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0 && n <= 40   },
-            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 40   }
+            thresholdDb: { type: "number", val: -45, match: (n: number) => n <= 0   && n >= -100 },
+            floorDB:     { type: "number", val: -64, match: (n: number) => n <= 0   && n >= -100 },
+            ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1   && n <= 20   },
+            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0   && n <= 1000 },
+            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0   && n <= 1000 },
+            kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0   && n <= 40   },
+            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= -24 && n <= 24   }
         })
 
         /*  declare node input/output format  */
