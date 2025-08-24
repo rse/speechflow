@@ -71,19 +71,12 @@ class AudioExpander extends WebAudio {
         /*  configure expander node  */
         const currentTime = this.audioContext.currentTime
         const node = this.expanderNode as any
-        console.log("FUCK1")
         node.threshold.setValueAtTime(this.config.thresholdDb, currentTime)
-        console.log("FUCK2")
         node.ratio.setValueAtTime(this.config.ratio, currentTime)
-        console.log("FUCK3")
         node.attack.setValueAtTime(this.config.attackMs / 1000, currentTime)
-        console.log("FUCK4")
         node.release.setValueAtTime(this.config.releaseMs / 1000, currentTime)
-        console.log("FUCK5")
         node.knee.setValueAtTime(this.config.kneeDb, currentTime)
-        console.log("FUCK6")
         node.makeup.setValueAtTime(this.config.makeupDb, currentTime)
-        console.log("FUCK7")
 
         /*  connect nodes  */
         this.sourceNode!.connect(this.expanderNode)
@@ -116,12 +109,12 @@ export default class SpeechFlowNodeExpander extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            thresholdDb: { type: "number", val: -45, match: (n: number) => n <= 0 && n >= -60 },
-            ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1 && n <= 20  },
-            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0 && n <= 100 },
-            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0 && n <= 100 },
-            kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0 && n <= 100 },
-            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 100 }
+            thresholdDb: { type: "number", val: -45, match: (n: number) => n <= 0 && n >= -60  },
+            ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1 && n <= 20   },
+            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0 && n <= 1000 },
+            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0 && n <= 1000 },
+            kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0 && n <= 40   },
+            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 40   }
         })
 
         /*  declare node input/output format  */
