@@ -66,7 +66,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
             this.server = new ws.WebSocketServer({
                 host: url.hostname,
-                port: Number.parseInt(url.port),
+                port: Number.parseInt(url.port, 10),
                 path: url.pathname
             })
             this.server.on("listening", () => {
