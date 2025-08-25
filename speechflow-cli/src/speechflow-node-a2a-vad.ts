@@ -205,7 +205,7 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         if ((chunks * chunkSize) < data.length) {
                             const frame = new Float32Array(chunkSize)
                             frame.fill(0)
-                            frame.set(data.slice(chunks * chunkSize, data.length))
+                            frame.set(data.slice(chunks * chunkSize))
                             const segment: AudioQueueElementSegment = { data: frame }
                             segmentData.push(segment)
                         }

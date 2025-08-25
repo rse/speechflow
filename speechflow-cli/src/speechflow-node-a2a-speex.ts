@@ -91,6 +91,8 @@ export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
                         /*  forward updated chunk  */
                         this.push(chunk)
                         callback()
+                    }).catch((err: Error) => {
+                        self.log("warning", `processing of chunk failed: ${err}`)
                     })
                 }
             },
