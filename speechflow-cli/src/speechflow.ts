@@ -667,8 +667,7 @@ let debug = false
     hapi.route({
         method: "GET",
         path:   "/api/{req}/{node}/{params*}",
-        options: {
-        },
+        options: {},
         handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
             const peer = request.info.remoteAddress
             const params = request.params.params as string ?? ""

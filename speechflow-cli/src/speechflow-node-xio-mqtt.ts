@@ -110,6 +110,7 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
         const topicWrite = this.params.topicWrite
         const type       = this.params.type
         const mode       = this.params.mode
+        const self       = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -137,6 +138,8 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
                     throw new Error("read operation on write-only node")
                 chunkQueue.read().then((chunk) => {
                     this.push(chunk, "binary")
+                }).catch((err: Error) => {
+                    self.log("warning", `read on chunk queue operation failed: ${err}`)
                 })
             }
         })

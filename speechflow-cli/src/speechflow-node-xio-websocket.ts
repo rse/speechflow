@@ -110,6 +110,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             })
             const type = this.params.type
             const mode = this.params.mode
+            const self = this
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
                 readableObjectMode: true,
@@ -148,6 +149,8 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                         throw new Error("read operation on write-only node")
                     chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
+                    }).catch((err: Error) => {
+                        self.log("warning", `read on chunk queue operation failed: ${err}`)
                     })
                 }
             })
@@ -192,6 +195,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             client.binaryType = "arraybuffer"
             const type = this.params.type
             const mode = this.params.mode
+            const self = this
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
                 readableObjectMode: true,
@@ -215,6 +219,8 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                         throw new Error("read operation on write-only node")
                     chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
+                    }).catch((err: Error) => {
+                        self.log("warning", `read on chunk queue operation failed: ${err}`)
                     })
                 }
             })

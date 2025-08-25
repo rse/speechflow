@@ -88,7 +88,7 @@ export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
         if (voiceConfig === undefined)
             throw new Error("unsupported voice")
         if (voiceConfig.language !== this.params.language)
-            throw new Error(`voice does only support language \"${voiceConfig.language}\"`)
+            throw new Error(`voice does only support language "${voiceConfig.language}"`)
 
         /*  perform text-to-speech operation with AWS Polly API  */
         const textToSpeech = async (text: string) => {

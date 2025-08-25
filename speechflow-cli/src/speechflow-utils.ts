@@ -10,7 +10,7 @@ import { EventEmitter }       from "node:events"
 
 /*  external dependencies  */
 import { DateTime, Duration } from "luxon"
-import CBOR                   from "cbor2"
+import * as CBOR              from "cbor2"
 import * as IntervalTree      from "node-interval-tree"
 
 /*  internal dependencies  */
