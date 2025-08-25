@@ -32,7 +32,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         this.sampleRate = sampleRate as number
     }
 
-    /*  determine gain difference (downward expansion)  */
+    /*  determine gain difference  */
     private gainDBFor (levelDB: number, thresholdDB: number, ratio: number, kneeDB: number): number {
         /*  short-circuit for unreasonable ratio  */
         if (ratio <= 1.0)
