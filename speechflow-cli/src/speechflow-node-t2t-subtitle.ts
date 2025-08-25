@@ -222,9 +222,8 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
                         }
                     }
                 },
-                handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
-                    return h.response({}).code(204)
-                }
+                handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) =>
+                    h.response({}).code(204)
             })
 
             await this.hapi.start()
