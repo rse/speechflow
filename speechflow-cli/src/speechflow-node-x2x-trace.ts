@@ -48,6 +48,18 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 this.log(level, msg)
         }
 
+        /*  helper functions for formatting  */
+        const fmtTime = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
+        const fmtMeta = (meta: Map<string, any>) => {
+            if (meta.size === 0)
+                return "none"
+            else
+                return `{ ${Array.from(meta.entries())
+                    .map(([ k, v ]) => `${k}: ${JSON.stringify(v)}`)
+                    .join(", ")
+                } }`
+        }
+
         /*  provide Transform stream  */
         const self = this
         this.stream = new Stream.Transform({
@@ -57,16 +69,6 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 let error: Error | undefined
-                const fmtTime = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
-                const fmtMeta = (meta: Map<string, any>) => {
-                    if (meta.size === 0)
-                        return "none"
-                    else
-                        return `{ ${Array.from(meta.entries())
-                            .map(([ k, v ]) => `${k}: ${JSON.stringify(v)}`)
-                            .join(", ")
-                        } }`
-                }
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (self.params.type === "audio")
                         log("debug", `chunk: type=${chunk.type} ` +
