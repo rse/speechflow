@@ -70,16 +70,14 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         for (const device of devices)
             this.log("info", `found audio device "${device.name}" ` +
                 `(inputs: ${device.maxInputChannels}, outputs: ${device.maxOutputChannels}`)
-        const device = devices.find((device) => {
-            return (
-                (   (   mode === "r"   && device.maxInputChannels  > 0)
-                    || (mode === "w"   && device.maxOutputChannels > 0)
-                    || (mode === "rw"  && device.maxInputChannels  > 0 && device.maxOutputChannels > 0)
-                    || (mode === "any" && (device.maxInputChannels > 0 || device.maxOutputChannels > 0)))
-                && device.name.match(name)
-                && device.hostAPIName === api.name
-            )
-        })
+        const device = devices.find((device) => (
+            (   (   mode === "r"   && device.maxInputChannels  > 0)
+                || (mode === "w"   && device.maxOutputChannels > 0)
+                || (mode === "rw"  && device.maxInputChannels  > 0 && device.maxOutputChannels > 0)
+                || (mode === "any" && (device.maxInputChannels > 0 || device.maxOutputChannels > 0)))
+            && device.name.match(name)
+            && device.hostAPIName === api.name
+        ))
         if (!device)
             throw new Error(`invalid audio device "${name}" (of audio API type "${type}")`)
         return device

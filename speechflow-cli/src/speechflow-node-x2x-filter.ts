@@ -56,15 +56,14 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
             }
             else {
                 /*  non-equal comparison  */
-                const coerceNum = (val: any) => {
-                    return typeof val === "number" ? val : (
+                const coerceNum = (val: any) =>
+                    typeof val === "number" ? val : (
                         typeof val === "string" && val.match(/^[\d+-]+$/) ? parseInt(val) : (
                             typeof val === "string" && val.match(/^[\d.+-]+$/) ?
                                 parseFloat(val) :
                                 Number(val)
                         )
                     )
-                }
                 const num1 = coerceNum(val1)
                 const num2 = coerceNum(val2)
                 return (

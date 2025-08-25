@@ -680,11 +680,9 @@ let debug = false
                 args:    params.split("/").filter((seg) => seg !== "")
             }
             cli!.log("info", `HAPI: peer ${peer}: GET: ${JSON.stringify(req)}`)
-            return consumeExternalRequest(req).then(() => {
-                return h.response({ response: "OK" }).code(200)
-            }).catch((err) => {
-                return h.response({ response: "ERROR", data: err.message }).code(417)
-            })
+            return consumeExternalRequest(req)
+                .then(()     => h.response({ response: "OK" }).code(200))
+                .catch((err) => h.response({ response: "ERROR", data: err.message }).code(417))
         }
     })
     hapi.route({
@@ -727,11 +725,9 @@ let debug = false
             if (req instanceof arktype.type.errors)
                 return h.response({ response: "ERROR", data: `invalid request: ${req.summary}` }).code(417)
             cli!.log("info", `HAPI: peer ${peer}: POST: ${JSON.stringify(req)}`)
-            return consumeExternalRequest(req).then(() => {
-                return h.response({ response: "OK" }).code(200)
-            }).catch((err: Error) => {
-                return h.response({ response: "ERROR", data: err.message }).code(417)
-            })
+            return consumeExternalRequest(req)
+                .then(()            => h.response({ response: "OK" }).code(200))
+                .catch((err: Error) => h.response({ response: "ERROR", data: err.message }).code(417))
         }
     })
     await hapi.start()

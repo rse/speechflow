@@ -115,9 +115,9 @@ export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
                     const payload = utils.convertBufToI16(chunk.payload)
 
                     /*  process Int16Array in necessary segments  */
-                    utils.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
-                        return workerProcessSegment(segment)
-                    }).then((payload: Int16Array<ArrayBuffer>) => {
+                    utils.processInt16ArrayInSegments(payload, self.sampleSize, (segment) =>
+                        workerProcessSegment(segment)
+                    ).then((payload: Int16Array<ArrayBuffer>) => {
                         /*  convert Int16Array into Buffer  */
                         const buf = utils.convertI16ToBuf(payload)
 
