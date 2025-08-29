@@ -258,7 +258,7 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
         }
     }
 
-    /*  open node  */
+    /*  close node  */
     async close () {
         /*  close stream  */
         if (this.stream !== null) {
