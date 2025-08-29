@@ -5,19 +5,33 @@ ChangeLog
 1.4.6 (2025-08-xx)
 ------------------
 
-- UPGRADE: upgrade NPM dependencies
 - IMPROVEMENT: allow nodes to publish dashboard info to other nodes, too
 - IMPROVEMENT: add "speex" noise suppression node
 - IMPROVEMENT: add "rnnoise" noise suppression node
 - IMPROVEMENT: add "awstranscribe" speech to text node
-- IMPROVEMENT: add "compressor" audio processing node
+- IMPROVEMENT: add "compressor" audio processing node with sidechain functionality
 - IMPROVEMENT: add "awstranslate" text translation node
-- IMPROVEMENT: add "awspolly" test to speech generation node
+- IMPROVEMENT: add "awspolly" text to speech generation node
 - IMPROVEMENT: add "openaitranscribe" speech to text node
 - IMPROVEMENT: add "expander" audio node
 - IMPROVEMENT: add "gain" audio node
 - IMPROVEMENT: add "filler" audio node
 - IMPROVEMENT: add CLI option for exporting dashboard info via OSC
+- IMPROVEMENT: provide access bus functionality for nodes
+- IMPROVEMENT: add improved dashboard infrastructure
+- BUGFIX: fix usage of AudioIO quit and abort methods
+- UPDATE: upgrade NPM dependencies
+- UPDATE: update OxLint rules and configuration
+- UPDATE: use newer FlowLink
+- CLEANUP: cleanup code in various modules
+- CLEANUP: cleanup expander node implementation
+- CLEANUP: remove stereoLink feature from expander
+- CLEANUP: align parameters with expander
+- CLEANUP: document compressor, Amazon, and rnnoise nodes
+- CLEANUP: cleanup AWS nodes
+- CLEANUP: align outputs across nodes
+- CLEANUP: fix paths to linters and make linter happy
+- CLEANUP: general code cleanup
 
 1.4.5 (2025-08-07)
 ------------------
