@@ -115,7 +115,8 @@
         "switch-case-braces":                 "off",
         "prefer-event-target":                "off",
         "no-array-reduce":                    "off",
-        "no-rest-spread-properties":          "off"
+        "no-rest-spread-properties":          "off",
+        "always-return":                      "off"
     }
 }
 
