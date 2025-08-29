@@ -141,6 +141,7 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
     private destroyed = false
     private compressor: AudioCompressor | null = null
     private bus: EventEmitter | null = null
+    private intervalId: ReturnType<typeof setInterval> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -151,12 +152,12 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
             type:        { type: "string", val: "standalone", match: /^(?:standalone|sidechain)$/ },
             mode:        { type: "string", val: "compress",   match: /^(?:compress|measure|adjust)$/ },
             bus:         { type: "string", val: "compressor", match: /^.+$/ },
-            thresholdDb: { type: "number", val: -23, match: (n: number) => n <= 0 && n >= -100 },
-            ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1 && n <= 20   },
-            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0 && n <= 1000 },
-            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0 && n <= 1000 },
-            kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0 && n <= 40   },
-            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= 0 && n <= 40   }
+            thresholdDb: { type: "number", val: -23, match: (n: number) => n <= 0   && n >= -100 },
+            ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1   && n <= 20   },
+            attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0   && n <= 1000 },
+            releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0   && n <= 1000 },
+            kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0   && n <= 40   },
+            makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= -24 && n <= 24   }
         })
 
         /*  sanity check mode and role  */
@@ -193,9 +194,9 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
 
         /*  optionally establish sidechain processing  */
         if (this.params.type === "sidechain") {
-            this.bus = this.accessBus(`${this.params.bus}:${this.params.role}`)
+            this.bus = this.accessBus(this.params.bus)
             if (this.params.mode === "measure") {
-                setInterval(() => {
+                this.intervalId = setInterval(() => {
                     const decibel = this.compressor?.getGainReduction()
                     this.bus?.emit("sidechain-decibel", decibel)
                 }, 10)
@@ -252,6 +253,12 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
     async close () {
         /*  indicate destruction  */
         this.destroyed = true
+
+        /*  clear interval  */
+        if (this.intervalId !== null) {
+            clearInterval(this.intervalId)
+            this.intervalId = null
+        }
 
         /*  destroy bus  */
         if (this.bus !== null)
