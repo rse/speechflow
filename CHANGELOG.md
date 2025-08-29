@@ -7,19 +7,16 @@ ChangeLog
 
 - IMPROVEMENT: add improved dashboard infrastructure and allow nodes to publish dashboard info
 - IMPROVEMENT: add CLI option for exporting dashboard info via OSC
-- IMPROVEMENT: provide access bus functionality for nodes
-- IMPROVEMENT: add new audio processing nodes (compressor, expander, gain, filler)
+- IMPROVEMENT: add new audio processing nodes (compressor with sidechain, expander, gain, filler)
 - IMPROVEMENT: add AWS integration nodes (Polly, Translate, Transcribe)
 - IMPROVEMENT: add noise suppression nodes (rnnoise, speex)
-- IMPROVEMENT: provide audio helper utilities, improve types, and add helper functions
+- IMPROVEMENT: provide audio helper utilities, access bus functionality, and improve types
 - BUGFIX: fix usage of AudioIO quit and abort methods
 - UPDATE: upgrade NPM dependencies
 - UPDATE: update OxLint rules and configuration
-- UPDATE: use newer FlowLink
-- CLEANUP: consolidate and cleanup code
+- CLEANUP: consolidate and cleanup code throughout project
 - CLEANUP: cleanup expander node implementation and remove stereoLink feature
-- CLEANUP: cleanup AWS nodes and general code cleanup
-- CLEANUP: fix paths to linters and make linter happy
+- CLEANUP: cleanup AWS nodes and general code organization
 
 1.4.5 (2025-08-07)
 ------------------
