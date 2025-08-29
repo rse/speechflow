@@ -8,7 +8,7 @@
 import Stream     from "node:stream"
 
 /*  external dependencies  */
-import { Ollama } from "ollama"
+import { Ollama, type ListResponse } from "ollama"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -49,12 +49,12 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 "Focus ONLY on the word spelling.\n" +
                 "The text you have to correct is:\n",
             chat: [
-                { role: "user",   content: "I luve my wyfe" },
-                { role: "system", content: "I love my wife." },
-                { role: "user",   content: "The weether is wunderfull!" },
-                { role: "system", content: "The weather is wonderful!" },
-                { role: "user",   content: "The live awesome but I'm hungry." },
-                { role: "system", content: "The live is awesome, but I'm hungry." }
+                { role: "user",      content: "I luve my wyfe" },
+                { role: "assistant", content: "I love my wife." },
+                { role: "user",      content: "The weether is wunderfull!" },
+                { role: "assistant", content: "The weather is wonderful!" },
+                { role: "user",      content: "The live awesome but I'm hungry." },
+                { role: "assistant", content: "The live is awesome, but I'm hungry." }
             ]
         },
 
@@ -81,12 +81,12 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 "Fokussiere dich NUR auf die Rechtschreibung der Wörter.\n" +
                 "Der von dir zu korrigierende Text ist:\n",
             chat: [
-                { role: "user",   content: "Ich ljebe meine Frao" },
-                { role: "system", content: "Ich liebe meine Frau." },
-                { role: "user",   content: "Die Wedter ist wunderschoen." },
-                { role: "system", content: "Das Wetter ist wunderschön." },
-                { role: "user",   content: "Das Leben einfach großartig aber ich bin hungrig." },
-                { role: "system", content: "Das Leben ist einfach großartig, aber ich bin hungrig." }
+                { role: "user",      content: "Ich ljebe meine Frao" },
+                { role: "assistant", content: "Ich liebe meine Frau." },
+                { role: "user",      content: "Die Wedter ist wunderschoen." },
+                { role: "assistant", content: "Das Wetter ist wunderschön." },
+                { role: "user",      content: "Das Leben einfach großartig aber ich bin hungrig." },
+                { role: "assistant", content: "Das Leben ist einfach großartig, aber ich bin hungrig." }
             ]
         },
 
@@ -106,12 +106,12 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 "Preserve the original meaning, tone, and nuance.\n" +
                 "Directly translate text from English (EN) to fluent and natural German (DE) language.\n",
             chat: [
-                { role: "user",   content: "I love my wife." },
-                { role: "system", content: "Ich liebe meine Frau." },
-                { role: "user",   content: "The weather is wonderful." },
-                { role: "system", content: "Das Wetter ist wunderschön." },
-                { role: "user",   content: "The live is awesome." },
-                { role: "system", content: "Das Leben ist einfach großartig." }
+                { role: "user",      content: "I love my wife." },
+                { role: "assistant", content: "Ich liebe meine Frau." },
+                { role: "user",      content: "The weather is wonderful." },
+                { role: "assistant", content: "Das Wetter ist wunderschön." },
+                { role: "user",      content: "The live is awesome." },
+                { role: "assistant", content: "Das Leben ist einfach großartig." }
             ]
         },
 
@@ -124,19 +124,19 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 "Do not chat.\n" +
                 "Do not show any explanations.\n" +
                 "Do not show any introduction.\n" +
-                "Do not show any preamble. \n" +
-                "Do not show any prolog. \n" +
-                "Do not show any epilog. \n" +
+                "Do not show any preamble.\n" +
+                "Do not show any prolog.\n" +
+                "Do not show any epilog.\n" +
                 "Get to the point.\n" +
                 "Preserve the original meaning, tone, and nuance.\n" +
                 "Directly translate text from German (DE) to fluent and natural English (EN) language.\n",
             chat: [
-                { role: "user",   content: "Ich liebe meine Frau." },
-                { role: "system", content: "I love my wife." },
-                { role: "user",   content: "Das Wetter ist wunderschön." },
-                { role: "system", content: "The weather is wonderful." },
-                { role: "user",   content: "Das Leben ist einfach großartig." },
-                { role: "system", content: "The live is awesome." }
+                { role: "user",      content: "Ich liebe meine Frau." },
+                { role: "assistant", content: "I love my wife." },
+                { role: "user",      content: "Das Wetter ist wunderschön." },
+                { role: "assistant", content: "The weather is wonderful." },
+                { role: "user",      content: "Das Leben ist einfach großartig." },
+                { role: "assistant", content: "The live is awesome." }
             ]
         }
     }
@@ -172,7 +172,13 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
 
         /*  ensure the model is available  */
         const model  = this.params.model
-        const models = await this.ollama.list()
+        let models: ListResponse
+        try {
+            models = await this.ollama.list()
+        }
+        catch (err) {
+            throw new Error(`failed to connect to Ollama API at ${this.params.api}: ${err}`)
+        }
         const exists = models.models.some((m) => m.name === model)
         if (!exists) {
             this.log("info", `Ollama: model "${model}" still not present in Ollama -- ` +
@@ -182,14 +188,18 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
             const interval = setInterval(() => {
                 this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
             }, 1000)
-            const progress = await this.ollama.pull({ model, stream: true })
-            for await (const event of progress) {
-                if (event.digest)
-                    artifact = event.digest
-                if (event.completed && event.total)
-                    percent = (event.completed / event.total) * 100
+            try {
+                const progress = await this.ollama.pull({ model, stream: true })
+                for await (const event of progress) {
+                    if (event.digest)
+                        artifact = event.digest
+                    if (event.completed && event.total)
+                        percent = (event.completed / event.total) * 100
+                }
             }
-            clearInterval(interval)
+            finally {
+                clearInterval(interval)
+            }
         }
         else
             this.log("info", `Ollama: model "${model}" already present in Ollama`)
