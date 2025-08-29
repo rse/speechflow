@@ -23,6 +23,7 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
     /*  internal state  */
     private broker: MQTT.MqttClient | null = null
     private clientId: string = (new UUID(1)).format()
+    private chunkQueue: utils.SingleQueue<SpeechFlowChunk> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -63,6 +64,10 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
             throw new Error("writing to MQTT requires a topicWrite parameter")
         if ((this.params.mode === "r" || this.params.mode === "rw") && this.params.topicRead === "")
             throw new Error("reading from MQTT requires a topicRead parameter")
+        if (this.params.username !== "" && this.params.password === "")
+            throw new Error("username provided but password is missing")
+        if (this.params.username === "" && this.params.password !== "")
+            throw new Error("password provided but username is missing")
 
         /*  connect remotely to a MQTT broker  */
         this.broker = MQTT.connect(this.params.url, {
@@ -94,49 +99,45 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
         this.broker.on("disconnect", (packet: MQTT.IDisconnectPacket) => {
             this.log("info", `connection closed to MQTT ${this.params.url}`)
         })
-        const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
+        this.chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
         this.broker.on("message", (topic: string, payload: Buffer, packet: MQTT.IPublishPacket) => {
-            if (topic !== this.params.topicRead)
+            if (topic !== this.params.topicRead || this.params.mode === "w")
                 return
             try {
                 const chunk = utils.streamChunkDecode(payload)
-                chunkQueue.write(chunk)
+                this.chunkQueue!.write(chunk)
             }
             catch (_err: any) {
                 this.log("warning", `received invalid CBOR chunk from MQTT ${this.params.url}`)
             }
         })
-        const broker     = this.broker
-        const topicWrite = this.params.topicWrite
-        const type       = this.params.type
-        const mode       = this.params.mode
-        const self       = this
+        const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
             decodeStrings:      false,
             highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (mode === "r")
+                if (self.params.mode === "r")
                     callback(new Error("write operation on read-only node"))
-                else if (chunk.type !== type)
-                    callback(new Error(`written chunk is not of ${type} type`))
-                else if (!broker.connected)
+                else if (chunk.type !== self.params.type)
+                    callback(new Error(`written chunk is not of ${self.params.type} type`))
+                else if (!self.broker!.connected)
                     callback(new Error("still no MQTT connection available"))
                 else {
                     const data = Buffer.from(utils.streamChunkEncode(chunk))
-                    broker.publish(topicWrite, data, { qos: 2, retain: false }, (err) => {
+                    self.broker!.publish(self.params.topicWrite, data, { qos: 2, retain: false }, (err) => {
                         if (err)
-                            callback(new Error(`failed to publish to MQTT topic "${topicWrite}": ${err}`))
+                            callback(new Error(`failed to publish to MQTT topic "${self.params.topicWrite}": ${err}`))
                         else
                             callback()
                     })
                 }
             },
             read (size: number) {
-                if (mode === "w")
+                if (self.params.mode === "w")
                     throw new Error("read operation on write-only node")
-                chunkQueue.read().then((chunk) => {
+                self.chunkQueue!.read().then((chunk) => {
                     this.push(chunk, "binary")
                 }).catch((err: Error) => {
                     self.log("warning", `read on chunk queue operation failed: ${err}`)
@@ -147,6 +148,9 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  clear chunk queue reference  */
+        this.chunkQueue = null
+
         /*  close MQTT broker  */
         if (this.broker !== null) {
             if (this.broker.connected)
