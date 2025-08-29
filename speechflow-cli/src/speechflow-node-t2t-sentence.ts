@@ -122,8 +122,8 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
                         }
                         element2.chunk.timestampStart = element.chunk.timestampStart
                         element2.chunk.payload =
-                            element.chunk.payload  as string + " " +
-                            element2.chunk.payload as string
+                            (element.chunk.payload  as string) + " " +
+                            (element2.chunk.payload as string)
                         this.queueSplit.delete()
                         this.queueSplit.touch()
                     }
