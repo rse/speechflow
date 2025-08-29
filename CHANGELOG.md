@@ -11,12 +11,19 @@ ChangeLog
 - IMPROVEMENT: add AWS integration nodes (Polly, Translate, Transcribe)
 - IMPROVEMENT: add noise suppression nodes (rnnoise, speex)
 - IMPROVEMENT: provide audio helper utilities, access bus functionality, and improve types
+- IMPROVEMENT: switch to GPT-5 with improved error handling and timeout support
 - BUGFIX: fix usage of AudioIO quit and abort methods
+- BUGFIX: fix comment formatting issues
+- BUGFIX: fix operator order in audio processing
+- BUGFIX: reset envelope array when channels change
 - UPDATE: upgrade NPM dependencies
 - UPDATE: update OxLint rules and configuration
 - CLEANUP: consolidate and cleanup code throughout project
 - CLEANUP: cleanup expander node implementation and remove stereoLink feature
 - CLEANUP: cleanup AWS nodes and general code organization
+- CLEANUP: reduce code depth in multiple components
+- CLEANUP: align identifiers with remaining code
+- CLEANUP: make code compliant with updated linter rules
 
 1.4.5 (2025-08-07)
 ------------------
