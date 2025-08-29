@@ -207,21 +207,19 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload === "") {
+                    this.push(chunk)
+                    callback()
+                }
                 else {
-                    if (chunk.payload === "") {
-                        this.push(chunk)
+                    translate(chunk.payload).then((payload) => {
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = payload
+                        this.push(chunkNew)
                         callback()
-                    }
-                    else {
-                        translate(chunk.payload).then((payload) => {
-                            const chunkNew = chunk.clone()
-                            chunkNew.payload = payload
-                            this.push(chunkNew)
-                            callback()
-                        }).catch((err) => {
-                            callback(err)
-                        })
-                    }
+                    }).catch((err) => {
+                        callback(err)
+                    })
                 }
             },
             final (callback) {
