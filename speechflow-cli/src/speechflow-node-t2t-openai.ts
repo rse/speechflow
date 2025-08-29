@@ -151,7 +151,7 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
             dst:   { type: "string", pos: 1, val: "en",                              match: /^(?:de|en)$/ },
             key:   { type: "string",         val: process.env.SPEECHFLOW_OPENAI_KEY, match: /^.+$/ },
             api:   { type: "string",         val: "https://api.openai.com/v1",       match: /^https?:\/\/.+/ },
-            model: { type: "string",         val: "gpt-4o-mini",                     match: /^.+$/ }
+            model: { type: "string",         val: "gpt-5-mini",                      match: /^.+$/ }
         })
 
         /*  tell effective mode  */
@@ -168,34 +168,36 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        /*  validate API key  */
+        if (!this.params.key)
+            throw new Error("OpenAI API key is required")
+
         /*  instantiate OpenAI API  */
         this.openai = new OpenAI({
             baseURL: this.params.api,
             apiKey:  this.params.key,
-            dangerouslyAllowBrowser: true
+            timeout: 30000
         })
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
             const key = `${this.params.src}-${this.params.dst}`
             const cfg = this.setup[key]
-            const stream = this.openai!.chat.completions.stream({
-                stream:                true,
-                model:                 this.params.model,
-                seed:                  null,
-                temperature:           0.7,
-                n:                     1,
+            if (!this.openai)
+                throw new Error("OpenAI client not available")
+            const completion = await this.openai.chat.completions.create({
+                model:       this.params.model,
+                temperature: this.params.model === "gpt-5-mini" ? 1.0 : 0.7,
                 messages: [
                     { role: "system", content: cfg.systemPrompt },
                     ...cfg.chat,
                     { role: "user", content: text }
                 ]
             })
-            const completion = await stream.finalChatCompletion()
-            const translation = completion.choices[0].message.content!
-            if (!stream.ended)
-                stream.abort()
-            return translation
+            const content = completion?.choices?.[0]?.message?.content
+            if (!content)
+                throw new Error("OpenAI API returned empty content")
+            return content
         }
 
         /*  establish a duplex stream and connect it to OpenAI  */
