@@ -19,7 +19,7 @@ import { WebAudio }                        from "./speechflow-utils-audio"
 /*  internal types  */
 interface AudioExpanderConfig {
     thresholdDb?: number
-    floorDB?:     number
+    floorDb?:     number
     ratio?:       number
     attackMs?:    number
     releaseMs?:   number
@@ -44,7 +44,7 @@ class AudioExpander extends WebAudio {
         /*  store configuration  */
         this.config = {
             thresholdDb: config.thresholdDb ?? -45,
-            floorDB:     config.floorDB     ?? -64,
+            floorDb:     config.floorDb     ?? -64,
             ratio:       config.ratio       ?? 4.0,
             attackMs:    config.attackMs    ?? 0.010,
             releaseMs:   config.releaseMs   ?? 0.050,
@@ -74,7 +74,7 @@ class AudioExpander extends WebAudio {
         const currentTime = this.audioContext.currentTime
         const node = this.expanderNode as any
         node.threshold.setValueAtTime(this.config.thresholdDb, currentTime)
-        node.floor.setValueAtTime(this.config.floorDB, currentTime)
+        node.floor.setValueAtTime(this.config.floorDb, currentTime)
         node.ratio.setValueAtTime(this.config.ratio, currentTime)
         node.attack.setValueAtTime(this.config.attackMs / 1000, currentTime)
         node.release.setValueAtTime(this.config.releaseMs / 1000, currentTime)
@@ -113,7 +113,7 @@ export default class SpeechFlowNodeExpander extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             thresholdDb: { type: "number", val: -45, match: (n: number) => n <= 0   && n >= -100 },
-            floorDB:     { type: "number", val: -64, match: (n: number) => n <= 0   && n >= -100 },
+            floorDb:     { type: "number", val: -64, match: (n: number) => n <= 0   && n >= -100 },
             ratio:       { type: "number", val: 4.0, match: (n: number) => n >= 1   && n <= 20   },
             attackMs:    { type: "number", val: 10,  match: (n: number) => n >= 0   && n <= 1000 },
             releaseMs:   { type: "number", val: 50,  match: (n: number) => n >= 0   && n <= 1000 },
@@ -136,7 +136,7 @@ export default class SpeechFlowNodeExpander extends SpeechFlowNode {
             this.config.audioSampleRate,
             this.config.audioChannels, {
                 thresholdDb: this.params.thresholdDb,
-                floorDB:     this.params.floorDB,
+                floorDb:     this.params.floorDb,
                 ratio:       this.params.ratio,
                 attackMs:    this.params.attackMs,
                 releaseMs:   this.params.releaseMs,
@@ -163,6 +163,9 @@ export default class SpeechFlowNodeExpander extends SpeechFlowNode {
                     /*  expand chunk  */
                     const payload = utils.convertBufToI16(chunk.payload)
                     self.expander?.process(payload).then((result) => {
+                        if (self.destroyed)
+                            throw new Error("stream already destroyed")
+
                         /*  take over expanded data  */
                         const payload = utils.convertI16ToBuf(result)
                         chunk.payload = payload
