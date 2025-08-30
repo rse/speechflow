@@ -16,9 +16,15 @@ let denoiseState: DenoiseState
 
 /*  global initialization  */
 ;(async () => {
-    rnnoise = await Rnnoise.load()
-    denoiseState = rnnoise.createDenoiseState()
-    parentPort!.postMessage({ type: "ready" })
+    try {
+        rnnoise = await Rnnoise.load()
+        denoiseState = rnnoise.createDenoiseState()
+        parentPort!.postMessage({ type: "ready" })
+    }
+    catch (err) {
+        parentPort!.postMessage({ type: "failed", message: `failed to initialize RNNoise: ${err}` })
+        process.exit(1)
+    }
 })()
 
 /*  receive messages  */
@@ -28,11 +34,11 @@ parentPort!.on("message", (msg) => {
         const { id, data } = msg
 
         /*  convert regular Int16Array [-32768,32768]
-            to unusal non-normalized Float32Array [-32768,32768]
-            as required by RRNoise  */
+            to unusual non-normalized Float32Array [-32768,32768]
+            as required by RNNoise  */
         const f32a = new Float32Array(data.length)
         for (let i = 0; i < data.length; i++)
-            f32a[i] = data[i] * 1.0
+            f32a[i] = data[i]
 
         /*  process frame with RNNoise WASM  */
         denoiseState.processFrame(f32a)

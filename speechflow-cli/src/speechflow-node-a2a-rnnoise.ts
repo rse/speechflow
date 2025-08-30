@@ -28,9 +28,7 @@ export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
         super(id, cfg, opts, args)
 
         /*  declare node configuration parameters  */
-        this.configure({
-            threshold: { type: "number", val: -42, match: (n: number) => n <= 0 && n >= -60 }
-        })
+        this.configure({})
 
         /*  declare node input/output format  */
         this.input  = "audio"
@@ -45,24 +43,26 @@ export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
         /*  initialize worker  */
         this.worker = new Worker(resolve(__dirname, "speechflow-node-a2a-rnnoise-wt.js"))
         this.worker.on("error", (err) => {
-            this.log("error", `rnnoise worker thread error: ${err}`)
+            this.log("error", `RNNoise worker thread error: ${err}`)
         })
         this.worker.on("exit", (code) => {
             if (code !== 0)
-                this.log("error", `rnnoise worker thread exited with error code ${code}`)
+                this.log("error", `RNNoise worker thread exited with error code ${code}`)
             else
-                this.log("info", `rnnoise worker thread exited with regular code ${code}`)
+                this.log("info", `RNNoise worker thread exited with regular code ${code}`)
         })
         await new Promise<void>((resolve, reject) => {
             const timeout = setTimeout(() => {
-                reject(new Error("rnnoise worker thread initialization timeout"))
+                reject(new Error("RNNoise worker thread initialization timeout"))
             }, 5000)
             this.worker!.once("message", (msg: any) => {
                 clearTimeout(timeout)
                 if (typeof msg === "object" && msg !== null && msg.type === "ready")
                     resolve()
+                else if (typeof msg === "object" && msg !== null && msg.type === "failed")
+                    reject(new Error(msg.message ?? "RNNoise worker thread initialization failed"))
                 else
-                    reject(new Error(`rnnoise worker thread sent unexpected message on startup`))
+                    reject(new Error(`RNNoise worker thread sent unexpected message on startup`))
             })
             this.worker!.once("error", (err) => {
                 clearTimeout(timeout)
@@ -79,10 +79,10 @@ export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
                 if (cb)
                     cb(msg.data)
                 else
-                    this.log("warning", `rnnoise worker thread sent back unexpected id: ${msg.id}`)
+                    this.log("warning", `RNNoise worker thread sent back unexpected id: ${msg.id}`)
             }
             else
-                this.log("warning", `rnnoise worker thread send unexpected message: ${JSON.stringify(msg)}`)
+                this.log("warning", `RNNoise worker thread sent unexpected message: ${JSON.stringify(msg)}`)
         })
 
         /*  send message to worker  */
@@ -129,6 +129,7 @@ export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
                         callback()
                     }).catch((err: Error) => {
                         self.log("warning", `processing of chunk failed: ${err}`)
+                        callback(err)
                     })
                 }
             },
