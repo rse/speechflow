@@ -22,6 +22,7 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
     /*  internal state  */
     private emitInterval: ReturnType<typeof setInterval> | null = null
     private calcInterval: ReturnType<typeof setInterval> | null = null
+    private silenceTimer: ReturnType<typeof setTimeout> | null = null
     private chunkBuffer = new Float32Array(0)
     private destroyed = false
 
@@ -63,7 +64,6 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
         this.chunkBuffer = new Float32Array(0)
 
         /*  define chunk processing function  */
-        let timer: ReturnType<typeof setTimeout> | null = null
         const processChunk = (chunkData: Float32Array) => {
             /*  update internal audio sample sliding window  */
             const newWindow = new Float32Array(sampleWindowSize)
@@ -86,11 +86,11 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
                 calculateLoudnessRange: false,
                 calculateTruePeak:      false
             })
-            lufss = lufs.shortTerm ? lufs.shortTerm[0] : 0
+            lufss = lufs.shortTerm ? lufs.shortTerm[0] : -60
             rms = getRMS(audioData, { asDB: true })
-            if (timer !== null)
-                clearTimeout(timer)
-            timer = setTimeout(() => {
+            if (this.silenceTimer !== null)
+                clearTimeout(this.silenceTimer)
+            this.silenceTimer = setTimeout(() => {
                 lufss = -60
                 rms   = -60
             }, 500)
@@ -172,9 +172,6 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
-
         /*  stop intervals  */
         if (this.emitInterval !== null) {
             clearInterval(this.emitInterval)
@@ -184,11 +181,18 @@ export default class SpeechFlowNodeMeter extends SpeechFlowNode {
             clearInterval(this.calcInterval)
             this.calcInterval = null
         }
+        if (this.silenceTimer !== null) {
+            clearTimeout(this.silenceTimer)
+            this.silenceTimer = null
+        }
 
         /*  close stream  */
         if (this.stream !== null) {
             this.stream.destroy()
             this.stream = null
         }
+
+        /*  indicate destruction  */
+        this.destroyed = true
     }
 }
