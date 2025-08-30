@@ -21,22 +21,19 @@ const writeWavHeader = (
     const bitDepth     = options?.bitDepth    ?? 16    /* 16-Bit */
 
     const headerLength = 44
-    const dataLength   = length || (4294967295 - 100)
+    const maxDataSize  = Math.pow(2, 32) - 100 /* safe maximum for 32-bit WAV files */
+    const dataLength   = length ?? maxDataSize
     const fileSize     = dataLength + headerLength
     const header       = Buffer.alloc(headerLength)
 
-    const RIFF         = Buffer.alloc(4, "RIFF")
-    const WAVE         = Buffer.alloc(4, "WAVE")
-    const fmt          = Buffer.alloc(4, "fmt ")
-    const data         = Buffer.alloc(4, "data")
     const byteRate     = (sampleRate * channels * bitDepth) / 8
     const blockAlign   = (channels * bitDepth) / 8
 
     let offset = 0
-    RIFF.copy(header, offset);                  offset += RIFF.length
+    header.write("RIFF", offset);               offset += 4
     header.writeUInt32LE(fileSize - 8, offset); offset += 4
-    WAVE.copy(header, offset);                  offset += WAVE.length
-    fmt.copy(header, offset);                   offset += fmt.length
+    header.write("WAVE", offset);               offset += 4
+    header.write("fmt ", offset);               offset += 4
     header.writeUInt32LE(16, offset);           offset += 4
     header.writeUInt16LE(audioFormat, offset);  offset += 2
     header.writeUInt16LE(channels, offset);     offset += 2
@@ -44,7 +41,7 @@ const writeWavHeader = (
     header.writeUInt32LE(byteRate, offset);     offset += 4
     header.writeUInt16LE(blockAlign, offset);   offset += 2
     header.writeUInt16LE(bitDepth, offset);     offset += 2
-    data.copy(header, offset);                  offset += data.length
+    header.write("data", offset);               offset += 4
     header.writeUInt32LE(dataLength, offset);   offset += 4
 
     return header
@@ -69,6 +66,15 @@ const readWavHeader = (buffer: Buffer) => {
     const bitDepth     = buffer.readUInt16LE(offset);                    offset += 2
     const data         = buffer.subarray(offset, offset + 4).toString(); offset += 4
     const dataLength   = buffer.readUInt32LE(offset);                    offset += 4
+
+    if (riffHead !== "RIFF")
+        throw new Error(`Invalid WAV file: expected RIFF header, got "${riffHead}"`)
+    if (waveHead !== "WAVE")
+        throw new Error(`Invalid WAV file: expected WAVE header, got "${waveHead}"`)
+    if (fmtHead !== "fmt ")
+        throw new Error(`Invalid WAV file: expected "fmt " header, got "${fmtHead}"`)
+    if (data !== "data")
+        throw new Error(`Invalid WAV file: expected "data" header, got "${data}"`)
 
     return {
         riffHead, fileSize, waveHead, fmtHead, formatLength, audioFormat,
