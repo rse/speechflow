@@ -61,7 +61,7 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             return { usage: `${percent.toFixed(2)}%` }
         }
         catch (error) {
-            return {}
+            return { usage: "unknown" }
         }
     }
 
