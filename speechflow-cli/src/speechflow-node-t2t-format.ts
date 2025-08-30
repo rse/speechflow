@@ -35,7 +35,7 @@ export default class SpeechFlowNodeFormat extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  provide text-to-text formatter  */
-        const format = async (text: string) => {
+        const format = (text: string) => {
             text = wrapText(text, this.params.width)
             text = text.replace(/([^\n])$/, "$1\n")
             return text
@@ -50,21 +50,16 @@ export default class SpeechFlowNodeFormat extends SpeechFlowNode {
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload === "") {
+                    this.push(chunk)
+                    callback()
+                }
                 else {
-                    if (chunk.payload === "") {
-                        this.push(chunk)
-                        callback()
-                    }
-                    else {
-                        format(chunk.payload).then((payload) => {
-                            const chunkNew = chunk.clone()
-                            chunkNew.payload = payload
-                            this.push(chunkNew)
-                            callback()
-                        }).catch((err) => {
-                            callback(err)
-                        })
-                    }
+                    const payload = format(chunk.payload)
+                    const chunkNew = chunk.clone()
+                    chunkNew.payload = payload
+                    this.push(chunkNew)
+                    callback()
                 }
             },
             final (callback) {
