@@ -41,9 +41,10 @@ export default class SpeechFlowNodeGain extends SpeechFlowNode {
         /*  adjust gain  */
         const adjustGain = (chunk: SpeechFlowChunk & { payload: Buffer }, db: number) => {
             const dv = new DataView(chunk.payload.buffer, chunk.payload.byteOffset, chunk.payload.byteLength)
+            const gainFactor = utils.dB2lin(db)
             for (let i = 0; i < dv.byteLength; i += 2) {
                 let sample = dv.getInt16(i, true)
-                sample *= utils.dB2lin(db)
+                sample *= gainFactor
                 sample = Math.max(Math.min(sample, 32767), -32768)
                 dv.setInt16(i, sample, true)
             }
@@ -62,6 +63,8 @@ export default class SpeechFlowNodeGain extends SpeechFlowNode {
                 }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload.byteLength % 2 !== 0)
+                    callback(new Error("invalid audio buffer size (not 16-bit aligned)"))
                 else {
                     /*  adjust chunk  */
                     adjustGain(chunk, self.params.db)
