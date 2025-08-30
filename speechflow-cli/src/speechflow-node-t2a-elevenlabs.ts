@@ -95,15 +95,15 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         /*  determine voice for text-to-speech operation
             (for details see https://elevenlabs.io/text-to-speech)  */
         const voices = await this.elevenlabs.voices.getAll()
-        let voice = voices.voices.find((voice) => voice.name === this.params.voice)
+        let voice = voices.voices.find((v) => v.name === this.params.voice)
         if (voice === undefined) {
-            voice = voices.voices.find((voice) => (voice.name ?? "").startsWith(this.params.voice))
+            voice = voices.voices.find((v) => (v.name ?? "").startsWith(this.params.voice))
             if (voice === undefined)
                 throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
         }
-        const info = Object.keys(voice.labels ?? {}).length > 0 ?
-            (", " + Object.entries(voice.labels ?? {})
-                .map(([ key, val ]) => `${key}: "${val}"`).join(", ")) : ""
+        const labels = voice.labels ?? {}
+        const info = Object.keys(labels).length > 0 ?
+            ", " + Object.entries(labels).map(([ key, val ]) => `${key}: "${val}"`).join(", ") : ""
         this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
         /*  perform text-to-speech operation with Elevenlabs API  */
