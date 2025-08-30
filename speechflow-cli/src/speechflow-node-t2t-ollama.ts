@@ -53,8 +53,8 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 { role: "assistant", content: "I love my wife." },
                 { role: "user",      content: "The weether is wunderfull!" },
                 { role: "assistant", content: "The weather is wonderful!" },
-                { role: "user",      content: "The live awesome but I'm hungry." },
-                { role: "assistant", content: "The live is awesome, but I'm hungry." }
+                { role: "user",      content: "The life awesome but I'm hungry." },
+                { role: "assistant", content: "The life is awesome, but I'm hungry." }
             ]
         },
 
@@ -110,7 +110,7 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 { role: "assistant", content: "Ich liebe meine Frau." },
                 { role: "user",      content: "The weather is wonderful." },
                 { role: "assistant", content: "Das Wetter ist wunderschön." },
-                { role: "user",      content: "The live is awesome." },
+                { role: "user",      content: "The life is awesome." },
                 { role: "assistant", content: "Das Leben ist einfach großartig." }
             ]
         },
@@ -136,7 +136,7 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
                 { role: "user",      content: "Das Wetter ist wunderschön." },
                 { role: "assistant", content: "The weather is wonderful." },
                 { role: "user",      content: "Das Leben ist einfach großartig." },
-                { role: "assistant", content: "The live is awesome." }
+                { role: "assistant", content: "The life is awesome." }
             ]
         }
     }
@@ -171,7 +171,6 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
         this.ollama = new Ollama({ host: this.params.api })
 
         /*  ensure the model is available  */
-        const model  = this.params.model
         let models: ListResponse
         try {
             models = await this.ollama.list()
@@ -179,17 +178,21 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
         catch (err) {
             throw new Error(`failed to connect to Ollama API at ${this.params.api}: ${err}`)
         }
-        const exists = models.models.some((m) => m.name === model)
+        const exists = models.models.some((m) => m.name === this.params.model)
         if (!exists) {
-            this.log("info", `Ollama: model "${model}" still not present in Ollama -- ` +
+            this.log("info", `Ollama: model "${this.params.model}" still not present in Ollama -- ` +
                 "automatically downloading model")
             let artifact = ""
             let percent  = 0
+            let lastLoggedPercent = -1
             const interval = setInterval(() => {
-                this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
+                if (percent !== lastLoggedPercent) {
+                    this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
+                    lastLoggedPercent = percent
+                }
             }, 1000)
             try {
-                const progress = await this.ollama.pull({ model, stream: true })
+                const progress = await this.ollama.pull({ model: this.params.model, stream: true })
                 for await (const event of progress) {
                     if (event.digest)
                         artifact = event.digest
@@ -202,14 +205,14 @@ export default class SpeechFlowNodeOllama extends SpeechFlowNode {
             }
         }
         else
-            this.log("info", `Ollama: model "${model}" already present in Ollama`)
+            this.log("info", `Ollama: model "${this.params.model}" already present in Ollama`)
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
             const key = `${this.params.src}-${this.params.dst}`
             const cfg = this.setup[key]
             const response = await this.ollama!.chat({
-                model,
+                model: this.params.model,
                 messages: [
                     { role: "system", content: cfg.systemPrompt },
                     ...cfg.chat,
