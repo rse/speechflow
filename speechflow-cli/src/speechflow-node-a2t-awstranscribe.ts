@@ -36,6 +36,13 @@ class AsyncQueue<T> {
         else
             this.queue.push(v)
     }
+    destroy () {
+        while (this.resolvers.length > 0) {
+            const resolve = this.resolvers.shift()
+            resolve?.({ value: null, done: true })
+        }
+        this.queue.length = 0
+    }
     async *[Symbol.asyncIterator](): AsyncIterator<T> {
         while (true) {
             if (this.queue.length > 0) {
@@ -135,9 +142,7 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
         const ensureAudioStreamActive = async () => {
             if (this.clientStream !== null || this.destroyed)
                 return
-            let language: LanguageCode = "en-US"
-            if (this.params.language === "de")
-                language = "de-DE"
+            const language: LanguageCode = this.params.language === "de" ? "de-DE" : "en-US"
             const command = new StartStreamTranscriptionCommand({
                 LanguageCode: language,
                 EnablePartialResultsStabilization: this.params.interim,
@@ -190,7 +195,7 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
                     }
                 }
             })().catch((err: Error) => {
-                this.log("error", `failed to establish connectivity to Amazon Transcribe: ${err}`)
+                this.log("warning", `failed to establish connectivity to Amazon Transcribe: ${err}`)
             })
         }
 
@@ -261,6 +266,7 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
                     self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
                 }
                 audioQueue.push(null) /* do not push null to stream, let Amazon Transcribe do it */
+                audioQueue.destroy()
                 callback()
             }
         })
