@@ -18,7 +18,7 @@ import {
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
-/*  SpeechFlow node for Elevenlabs text-to-speech conversion  */
+/*  SpeechFlow node for AWS Polly text-to-speech conversion  */
 export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "awspolly"
@@ -37,7 +37,8 @@ export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
         this.configure({
             key:        { type: "string", val: process.env.SPEECHFLOW_AMAZON_KEY },
             secKey:     { type: "string", val: process.env.SPEECHFLOW_AMAZON_KEY_SEC },
-            voice:      { type: "string", val: "Amy", pos: 0, match: /^(?:Amy|Danielle|Joanna|Matthew|Ruth|Stephen|Viki|Daniel)$/ },
+            region:     { type: "string", val: "eu-central-1" },
+            voice:      { type: "string", val: "Amy", pos: 0, match: /^(?:Amy|Danielle|Joanna|Matthew|Ruth|Stephen|Vicki|Daniel)$/ },
             language:   { type: "string", val: "en",  pos: 1, match: /^(?:de|en)$/ }
         })
 
@@ -136,6 +137,8 @@ export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
                 else if (chunk.payload.length > 0) {
                     self.log("debug", `send data (${chunk.payload.length} bytes): "${chunk.payload}"`)
                     textToSpeech(chunk.payload as string).then((buffer) => {
+                        if (self.destroyed)
+                            throw new Error("stream destroyed during processing")
                         const chunkNew = chunk.clone()
                         chunkNew.type = "audio"
                         chunkNew.payload = buffer
@@ -143,7 +146,7 @@ export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
                         callback()
                     }).catch((error) => {
                         callback(error instanceof Error ?
-                            error : new Error("failed to send to AWS Polly"))
+                            error : new Error(`failed to send to AWS Polly: ${String(error)}`))
                     })
                 }
                 else
