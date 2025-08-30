@@ -30,8 +30,8 @@ export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
             key:      { type: "string",         val: process.env.SPEECHFLOW_AMAZON_KEY },
             secKey:   { type: "string",         val: process.env.SPEECHFLOW_AMAZON_KEY_SEC },
             region:   { type: "string",         val: "eu-central-1" },
-            src:      { type: "string", pos: 0, val: "de", match: /^(?:de|en)$/ },
-            dst:      { type: "string", pos: 1, val: "en", match: /^(?:de|en)$/ }
+            src:      { type: "string", pos: 0, val: "de", match: /^(?:de|en|fr|it)$/ },
+            dst:      { type: "string", pos: 1, val: "en", match: /^(?:de|en|fr|it)$/ }
         })
 
         /*  sanity check parameters  */
@@ -51,7 +51,6 @@ export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
 
     /*  one-time status of node  */
     async status () {
-        //  FIXME
         return {}
     }
 
@@ -90,14 +89,14 @@ export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
                     lastError = e
                     attempt += 1
 
-                    /*   simple backoff for transient errors  */
+                    /*  simple backoff for transient errors  */
                     const retriable =
                         e?.name === "ThrottlingException" ||
                         e?.name === "ServiceUnavailableException" ||
                         e?.$retryable === true
                     if (!retriable || attempt >= maxRetries)
                         break
-                    const delayMs = Math.min(1000 * 2 ** (attempt - 1), 5000)
+                    const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000)
                     await new Promise((resolve) => setTimeout(resolve, delayMs))
                 }
             }
@@ -113,21 +112,19 @@ export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload === "") {
+                    this.push(chunk)
+                    callback()
+                }
                 else {
-                    if (chunk.payload === "") {
-                        this.push(chunk)
+                    translate(chunk.payload).then((payload) => {
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = payload
+                        this.push(chunkNew)
                         callback()
-                    }
-                    else {
-                        translate(chunk.payload).then((payload) => {
-                            const chunkNew = chunk.clone()
-                            chunkNew.payload = payload
-                            this.push(chunkNew)
-                            callback()
-                        }).catch((err) => {
-                            callback(err)
-                        })
-                    }
+                    }).catch((err) => {
+                        callback(err)
+                    })
                 }
             },
             final (callback) {

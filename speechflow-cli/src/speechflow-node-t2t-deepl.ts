@@ -28,8 +28,8 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string", val: process.env.SPEECHFLOW_DEEPL_KEY ?? "" },
-            src:      { type: "string", pos: 0, val: "de",      match: /^(?:de|en)$/ },
-            dst:      { type: "string", pos: 1, val: "en",      match: /^(?:de|en)$/ },
+            src:      { type: "string", pos: 0, val: "de",      match: /^(?:de|en|fr|it)$/ },
+            dst:      { type: "string", pos: 1, val: "en",      match: /^(?:de|en|fr|it)$/ },
             optimize: { type: "string", pos: 2, val: "latency", match: /^(?:latency|quality)$/ }
         })
 

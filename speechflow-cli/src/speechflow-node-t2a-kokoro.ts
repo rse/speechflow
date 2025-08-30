@@ -51,26 +51,33 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
                 artifact += `:${progress.file}`
             let percent = 0
             if (typeof progress.loaded === "number" && typeof progress.total === "number")
-                percent = (progress.loaded as number / progress.total as number) * 100
+                percent = (progress.loaded / progress.total) * 100
             else if (typeof progress.progress === "number")
                 percent = progress.progress
             if (percent > 0)
                 progressState.set(artifact, percent)
         }
-        const interval = setInterval(() => {
+        let interval: ReturnType<typeof setInterval> | null = setInterval(() => {
             for (const [ artifact, percent ] of progressState) {
                 this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
                 if (percent >= 100.0)
                     progressState.delete(artifact)
             }
-            if (progressState.size === 0)
-                clearInterval(interval)
+            if (progressState.size === 0) {
+                if (interval !== null) {
+                    clearInterval(interval)
+                    interval = null
+                }
+            }
         }, 1000)
         this.kokoro = await KokoroTTS.from_pretrained(model, {
             dtype: "q4f16",
             progress_callback: progressCallback
         })
-        clearInterval(interval)
+        if (interval !== null) {
+            clearInterval(interval)
+            interval = null
+        }
         if (this.kokoro === null)
             throw new Error("failed to instantiate Kokoro")
 
@@ -84,13 +91,13 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
         this.resampler = new SpeexResampler(1, 24000, this.config.audioSampleRate, 7)
 
         /*  determine voice for text-to-speech operation  */
-        const voices = {
+        const voices: Record<string, string> = {
             "Aoede":  "af_aoede",
             "Heart":  "af_heart",
             "Puck":   "am_puck",
             "Fenrir": "am_fenrir"
         }
-        const voice = ((voices as any)[this.params.voice]) as string | undefined
+        const voice = voices[this.params.voice]
         if (voice === undefined)
             throw new Error(`invalid Kokoro voice "${this.params.voice}"`)
 
