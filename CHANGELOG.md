@@ -2,25 +2,28 @@
 ChangeLog
 =========
 
-1.4.6 (2025-08-29)
+1.4.6 (2025-08-30)
 ------------------
 
 - IMPROVEMENT: add improved dashboard infrastructure and allow nodes to publish dashboard info
 - IMPROVEMENT: add CLI option for exporting dashboard info via OSC
 - IMPROVEMENT: add new audio processing nodes (compressor with sidechain, expander, gain, filler)
 - IMPROVEMENT: add AWS integration nodes (Polly, Translate, Transcribe)
+- IMPROVEMENT: add OpenAI Transcribe node for speech-to-text
 - IMPROVEMENT: add noise suppression nodes (rnnoise, speex)
-- IMPROVEMENT: provide audio helper utilities, access bus functionality, and improve types
+- IMPROVEMENT: provide audio helper utilities and access bus functionality
+- IMPROVEMENT: improve types and error handling
 - IMPROVEMENT: switch to GPT-5 with improved error handling and timeout support
+- IMPROVEMENT: switch from native compressor to custom implementation
 - BUGFIX: fix usage of AudioIO quit and abort methods
-- BUGFIX: fix comment formatting issues
 - BUGFIX: fix operator order in audio processing
 - BUGFIX: reset envelope array when channels change
+- BUGFIX: fix parameter configuration in audio nodes
 - UPDATE: upgrade NPM dependencies
 - UPDATE: update OxLint rules and configuration
-- CLEANUP: consolidate and cleanup code throughout project
+- CLEANUP: cleanup and simplify code throughout project
 - CLEANUP: cleanup expander node implementation and remove stereoLink feature
-- CLEANUP: cleanup AWS nodes and general code organization
+- CLEANUP: cleanup gender, ffmpeg, filler, and AWS nodes
 - CLEANUP: reduce code depth in multiple components
 - CLEANUP: align identifiers with remaining code
 - CLEANUP: make code compliant with updated linter rules
