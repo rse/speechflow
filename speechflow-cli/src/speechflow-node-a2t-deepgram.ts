@@ -52,13 +52,15 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         try {
             const deepgram = Deepgram.createClient(this.params.keyAdm)
             const response = await deepgram.manage.getProjects()
-            if (response !== null && response.error === null) {
+            if (response !== null && response.error === null && response.result?.projects) {
                 for (const project of response.result.projects) {
-                    const response = await deepgram.manage.getProjectBalances(project.project_id)
-                    if (response !== null && response.error === null)
-                        balance += response.result.balances[0]?.amount ?? 0
+                    const balanceResponse = await deepgram.manage.getProjectBalances(project.project_id)
+                    if (balanceResponse !== null && balanceResponse.error === null && balanceResponse.result?.balances)
+                        balance += balanceResponse.result.balances[0]?.amount ?? 0
                 }
             }
+            else if (response?.error !== null)
+                this.log("warning", `API error fetching projects: ${response.error}`)
         }
         catch (error) {
             this.log("warning", `failed to fetch balance: ${error}`)
@@ -84,10 +86,12 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         /*  connect to Deepgram API  */
         const deepgram = Deepgram.createClient(this.params.key)
         let language = "en"
-        if (this.params.model.match(/^nova-2/) && this.params.language !== "en")
-            language = this.params.language
-        else if (this.params.model.match(/^nova-3/) && this.params.language !== "en")
-            language = "multi"
+        if (this.params.language !== "en") {
+            if (this.params.model.match(/^nova-2/))
+                language = this.params.language
+            else if (this.params.model.match(/^nova-3/))
+                language = "multi"
+        }
         this.dg = deepgram.listen.live({
             mip_opt_out:      true,
             model:            this.params.model,
@@ -162,10 +166,8 @@ export default class SpeechFlowNodeDeepgram extends SpeechFlowNode {
         /*  wait for Deepgram API to be available  */
         await new Promise((resolve, reject) => {
             this.connectionTimeout = setTimeout(() => {
-                if (this.connectionTimeout !== null) {
-                    this.connectionTimeout = null
-                    reject(new Error("Deepgram: timeout waiting for connection open"))
-                }
+                this.connectionTimeout = null
+                reject(new Error("Deepgram: timeout waiting for connection open"))
             }, 8000)
             this.dg!.once(Deepgram.LiveTranscriptionEvents.Open, () => {
                 this.log("info", "connection open")
