@@ -38,7 +38,7 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key:      { type: "string",  val: process.env.SPEECHFLOW_OPENAI_KEY },
-            api:      { type: "string",  val: "https://api.openai.com/v1", match: /^https?:\/\/.+?:\d+$/ },
+            api:      { type: "string",  val: "https://api.openai.com/v1", match: /^https?:\/\/.+/ },
             model:    { type: "string",  val: "gpt-4o-mini-transcribe" },
             language: { type: "string",  val: "de", match: /^(?:en|de)$/ },
             interim:  { type: "boolean", val: false }
@@ -86,7 +86,7 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
         })
 
         /*  open the WebSocket connection for streaming  */
-        const url = `${this.params.api.replace(/^http/, "ws")}/realtime?intent=transcription` // model=${this.params.model}`
+        const url = `${this.params.api.replace(/^http/, "ws")}/realtime?intent=transcription`
         this.ws = new ws.WebSocket(url, {
             headers: {
                 Authorization: `Bearer ${this.params.key}`,
@@ -177,7 +177,13 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
                     if (this.params.interim) {
                         const start = DateTime.now().diff(this.timeOpen!) // FIXME: OpenAI does not provide timestamps
                         const end   = start                               // FIXME: OpenAI does not provide timestamps
+                        const metas = metastore.fetch(start, end)
+                        const meta = metas.reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                            curr.forEach((val, key) => { prev.set(key, val) })
+                            return prev
+                        }, new Map<string, any>())
                         const chunk = new SpeechFlowChunk(start, end, "intermediate", "text", text)
+                        chunk.meta = meta
                         this.queue!.write(chunk)
                     }
                     break
@@ -186,7 +192,14 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
                     text = ev.transcript as string
                     const start = DateTime.now().diff(this.timeOpen!) // FIXME: OpenAI does not provide timestamps
                     const end   = start                               // FIXME: OpenAI does not provide timestamps
+                    const metas = metastore.fetch(start, end)
+                    const meta = metas.reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                        curr.forEach((val, key) => { prev.set(key, val) })
+                        return prev
+                    }, new Map<string, any>())
+                    metastore.prune(start)
                     const chunk = new SpeechFlowChunk(start, end, "final", "text", text)
+                    chunk.meta = meta
                     this.queue!.write(chunk)
                     text = ""
                     break
@@ -279,12 +292,13 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
                 try {
                     sendMessage({ type: "input_audio_buffer.commit" })
                     self.ws.close()
+                    /*  NOTICE: do not push null here -- let the OpenAI close event handle it  */
+                    callback()
                 }
                 catch (error) {
                     self.log("warning", `error closing OpenAI connection: ${error}`)
+                    callback(error instanceof Error ? error : new Error("failed to close OpenAI connection"))
                 }
-                /*  NOTICE: do not push null here -- let the OpenAI close event handle it  */
-                callback()
             }
         })
     }
