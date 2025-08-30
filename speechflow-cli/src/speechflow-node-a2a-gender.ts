@@ -21,7 +21,7 @@ type AudioQueueElement = {
     type:         "audio-frame",
     chunk:        SpeechFlowChunk,
     data:         Float32Array,
-    gender?:      "male" | "female"
+    gender?:      "male" | "female" | "unknown"
 } | {
     type:         "audio-eof"
 }
@@ -32,7 +32,6 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
     public static name = "gender"
 
     /*  internal state  */
-    private static speexInitialized = false
     private classifier: Transformers.AudioClassificationPipeline | null = null
     private queue     = new utils.Queue<AudioQueueElement>()
     private queueRecv = this.queue.pointerUse("recv")
@@ -66,7 +65,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
         this.shutdown = false
 
         /*  pass-through logging  */
-        const log = (level: string, msg: string) => { this.log(level, msg) }
+        const log = this.log.bind(this)
 
         /*  the used model  */
         const model = "Xenova/wav2vec2-large-xlsr-53-gender-recognition-librispeech"
@@ -81,7 +80,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                 artifact += `:${progress.file}`
             let percent = 0
             if (typeof progress.loaded === "number" && typeof progress.total === "number")
-                percent = (progress.loaded as number / progress.total as number) * 100
+                percent = (progress.loaded / progress.total) * 100
             else if (typeof progress.progress === "number")
                 percent = progress.progress
             if (percent > 0)
@@ -92,7 +91,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                 return
             for (const [ artifact, percent ] of progressState) {
                 this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
-                if (percent >= 1.0)
+                if (percent >= 100.0)
                     progressState.delete(artifact)
             }
         }, 1000)
@@ -103,11 +102,17 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                 device:    "auto",
                 progress_callback: progressCallback
             })
-            const timeoutPromise = new Promise((resolve, reject) => setTimeout(() =>
-                reject(new Error("model initialization timeout")), 30 * 1000))
+            let timeoutId: ReturnType<typeof setTimeout> | null = null
+            const timeoutPromise = new Promise((resolve, reject) => {
+                timeoutId = setTimeout(() =>
+                    reject(new Error("model initialization timeout")), 30 * 1000)
+            })
             this.classifier = await Promise.race([
                 pipelinePromise, timeoutPromise
-            ]) as Transformers.AudioClassificationPipeline
+            ]).finally(() => {
+                if (timeoutId !== null)
+                    clearTimeout(timeoutId)
+            }) as Transformers.AudioClassificationPipeline
         }
         catch (error) {
             if (this.progressInterval) {
@@ -128,10 +133,15 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             if (this.shutdown || this.classifier === null)
                 throw new Error("classifier shutdown during operation")
             const classifyPromise = this.classifier(data)
-            const timeoutPromise = new Promise((resolve, reject) => setTimeout(() =>
-                reject(new Error("classification timeout")), 30 * 1000))
-            const result = await Promise.race([ classifyPromise, timeoutPromise ]) as
-                Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
+            let timeoutId: ReturnType<typeof setTimeout> | null = null
+            const timeoutPromise = new Promise((resolve, reject) => {
+                timeoutId = setTimeout(() =>
+                    reject(new Error("classification timeout")), 30 * 1000)
+            })
+            const result = await Promise.race([ classifyPromise, timeoutPromise ]).finally(() => {
+                if (timeoutId !== null)
+                    clearTimeout(timeoutId)
+            }) as Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
             const classified = Array.isArray(result) ?
                 result as Transformers.AudioClassificationOutput :
                 [ result ]
@@ -139,15 +149,20 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
             const c2 = classified.find((c: any) => c.label === "female")
             const male   = c1 ? c1.score : 0.0
             const female = c2 ? c2.score : 0.0
-            return (male > female ? "male" : "female")
+            if (male > female)
+                return "male"
+            else if (male < female)
+                return "female"
+            else
+                return "unknown"
         }
 
         /*  define sample rate required by model  */
         const sampleRateTarget = 16000
 
         /*  work off queued audio frames  */
-        const frameWindowDuration = 0.5
-        const frameWindowSamples  = frameWindowDuration * sampleRateTarget
+        const frameWindowDuration = this.params.window / 1000
+        const frameWindowSamples  = Math.floor(frameWindowDuration * sampleRateTarget)
         let lastGender = ""
         let workingOff = false
         const workOffQueue = async () => {
@@ -236,8 +251,7 @@ export default class SpeechFlowNodeGender extends SpeechFlowNode {
                         const wav = new WaveFile()
                         wav.fromScratch(self.config.audioChannels, self.config.audioSampleRate, "32f", data)
                         wav.toSampleRate(sampleRateTarget, { method: "cubic" })
-                        data = wav.getSamples(false, Float32Array<ArrayBuffer>) as
-                            any as Float32Array<ArrayBuffer>
+                        data = wav.getSamples(false, Float32Array) as any as Float32Array<ArrayBuffer>
 
                         /*  queue chunk and converted data  */
                         self.queueRecv.append({ type: "audio-frame", chunk, data })
