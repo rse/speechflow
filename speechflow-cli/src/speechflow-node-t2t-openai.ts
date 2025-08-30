@@ -187,7 +187,7 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
                 throw new Error("OpenAI client not available")
             const completion = await this.openai.chat.completions.create({
                 model:       this.params.model,
-                temperature: this.params.model === "gpt-5-mini" ? 1.0 : 0.7,
+                temperature: this.params.model.includes("mini") ? 1.0 : 0.7,
                 messages: [
                     { role: "system", content: cfg.systemPrompt },
                     ...cfg.chat,
