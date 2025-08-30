@@ -316,8 +316,10 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                             && element.isSpeech !== undefined)
                             flushPendingChunks()
                         else if (!self.destroyed) {
-                            self.queue.once("write", awaitForthcomingChunks)
-                            self.activeEventListeners.add(awaitForthcomingChunks)
+                            if (!self.activeEventListeners.has(awaitForthcomingChunks)) {
+                                self.queue.once("write", awaitForthcomingChunks)
+                                self.activeEventListeners.add(awaitForthcomingChunks)
+                            }
                         }
                     }
 
@@ -329,8 +331,10 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         && element.isSpeech !== undefined)
                         flushPendingChunks()
                     else if (!self.destroyed) {
-                        self.queue.once("write", awaitForthcomingChunks)
-                        self.activeEventListeners.add(awaitForthcomingChunks)
+                        if (!self.activeEventListeners.has(awaitForthcomingChunks)) {
+                            self.queue.once("write", awaitForthcomingChunks)
+                            self.activeEventListeners.add(awaitForthcomingChunks)
+                        }
                     }
                 }
                 tryToRead()
