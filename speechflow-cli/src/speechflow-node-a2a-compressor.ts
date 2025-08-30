@@ -69,9 +69,14 @@ class AudioCompressor extends WebAudio {
         const url = path.resolve(__dirname, "speechflow-node-a2a-compressor-wt.js")
         await this.audioContext.audioWorklet.addModule(url)
 
+        /*  determine operation modes  */
+        const needsCompressor = (this.type === "standalone" && this.mode === "compress") ||
+                                (this.type === "sidechain"  && this.mode === "measure")
+        const needsGain       = (this.type === "standalone" && this.mode === "compress") ||
+                                (this.type === "sidechain"  && this.mode === "adjust")
+
         /*  create compressor worklet node  */
-        if ((this.type === "standalone" && this.mode === "compress") ||
-            (this.type === "sidechain"  && this.mode === "measure")    ) {
+        if (needsCompressor) {
             this.compressorNode = new AudioWorkletNode(this.audioContext, "compressor", {
                 numberOfInputs:  1,
                 numberOfOutputs: 1,
@@ -82,8 +87,7 @@ class AudioCompressor extends WebAudio {
         }
 
         /*  create gain node  */
-        if ((this.type === "standalone" && this.mode === "compress") ||
-            (this.type === "sidechain"  && this.mode === "adjust")     )
+        if (needsGain)
             this.gainNode = this.audioContext.createGain()
 
         /*  connect nodes (according to type and mode)  */
@@ -102,8 +106,7 @@ class AudioCompressor extends WebAudio {
 
         /*  configure compressor worklet node  */
         const currentTime = this.audioContext.currentTime
-        if ((this.type === "standalone" && this.mode === "compress") ||
-            (this.type === "sidechain"  && this.mode === "measure")    ) {
+        if (needsCompressor) {
             const node = this.compressorNode!
             const params = node.parameters as Map<string, AudioParam>
             params.get("threshold")!.setValueAtTime(this.config.thresholdDb, currentTime)
@@ -115,23 +118,26 @@ class AudioCompressor extends WebAudio {
         }
 
         /*  configure gain node  */
-        if ((this.type === "standalone" && this.mode === "compress") ||
-            (this.type === "sidechain"  && this.mode === "adjust")     ) {
+        if (needsGain) {
             const gain = Math.pow(10, this.config.makeupDb / 20)
             this.gainNode!.gain.setValueAtTime(gain, currentTime)
         }
     }
 
-    public getGainReduction(): number {
+    /*  get the current gain reduction  */
+    public getGainReduction (): number {
         const processor = (this.compressorNode as any)?.port?.processor
         return processor?.reduction ?? 0
     }
 
-    public setGain(decibel: number): void {
+    /*  set the current gain  */
+    public setGain (decibel: number): void {
         const gain = Math.pow(10, decibel / 20)
         this.gainNode?.gain.setTargetAtTime(gain, this.audioContext.currentTime, 0.002)
     }
-    public async destroy(): Promise<void> {
+
+    /*  destroy the compressor  */
+    public async destroy (): Promise<void> {
         await super.destroy()
 
         /*  destroy nodes  */
@@ -239,6 +245,8 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
                     /*  compress chunk  */
                     const payload = utils.convertBufToI16(chunk.payload)
                     self.compressor?.process(payload).then((result) => {
+                        if (self.destroyed)
+                            throw new Error("stream already destroyed")
                         if ((self.params.type === "standalone" && self.params.mode === "compress") ||
                             (self.params.type === "sidechain"  && self.params.mode === "adjust")     ) {
                             /*  take over compressed data  */
@@ -275,8 +283,10 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
         }
 
         /*  destroy bus  */
-        if (this.bus !== null)
+        if (this.bus !== null) {
+            this.bus.removeAllListeners()
             this.bus = null
+        }
 
         /*  destroy compressor  */
         if (this.compressor !== null) {
