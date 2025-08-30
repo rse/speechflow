@@ -52,6 +52,9 @@ const writeWavHeader = (
 
 /*  read WAV header  */
 const readWavHeader = (buffer: Buffer) => {
+    if (buffer.length < 44)
+        throw new Error("WAV header too short, expected at least 44 bytes")
+
     let offset = 0
     const riffHead     = buffer.subarray(offset, offset + 4).toString(); offset += 4
     const fileSize     = buffer.readUInt32LE(offset);                    offset += 4
@@ -164,13 +167,13 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
                         callback(new Error(`invalid operation mode "${self.params.mode}"`))
                         return
                     }
+                    firstChunk = false
                 }
                 else {
                     /*  pass-through original chunk  */
                     this.push(chunk)
                     callback()
                 }
-                firstChunk = false
             },
             final (callback) {
                 this.push(null)
