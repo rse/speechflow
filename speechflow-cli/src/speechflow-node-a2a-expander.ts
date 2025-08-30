@@ -46,8 +46,8 @@ class AudioExpander extends WebAudio {
             thresholdDb: config.thresholdDb ?? -45,
             floorDb:     config.floorDb     ?? -64,
             ratio:       config.ratio       ?? 4.0,
-            attackMs:    config.attackMs    ?? 0.010,
-            releaseMs:   config.releaseMs   ?? 0.050,
+            attackMs:    config.attackMs    ?? 10,
+            releaseMs:   config.releaseMs   ?? 50,
             kneeDb:      config.kneeDb      ?? 6.0,
             makeupDb:    config.makeupDb    ?? 0
         }
@@ -121,6 +121,10 @@ export default class SpeechFlowNodeExpander extends SpeechFlowNode {
             kneeDb:      { type: "number", val: 6.0, match: (n: number) => n >= 0   && n <= 40   },
             makeupDb:    { type: "number", val: 0,   match: (n: number) => n >= -24 && n <= 24   }
         })
+
+        /*  sanity check floor vs threshold  */
+        if (this.params.floorDb >= this.params.thresholdDb)
+            throw new Error("floor dB must be less than threshold dB for proper expansion")
 
         /*  declare node input/output format  */
         this.input  = "audio"
