@@ -43,9 +43,10 @@ export default class SpeechFlowNodeMute extends SpeechFlowNode {
             throw new Error("mute: node already destroyed")
         try {
             if (params.length === 2 && params[0] === "mode") {
-                if (!params[1].match(/^(?:none|silenced|unplugged)$/))
+                if (typeof params[1] !== "string" ||
+                    !params[1].match(/^(?:none|silenced|unplugged)$/))
                     throw new Error("mute: invalid mode argument in external request")
-                const muteMode: MuteMode = params[1] as MuteMode
+                const muteMode = params[1] as MuteMode
                 this.setMuteMode(muteMode)
                 this.sendResponse([ "mute", "mode", muteMode ])
             }
