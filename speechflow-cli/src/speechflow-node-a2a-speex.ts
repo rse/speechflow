@@ -45,6 +45,10 @@ export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
         /*  clear destruction flag  */
         this.destroyed = false
 
+        /*  validate sample rate compatibility  */
+        if (this.config.audioSampleRate !== 48000)
+            throw new Error(`Speex node requires 48KHz sample rate, got ${this.config.audioSampleRate}Hz`)
+
         /*  initialize and configure Speex pre-processor  */
         const wasmBinary = await fs.promises.readFile(
             path.join(__dirname, "../node_modules/@sapphi-red/speex-preprocess-wasm/dist/speex.wasm"))
@@ -79,9 +83,14 @@ export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
 
                     /*  process Int16Array in necessary fixed-size segments  */
                     utils.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
-                        self.speexProcessor!.processInt16(segment)
-                        return Promise.resolve(segment)
+                        if (self.destroyed)
+                            throw new Error("stream already destroyed")
+                        self.speexProcessor?.processInt16(segment)
+                        return segment
                     }).then((payload: Int16Array<ArrayBuffer>) => {
+                        if (self.destroyed)
+                            throw new Error("stream already destroyed")
+
                         /*  convert Int16Array back into Buffer  */
                         const buf = utils.convertI16ToBuf(payload)
 
@@ -93,6 +102,7 @@ export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
                         callback()
                     }).catch((err: Error) => {
                         self.log("warning", `processing of chunk failed: ${err}`)
+                        callback(err)
                     })
                 }
             },
