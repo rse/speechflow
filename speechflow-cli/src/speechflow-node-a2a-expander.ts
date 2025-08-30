@@ -72,14 +72,15 @@ class AudioExpander extends WebAudio {
 
         /*  configure expander node  */
         const currentTime = this.audioContext.currentTime
-        const node = this.expanderNode as any
-        node.threshold.setValueAtTime(this.config.thresholdDb, currentTime)
-        node.floor.setValueAtTime(this.config.floorDb, currentTime)
-        node.ratio.setValueAtTime(this.config.ratio, currentTime)
-        node.attack.setValueAtTime(this.config.attackMs / 1000, currentTime)
-        node.release.setValueAtTime(this.config.releaseMs / 1000, currentTime)
-        node.knee.setValueAtTime(this.config.kneeDb, currentTime)
-        node.makeup.setValueAtTime(this.config.makeupDb, currentTime)
+        const node = this.expanderNode!
+        const params = node.parameters as Map<string, AudioParam>
+        params.get("threshold")!.setValueAtTime(this.config.thresholdDb, currentTime)
+        params.get("floor")!.setValueAtTime(this.config.floorDb, currentTime)
+        params.get("ratio")!.setValueAtTime(this.config.ratio, currentTime)
+        params.get("attack")!.setValueAtTime(this.config.attackMs / 1000, currentTime)
+        params.get("release")!.setValueAtTime(this.config.releaseMs / 1000, currentTime)
+        params.get("knee")!.setValueAtTime(this.config.kneeDb, currentTime)
+        params.get("makeup")!.setValueAtTime(this.config.makeupDb, currentTime)
 
         /*  connect nodes  */
         this.sourceNode!.connect(this.expanderNode)
