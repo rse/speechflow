@@ -86,7 +86,7 @@ export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
                         if (self.destroyed)
                             throw new Error("stream already destroyed")
                         self.speexProcessor?.processInt16(segment)
-                        return segment
+                        return Promise.resolve(segment)
                     }).then((payload: Int16Array<ArrayBuffer>) => {
                         if (self.destroyed)
                             throw new Error("stream already destroyed")
