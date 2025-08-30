@@ -5,11 +5,12 @@
 */
 
 /*  standard dependencies  */
+import path             from "node:path"
 import Stream           from "node:stream"
 import { EventEmitter } from "node:events"
 
 /*  external dependencies  */
-import { GainNode, DynamicsCompressorNode } from "node-web-audio-api"
+import { GainNode, AudioWorkletNode } from "node-web-audio-api"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -32,7 +33,7 @@ class AudioCompressor extends WebAudio {
     private type:              "standalone" | "sidechain"
     private mode:              "compress" | "measure" | "adjust"
     private config:            Required<AudioCompressorConfig>
-    public compressorNode:    DynamicsCompressorNode | null = null
+    private compressorNode:    AudioWorkletNode | null = null
     private gainNode:          GainNode | null = null
 
     /*  construct object  */
@@ -64,10 +65,21 @@ class AudioCompressor extends WebAudio {
     public async setup (): Promise<void> {
         await super.setup()
 
-        /*  create compressor node  */
+        /*  add audio worklet module  */
+        const url = path.resolve(__dirname, "speechflow-node-a2a-compressor-wt.js")
+        await this.audioContext.audioWorklet.addModule(url)
+
+        /*  create compressor worklet node  */
         if ((this.type === "standalone" && this.mode === "compress") ||
-            (this.type === "sidechain"  && this.mode === "measure")    )
-            this.compressorNode = this.audioContext.createDynamicsCompressor()
+            (this.type === "sidechain"  && this.mode === "measure")    ) {
+            this.compressorNode = new AudioWorkletNode(this.audioContext, "compressor", {
+                numberOfInputs:  1,
+                numberOfOutputs: 1,
+                processorOptions: {
+                    sampleRate: this.audioContext.sampleRate
+                }
+            })
+        }
 
         /*  create gain node  */
         if ((this.type === "standalone" && this.mode === "compress") ||
@@ -88,29 +100,31 @@ class AudioCompressor extends WebAudio {
             this.gainNode!.connect(this.captureNode!)
         }
 
-        /*  configure compressor node  */
+        /*  configure compressor worklet node  */
+        const currentTime = this.audioContext.currentTime
         if ((this.type === "standalone" && this.mode === "compress") ||
             (this.type === "sidechain"  && this.mode === "measure")    ) {
-            const currentTime = this.audioContext.currentTime
-            this.compressorNode!.threshold.setValueAtTime(this.config.thresholdDb, currentTime)
-            this.compressorNode!.ratio.setValueAtTime(this.config.ratio, currentTime)
-            this.compressorNode!.attack.setValueAtTime(this.config.attackMs / 1000, currentTime)
-            this.compressorNode!.release.setValueAtTime(this.config.releaseMs / 1000, currentTime)
-            this.compressorNode!.knee.setValueAtTime(this.config.kneeDb, currentTime)
+            const node = this.compressorNode!
+            const params = node.parameters as Map<string, AudioParam>
+            params.get("threshold")!.setValueAtTime(this.config.thresholdDb, currentTime)
+            params.get("ratio")!.setValueAtTime(this.config.ratio, currentTime)
+            params.get("attack")!.setValueAtTime(this.config.attackMs / 1000, currentTime)
+            params.get("release")!.setValueAtTime(this.config.releaseMs / 1000, currentTime)
+            params.get("knee")!.setValueAtTime(this.config.kneeDb, currentTime)
+            params.get("makeup")!.setValueAtTime(this.config.makeupDb, currentTime)
         }
 
         /*  configure gain node  */
         if ((this.type === "standalone" && this.mode === "compress") ||
             (this.type === "sidechain"  && this.mode === "adjust")     ) {
-            const currentTime = this.audioContext.currentTime
             const gain = Math.pow(10, this.config.makeupDb / 20)
             this.gainNode!.gain.setValueAtTime(gain, currentTime)
         }
     }
 
     public getGainReduction(): number {
-        const decibel = this.compressorNode?.reduction ?? 0
-        return decibel
+        const processor = (this.compressorNode as any)?.port?.processor
+        return processor?.reduction ?? 0
     }
 
     public setGain(decibel: number): void {
@@ -122,7 +136,7 @@ class AudioCompressor extends WebAudio {
 
         /*  destroy nodes  */
         if (this.compressorNode !== null) {
-            this.compressorNode?.disconnect()
+            this.compressorNode.disconnect()
             this.compressorNode = null
         }
         if (this.gainNode !== null) {
