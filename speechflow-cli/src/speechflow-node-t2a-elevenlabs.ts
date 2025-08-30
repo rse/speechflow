@@ -52,10 +52,17 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
     /*  one-time status of node  */
     async status () {
-        const elevenlabs = new ElevenLabs.ElevenLabsClient({ apiKey: this.params.key })
-        const subscription = await elevenlabs.user.subscription.get()
-        const percent = subscription.characterCount / subscription.characterLimit
-        return { usage: `${percent.toFixed(2)}%` }
+        try {
+            const elevenlabs = new ElevenLabs.ElevenLabsClient({ apiKey: this.params.key })
+            const subscription = await elevenlabs.user.subscription.get()
+            const percent = subscription.characterLimit > 0
+                ? subscription.characterCount / subscription.characterLimit
+                : 0
+            return { usage: `${percent.toFixed(2)}%` }
+        }
+        catch (error) {
+            return {}
+        }
     }
 
     /*  open node  */
@@ -90,12 +97,12 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
         const voices = await this.elevenlabs.voices.getAll()
         let voice = voices.voices.find((voice) => voice.name === this.params.voice)
         if (voice === undefined) {
-            voice = voices.voices.find((voice) => voice.name!.startsWith(this.params.voice))
+            voice = voices.voices.find((voice) => (voice.name ?? "").startsWith(this.params.voice))
             if (voice === undefined)
                 throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
         }
         const info = Object.keys(voice.labels ?? {}).length > 0 ?
-            (", " + Object.entries(voice.labels!)
+            (", " + Object.entries(voice.labels ?? {})
                 .map(([ key, val ]) => `${key}: "${val}"`).join(", ")) : ""
         this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
@@ -139,11 +146,9 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed) {
+                if (self.destroyed)
                     callback(new Error("stream already destroyed"))
-                    return
-                }
-                if (Buffer.isBuffer(chunk.payload))
+                else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
                     (async () => {
@@ -158,12 +163,12 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
                             }
                         }
                         try {
-                            const stream = await speechStream(chunk.payload as string)
                             if (self.destroyed) {
                                 clearProcessTimeout()
                                 callback(new Error("stream destroyed during processing"))
                                 return
                             }
+                            const stream = await speechStream(chunk.payload as string)
                             const buffer = await getStreamAsBuffer(stream)
                             if (self.destroyed) {
                                 clearProcessTimeout()
