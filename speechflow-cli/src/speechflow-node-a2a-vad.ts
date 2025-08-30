@@ -315,11 +315,9 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                             && element.type === "audio-frame"
                             && element.isSpeech !== undefined)
                             flushPendingChunks()
-                        else if (!self.destroyed) {
-                            if (!self.activeEventListeners.has(awaitForthcomingChunks)) {
-                                self.queue.once("write", awaitForthcomingChunks)
-                                self.activeEventListeners.add(awaitForthcomingChunks)
-                            }
+                        else if (!self.destroyed && !self.activeEventListeners.has(awaitForthcomingChunks)) {
+                            self.queue.once("write", awaitForthcomingChunks)
+                            self.activeEventListeners.add(awaitForthcomingChunks)
                         }
                     }
 
@@ -330,11 +328,9 @@ export default class SpeechFlowNodeVAD extends SpeechFlowNode {
                         && element.type === "audio-frame"
                         && element.isSpeech !== undefined)
                         flushPendingChunks()
-                    else if (!self.destroyed) {
-                        if (!self.activeEventListeners.has(awaitForthcomingChunks)) {
-                            self.queue.once("write", awaitForthcomingChunks)
-                            self.activeEventListeners.add(awaitForthcomingChunks)
-                        }
+                    else if (!self.destroyed && !self.activeEventListeners.has(awaitForthcomingChunks)) {
+                        self.queue.once("write", awaitForthcomingChunks)
+                        self.activeEventListeners.add(awaitForthcomingChunks)
                     }
                 }
                 tryToRead()
