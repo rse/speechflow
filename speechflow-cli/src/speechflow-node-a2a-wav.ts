@@ -106,10 +106,8 @@ export default class SpeechFlowNodeWAV extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (!Buffer.isBuffer(chunk.payload)) {
+                if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
-                    return
-                }
                 else if (firstChunk) {
                     if (self.params.mode === "encode") {
                         /*  convert raw/PCM to WAV/PCM
