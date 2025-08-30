@@ -75,7 +75,7 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
                 "c:a":         "pcm_s16le",
                 "ar":          this.config.audioSampleRate,
                 "ac":          this.config.audioChannels,
-                "f":           "s16le",
+                "f":           "s16le"
             } : {}),
             ...(this.params.dst === "wav" ? {
                 "f":           "wav"
@@ -90,7 +90,12 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
                 "f":           "opus"
             } : {})
         })
-        this.ffmpeg.run()
+        try {
+            this.ffmpeg.run()
+        }
+        catch (err) {
+            throw new Error(`failed to start FFmpeg process: ${err}`)
+        }
 
         /*  establish a duplex stream and connect it to FFmpeg  */
         this.stream = Stream.Duplex.from({
@@ -120,7 +125,12 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
 
         /*  shutdown FFmpeg  */
         if (this.ffmpeg !== null) {
-            this.ffmpeg.kill()
+            try {
+                this.ffmpeg.kill()
+            }
+            catch {
+                /*  ignore kill errors during cleanup  */
+            }
             this.ffmpeg = null
         }
     }

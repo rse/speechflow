@@ -17,6 +17,7 @@ class AudioFiller extends EventEmitter {
     private emittedEndSamples = 0           /* stream position in samples already emitted */
     private readonly bytesPerSample = 2     /* PCM I16 */
     private readonly bytesPerFrame: number
+    private readonly sampleTolerance = 0.5  /* tolerance for floating-point sample comparisons */
 
     constructor (private sampleRate = 48000, private channels = 1) {
         super()
@@ -62,13 +63,13 @@ class AudioFiller extends EventEmitter {
             throw new Error("invalid timestamps")
 
         /*  if chunk starts beyond what we've emitted, insert silence for the gap  */
-        if (startSamp > this.emittedEndSamples + 0.5) {
+        if (startSamp > this.emittedEndSamples + this.sampleTolerance) {
             this.emitSilence(this.emittedEndSamples, startSamp)
             this.emittedEndSamples = startSamp
         }
 
         /*  if chunk ends before or at emitted end, we have it fully covered, so drop it  */
-        if (endSamp <= this.emittedEndSamples + 0.5)
+        if (endSamp <= this.emittedEndSamples + this.sampleTolerance)
             return
 
         /*  trim any overlap at the head  */
@@ -152,8 +153,13 @@ export default class SpeechFlowNodeFiller extends SpeechFlowNode {
                 else if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
-                    self.filler.add(chunk)
-                    callback()
+                    try {
+                        self.filler.add(chunk)
+                        callback()
+                    }
+                    catch (error: any) {
+                        callback(error)
+                    }
                 }
             },
             read (size) {
