@@ -78,8 +78,8 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
             output to our standard audio sample rate (48KHz)  */
         if (!SpeechFlowNodeKokoro.speexInitialized) {
             /*  at least once initialize resampler  */
-            await SpeexResampler.initPromise
             SpeechFlowNodeKokoro.speexInitialized = true
+            await SpeexResampler.initPromise
         }
         this.resampler = new SpeexResampler(1, 24000, this.config.audioSampleRate, 7)
 
