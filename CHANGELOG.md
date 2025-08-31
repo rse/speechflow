@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.4.6 (2025-08-30)
+1.4.6 (2025-08-31)
 ------------------
 
 - IMPROVEMENT: add improved dashboard infrastructure and allow nodes to publish dashboard info
