@@ -9,29 +9,15 @@ import Stream from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for data flow filtering (based on meta information)  */
 export default class SpeechFlowNodeFilter extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "filter"
 
-    /*  regex cache for performance optimization  */
-    private regexCache = new Map<string, RegExp>()
-
-    /*  helper function for cached regex creation  */
-    private regexCached(pattern: string): RegExp | null {
-        if (this.regexCache.has(pattern))
-            return this.regexCache.get(pattern)!
-        try {
-            const regex = new RegExp(pattern)
-            this.regexCache.set(pattern, regex)
-            return regex
-        }
-        catch (_error) {
-            this.log("warning", `invalid regular expression: "${pattern}"`)
-            return null
-        }
-    }
+    /*  cached regular expression instance  */
+    private cachedRegExp = new utils.CachedRegExp()
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -68,10 +54,11 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
                     val2 instanceof RegExp ?
                         val2 :
                         typeof val2 === "string" ?
-                            self.regexCached(val2) :
-                            self.regexCached(val2.toString()))
+                            this.cachedRegExp.compile(val2) :
+                            this.cachedRegExp.compile(val2.toString()))
                 if (regexp === null) {
                     /*  fallback to literal string comparison on invalid regex  */
+                    this.log("warning", `invalid regular expression: "${val2}"`)
                     return (op === "~~" ? (str === val2) : (str !== val2))
                 }
                 return (op === "~~" ? regexp.test(str) : !regexp.test(str))

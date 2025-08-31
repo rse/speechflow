@@ -598,6 +598,29 @@ export async function processInt16ArrayInSegments (
     return data
 }
 
+/*  cached regular expression class  */
+export class CachedRegExp {
+    private cache = new Map<string, RegExp>()
+    compile (pattern: string): RegExp | null {
+        if (this.cache.has(pattern))
+            return this.cache.get(pattern)!
+        try {
+            const regex = new RegExp(pattern)
+            this.cache.set(pattern, regex)
+            return regex
+        }
+        catch (_error) {
+            return null
+        }
+    }
+    clear (): void {
+        this.cache.clear()
+    }
+    size (): number {
+        return this.cache.size
+    }
+}
+
 /*  helper functions for linear/decibel conversions  */
 export function lin2dB (x: number): number {
     return 20 * Math.log10(Math.max(x, 1e-12))
