@@ -28,7 +28,7 @@
                         <div v-bind:key="value"
                             v-for="value of block.value"
                             class="text-value">
-                            {{ value as unknown as string }}
+                            {{ value as string }}
                         </div>
                     </div>
                 </div>
