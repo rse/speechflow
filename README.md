@@ -45,6 +45,7 @@ cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
 cloud-based [Amazon Polly](https://aws.amazon.com/polly/) text-to-speech conversion,
 cloud-based [DeepL](https://deepl.com) text-to-text translation,
 cloud-based [Amazon Translate](https://aws.amazon.com/translate/) text-to-text translation,
+cloud-based [Google Cloud Translate](https://cloud.google.com/translate) text-to-text translation,
 cloud-based [OpenAI/GPT](https://openai.com) text-to-text translation (or spelling correction),
 local [Ollama/Gemma](https://ollama.com) text-to-text translation (or spelling correction),
 local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translation,
@@ -315,6 +316,7 @@ First a short overview of the available processing nodes:
   **openai**,
   **ollama**,
   **transformers**,
+  **google**,
   **subtitle**,
   **format**.
 - Text-to-Audio nodes:
@@ -806,6 +808,27 @@ The following nodes process text chunks only.
   | **model**    | *none*    | "OPUS"   | `/^(?:OPUS\|SmolLM3)$/` |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+
+- Node: **google**<br/>
+  Purpose: **Google Cloud Translate Text-to-Text translation**<br/>
+  Example: `google(src: "de", dst: "en")`<br/>
+  Notice: this node requires a Google Cloud API key and project ID!
+
+  > This node performs translation between multiple languages
+  > in the text stream using Google Cloud Translate API.
+  > It supports German, English, French, and Italian languages.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **key**      | *none*    | env.SPEECHFLOW\_GOOGLE\_KEY | *none* |
+  | **prj**      | *none*    | env.SPEECHFLOW\_GOOGLE\_PRJ | *none* |
+  | **src**      | 0         | "de"     | `/^(?:de\|en\|fr\|it)$/` |
+  | **dst**      | 1         | "en"     | `/^(?:de\|en\|fr\|it)$/` |
 
 - Node: **sentence**<br/>
   Purpose: **sentence splitting/merging**<br/>

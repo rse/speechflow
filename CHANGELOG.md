@@ -5,6 +5,8 @@ ChangeLog
 1.5.1 (2025-08-31)
 ------------------
 
+- IMPROVEMENT: add Google Translate node
+
 1.5.0 (2025-08-31)
 ------------------
 

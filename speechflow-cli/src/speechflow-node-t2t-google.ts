@@ -1,0 +1,127 @@
+/*
+**  SpeechFlow - Speech Processing Flow Graph
+**  Copyright (c) 2024-2025 Dr. Ralf S. Engelschall <rse@engelschall.com>
+**  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
+*/
+
+/*  standard dependencies  */
+import Stream from "node:stream"
+
+/*  external dependencies  */
+import { TranslationServiceClient } from "@google-cloud/translate"
+
+/*  internal dependencies  */
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
+
+/*  SpeechFlow node for Google Translate text-to-text translations  */
+export default class SpeechFlowNodeGoogle extends SpeechFlowNode {
+    /*  declare official node name  */
+    public static name = "google"
+
+    /*  internal state  */
+    private client: TranslationServiceClient | null = null
+
+    /*  construct node  */
+    constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
+        super(id, cfg, opts, args)
+
+        /*  declare node configuration parameters  */
+        this.configure({
+            key: { type: "string",         val: process.env.SPEECHFLOW_GOOGLE_KEY ?? "" },
+            prj: { type: "string",         val: process.env.SPEECHFLOW_GOOGLE_PRJ ?? "" },
+            src: { type: "string", pos: 0, val: "de", match: /^(?:de|en|fr|it)$/ },
+            dst: { type: "string", pos: 1, val: "en", match: /^(?:de|en|fr|it)$/ }
+        })
+
+        /*  validate API key and project  */
+        if (this.params.key === "")
+            throw new Error("Google Translate API key is required")
+        if (this.params.prj === "")
+            throw new Error("Google Cloud project ID is required")
+
+        /*  sanity check situation  */
+        if (this.params.src === this.params.dst)
+            throw new Error("source and destination languages cannot be the same")
+
+        /*  declare node input/output format  */
+        this.input  = "text"
+        this.output = "text"
+    }
+
+    /*  one-time status of node  */
+    async status () {
+        return {}
+    }
+
+    /*  open node  */
+    async open () {
+        /*  instantiate Google Translate client  */
+        this.client = new TranslationServiceClient({
+            apiKey:    this.params.key,
+            projectId: this.params.prj
+        })
+
+        /*  provide text-to-text translation  */
+        const translate = async (text: string): Promise<string> => {
+            try {
+                const [ response ] = await this.client!.translateText({
+                    parent:   `projects/${this.params.prj}/locations/global`,
+                    contents: [ text ],
+                    mimeType: "text/plain",
+                    sourceLanguageCode: this.params.src,
+                    targetLanguageCode: this.params.dst
+                })
+                return response.translations?.[0]?.translatedText ?? text
+            }
+            catch (error: unknown) {
+                throw utils.ensureError(error, "Google Translate error")
+            }
+        }
+
+        /*  establish a duplex stream and connect it to Google Translate  */
+        this.stream = new Stream.Transform({
+            readableObjectMode: true,
+            writableObjectMode: true,
+            decodeStrings:      false,
+            highWaterMark:      1,
+            transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (Buffer.isBuffer(chunk.payload))
+                    callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload === "") {
+                    this.push(chunk)
+                    callback()
+                }
+                else {
+                    translate(chunk.payload).then((payload) => {
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = payload
+                        this.push(chunkNew)
+                        callback()
+                    }).catch((error: unknown) => {
+                        callback(utils.ensureError(error))
+                    })
+                }
+            },
+            final (callback) {
+                this.push(null)
+                callback()
+            }
+        })
+    }
+
+    /*  close node  */
+    async close () {
+        /*  close stream  */
+        if (this.stream !== null) {
+            this.stream.destroy()
+            this.stream = null
+        }
+
+        /*  shutdown Google Translate client  */
+        if (this.client !== null) {
+            this.client.close()
+            this.client = null
+        }
+    }
+}

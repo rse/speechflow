@@ -32,6 +32,7 @@
         "@aws-sdk/client-transcribe-streaming": "3.879.0",
         "@aws-sdk/client-translate":            "3.879.0",
         "@aws-sdk/client-polly":                "3.879.0",
+        "@google-cloud/translate":              "8.5.0",
         "node-web-audio-api":                   "1.0.4",
         "object-path":                          "0.11.8",
         "ws":                                   "8.18.3",
