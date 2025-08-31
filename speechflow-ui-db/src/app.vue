@@ -154,7 +154,8 @@ export default defineComponent({
     components: {
     },
     data: () => ({
-        info: [] as Info[]
+        info: [] as Info[],
+        ws: null as ReconnectingWebSocket | null
     }),
     created () {
     },
@@ -175,17 +176,24 @@ export default defineComponent({
         }
 
         /*  connect to WebSocket API for receiving dashboard information  */
-        const ws = new ReconnectingWebSocket(url, [], {
+        this.ws = new ReconnectingWebSocket(url, [], {
             reconnectionDelayGrowFactor: 1.3,
             maxReconnectionDelay:        4000,
             minReconnectionDelay:        1000,
             connectionTimeout:           4000,
             minUptime:                   5000
         })
-        ws.addEventListener("open", (ev) => {
+        this.ws.addEventListener("open", (ev) => {
         })
-        ws.addEventListener("message", (ev) => {
-            const event = JSON.parse(ev.data)
+        this.ws.addEventListener("message", (ev) => {
+            let event
+            try {
+                event = JSON.parse(ev.data)
+            }
+            catch (error) {
+                this.log("ERROR", "Failed to parse WebSocket message", { error, data: ev.data })
+                return
+            }
             if (event.response !== "DASHBOARD")
                 return
             const [ type, id, kind, value ] = event.args
@@ -214,6 +222,12 @@ export default defineComponent({
                 }
             }
         })
+    },
+    beforeUnmount () {
+        if (this.ws) {
+            this.ws.close()
+            this.ws = null
+        }
     },
     methods: {
         log (level: string, msg: string, data: { [ key: string ]: any } | null = null) {
