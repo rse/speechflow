@@ -63,11 +63,9 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
                 if (percent >= 100.0)
                     progressState.delete(artifact)
             }
-            if (progressState.size === 0) {
-                if (interval !== null) {
-                    clearInterval(interval)
-                    interval = null
-                }
+            if (progressState.size === 0 && interval !== null) {
+                clearInterval(interval)
+                interval = null
             }
         }, 1000)
         this.kokoro = await KokoroTTS.from_pretrained(model, {

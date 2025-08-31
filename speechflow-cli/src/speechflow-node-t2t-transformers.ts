@@ -46,11 +46,11 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
                 "Preserve the original meaning, tone, and nuance.\n" +
                 "Directly translate text from English (EN) to fluent and natural German (DE) language.\n",
             chat: [
-                { role: "user",   content: "I love my wife." },
+                { role: "user",      content: "I love my wife." },
                 { role: "assistant", content: "Ich liebe meine Frau." },
-                { role: "user",   content: "The weather is wonderful." },
+                { role: "user",      content: "The weather is wonderful." },
                 { role: "assistant", content: "Das Wetter ist wunderschön." },
-                { role: "user",   content: "The live is awesome." },
+                { role: "user",      content: "The life is awesome." },
                 { role: "assistant", content: "Das Leben ist einfach großartig." }
             ]
         },
@@ -65,19 +65,19 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
                 "Do not chat.\n" +
                 "Do not show any explanations.\n" +
                 "Do not show any introduction.\n" +
-                "Do not show any preamble. \n" +
-                "Do not show any prolog. \n" +
-                "Do not show any epilog. \n" +
+                "Do not show any preamble.\n" +
+                "Do not show any prolog.\n" +
+                "Do not show any epilog.\n" +
                 "Get to the point.\n" +
                 "Preserve the original meaning, tone, and nuance.\n" +
                 "Directly translate text from German (DE) to fluent and natural English (EN) language.\n",
             chat: [
-                { role: "user",   content: "Ich liebe meine Frau." },
+                { role: "user",      content: "Ich liebe meine Frau." },
                 { role: "assistant", content: "I love my wife." },
-                { role: "user",   content: "Das Wetter ist wunderschön." },
+                { role: "user",      content: "Das Wetter ist wunderschön." },
                 { role: "assistant", content: "The weather is wonderful." },
-                { role: "user",   content: "Das Leben ist einfach großartig." },
-                { role: "assistant", content: "The live is awesome." }
+                { role: "user",      content: "Das Leben ist einfach großartig." },
+                { role: "assistant", content: "The life is awesome." }
             ]
         }
     }
@@ -114,7 +114,7 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
                 artifact += `:${progress.file}`
             let percent = 0
             if (typeof progress.loaded === "number" && typeof progress.total === "number")
-                percent = (progress.loaded as number / progress.total as number) * 100
+                percent = (progress.loaded / progress.total) * 100
             else if (typeof progress.progress === "number")
                 percent = progress.progress
             if (percent > 0)
@@ -123,7 +123,7 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
         const interval = setInterval(() => {
             for (const [ artifact, percent ] of progressState) {
                 this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
-                if (percent >= 1.0)
+                if (percent >= 100.0)
                     progressState.delete(artifact)
             }
         }, 1000)
@@ -163,9 +163,8 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
         const translate = async (text: string) => {
             if (this.params.model === "OPUS") {
                 const result = await this.translator!(text)
-                return Array.isArray(result) ?
-                    (result[0] as Transformers.TranslationSingle).translation_text :
-                    (result as Transformers.TranslationSingle).translation_text
+                const single = Array.isArray(result) ? result[0] : result
+                return (single as Transformers.TranslationSingle).translation_text
             }
             else if (this.params.model === "SmolLM3") {
                 const key = `SmolLM3:${this.params.src}-${this.params.dst}`
@@ -184,13 +183,11 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
                         skip_special_tokens: true
                     })
                 })
-                const generatedText = Array.isArray(result) ?
-                    (result[0] as Transformers.TextGenerationSingle).generated_text :
-                    (result as Transformers.TextGenerationSingle).generated_text
-                const response = typeof generatedText === "string" ?
+                const single = Array.isArray(result) ? result[0] : result
+                const generatedText = (single as Transformers.TextGenerationSingle).generated_text
+                return typeof generatedText === "string" ?
                     generatedText :
                     generatedText.at(-1)!.content
-                return response
             }
             else
                 throw new Error("invalid model")
@@ -205,21 +202,19 @@ export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload === "") {
+                    this.push(chunk)
+                    callback()
+                }
                 else {
-                    if (chunk.payload === "") {
+                    translate(chunk.payload).then((payload) => {
+                        chunk = chunk.clone()
+                        chunk.payload = payload
                         this.push(chunk)
                         callback()
-                    }
-                    else {
-                        translate(chunk.payload).then((payload) => {
-                            chunk = chunk.clone()
-                            chunk.payload = payload
-                            this.push(chunk)
-                            callback()
-                        }).catch((err) => {
-                            callback(err)
-                        })
-                    }
+                    }).catch((err) => {
+                        callback(err)
+                    })
                 }
             },
             final (callback) {
