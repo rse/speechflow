@@ -53,7 +53,7 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
         /*  clear destruction flag  */
         this.destroyed = false
 
-        /*  work off queued audio frames  */
+        /*  work off queued text frames  */
         let workingOff = false
         const workOffQueue = async () => {
             if (this.destroyed)
@@ -193,19 +193,19 @@ export default class SpeechFlowNodeSentence extends SpeechFlowNode {
                         && element.type === "text-frame"
                         && element.complete === true) {
                         while (true) {
-                            const element = self.queueSend.peek()
-                            if (element === undefined)
+                            const nextElement = self.queueSend.peek()
+                            if (nextElement === undefined)
                                 break
-                            else if (element.type === "text-eof") {
+                            else if (nextElement.type === "text-eof") {
                                 this.push(null)
                                 self.queueSend.walk(+1)
                                 break
                             }
-                            else if (element.type === "text-frame"
-                                && element.complete !== true)
+                            else if (nextElement.type === "text-frame"
+                                && nextElement.complete !== true)
                                 break
-                            self.log("info", `send text: ${JSON.stringify(element.chunk.payload)}`)
-                            this.push(element.chunk)
+                            self.log("info", `send text: ${JSON.stringify(nextElement.chunk.payload)}`)
+                            this.push(nextElement.chunk)
                             self.queueSend.walk(+1)
                             self.queue.trim()
                         }
