@@ -65,18 +65,18 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
                 if (typeof chunk.payload !== "string")
                     throw new Error("chunk payload type must be string")
                 const convertSingle = (
-                    start:      Duration,
-                    end:        Duration,
-                    text:       string,
-                    word?:      string,
-                    occurence?: number
+                    start:       Duration,
+                    end:         Duration,
+                    text:        string,
+                    word?:       string,
+                    occurrence?: number
                 ) => {
                     if (word) {
-                        occurence ??= 1
+                        occurrence ??= 1
                         let match = 1
                         word = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
                         text = text.replaceAll(new RegExp(`\\b${word}\\b`, "g"), (m) => {
-                            if (match++ === occurence)
+                            if (match++ === occurrence)
                                 return `<b>${m}</b>`
                             else
                                 return m
@@ -102,12 +102,12 @@ export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
                     output += convertSingle(chunk.timestampStart, chunk.timestampEnd, chunk.payload)
                     const words = (chunk.meta.get("words") ?? []) as
                         { word: string, start: Duration, end: Duration }[]
-                    const occurences = new Map<string, number>()
+                    const occurrences = new Map<string, number>()
                     for (const word of words) {
-                        let occurence = occurences.get(word.word) ?? 0
-                        occurence++
-                        occurences.set(word.word, occurence)
-                        output += convertSingle(word.start, word.end, chunk.payload, word.word, occurence)
+                        let occurrence = occurrences.get(word.word) ?? 0
+                        occurrence++
+                        occurrences.set(word.word, occurrence)
+                        output += convertSingle(word.start, word.end, chunk.payload, word.word, occurrence)
                     }
                 }
                 else
