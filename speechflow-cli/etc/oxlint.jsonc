@@ -52,7 +52,6 @@
         "no-control-regex":                   "off",
         "no-default-export":                  "off",
         "no-dynamic-delete":                  "off",
-        "no-dynamic-delete":                  "off",
         "no-else-return":                     "off",
         "no-empty-function":                  "off",
         "no-empty-object-type":               "off",
