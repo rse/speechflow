@@ -59,6 +59,11 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                     .join(", ")
                 } }`
         }
+        const fmtChunkBase = (chunk: SpeechFlowChunk) =>
+            `chunk: type=${chunk.type} ` +
+            `kind=${chunk.kind} ` +
+            `start=${fmtTime(chunk.timestampStart)} ` +
+            `end=${fmtTime(chunk.timestampEnd)} `
 
         /*  provide Transform stream  */
         const self = this
@@ -71,10 +76,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 let error: Error | undefined
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (self.params.type === "audio")
-                        log("debug", `chunk: type=${chunk.type} ` +
-                            `kind=${chunk.kind} ` +
-                            `start=${fmtTime(chunk.timestampStart)} ` +
-                            `end=${fmtTime(chunk.timestampEnd)} ` +
+                        log("debug", fmtChunkBase(chunk) +
                             `payload-type=Buffer payload-length=${chunk.payload.byteLength} ` +
                             `meta=${fmtMeta(chunk.meta)}`)
                     else
@@ -82,10 +84,7 @@ export default class SpeechFlowNodeTrace extends SpeechFlowNode {
                 }
                 else {
                     if (self.params.type === "text") {
-                        log("debug", `chunk: type=${chunk.type} ` +
-                            `kind=${chunk.kind} ` +
-                            `start=${fmtTime(chunk.timestampStart)} ` +
-                            `end=${fmtTime(chunk.timestampEnd)} ` +
+                        log("debug", fmtChunkBase(chunk) +
                             `payload-type=String payload-length=${chunk.payload.length} ` +
                             `payload-content="${chunk.payload.toString()}" ` +
                             `meta=${fmtMeta(chunk.meta)}`)
