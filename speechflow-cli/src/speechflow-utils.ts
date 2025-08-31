@@ -16,6 +16,17 @@ import * as IntervalTree      from "node-interval-tree"
 /*  internal dependencies  */
 import { SpeechFlowChunk }    from "./speechflow-node"
 
+/*  helper function for retrieving an Error object  */
+export function ensureError (error: unknown, prefix?: string): Error {
+    if (error instanceof Error && prefix === undefined)
+        return error
+    let msg = error instanceof Error ?
+        error.message : String(error)
+    if (prefix)
+        msg = `${prefix}: ${msg}`
+    return new Error(msg, { cause: error })
+}
+
 /*  calculate duration of an audio buffer  */
 export function audioBufferDuration (
     buffer: Buffer,
