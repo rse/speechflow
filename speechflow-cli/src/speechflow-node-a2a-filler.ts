@@ -30,7 +30,7 @@ class AudioFiller extends EventEmitter {
         return super.on(event, listener)
     }
 
-    /*  convert to fractional samples to duration  */
+    /*  convert fractional samples to duration  */
     private samplesFromDuration(duration: Duration): number {
         const seconds = duration.as("seconds")
         const samples = seconds * this.sampleRate
