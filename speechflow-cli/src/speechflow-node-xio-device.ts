@@ -69,7 +69,7 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
         const devices = PortAudio.getDevices()
         for (const device of devices)
             this.log("info", `found audio device "${device.name}" ` +
-                `(inputs: ${device.maxInputChannels}, outputs: ${device.maxOutputChannels}`)
+                `(inputs: ${device.maxInputChannels}, outputs: ${device.maxOutputChannels})`)
         const device = devices.find((device) => (
             (   (   mode === "r"   && device.maxInputChannels  > 0)
                 || (mode === "w"   && device.maxOutputChannels > 0)
@@ -195,12 +195,12 @@ export default class SpeechFlowNodeDevice extends SpeechFlowNode {
     async close () {
         /*  shutdown PortAudio  */
         if (this.io !== null) {
-            await new Promise<void>((resolve, reject) => {
+            await new Promise<void>((resolve) => {
                 this.io!.abort(() => {
                     resolve()
                 })
             })
-            await new Promise<void>((resolve, reject) => {
+            await new Promise<void>((resolve) => {
                 this.io!.quit(() => {
                     resolve()
                 })
