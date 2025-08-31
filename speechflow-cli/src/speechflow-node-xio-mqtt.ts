@@ -90,7 +90,7 @@ export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
             if (this.params.mode !== "w" && !packet.sessionPresent)
                 this.broker!.subscribe([ this.params.topicRead ], (err) => {
                     if (err)
-                        this.log("error", `failed to subscribe to MQTT topic "${this.params.topicRead}": ${err.message}`)
+                        this.log("warning", `failed to subscribe to MQTT topic "${this.params.topicRead}": ${err.message}`)
                 })
         })
         this.broker.on("reconnect", () => {

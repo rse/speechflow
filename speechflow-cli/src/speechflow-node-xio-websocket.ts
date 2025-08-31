@@ -108,8 +108,6 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
             this.server.on("error", (error) => {
                 this.log("error", `error of some connection on URL ${this.params.listen}: ${error.message}`)
             })
-            const type = this.params.type
-            const mode = this.params.mode
             const self = this
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
@@ -117,10 +115,10 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 decodeStrings:      false,
                 highWaterMark:      1,
                 write (chunk: SpeechFlowChunk, encoding, callback) {
-                    if (mode === "r")
+                    if (self.params.mode === "r")
                         callback(new Error("write operation on read-only node"))
-                    else if (chunk.type !== type)
-                        callback(new Error(`written chunk is not of ${type} type`))
+                    else if (chunk.type !== self.params.type)
+                        callback(new Error(`written chunk is not of ${self.params.type} type`))
                     else if (websockets.size === 0)
                         callback(new Error("still no Websocket connections available"))
                     else {
@@ -138,14 +136,13 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                         }
                         Promise.all(results).then(() => {
                             callback()
-                        }).catch((errors: Error[]) => {
-                            const error = new Error(errors.map((e) => e.message).join("; "))
+                        }).catch((error: Error) => {
                             callback(error)
                         })
                     }
                 },
                 read (size: number) {
-                    if (mode === "w")
+                    if (self.params.mode === "w")
                         throw new Error("read operation on write-only node")
                     chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
@@ -191,10 +188,7 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 const chunk = utils.streamChunkDecode(buffer)
                 chunkQueue.write(chunk)
             })
-            const client = this.client
-            client.binaryType = "arraybuffer"
-            const type = this.params.type
-            const mode = this.params.mode
+            this.client.binaryType = "arraybuffer"
             const self = this
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
@@ -202,20 +196,20 @@ export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
                 decodeStrings:      false,
                 highWaterMark:      1,
                 write (chunk: SpeechFlowChunk, encoding, callback) {
-                    if (mode === "r")
+                    if (self.params.mode === "r")
                         callback(new Error("write operation on read-only node"))
-                    else if (chunk.type !== type)
-                        callback(new Error(`written chunk is not of ${type} type`))
-                    else if (!client.OPEN)
+                    else if (chunk.type !== self.params.type)
+                        callback(new Error(`written chunk is not of ${self.params.type} type`))
+                    else if (!self.client!.OPEN)
                         callback(new Error("still no Websocket connection available"))
                     else {
                         const data = utils.streamChunkEncode(chunk)
-                        client.send(data)
+                        self.client!.send(data)
                         callback()
                     }
                 },
                 read (size: number) {
-                    if (mode === "w")
+                    if (self.params.mode === "w")
                         throw new Error("read operation on write-only node")
                     chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
