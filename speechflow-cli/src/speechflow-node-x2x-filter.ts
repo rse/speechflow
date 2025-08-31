@@ -15,6 +15,24 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "filter"
 
+    /*  regex cache for performance optimization  */
+    private regexCache = new Map<string, RegExp>()
+
+    /*  helper function for cached regex creation  */
+    private regexCached(pattern: string): RegExp | null {
+        if (this.regexCache.has(pattern))
+            return this.regexCache.get(pattern)!
+        try {
+            const regex = new RegExp(pattern)
+            this.regexCache.set(pattern, regex)
+            return regex
+        }
+        catch (_error) {
+            this.log("warning", `invalid regular expression: "${pattern}"`)
+            return null
+        }
+    }
+
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
         super(id, cfg, opts, args)
@@ -50,8 +68,12 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
                     val2 instanceof RegExp ?
                         val2 :
                         typeof val2 === "string" ?
-                            new RegExp(val2) :
-                            new RegExp(val2.toString()))
+                            self.regexCached(val2) :
+                            self.regexCached(val2.toString()))
+                if (regexp === null) {
+                    /*  fallback to literal string comparison on invalid regex  */
+                    return (op === "~~" ? (str === val2) : (str !== val2))
+                }
                 return (op === "~~" ? regexp.test(str) : !regexp.test(str))
             }
             else {
@@ -67,15 +89,11 @@ export default class SpeechFlowNodeFilter extends SpeechFlowNode {
                 const num1 = coerceNum(val1)
                 const num2 = coerceNum(val2)
                 return (
-                    op === "<" ?
-                        (num1 < num2) :
-                        op === "<=" ?
-                            (num1 <= num2) :
-                            op === ">=" ?
-                                (num1 >= num2) :
-                                op === ">" ?
-                                    (num1 > num2) :
-                                    false
+                    op === "<"  ? (num1 <  num2) :
+                    op === "<=" ? (num1 <= num2) :
+                    op === ">=" ? (num1 >= num2) :
+                    op === ">"  ? (num1 >  num2) :
+                    false
                 )
             }
         }
