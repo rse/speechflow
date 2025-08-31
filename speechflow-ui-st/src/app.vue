@@ -14,7 +14,7 @@
                 <div v-bind:key="value"
                     v-for="(value, idx) of text"
                     class="text-value">
-                    {{ value as unknown as string }}
+                    {{ value as string }}
                     <span class="cursor" v-if="idx === (text.length - 1) && lastTextBlockKind === 'intermediate'">
                         <spinner-grid class="spinner-grid" size="32"/>
                     </span>
@@ -89,11 +89,9 @@ export default defineComponent({
         "spinner-grid":  VueSpinnerGrid
     },
     data: () => ({
-        text: [],
+        text: [] as string[],
         lastTextBlockKind: ""
     }),
-    created () {
-    },
     async mounted () {
         /*  determine API URL  */
         let url = document.location.href
@@ -109,17 +107,12 @@ export default defineComponent({
             connectionTimeout:           4000,
             minUptime:                   5000
         })
-        ws.addEventListener("open", (ev) => {
-        })
         ws.addEventListener("message", (ev) => {
             const chunk = JSON.parse(ev.data) as SpeechFlowChunk
-            if (this.lastTextBlockKind === "intermediate") {
-                const arr = this.text as string[]
-                arr[arr.length - 1] = chunk.payload
-            }
+            if (this.lastTextBlockKind === "intermediate")
+                this.text[this.text.length - 1] = chunk.payload
             else {
-                const arr = this.text as string[]
-                arr.push(chunk.payload)
+                this.text.push(chunk.payload)
                 this.text = this.text.slice(-2)
             }
             this.lastTextBlockKind = chunk.kind
