@@ -1,5 +1,5 @@
 {
-    "private":                                  "true",
+    "private":                                  true,
     "name":                                     "speechflow",
     "version":                                  "0.0.0",
     "homepage":                                 "https://github.com/rse/speechflow",

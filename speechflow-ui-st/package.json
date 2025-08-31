@@ -1,5 +1,5 @@
 {
-    "private":                              "true",
+    "private":                              true,
     "name":                                 "speechflow-ui-st",
     "description":                          "SpeechFlow User Interface (Subtitle)",
     "keywords":                             [ "speechflow" ],
