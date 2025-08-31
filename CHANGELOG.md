@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.4.6 (2025-08-31)
+1.5.0 (2025-08-31)
 ------------------
 
 - IMPROVEMENT: add improved dashboard infrastructure and allow nodes to publish dashboard info
@@ -19,6 +19,7 @@ ChangeLog
 - BUGFIX: fix operator order in audio processing
 - BUGFIX: reset envelope array when channels change
 - BUGFIX: fix parameter configuration in audio nodes
+- BUGFIX: fix private field access and remove unnecessary casts
 - UPDATE: upgrade NPM dependencies
 - UPDATE: update OxLint rules and configuration
 - CLEANUP: cleanup and simplify code throughout project
@@ -27,6 +28,7 @@ ChangeLog
 - CLEANUP: reduce code depth in multiple components
 - CLEANUP: align identifiers with remaining code
 - CLEANUP: make code compliant with updated linter rules
+- CLEANUP: fix indentation and remove duplicate entries
 
 1.4.5 (2025-08-07)
 ------------------
