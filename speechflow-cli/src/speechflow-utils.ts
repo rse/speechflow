@@ -234,25 +234,16 @@ export class SingleQueue<T> extends EventEmitter {
     }
     read () {
         return new Promise<T>((resolve, reject) => {
-            const consume = () => {
-                if (this.queue.length > 0)
-                    return this.queue.pop()!
+            const consume = () =>
+                this.queue.length > 0 ? this.queue.pop()! : null
+            const tryToConsume = () => {
+                const item = consume()
+                if (item !== null)
+                    resolve(item)
                 else
-                    return null
+                    this.once("dequeue", tryToConsume)
             }
-            let item = consume()
-            if (item !== null)
-                resolve(item)
-            else {
-                const tryToConsume = () => {
-                    item = consume()
-                    if (item !== null)
-                        resolve(item)
-                    else
-                        this.once("dequeue", tryToConsume)
-                }
-                this.once("dequeue", tryToConsume)
-            }
+            tryToConsume()
         })
     }
 }
@@ -281,22 +272,16 @@ export class DoubleQueue<T0, T1> extends EventEmitter {
                     const item1 = this.queue1.pop() as T1
                     return [ item0, item1 ]
                 }
+                return null
+            }
+            const tryToConsume = () => {
+                const items = consume()
+                if (items !== null)
+                    resolve(items)
                 else
-                    return null
+                    this.once("dequeue", tryToConsume)
             }
-            let items = consume()
-            if (items !== null)
-                resolve(items)
-            else {
-                const tryToConsume = () => {
-                    items = consume()
-                    if (items !== null)
-                        resolve(items)
-                    else
-                        this.once("dequeue", tryToConsume)
-                }
-                this.once("dequeue", tryToConsume)
-            }
+            tryToConsume()
         })
     }
 }
