@@ -5,6 +5,7 @@
     "x-release":        "2025-08-07",
     "homepage":         "https://github.com/rse/speechflow",
     "description":      "Speech Processing Flow Graph",
+    "keywords":         [ "speech", "audio", "flow", "graph" ],
     "license":          "GPL-3.0-only",
     "author": {
         "name":         "Dr. Ralf S. Engelschall",
@@ -26,7 +27,7 @@
         "cross-env":    "10.0.0",
         "shx":          "0.4.0"
     },
-    "engines" : {
+    "engines": {
         "npm":          ">=10.0.0",
         "node":         ">=22.0.0"
     },
