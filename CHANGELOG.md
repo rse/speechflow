@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: add Google Translate node
+- BUGFIX: improve error handling by ensuring we have always an Error object at hand
 
 1.5.0 (2025-08-31)
 ------------------
