@@ -74,21 +74,16 @@ export default class SpeechFlowNodeGoogle extends SpeechFlowNode {
         })
 
         /*  provide text-to-text translation  */
-        const translate = async (text: string): Promise<string> => {
-            try {
-                const [ response ] = await this.client!.translateText({
-                    parent:   `projects/${credentials.project_id}/locations/global`,
-                    contents: [ text ],
-                    mimeType: "text/plain",
-                    sourceLanguageCode: this.params.src,
-                    targetLanguageCode: this.params.dst
-                })
-                return response.translations?.[0]?.translatedText ?? text
-            }
-            catch (error: unknown) {
-                throw utils.ensureError(error, "Google Translate error")
-            }
-        }
+        const translate = utils.runner("Google Translate API", async (text: string) => {
+            const [ response ] = await this.client!.translateText({
+                parent:   `projects/${credentials.project_id}/locations/global`,
+                contents: [ text ],
+                mimeType: "text/plain",
+                sourceLanguageCode: this.params.src,
+                targetLanguageCode: this.params.dst
+            })
+            return response.translations?.[0]?.translatedText ?? text
+        })
 
         /*  establish a duplex stream and connect it to Google Translate  */
         this.stream = new Stream.Transform({
