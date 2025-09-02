@@ -90,12 +90,7 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
                 "f":           "opus"
             } : {})
         })
-        try {
-            this.ffmpeg.run()
-        }
-        catch (err) {
-            throw new Error(`failed to start FFmpeg process: ${err}`)
-        }
+        utils.run("starting FFmpeg process", () => this.ffmpeg.run())
 
         /*  establish a duplex stream and connect it to FFmpeg  */
         this.stream = Stream.Duplex.from({
@@ -125,12 +120,7 @@ export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
 
         /*  shutdown FFmpeg  */
         if (this.ffmpeg !== null) {
-            try {
-                this.ffmpeg.kill()
-            }
-            catch {
-                /*  ignore kill errors during cleanup  */
-            }
+            utils.run(() => this.ffmpeg.kill(), () => {})
             this.ffmpeg = null
         }
     }
