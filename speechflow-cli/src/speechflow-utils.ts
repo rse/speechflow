@@ -50,7 +50,7 @@ type runNoPromise<T> =
 /*  run a synchronous or asynchronous action  */
 export function run<T, X extends runNoPromise<T> | never> (
     action:      () => X,
-    oncatch?:    (error: Error) => X,
+    oncatch?:    (error: Error) => X | never,
     onfinally?:  () => void
 ): X
 export function run<T, X extends runNoPromise<T> | never> (
@@ -137,6 +137,60 @@ export function run<T> (
         /*  synchronous case (result branch)  */
         runFinally(onfinally)
         return result
+    }
+}
+
+/*  run a synchronous or asynchronous action  */
+/* eslint @typescript-eslint/unified-signatures: off */
+export function runner<T, X extends runNoPromise<T> | never, F extends (...args: any[]) => X> (
+    action:      F,
+    oncatch?:    (error: Error) => X | never,
+    onfinally?:  () => void
+): F
+export function runner<T, X extends runNoPromise<T> | never, F extends (...args: any[]) => X> (
+    description: string,
+    action:      F,
+    oncatch?:    (error: Error) => X | never,
+    onfinally?:  () => void
+): F
+export function runner<T, X extends (T | Promise<T>), F extends (...args: any[]) => Promise<T>> (
+    action:      F,
+    oncatch?:    (error: Error) => X,
+    onfinally?:  () => void
+): F
+export function runner<T, X extends (T | Promise<T>), F extends (...args: any[]) => Promise<T>> (
+    description: string,
+    action:      F,
+    oncatch?:    (error: Error) => X,
+    onfinally?:  () => void
+): F
+export function runner<T> (
+    ...args: any[]
+): (...args: any[]) => T | Promise<T> | never {
+    /*  support overloaded signatures  */
+    let description: string | undefined
+    let action:      (...args: any[]) => T | Promise<T> | never
+    let oncatch:     (error: Error) => T | Promise<T> | never
+    let onfinally:   () => void
+    if (typeof args[0] === "string") {
+        description = args[0]
+        action      = args[1]
+        oncatch     = args[2]
+        onfinally   = args[3]
+    }
+    else {
+        action      = args[0]
+        oncatch     = args[1]
+        onfinally   = args[2]
+    }
+
+    /*  wrap the "run" operation on "action" into function
+        which exposes the signature of "action"  */
+    return (...args: any[]) => {
+        if (description)
+            return run(description, () => action(...args), oncatch, onfinally)
+        else
+            return run(() => action(...args), oncatch, onfinally)
     }
 }
 
