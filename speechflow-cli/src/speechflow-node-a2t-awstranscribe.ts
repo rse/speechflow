@@ -259,12 +259,10 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
                     callback()
                     return
                 }
-                try {
-                    self.client.destroy()
-                }
-                catch (error) {
-                    self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
-                }
+                utils.run(
+                    () => self.client.destroy(),
+                    (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
+                )
                 audioQueue.push(null) /* do not push null to stream, let Amazon Transcribe do it */
                 audioQueue.destroy()
                 callback()
