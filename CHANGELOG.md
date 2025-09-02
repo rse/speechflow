@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: add Google Translate node
 - BUGFIX: improve error handling by ensuring we have always an Error object at hand
+- UPDATE: upgrade NPM dependencies
 
 1.5.0 (2025-08-31)
 ------------------
