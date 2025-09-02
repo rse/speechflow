@@ -7,7 +7,7 @@
 /*  standard dependencies  */
 import Stream                 from "node:stream"
 import { EventEmitter }       from "node:events"
-import { type, type ArkErrors, type Type } from "arktype"
+import { type, type Type }    from "arktype"
 
 /*  external dependencies  */
 import { DateTime, Duration } from "luxon"
@@ -40,7 +40,7 @@ function runFinally (onfinally?: () => void) {
     if (!onfinally)
         return
     try { onfinally() }
-    catch (arg: unknown) { /*  ignored  */ }
+    catch (_arg: unknown) { /*  ignored  */ }
 }
 
 /*  helper type for ensuring T contains no Promise  */
@@ -142,7 +142,7 @@ export function run<T> (
 
 /*  import an object with parsing and strict error handling  */
 export function importObject<T>(name: string, arg: object | string, validator: Type<T, {}>): T {
-    let obj: object = typeof arg === "string" ?
+    const obj: object = typeof arg === "string" ?
         run(`${name}: parsing JSON`, () => JSON.parse(arg)) :
         arg
     const result = validator(obj)
