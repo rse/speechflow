@@ -442,6 +442,7 @@ let debug = false
                     process.exit(1)
                 }
                 const params = Object.keys(node!.params)
+                    .filter((key) => !key.match(/key/))
                     .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
                 cli!.log("info", `create node <${node!.id}> (${params})`)
                 graphNodes.add(node!)
