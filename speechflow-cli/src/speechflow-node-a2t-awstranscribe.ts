@@ -260,7 +260,7 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
                     return
                 }
                 utils.run(
-                    () => self.client.destroy(),
+                    () => self.client!.destroy(),
                     (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
                 )
                 audioQueue.push(null) /* do not push null to stream, let Amazon Transcribe do it */
