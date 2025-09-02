@@ -9,6 +9,7 @@ import Stream from "node:stream"
 
 /*  external dependencies  */
 import { TranslationServiceClient } from "@google-cloud/translate"
+import * as arktype                 from "arktype"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -29,16 +30,13 @@ export default class SpeechFlowNodeGoogle extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key: { type: "string",         val: process.env.SPEECHFLOW_GOOGLE_KEY ?? "" },
-            prj: { type: "string",         val: process.env.SPEECHFLOW_GOOGLE_PRJ ?? "" },
             src: { type: "string", pos: 0, val: "de", match: /^(?:de|en|fr|it)$/ },
             dst: { type: "string", pos: 1, val: "en", match: /^(?:de|en|fr|it)$/ }
         })
 
         /*  validate API key and project  */
         if (this.params.key === "")
-            throw new Error("Google Translate API key is required")
-        if (this.params.prj === "")
-            throw new Error("Google Cloud project ID is required")
+            throw new Error("Google Cloud API credentials JSON key is required")
 
         /*  sanity check situation  */
         if (this.params.src === this.params.dst)
@@ -57,16 +55,29 @@ export default class SpeechFlowNodeGoogle extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  instantiate Google Translate client  */
+        const data = utils.run("Google Cloud API credentials key", () =>
+            JSON.parse(this.params.key))
+        const credentials = utils.importObject("Google Cloud API credentials key",
+            data,
+            arktype.type({
+                project_id:   "string",
+                private_key:  "string",
+                client_email: "string",
+            })
+        )
         this.client = new TranslationServiceClient({
-            apiKey:    this.params.key,
-            projectId: this.params.prj
+            credentials: {
+                private_key:  credentials.private_key,
+                client_email: credentials.client_email
+            },
+            projectId: credentials.project_id
         })
 
         /*  provide text-to-text translation  */
         const translate = async (text: string): Promise<string> => {
             try {
                 const [ response ] = await this.client!.translateText({
-                    parent:   `projects/${this.params.prj}/locations/global`,
+                    parent:   `projects/${credentials.project_id}/locations/global`,
                     contents: [ text ],
                     mimeType: "text/plain",
                     sourceLanguageCode: this.params.src,
