@@ -99,9 +99,9 @@ class AudioExpander extends WebAudio {
 }
 
 /*  SpeechFlow node for noise expander in audio-to-audio passing  */
-export default class SpeechFlowNodeExpander extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "expander"
+    public static name = "a2a-expander"
 
     /*  internal state  */
     private destroyed = false

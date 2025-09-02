@@ -12,9 +12,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for data flow filtering (based on meta information)  */
-export default class SpeechFlowNodeFilter extends SpeechFlowNode {
+export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "filter"
+    public static name = "x2x-filter"
 
     /*  cached regular expression instance  */
     private cachedRegExp = new utils.CachedRegExp()

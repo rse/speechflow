@@ -14,9 +14,9 @@ import wrapText from "wrap-text"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  SpeechFlow node for text-to-text formatting  */
-export default class SpeechFlowNodeFormat extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TFormat extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "format"
+    public static name = "t2t-format"
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {

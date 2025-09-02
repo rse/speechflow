@@ -16,9 +16,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for Websocket networking  */
-export default class SpeechFlowNodeWebsocket extends SpeechFlowNode {
+export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "websocket"
+    public static name = "xio-websocket"
 
     /*  internal state  */
     private server: ws.WebSocketServer | null = null

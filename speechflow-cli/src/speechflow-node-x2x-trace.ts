@@ -14,9 +14,9 @@ import { Duration } from "luxon"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  SpeechFlow node for data flow tracing  */
-export default class SpeechFlowNodeTrace extends SpeechFlowNode {
+export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "trace"
+    public static name = "x2x-trace"
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {

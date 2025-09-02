@@ -83,9 +83,9 @@ const readWavHeader = (buffer: Buffer) => {
 }
 
 /*  SpeechFlow node for WAV format conversion  */
-export default class SpeechFlowNodeWAV extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "wav"
+    public static name = "a2a-wav"
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {

@@ -15,9 +15,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for audio metering  */
-export default class SpeechFlowNodeMeter extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "meter"
+    public static name = "a2a-meter"
 
     /*  internal state  */
     private emitInterval: ReturnType<typeof setInterval> | null = null

@@ -153,9 +153,9 @@ class AudioCompressor extends WebAudio {
 }
 
 /*  SpeechFlow node for compression in audio-to-audio passing  */
-export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
+export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "compressor"
+    public static name = "a2a-compressor"
 
     /*  internal state  */
     private destroyed = false

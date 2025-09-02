@@ -19,9 +19,9 @@ type ConfigEntry = { systemPrompt: string, chat: Array<{ role: string, content: 
 type Config      = { [ key: string ]: ConfigEntry }
 
 /*  SpeechFlow node for Ollama text-to-text translation  */
-export default class SpeechFlowNodeOllama extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TOllama extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "ollama"
+    public static name = "t2t-ollama"
 
     /*  internal state  */
     private ollama: Ollama | null = null

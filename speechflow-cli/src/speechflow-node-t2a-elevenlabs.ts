@@ -16,9 +16,9 @@ import SpeexResampler        from "speex-resampler"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 
 /*  SpeechFlow node for Elevenlabs text-to-speech conversion  */
-export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
+export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "elevenlabs"
+    public static name = "t2a-elevenlabs"
 
     /*  internal state  */
     private elevenlabs: ElevenLabs.ElevenLabsClient | null = null
@@ -131,10 +131,10 @@ export default class SpeechFlowNodeElevenlabs extends SpeechFlowNode {
 
         /*  establish resampler from ElevenLabs's maximum 24Khz
             output to our standard audio sample rate (48KHz)  */
-        if (!SpeechFlowNodeElevenlabs.speexInitialized) {
+        if (!SpeechFlowNodeT2AElevenlabs.speexInitialized) {
             /*  at least once initialize resampler  */
             await SpeexResampler.initPromise
-            SpeechFlowNodeElevenlabs.speexInitialized = true
+            SpeechFlowNodeT2AElevenlabs.speexInitialized = true
         }
         this.resampler = new SpeexResampler(1, maxSampleRate, this.config.audioSampleRate, 7)
 

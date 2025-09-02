@@ -104,9 +104,9 @@ class AudioFiller extends EventEmitter {
 }
 
 /*  SpeechFlow node for filling audio gaps  */
-export default class SpeechFlowNodeFiller extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "filler"
+    public static name = "a2a-filler"
 
     /*  internal state  */
     private destroyed = false

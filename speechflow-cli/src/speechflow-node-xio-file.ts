@@ -13,9 +13,9 @@ import SpeechFlowNode   from "./speechflow-node"
 import * as utils       from "./speechflow-utils"
 
 /*  SpeechFlow node for file access  */
-export default class SpeechFlowNodeFile extends SpeechFlowNode {
+export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "file"
+    public static name = "xio-file"
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {

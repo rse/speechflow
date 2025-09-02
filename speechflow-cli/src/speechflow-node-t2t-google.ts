@@ -16,9 +16,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for Google Translate text-to-text translations  */
-export default class SpeechFlowNodeGoogle extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "google"
+    public static name = "t2t-google"
 
     /*  internal state  */
     private client: TranslationServiceClient | null = null

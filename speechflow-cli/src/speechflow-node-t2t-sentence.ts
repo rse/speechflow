@@ -24,9 +24,9 @@ type TextQueueElement = {
 }
 
 /*  SpeechFlow node for sentence splitting  */
-export default class SpeechFlowNodeSentence extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "sentence"
+    public static name = "t2t-sentence"
 
     /*  internal state  */
     private queue      = new utils.Queue<TextQueueElement>()

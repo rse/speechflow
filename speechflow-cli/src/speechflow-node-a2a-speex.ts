@@ -17,9 +17,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for Speex based noise suppression in audio-to-audio passing  */
-export default class SpeechFlowNodeSpeex extends SpeechFlowNode {
+export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "speex"
+    public static name = "a2a-speex"
 
     /*  internal state  */
     private destroyed = false

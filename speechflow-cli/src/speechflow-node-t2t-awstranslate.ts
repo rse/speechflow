@@ -15,9 +15,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for AWS Translate text-to-text translations  */
-export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TAWSTranslate extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "awstranslate"
+    public static name = "t2t-awstranslate"
 
     /*  internal state  */
     private client: TranslateClient | null = null

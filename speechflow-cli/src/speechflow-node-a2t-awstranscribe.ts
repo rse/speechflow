@@ -63,9 +63,9 @@ class AsyncQueue<T> {
 }
 
 /*  SpeechFlow node for AWS Transcribe speech-to-text conversion  */
-export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
+export default class SpeechFlowNodeA2TAWSTranscribe extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "awstranscribe"
+    public static name = "a2t-awstranscribe"
 
     /*  internal state  */
     private client:            TranscribeStreamingClient     | null             = null

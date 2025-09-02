@@ -30,9 +30,9 @@ type AudioQueueElement = {
 }
 
 /*  SpeechFlow node for VAD speech-to-speech processing  */
-export default class SpeechFlowNodeVAD extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "vad"
+    public static name = "a2a-vad"
 
     /*  internal state  */
     private vad: RealTimeVAD | null = null

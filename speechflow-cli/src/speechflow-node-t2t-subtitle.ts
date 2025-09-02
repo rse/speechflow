@@ -30,9 +30,9 @@ type wsPeerInfo = {
 }
 
 /*  SpeechFlow node for subtitle (text-to-text) "translations"  */
-export default class SpeechFlowNodeSubtitle extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "subtitle"
+    public static name = "t2t-subtitle"
 
     /*  internal state  */
     private sequenceNo = 1

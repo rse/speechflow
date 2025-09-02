@@ -15,9 +15,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for DeepL text-to-text translations  */
-export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TDeepL extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "deepl"
+    public static name = "t2t-deepl"
 
     /*  internal state  */
     private deepl: DeepL.Translator | null = null

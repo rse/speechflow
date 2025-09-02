@@ -4,74 +4,74 @@
 
 #   Capture and meter audio from microphone device into WAV audio file
 capturing: |
-    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-        vad() |
-            meter(1000) |
-                wav(mode: "encode") |
-                    file(path: "capture.wav", mode: "w", type: "audio")
+    xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+        a2a-vad() |
+            a2a-meter(1000) |
+                a2a-wav(mode: "encode") |
+                    xio-file(path: "capture.wav", mode: "w", type: "audio")
 
 #   Pass-through audio from microphone device to speaker
 #   device and in parallel record it to WAV audio file
 pass-through: |
-    device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
-        wav(mode: "encode") |
-            file(path: "capture.wav", mode: "w", type: "audio"),
-        device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
+    xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
+        a2a-wav(mode: "encode") |
+            xio-file(path: "capture.wav", mode: "w", type: "audio"),
+        xio-device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
     }
 
 #   Generate text file with German transcription of German MP3 audio file
 transcription: |
-    file(path: argv.0, mode: "r", type: "audio") |
-        ffmpeg(src: "mp3", dst: "pcm") |
-            deepgram(language: "de") |
-                format(width: 80) |
-                    file(path: argv.1, mode: "w", type: "text")
+    xio-file(path: argv.0, mode: "r", type: "audio") |
+        a2a-ffmpeg(src: "mp3", dst: "pcm") |
+            a2t-deepgram(language: "de") |
+                t2t-format(width: 80) |
+                    xio-file(path: argv.1, mode: "w", type: "text")
 
 #   Generate WebVTT file with German closed captions of German MP3 audio file
 captioning: |
-    file(path: argv.0, mode: "r", type: "audio") |
-        ffmpeg(src: "mp3", dst: "pcm") |
-            deepgram(language: "de") |
-                subtitle(format: "vtt") |
-                    file(path: argv.1, mode: "w", type: "text")
+    xio-file(path: argv.0, mode: "r", type: "audio") |
+        a2a-ffmpeg(src: "mp3", dst: "pcm") |
+            a2t-deepgram(language: "de") |
+                t2t-subtitle(format: "vtt") |
+                    xio-file(path: argv.1, mode: "w", type: "text")
 
 #   Generate WebVTT file with English subtitles of German MP3 audio file
 subtitling: |
-    file(path: argv.0, mode: "r", type: "audio") |
-        ffmpeg(src: "mp3", dst: "pcm") |
-            deepgram(language: "de") |
-                deepl(src: "de", dst: "en") |
-                    subtitle(format: "vtt") |
-                        file(path: argv.1, mode: "w", type: "text")
+    xio-file(path: argv.0, mode: "r", type: "audio") |
+        a2a-ffmpeg(src: "mp3", dst: "pcm") |
+            a2t-deepgram(language: "de") |
+                t2t-deepl(src: "de", dst: "en") |
+                    t2t-subtitle(format: "vtt") |
+                        xio-file(path: argv.1, mode: "w", type: "text")
 
 #   Ad-Hoc text translation from German to English
 translation: |
-    file(path: "-", mode: "r", type: "text") |
-        deepl(src: "de", dst: "en") |
-            file(path: "-", mode: "w", type: "text")
+    xio-file(path: "-", mode: "r", type: "text") |
+        t2t-deepl(src: "de", dst: "en") |
+            xio-file(path: "-", mode: "w", type: "text")
 
 #   Generate audio file with English voice for a text file
 speaking: |
-    file(path: argv.0, mode: "r", type: "text") |
-        kokoro(language: "en") |
-            wav(mode: "encode") |
-                file(path: argv.1, mode: "w", type: "audio")
+    xio-file(path: argv.0, mode: "r", type: "text") |
+        t2a-kokoro(language: "en") |
+            a2a-wav(mode: "encode") |
+                xio-file(path: argv.1, mode: "w", type: "audio")
 
 #   Batch studio transcription from German to English,
 #   including the capturing of all involved inputs and outputs:
 studio-transcription: |
-    file(path: argv.0, mode: "r", type: "audio") | {
-        ffmpeg(src: "mp3", dst: "pcm") | {
-            deepgram(language: "de") | {
-                format(width: 80) |
-                    file(path: argv.1, mode: "w", type: "text"),
-                subtitle(format: "vtt") |
-                    file(path: argv.2, mode: "w", type: "text"),
-                subtitle(format: "srt") |
-                    file(path: argv.3, mode: "w", type: "text"),
-                elevenlabs(voice: "Mark", optimize: "quality", speed: 1.05, language: "en") |
-                    wav(mode: "encode") |
-                        file(path: argv.4, mode: "w", type: "audio")
+    xio-file(path: argv.0, mode: "r", type: "audio") | {
+        a2a-ffmpeg(src: "mp3", dst: "pcm") | {
+            a2t-deepgram(language: "de") | {
+                t2t-format(width: 80) |
+                    xio-file(path: argv.1, mode: "w", type: "text"),
+                t2t-subtitle(format: "vtt") |
+                    xio-file(path: argv.2, mode: "w", type: "text"),
+                t2t-subtitle(format: "srt") |
+                    xio-file(path: argv.3, mode: "w", type: "text"),
+                t2a-elevenlabs(voice: "Mark", optimize: "quality", speed: 1.05, language: "en") |
+                    a2a-wav(mode: "encode") |
+                        xio-file(path: argv.4, mode: "w", type: "audio")
             }
         }
     }
@@ -79,35 +79,35 @@ studio-transcription: |
 #   Real-time studio translation from German to English,
 #   including the capturing of all involved inputs and outputs:
 studio-translation: |
-    device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
-        gender() | {
-            meter(interval: 250, dashboard: "meter1") |
-                wav(mode: "encode") |
-                    file(path: "program-de.wav", mode: "w", type: "audio"),
-            deepgram(language: "de", key: interim: true) | {
-                trace(name: "trace1", type: "text", dashboard: "text1")
-                subtitle(format: "vtt", words: true) |
-                    file(path: "program-de.vtt", mode: "w", type: "text"),
-                sentence() | {
-                    trace(name: "trace2", type: "text", notify: true, dashboard: "text2") |
-                        format(width: 80) |
-                            file(path: "program-de.txt", mode: "w", type: "text"),
-                    deepl(src: "de", dst: "en") | {
-                        trace(name: "trace3", type: "text", dashboard: "text3") | {
-                            format(width: 80) |
-                                file(path: "program-en.txt", mode: "w", type: "text"),
-                            subtitle(format: "vtt", words: false) |
-                                file(path: "program-en.vtt", mode: "w", type: "text"),
+    xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
+        a2a-gender() | {
+            a2a-meter(interval: 250, dashboard: "meter1") |
+                a2a-wav(mode: "encode") |
+                    xio-file(path: "program-de.wav", mode: "w", type: "audio"),
+            a2t-deepgram(language: "de", key: interim: true) | {
+                x2x-trace(name: "trace1", type: "text", dashboard: "text1")
+                t2t-subtitle(format: "vtt", words: true) |
+                    xio-file(path: "program-de.vtt", mode: "w", type: "text"),
+                t2t-sentence() | {
+                    x2x-trace(name: "trace2", type: "text", notify: true, dashboard: "text2") |
+                        t2t-format(width: 80) |
+                            xio-file(path: "program-de.txt", mode: "w", type: "text"),
+                    t2t-deepl(src: "de", dst: "en") | {
+                        x2x-trace(name: "trace3", type: "text", dashboard: "text3") | {
+                            t2t-format(width: 80) |
+                                xio-file(path: "program-en.txt", mode: "w", type: "text"),
+                            t2t-subtitle(format: "vtt", words: false) |
+                                xio-file(path: "program-en.vtt", mode: "w", type: "text"),
                             {
-                                filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
-                                    elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
-                                filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
-                                    elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
+                                x2x-filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
+                                    t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
+                                x2x-filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
+                                    t2a-elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
                             } | {
-                                meter(interval: 250, dashboard: "meter2"),
-                                wav(mode: "encode") |
-                                    file(path: "program-en.wav", mode: "w", type: "audio"),
-                                device(device: "coreaudio:USBAudio2.0", mode: "w")
+                                a2a-meter(interval: 250, dashboard: "meter2"),
+                                a2a-wav(mode: "encode") |
+                                    xio-file(path: "program-en.wav", mode: "w", type: "audio"),
+                                xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
                             }
                         }
                     }
@@ -118,18 +118,18 @@ studio-translation: |
 
 #   Test-drive for development
 test: |
-    device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-        meter(interval: 50, dashboard: "meter1") |
-            deepgram(language: "de", model: "nova-2", interim: true) |
-                trace(type: "text", dashboard: "text1") | {
-                    subtitle(mode: "render", addr: "127.0.0.1", port: 8585),
-                    filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
-                        sentence() |
-                            trace(type: "text", dashboard: "text2") |
-                                deepl(src: "de", dst: "en") |
-                                    trace(type: "text", dashboard: "text3") |
-                                        elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
-                                            meter(interval: 50, dashboard: "meter2") |
-                                                device(device: "coreaudio:USBAudio2.0", mode: "w")
+    xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+        a2a-meter(interval: 50, dashboard: "meter1") |
+            a2t-deepgram(language: "de", model: "nova-2", interim: true) |
+                x2x-trace(type: "text", dashboard: "text1") | {
+                    t2t-subtitle(mode: "render", addr: "127.0.0.1", port: 8585),
+                    x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
+                        t2t-sentence() |
+                            x2x-trace(type: "text", dashboard: "text2") |
+                                t2t-deepl(src: "de", dst: "en") |
+                                    x2x-trace(type: "text", dashboard: "text3") |
+                                        t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
+                                            a2a-meter(interval: 50, dashboard: "meter2") |
+                                                xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
                 }
 

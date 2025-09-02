@@ -12,9 +12,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for gain adjustment in audio-to-audio passing  */
-export default class SpeechFlowNodeGain extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "gain"
+    public static name = "a2a-gain"
 
     /*  internal state  */
     private destroyed = false

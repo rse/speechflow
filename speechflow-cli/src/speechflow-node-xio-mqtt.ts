@@ -16,9 +16,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for MQTT networking  */
-export default class SpeechFlowNodeMQTT extends SpeechFlowNode {
+export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "mqtt"
+    public static name = "xio-mqtt"
 
     /*  internal state  */
     private broker: MQTT.MqttClient | null = null

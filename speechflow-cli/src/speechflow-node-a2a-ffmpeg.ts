@@ -16,9 +16,9 @@ import SpeechFlowNode                from "./speechflow-node"
 import * as utils                    from "./speechflow-utils"
 
 /*  SpeechFlow node for FFmpeg  */
-export default class SpeechFlowNodeFFmpeg extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "ffmpeg"
+    public static name = "a2a-ffmpeg"
 
     /*  internal state  */
     private ffmpegBinary = FFmpeg.supported ? FFmpeg.binary : "ffmpeg"

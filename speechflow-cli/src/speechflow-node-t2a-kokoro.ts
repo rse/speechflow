@@ -16,9 +16,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for Kokoro text-to-speech conversion  */
-export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
+export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "kokoro"
+    public static name = "t2a-kokoro"
 
     /*  internal state  */
     private kokoro: KokoroTTS | null = null
@@ -82,9 +82,9 @@ export default class SpeechFlowNodeKokoro extends SpeechFlowNode {
 
         /*  establish resampler from Kokoro's maximum 24Khz
             output to our standard audio sample rate (48KHz)  */
-        if (!SpeechFlowNodeKokoro.speexInitialized) {
+        if (!SpeechFlowNodeT2AKokoro.speexInitialized) {
             /*  at least once initialize resampler  */
-            SpeechFlowNodeKokoro.speexInitialized = true
+            SpeechFlowNodeT2AKokoro.speexInitialized = true
             await SpeexResampler.initPromise
         }
         this.resampler = new SpeexResampler(1, 24000, this.config.audioSampleRate, 7)

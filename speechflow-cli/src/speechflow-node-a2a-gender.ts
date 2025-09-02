@@ -27,9 +27,9 @@ type AudioQueueElement = {
 }
 
 /*  SpeechFlow node for Gender recognition  */
-export default class SpeechFlowNodeGender extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "gender"
+    public static name = "a2a-gender"
 
     /*  internal state  */
     private classifier: Transformers.AudioClassificationPipeline | null = null

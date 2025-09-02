@@ -14,9 +14,9 @@ import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for RNNoise based noise suppression in audio-to-audio passing  */
-export default class SpeechFlowNodeRNNoise extends SpeechFlowNode {
+export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "rnnoise"
+    public static name = "a2a-rnnoise"
 
     /*  internal state  */
     private destroyed = false

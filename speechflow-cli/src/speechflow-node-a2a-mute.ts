@@ -17,9 +17,9 @@ type MuteMode =
     "unplugged"    /*  muted by unplugging the audio sample flow   */
 
 /*  SpeechFlow node for muting in audio-to-audio passing  */
-export default class SpeechFlowNodeMute extends SpeechFlowNode {
+export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "mute"
+    public static name = "a2a-mute"
 
     /*  internal state  */
     private muteMode: MuteMode = "none"

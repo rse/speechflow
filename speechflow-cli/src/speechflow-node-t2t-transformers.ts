@@ -20,9 +20,9 @@ type ConfigEntry = { systemPrompt: string, chat: Array<{ role: string, content: 
 type Config      = { [ key: string ]: ConfigEntry }
 
 /*  SpeechFlow node for Transformers text-to-text translation  */
-export default class SpeechFlowNodeTransformers extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TTransformers extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "transformers"
+    public static name = "t2t-transformers"
 
     /*  internal state  */
     private translator: Transformers.TranslationPipeline    | null = null

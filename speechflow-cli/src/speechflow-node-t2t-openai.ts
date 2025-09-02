@@ -19,9 +19,9 @@ type ConfigEntry = { systemPrompt: string, chat: OpenAI.ChatCompletionMessagePar
 type Config      = { [ key: string ]: ConfigEntry }
 
 /*  SpeechFlow node for OpenAI/GPT text-to-text translation  */
-export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
+export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "openai"
+    public static name = "t2t-openai"
 
     /*  internal state  */
     private openai: OpenAI | null = null

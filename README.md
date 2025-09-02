@@ -75,18 +75,18 @@ and real-time translated to English.
 First, the used configuration was a straight linear pipeline in file `sample.conf`:
 
 ```txt
-device(device: "coreaudio:Elgato Wave:3", mode: "r") |
-meter(interval: 50, dashboard: "meter1") |
-deepgram(language: "de", model: "nova-2", interim: true) |
-trace(type: "text", dashboard: "text1") |
-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
-sentence() |
-trace(type: "text", dashboard: "text2") |
-deepl(src: "de", dst: "en") |
-trace(type: "text", dashboard: "text3") |
-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
-meter(interval: 50, dashboard: "meter2") |
-device(device: "coreaudio:USBAudio2.0", mode: "w")
+xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+a2a-meter(interval: 50, dashboard: "meter1") |
+a2t-deepgram(language: "de", model: "nova-2", interim: true) |
+x2x-trace(type: "text", dashboard: "text1") |
+x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
+t2t-sentence() |
+x2x-trace(type: "text", dashboard: "text2") |
+t2t-deepl(src: "de", dst: "en") |
+x2x-trace(type: "text", dashboard: "text3") |
+t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
+a2a-meter(interval: 50, dashboard: "meter2") |
+xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
 ```
 
 Second, the corresponding **SpeechFlow** command was:
@@ -100,13 +100,13 @@ Finally, the resulting dashboard under URL `http://127.0.0.1:8484/` was:
 
 ![dashboard](etc/speechflow.png)
 
-On the left you can see the volume meter of the microphone (`device`),
+On the left you can see the volume meter of the microphone (`xio-device`),
 followed by the German result of the speech-to-text conversion
-(`deepgram`), followed by the still German results of the text-to-text
-sentence splitting/aggregation (`sentence`), followed by the English
-results of the text-to-text translation (`deepl`) and then finally on
+(`a2t-deepgram`), followed by the still German results of the text-to-text
+sentence splitting/aggregation (`t2t-sentence`), followed by the English
+results of the text-to-text translation (`t2t-deepl`) and then finally on
 the right you can see the volume meter of the text-to-speech conversion
-(`elevenlabs`).
+(`t2a-elevenlabs`).
 
 The entire **SpeechFlow** processing pipeline runs in real-time and
 the latency between input and output audio is about 2-3 seconds, very
@@ -188,92 +188,92 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
 - **Capturing**: Capture audio from microphone device into WAV audio file:
 
   ```
-  device(device: "wasapi:VoiceMeeter Out B1", mode: "r") |
-      wav(mode: "encode") |
-          file(path: "capture.wav", mode: "w", type: "audio")
+  xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r") |
+      a2a-wav(mode: "encode") |
+          xio-file(path: "capture.wav", mode: "w", type: "audio")
   ```
 
 - **Pass-Through**: Pass-through audio from microphone device to speaker
   device and in parallel record it to WAV audio file:
 
   ```
-  device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
-      wav(mode: "encode") |
-          file(path: "capture.wav", mode: "w", type: "audio"),
-      device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
+  xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
+      a2a-wav(mode: "encode") |
+          xio-file(path: "capture.wav", mode: "w", type: "audio"),
+      xio-device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
   }
   ```
 
 - **Transcription**: Generate text file with German transcription of MP3 audio file:
 
   ```
-  file(path: argv.0, mode: "r", type: "audio") |
-      ffmpeg(src: "mp3", dst: "pcm") |
-          deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
-              format(width: 80) |
-                  file(path: argv.1, mode: "w", type: "text")
+  xio-file(path: argv.0, mode: "r", type: "audio") |
+      a2a-ffmpeg(src: "mp3", dst: "pcm") |
+          a2t-deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
+              t2t-format(width: 80) |
+                  xio-file(path: argv.1, mode: "w", type: "text")
   ```
 
 - **Subtitling**: Generate text file with German subtitles of MP3 audio file:
 
   ```
-  file(path: argv.0, mode: "r", type: "audio") |
-      ffmpeg(src: "mp3", dst: "pcm") |
-          deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
-              subtitle(format: "vtt") |
-                  file(path: argv.1, mode: "w", type: "text")
+  xio-file(path: argv.0, mode: "r", type: "audio") |
+      a2a-ffmpeg(src: "mp3", dst: "pcm") |
+          a2t-deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
+              t2t-subtitle(format: "vtt") |
+                  xio-file(path: argv.1, mode: "w", type: "text")
   ```
 
 - **Speaking**: Generate audio file with English voice for a text file:
 
   ```
-  file(path: argv.0, mode: "r", type: "text") |
-      kokoro(language: "en") |
-          wav(mode: "encode") |
-              file(path: argv.1, mode: "w", type: "audio")
+  xio-file(path: argv.0, mode: "r", type: "text") |
+      t2a-kokoro(language: "en") |
+          a2a-wav(mode: "encode") |
+              xio-file(path: argv.1, mode: "w", type: "audio")
   ```
 
 - **Ad-Hoc Translation**: Ad-Hoc text translation from German to English
   via stdin/stdout:
 
   ```
-  file(path: "-", mode: "r", type: "text") |
-      deepl(src: "de", dst: "en") |
-          file(path: "-", mode: "w", type: "text")
+  xio-file(path: "-", mode: "r", type: "text") |
+      t2t-deepl(src: "de", dst: "en") |
+          xio-file(path: "-", mode: "w", type: "text")
   ```
 
 - **Studio Translation**: Real-time studio translation from German to English,
   including the capturing of all involved inputs and outputs:
 
   ```
-  device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
-      gender() | {
-          meter(interval: 250) |
-              wav(mode: "encode") |
-                  file(path: "program-de.wav", mode: "w", type: "audio"),
-          deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) | {
-              sentence() | {
-                  format(width: 80) |
-                      file(path: "program-de.txt", mode: "w", type: "text"),
-                  deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) | {
-                      trace(name: "text", type: "text") | {
-                          format(width: 80) |
-                              file(path: "program-en.txt", mode: "w", type: "text"),
-                          subtitle(format: "srt") |
-                              file(path: "program-en.srt", mode: "w", type: "text"),
-                          mqtt(url: "mqtt://10.1.0.10:1883",
+  xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
+      a2a-gender() | {
+          a2a-meter(interval: 250) |
+              a2a-wav(mode: "encode") |
+                  xio-file(path: "program-de.wav", mode: "w", type: "audio"),
+          a2t-deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) | {
+              t2t-sentence() | {
+                  t2t-format(width: 80) |
+                      xio-file(path: "program-de.txt", mode: "w", type: "text"),
+                  t2t-deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) | {
+                      x2x-trace(name: "text", type: "text") | {
+                          t2t-format(width: 80) |
+                              xio-file(path: "program-en.txt", mode: "w", type: "text"),
+                          t2t-subtitle(format: "srt") |
+                              xio-file(path: "program-en.srt", mode: "w", type: "text"),
+                          xio-mqtt(url: "mqtt://10.1.0.10:1883",
                               username: env.SPEECHFLOW_MQTT_USER,
                               password: env.SPEECHFLOW_MQTT_PASS,
                               topicWrite: "stream/studio/sender"),
                           {
-                              filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
-                                  elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
-                              filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
-                                  elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
+                              x2x-filter(name: "S2T-male", type: "text", var: "meta:gender", op: "==", val: "male") |
+                                  t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en"),
+                              x2x-filter(name: "S2T-female", type: "text", var: "meta:gender", op: "==", val: "female") |
+                                  t2a-elevenlabs(voice: "Brittney", optimize: "latency", speed: 1.05, language: "en")
                           } | {
-                              wav(mode: "encode") |
-                                  file(path: "program-en.wav", mode: "w", type: "audio"),
-                              device(device: "coreaudio:USBAudio2.0", mode: "w")
+                              a2a-wav(mode: "encode") |
+                                  xio-file(path: "program-en.wav", mode: "w", type: "audio"),
+                              xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
                           }
                       }
                   }
@@ -289,52 +289,53 @@ Processing Node Types
 First a short overview of the available processing nodes:
 
 - Input/Output nodes:
-  **file**,
-  **device**,
-  **websocket**,
-  **mqtt**.
+  **xio-file**,
+  **xio-device**,
+  **xio-websocket**,
+  **xio-mqtt**.
 - Audio-to-Audio nodes:
-  **ffmpeg**,
-  **wav**,
-  **mute**,
-  **meter**,
-  **vad**,
-  **gender**,
-  **speex**,
-  **rrnoise**,
-  **compressor**,
-  **expander**,
-  **gain**,
-  **filler**.
+  **a2a-ffmpeg**,
+  **a2a-wav**,
+  **a2a-mute**,
+  **a2a-meter**,
+  **a2a-vad**,
+  **a2a-gender**,
+  **a2a-speex**,
+  **a2a-rnnoise**,
+  **a2a-compressor**,
+  **a2a-expander**,
+  **a2a-gain**,
+  **a2a-filler**.
 - Audio-to-Text nodes:
-  **openaitranscribe**,
-  **awstranscribe**,
-  **deepgram**.
+  **a2t-openaitranscribe**,
+  **a2t-awstranscribe**,
+  **a2t-deepgram**.
 - Text-to-Text nodes:
-  **deepl**,
-  **awstranslate**,
-  **openai**,
-  **ollama**,
-  **transformers**,
-  **google**,
-  **subtitle**,
-  **format**.
+  **t2t-deepl**,
+  **t2t-awstranslate**,
+  **t2t-openai**,
+  **t2t-ollama**,
+  **t2t-transformers**,
+  **t2t-google**,
+  **t2t-subtitle**,
+  **t2t-format**,
+  **t2t-sentence**.
 - Text-to-Audio nodes:
-  **awspolly**.
-  **elevenlabs**.
-  **kokoro**.
+  **t2a-awspolly**,
+  **t2a-elevenlabs**,
+  **t2a-kokoro**.
 - Any-to-Any nodes:
-  **filter**,
-  **trace**.
+  **x2x-filter**,
+  **x2x-trace**.
 
 ### Input/Output Nodes
 
 The following nodes are for external I/O, i.e, to read/write from
 external files, devices and network services.
 
-- Node:    **file**<br/>
+- Node:    **xio-file**<br/>
   Purpose: **File and StdIO source/sink**<br/>
-  Example: `file(path: "capture.pcm", mode: "w", type: "audio")`
+  Example: `xio-file(path: "capture.pcm", mode: "w", type: "audio")`
 
   > This node allows the reading/writing from/to files or from StdIO. It
   > is intended to be used as source and sink nodes in batch processing,
@@ -353,9 +354,9 @@ external files, devices and network services.
   | **chunka** |           | 200      | `10 <= n <= 1000`     |
   | **chunkt** |           | 65536    | `1024 <= n <= 131072` |
 
-- Node: **device**<br/>
+- Node: **xio-device**<br/>
   Purpose: **Microphone/speaker device source/sink**<br/>
-  Example: `device(device: "wasapi:VoiceMeeter Out B1", mode: "r")`
+  Example: `xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r")`
 
   > This node allows the reading/writing from/to audio devices. It is
   > intended to be used as source nodes for microphone devices and as
@@ -372,9 +373,9 @@ external files, devices and network services.
   | **mode**    | 1         | "rw"     | `/^(?:r\|w\|rw)$/` |
   | **chunk**   | 2         | 200      | `10 <= n <= 1000`  |
 
-- Node: **websocket**<br/>
+- Node: **xio-websocket**<br/>
   Purpose: **WebSocket source/sink**<br/>
-  Example: `websocket(connect: "ws://127.0.0.1:12345", type: "text")`
+  Example: `xio-websocket(connect: "ws://127.0.0.1:12345", type: "text")`
   Notice: this node requires a peer WebSocket service!
 
   > This node allows reading/writing from/to WebSocket network services.
@@ -393,9 +394,9 @@ external files, devices and network services.
   | **connect** | *none*    | *none*   | `/^(?:\|ws:\/\/(.+?):(\d+)(?:\/.*)?)$/` |
   | **type**    | *none*    | "audio"  | `/^(?:audio\|text)$/` |
 
-- Node: **mqtt**<br/>
+- Node: **xio-mqtt**<br/>
   Purpose: **MQTT sink**<br/>
-  Example: `mqtt(url: "mqtt://127.0.0.1:1883", username: "foo", password: "bar", topic: "quux")`
+  Example: `xio-mqtt(url: "mqtt://127.0.0.1:1883", username: "foo", password: "bar", topic: "quux")`
   Notice: this node requires a peer MQTT broker!
 
   > This node allows reading/writing from/to MQTT broker topics. It is
@@ -418,9 +419,9 @@ external files, devices and network services.
 
 The following nodes process audio chunks only.
 
-- Node: **ffmpeg**<br/>
+- Node: **a2a-ffmpeg**<br/>
   Purpose: **FFmpeg audio format conversion**<br/>
-  Example: `ffmpeg(src: "pcm", dst: "mp3")`
+  Example: `a2a-ffmpeg(src: "pcm", dst: "mp3")`
 
   > This node allows converting between audio formats. It is primarily
   > intended to support the reading/writing of external MP3 and Opus
@@ -436,9 +437,9 @@ The following nodes process audio chunks only.
   | **src**     | 0         | "pcm"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
   | **dst**     | 1         | "wav"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
 
-- Node: **wav**<br/>
+- Node: **a2a-wav**<br/>
   Purpose: **WAV audio format conversion**<br/>
-  Example: `wav(mode: "encode")`
+  Example: `a2a-wav(mode: "encode")`
 
   > This node allows converting between PCM and WAV audio formats. It is
   > primarily intended to support the reading/writing of external WAV
@@ -453,9 +454,9 @@ The following nodes process audio chunks only.
   | ----------- | --------- | -------- | ------------------------ |
   | **mode**    | 0         | "encode" | `/^(?:encode\|decode)$/` |
 
-- Node: **mute**<br/>
+- Node: **a2a-mute**<br/>
   Purpose: **volume muting node**<br/>
-  Example: `mute()`
+  Example: `a2a-mute()`
   Notice: this node has to be externally controlled via REST/WebSockets!
 
   > This node allows muting the audio stream by either silencing or even
@@ -469,9 +470,9 @@ The following nodes process audio chunks only.
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
 
-- Node: **meter**<br/>
+- Node: **a2a-meter**<br/>
   Purpose: **Loudness metering node**<br/>
-  Example: `meter(250)`
+  Example: `a2a-meter(250)`
 
   > This node allows measuring the loudness of the audio stream. The
   > results are emitted to both the logfile of **SpeechFlow** and the
@@ -486,9 +487,9 @@ The following nodes process audio chunks only.
   | ----------- | --------- | -------- | ------------------------ |
   | **interval**  | 0 | 250 | *none* |
 
-- Node: **vad**<br/>
+- Node: **a2a-vad**<br/>
   Purpose: **Voice Audio Detection (VAD) node**<br/>
-  Example: `vad()`
+  Example: `a2a-vad()`
 
   > This node perform Voice Audio Detection (VAD), i.e., it detects
   > voice in the audio stream and if not detected either silences or
@@ -509,9 +510,9 @@ The following nodes process audio chunks only.
   | **preSpeechPadFrames** | *none* | 1     | *none* |
   | **postSpeechTail**     | *none* | 1500  | *none* |
 
-- Node: **gender**<br/>
+- Node: **a2a-gender**<br/>
   Purpose: **Gender Detection node**<br/>
-  Example: `gender()`
+  Example: `a2a-gender()`
 
   > This node performs gender detection on the audio stream. It
   > annotates the audio chunks with `gender=male` or `gender=female`
@@ -526,9 +527,9 @@ The following nodes process audio chunks only.
   | ----------- | --------- | -------- | ------------------------ |
   | **window**  | 0         | 500      | *none*                   |
 
-- Node: **speex**<br/>
+- Node: **a2a-speex**<br/>
   Purpose: **Speex Noise Suppression node**<br/>
-  Example: `speex(attentuate: -18)`
+  Example: `a2a-speex(attentuate: -18)`
 
   > This node uses the Speex DSP pre-processor to perform noise
   > suppression, i.e., it detects and attenuates (by a certain level of
@@ -543,9 +544,9 @@ The following nodes process audio chunks only.
   | ----------- | --------- | -------- | ------------------------ |
   | **attentuate** | 0 | -18  | *none* | `-60 <= n <= 0` |
 
-- Node: **rnnoise**<br/>
+- Node: **a2a-rnnoise**<br/>
   Purpose: **RNNoise Noise Suppression node**<br/>
-  Example: `rnnoise()`
+  Example: `a2a-rnnoise()`
 
   > This node uses RNNoise to perform noise suppression, i.e., it
   > detects and attenuates the noise in the audio stream.
@@ -558,9 +559,9 @@ The following nodes process audio chunks only.
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
 
-- Node: **compressor**<br/>
+- Node: **a2a-compressor**<br/>
   Purpose: **audio compressor node**<br/>
-  Example: `compressor(thresholdDb: -18)`
+  Example: `a2a-compressor(thresholdDb: -18)`
 
   > This node applies a dynamics compressor, i.e., it attenuates the
   > volume by a certain ratio whenever the volume is above the threshold.
@@ -579,9 +580,9 @@ The following nodes process audio chunks only.
   | **kneeDb**      | *none* | 6   | `n >= 0 && n <= 100` |
   | **makeupDb**    | *none* | 0   | `n >= 0 && n <= 100` |
 
-- Node: **expander**<br/>
+- Node: **a2a-expander**<br/>
   Purpose: **audio expander node**<br/>
-  Example: `expander(thresholdDb: -46)`
+  Example: `a2a-expander(thresholdDb: -46)`
 
   > This node applies a dynamics expander, i.e., it attenuates the
   > volume by a certain ratio whenever the volume is below the threshold.
@@ -600,9 +601,9 @@ The following nodes process audio chunks only.
   | **kneeDb**      | *none* | 6   | `n >= 0 && n <= 100` |
   | **makeupDb**    | *none* | 0   | `n >= 0 && n <= 100` |
 
-- Node: **gain**<br/>
+- Node: **a2a-gain**<br/>
   Purpose: **audio gain adjustment node**<br/>
-  Example: `gain(db: 12)`
+  Example: `a2a-gain(db: 12)`
 
   > This node applies a gain adjustment to audio, i.e., it increases or
   > decreases the volume by certain decibels
@@ -616,9 +617,9 @@ The following nodes process audio chunks only.
   | ----------- | --------- | -------- | ------------------------ |
   | **db** | *none* | 12 | `n >= -60 && n <= -60` |
 
-- Node: **filler**<br/>
+- Node: **a2a-filler**<br/>
   Purpose: **audio filler node**<br/>
-  Example: `filler()`
+  Example: `a2a-filler()`
 
   > This node adds missing audio frames of silence in order to fill
   > the chronological gaps between generated audio frames (from
@@ -636,9 +637,9 @@ The following nodes process audio chunks only.
 
 The following nodes convert audio to text chunks.
 
-- Node: **openaitranscribe**<br/>
+- Node: **a2t-openaitranscribe**<br/>
   Purpose: **OpenAI/GPT Speech-to-Text conversion**<br/>
-  Example: `openaitranscribe(language: "de")`<br/>
+  Example: `a2t-openaitranscribe(language: "de")`<br/>
   Notice: this node requires an OpenAI API key!
 
   > This node uses OpenAI GPT to perform Speech-to-Text (S2T)
@@ -658,9 +659,9 @@ The following nodes convert audio to text chunks.
   | **language** | *none*    | "en"     | `/^(?:de\|en)$/` |
   | **interim**  | *none*    | false    | *none* |
 
-- Node: **awstranscribe**<br/>
+- Node: **a2t-awstranscribe**<br/>
   Purpose: **Amazon Transcribe Speech-to-Text conversion**<br/>
-  Example: `awstranscribe(language: "de")`<br/>
+  Example: `a2t-awstranscribe(language: "de")`<br/>
   Notice: this node requires an API key!
 
   > This node uses Amazon Trancribe to perform Speech-to-Text (S2T)
@@ -680,9 +681,9 @@ The following nodes convert audio to text chunks.
   | **language** | *none*    | "en" | `/^(?:en|de)$/` |
   | **interim**  | *none*    | false | *none* |
 
-- Node: **deepgram**<br/>
+- Node: **a2t-deepgram**<br/>
   Purpose: **Deepgram Speech-to-Text conversion**<br/>
-  Example: `deepgram(language: "de")`<br/>
+  Example: `a2t-deepgram(language: "de")`<br/>
   Notice: this node requires an API key!
 
   > This node performs Speech-to-Text (S2T) conversion, i.e., it
@@ -706,9 +707,9 @@ The following nodes convert audio to text chunks.
 
 The following nodes process text chunks only.
 
-- Node: **deepl**<br/>
+- Node: **t2t-deepl**<br/>
   Purpose: **DeepL Text-to-Text translation**<br/>
-  Example: `deepl(src: "de", dst: "en")`<br/>
+  Example: `t2t-deepl(src: "de", dst: "en")`<br/>
   Notice: this node requires an API key!
 
   > This node performs translation between English and German languages.
@@ -724,9 +725,9 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **awstranslate**<br/>
+- Node: **t2t-awstranslate**<br/>
   Purpose: **AWS Translate Text-to-Text translation**<br/>
-  Example: `awstranslate(src: "de", dst: "en")`<br/>
+  Example: `t2t-awstranslate(src: "de", dst: "en")`<br/>
   Notice: this node requires an API key!
 
   > This node performs translation between English and German languages.
@@ -744,9 +745,9 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **openai**<br/>
+- Node: **t2t-openai**<br/>
   Purpose: **OpenAI/GPT Text-to-Text translation and spelling correction**<br/>
-  Example: `openai(src: "de", dst: "en")`<br/>
+  Example: `t2t-openai(src: "de", dst: "en")`<br/>
   Notice: this node requires an OpenAI API key!
 
   > This node performs translation between English and German languages
@@ -768,9 +769,9 @@ The following nodes process text chunks only.
   | **key**      | *none*    | env.SPEECHFLOW\_OPENAI\_KEY | *none* |
   | **model**    | *none*    | "gpt-4o-mini" | *none* |
 
-- Node: **ollama**<br/>
+- Node: **t2t-ollama**<br/>
   Purpose: **Ollama/Gemma Text-to-Text translation and spelling correction**<br/>
-  Example: `ollama(src: "de", dst: "en")`<br/>
+  Example: `t2t-ollama(src: "de", dst: "en")`<br/>
   Notice: this node requires Ollama to be installed!
 
   > This node performs translation between English and German languages
@@ -791,9 +792,9 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **transformers**<br/>
+- Node: **t2t-transformers**<br/>
   Purpose: **Transformers Text-to-Text translation**<br/>
-  Example: `transformers(src: "de", dst: "en")`<br/>
+  Example: `t2t-transformers(src: "de", dst: "en")`<br/>
 
   > This node performs translation between English and German languages
   > in the text stream. It is based on local OPUS or SmolLM3 LLMs.
@@ -809,9 +810,9 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **google**<br/>
+- Node: **t2t-google**<br/>
   Purpose: **Google Cloud Translate Text-to-Text translation**<br/>
-  Example: `google(src: "de", dst: "en")`<br/>
+  Example: `t2t-google(src: "de", dst: "en")`<br/>
   Notice: this node requires a Google Cloud API key and project ID!
 
   > This node performs translation between multiple languages
@@ -829,13 +830,13 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en\|fr\|it)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en\|fr\|it)$/` |
 
-- Node: **sentence**<br/>
+- Node: **t2t-sentence**<br/>
   Purpose: **sentence splitting/merging**<br/>
-  Example: `sentence()`<br/>
+  Example: `t2t-sentence()`<br/>
 
   > This node allows you to ensure that a text stream is split or merged
   > into complete sentences. It is primarily intended to be used after
-  > the "deepgram" node and before "deepl" or "elevenlabs" nodes in
+  > the "a2t-deepgram" node and before "t2t-deepl" or "t2a-elevenlabs" nodes in
   > order to improve overall quality.
 
   | Port    | Payload     |
@@ -846,9 +847,9 @@ The following nodes process text chunks only.
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
 
-- Node: **subtitle**<br/>
+- Node: **t2t-subtitle**<br/>
   Purpose: **SRT/VTT Subtitle Generation**<br/>
-  Example: `subtitle(format: "srt")`<br/>
+  Example: `t2t-subtitle(format: "srt")`<br/>
 
   > This node generates subtitles from the text stream (and its embedded
   > timestamps) in the formats SRT (SubRip) or VTT (WebVTT).
@@ -863,9 +864,9 @@ The following nodes process text chunks only.
   | **format**   | *none*    | "srt"    | /^(?:srt\|vtt)$/   |
   | **words**    | *none*    | false    | *none*             |
 
-- Node: **format**<br/>
+- Node: **t2t-format**<br/>
   Purpose: **text paragraph formatting**<br/>
-  Example: `format(width: 80)`<br/>
+  Example: `t2t-format(width: 80)`<br/>
 
   > This node formats the text stream into lines no longer than a
   > certain width. It is primarily intended for use before writing text
@@ -884,9 +885,9 @@ The following nodes process text chunks only.
 
 The following nodes convert text chunks to audio chunks.
 
-- Node: **awspolly**<br/>
+- Node: **t2a-awspolly**<br/>
   Purpose: **Amazon Polly Text-to-Speech conversion**<br/>
-  Example: `awspolly(language: "en", voice: "Danielle)`<br/>
+  Example: `t2a-awspolly(language: "en", voice: "Danielle)`<br/>
   Notice: this node requires an Amazon API key!
 
   > This node uses Amazon Polly to perform Text-to-Speech (T2S)
@@ -906,9 +907,9 @@ The following nodes convert text chunks to audio chunks.
   | **voice**      | 0         | "Amy"     | `^(?:Amy|Danielle|Joanna|Matthew|Ruth|Stephen|Viki|Daniel)$/` |
   | **language**   | 1         | "en"      | `/^(?:de\|en)$/`  |
 
-- Node: **elevenlabs**<br/>
+- Node: **t2a-elevenlabs**<br/>
   Purpose: **ElevenLabs Text-to-Speech conversion**<br/>
-  Example: `elevenlabs(language: "en")`<br/>
+  Example: `t2a-elevenlabs(language: "en")`<br/>
   Notice: this node requires an ElevenLabs API key!
 
   > This node uses ElevenLabs to perform Text-to-Speech (T2S)
@@ -930,9 +931,9 @@ The following nodes convert text chunks to audio chunks.
   | **similarity** | 4         | 0.75      | `n >= 0.0 && n <= 1.0` |
   | **optimize**   | 5         | "latency" | `/^(?:latency\|quality)$/` |
 
-- Node: **kokoro**<br/>
+- Node: **t2a-kokoro**<br/>
   Purpose: **Kokoro Text-to-Speech conversion**<br/>
-  Example: `kokoro(language: "en")`<br/>
+  Example: `t2a-kokoro(language: "en")`<br/>
   Notice: this currently support English language only!
 
   > This node uses Kokoro to perform Text-to-Speech (T2S) conversion,
@@ -954,12 +955,12 @@ The following nodes convert text chunks to audio chunks.
 
 The following nodes process any type of chunk, i.e., both audio and text chunks.
 
-- Node: **filter**<br/>
+- Node: **x2x-filter**<br/>
   Purpose: **meta information based filter**<br/>
-  Example: `filter(type: "audio", var: "meta:gender", op: "==", val: "male")`<br/>
+  Example: `x2x-filter(type: "audio", var: "meta:gender", op: "==", val: "male")`<br/>
 
   > This node allows you to filter nodes based on certain criteria. It
-  > is primarily intended to be used in conjunction with the "gender"
+  > is primarily intended to be used in conjunction with the "a2a-gender"
   > node and in front of the `elevenlabs` or `kokoro` nodes in order to
   > translate with a corresponding voice.
 
@@ -976,9 +977,9 @@ The following nodes process any type of chunk, i.e., both audio and text chunks.
   | **op**       | 3         | "=="     | `/^(?:<\|<=\|==\|!=\|~~\|!~\|>=\|>)$/` |
   | **val**      | 4         | ""       | `/^.*$/` |
 
-- Node: **trace**<br/>
+- Node: **x2x-trace**<br/>
   Purpose: **data flow tracing**<br/>
-  Example: `trace(type: "audio")`<br/>
+  Example: `x2x-trace(type: "audio")`<br/>
 
   > This node allows you to trace the audio and text chunk flow through
   > the **SpeechFlow** graph. It just passes through its chunks, but
@@ -1000,33 +1001,33 @@ REST/WebSocket API
 **SpeechFlow** has an externally exposed REST/WebSockets API which can
 be used to control the nodes and to receive information from nodes.
 For controlling a node you have three possibilities (illustrated by
-controlling the mode of the "mute" node):
+controlling the mode of the "a2a-mute" node):
 
 ```sh
 # use HTTP/REST/GET:
-$ curl http://127.0.0.1:8484/api/COMMAND/mute/mode/silenced
+$ curl http://127.0.0.1:8484/api/COMMAND/a2a-mute/mode/silenced
 ```
 
 ```sh
 # use HTTP/REST/POST:
 $ curl -H "Content-type: application/json" \
-  --data '{ "request": "COMMAND", "node": "mute", "args": [ "mode", "silenced" ] }' \
+  --data '{ "request": "COMMAND", "node": "a2a-mute", "args": [ "mode", "silenced" ] }' \
   http://127.0.0.1:8484/api
 ```
 
 ```sh
 # use WebSockets:
 $ wscat -c ws://127.0.0.1:8484/api \
-> { "request": "COMMAND", "node": "mute", "args": [ "mode", "silenced" ] }
+> { "request": "COMMAND", "node": "a2a-mute", "args": [ "mode", "silenced" ] }
 ```
 
 For receiving emitted information from nodes, you have to use the WebSockets
-API (illustrated by the emitted information of the "meter" node):
+API (illustrated by the emitted information of the "a2a-meter" node):
 
 ```sh
 # use WebSockets:
 $ wscat -c ws://127.0.0.1:8484/api \
-< { "response": "NOTIFY", "node": "meter", "args": [ "meter", "LUFS-S", -35.75127410888672 ] }
+< { "response": "NOTIFY", "node": "a2a-meter", "args": [ "meter", "LUFS-S", -35.75127410888672 ] }
 ```
 
 History
