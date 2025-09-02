@@ -17,10 +17,10 @@ import ws                     from "ws"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
-/*  SpeechFlow node for OpenAI Transcribe speech-to-text conversion  */
-export default class SpeechFlowNodeA2TOpenAITranscribe extends SpeechFlowNode {
+/*  SpeechFlow node for OpenAI speech-to-text conversion  */
+export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "a2t-openaitranscribe"
+    public static name = "a2t-openai"
 
     /*  internal state  */
     private static speexInitialized = false
@@ -71,10 +71,10 @@ export default class SpeechFlowNodeA2TOpenAITranscribe extends SpeechFlowNode {
 
         /*  establish resampler from our standard audio sample rate (48Khz)
             to OpenAI's maximum 24Khz input sample rate  */
-        if (!SpeechFlowNodeA2TOpenAITranscribe.speexInitialized) {
+        if (!SpeechFlowNodeA2TOpenAI.speexInitialized) {
             /*  at least once initialize resampler  */
             await SpeexResampler.initPromise
-            SpeechFlowNodeA2TOpenAITranscribe.speexInitialized = true
+            SpeechFlowNodeA2TOpenAI.speexInitialized = true
         }
         this.resampler = new SpeexResampler(1, this.config.audioSampleRate, 24000, 7)
 

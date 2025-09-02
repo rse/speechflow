@@ -14,10 +14,10 @@ import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
-/*  SpeechFlow node for AWS Translate text-to-text translations  */
-export default class SpeechFlowNodeT2TAWSTranslate extends SpeechFlowNode {
+/*  SpeechFlow node for Amazon Translate text-to-text translations  */
+export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "t2t-awstranslate"
+    public static name = "t2t-amazon"
 
     /*  internal state  */
     private client: TranslateClient | null = null

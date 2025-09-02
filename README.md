@@ -307,12 +307,12 @@ First a short overview of the available processing nodes:
   **a2a-gain**,
   **a2a-filler**.
 - Audio-to-Text nodes:
-  **a2t-openaitranscribe**,
-  **a2t-awstranscribe**,
+  **a2t-openai**,
+  **a2t-amazon**,
   **a2t-deepgram**.
 - Text-to-Text nodes:
   **t2t-deepl**,
-  **t2t-awstranslate**,
+  **t2t-amazon**,
   **t2t-openai**,
   **t2t-ollama**,
   **t2t-transformers**,
@@ -321,7 +321,7 @@ First a short overview of the available processing nodes:
   **t2t-format**,
   **t2t-sentence**.
 - Text-to-Audio nodes:
-  **t2a-awspolly**,
+  **t2a-amazon**,
   **t2a-elevenlabs**,
   **t2a-kokoro**.
 - Any-to-Any nodes:
@@ -637,9 +637,9 @@ The following nodes process audio chunks only.
 
 The following nodes convert audio to text chunks.
 
-- Node: **a2t-openaitranscribe**<br/>
+- Node: **a2t-openai**<br/>
   Purpose: **OpenAI/GPT Speech-to-Text conversion**<br/>
-  Example: `a2t-openaitranscribe(language: "de")`<br/>
+  Example: `a2t-openai(language: "de")`<br/>
   Notice: this node requires an OpenAI API key!
 
   > This node uses OpenAI GPT to perform Speech-to-Text (S2T)
@@ -659,9 +659,9 @@ The following nodes convert audio to text chunks.
   | **language** | *none*    | "en"     | `/^(?:de\|en)$/` |
   | **interim**  | *none*    | false    | *none* |
 
-- Node: **a2t-awstranscribe**<br/>
+- Node: **a2t-amazon**<br/>
   Purpose: **Amazon Transcribe Speech-to-Text conversion**<br/>
-  Example: `a2t-awstranscribe(language: "de")`<br/>
+  Example: `a2t-amazon(language: "de")`<br/>
   Notice: this node requires an API key!
 
   > This node uses Amazon Trancribe to perform Speech-to-Text (S2T)
@@ -725,9 +725,9 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **t2t-awstranslate**<br/>
+- Node: **t2t-amazon**<br/>
   Purpose: **AWS Translate Text-to-Text translation**<br/>
-  Example: `t2t-awstranslate(src: "de", dst: "en")`<br/>
+  Example: `t2t-amazon(src: "de", dst: "en")`<br/>
   Notice: this node requires an API key!
 
   > This node performs translation between English and German languages.
@@ -885,9 +885,9 @@ The following nodes process text chunks only.
 
 The following nodes convert text chunks to audio chunks.
 
-- Node: **t2a-awspolly**<br/>
+- Node: **t2a-amazon**<br/>
   Purpose: **Amazon Polly Text-to-Speech conversion**<br/>
-  Example: `t2a-awspolly(language: "en", voice: "Danielle)`<br/>
+  Example: `t2a-amazon(language: "en", voice: "Danielle)`<br/>
   Notice: this node requires an Amazon API key!
 
   > This node uses Amazon Polly to perform Text-to-Speech (T2S)

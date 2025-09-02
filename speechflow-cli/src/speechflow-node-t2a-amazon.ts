@@ -19,10 +19,10 @@ import {
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
 
-/*  SpeechFlow node for AWS Polly text-to-speech conversion  */
-export default class SpeechFlowNodeT2AAWSPolly extends SpeechFlowNode {
+/*  SpeechFlow node for Amazon Polly text-to-speech conversion  */
+export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "t2a-awspolly"
+    public static name = "t2a-amazon"
 
     /*  internal state  */
     private client: PollyClient | null = null
@@ -114,10 +114,10 @@ export default class SpeechFlowNodeT2AAWSPolly extends SpeechFlowNode {
 
         /*  establish resampler from AWS Polly's maximum 16Khz output
             (for PCM output) to our standard audio sample rate (48KHz)  */
-        if (!SpeechFlowNodeT2AAWSPolly.speexInitialized) {
+        if (!SpeechFlowNodeT2AAmazon.speexInitialized) {
             /*  at least once initialize resampler  */
             await SpeexResampler.initPromise
-            SpeechFlowNodeT2AAWSPolly.speexInitialized = true
+            SpeechFlowNodeT2AAmazon.speexInitialized = true
         }
         this.resampler = new SpeexResampler(1, 16000, this.config.audioSampleRate, 7)
 
