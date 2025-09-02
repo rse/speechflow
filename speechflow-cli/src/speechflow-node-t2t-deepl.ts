@@ -12,6 +12,7 @@ import * as DeepL from "deepl-node"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for DeepL text-to-text translations  */
 export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
@@ -93,8 +94,8 @@ export default class SpeechFlowNodeDeepL extends SpeechFlowNode {
                         chunkNew.payload = payload
                         this.push(chunkNew)
                         callback()
-                    }).catch((err) => {
-                        callback(err)
+                    }).catch((error: unknown) => {
+                        callback(utils.ensureError(error))
                     })
                 }
             },

@@ -279,9 +279,9 @@ export default class SpeechFlowNodeOpenAITranscribe extends SpeechFlowNode {
                         self.log("debug", `received data (${chunk.payload.length} bytes)`)
                         this.push(chunk)
                     }
-                }).catch((error) => {
+                }).catch((error: unknown) => {
                     if (!self.destroyed)
-                        self.log("error", `queue read error: ${error.message}`)
+                        self.log("error", `queue read error: ${utils.ensureError(error).message}`)
                 })
             },
             final (callback) {

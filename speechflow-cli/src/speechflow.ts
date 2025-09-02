@@ -34,6 +34,7 @@ import chalk             from "chalk"
 
 /*  internal dependencies  */
 import SpeechFlowNode    from "./speechflow-node"
+import * as utils        from "./speechflow-utils"
 import pkg               from "../../package.json"
 
 /*  central CLI context  */
@@ -682,7 +683,7 @@ let debug = false
             cli!.log("info", `HAPI: peer ${peer}: GET: ${JSON.stringify(req)}`)
             return consumeExternalRequest(req)
                 .then(()     => h.response({ response: "OK" }).code(200))
-                .catch((err) => h.response({ response: "ERROR", data: err.message }).code(417))
+                .catch((error: unknown) => h.response({ response: "ERROR", data: utils.ensureError(error).message }).code(417))
         }
     })
     hapi.route({
@@ -835,8 +836,8 @@ let debug = false
                 Promise.all(closePromises),
                 new Promise((resolve, reject) =>
                     setTimeout(() => reject(new Error("timeout for all peers")), 5 * 1000))
-            ]).catch((err) => {
-                cli!.log("warning", `HAPI: WebSockets failed to close: ${err}`)
+            ]).catch((error: unknown) => {
+                cli!.log("warning", `HAPI: WebSockets failed to close: ${utils.ensureError(error).message}`)
             })
             wsPeers.clear()
         }

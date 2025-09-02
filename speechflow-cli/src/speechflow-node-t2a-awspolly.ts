@@ -17,6 +17,7 @@ import {
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for AWS Polly text-to-speech conversion  */
 export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
@@ -144,9 +145,8 @@ export default class SpeechFlowNodeAWSPolly extends SpeechFlowNode {
                         chunkNew.payload = buffer
                         this.push(chunkNew)
                         callback()
-                    }).catch((error) => {
-                        callback(error instanceof Error ?
-                            error : new Error(`failed to send to AWS Polly: ${String(error)}`))
+                    }).catch((error: unknown) => {
+                        callback(utils.ensureError(error, "failed to send to AWS Polly"))
                     })
                 }
                 else

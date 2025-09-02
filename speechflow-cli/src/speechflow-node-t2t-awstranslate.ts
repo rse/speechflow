@@ -12,6 +12,7 @@ import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  SpeechFlow node for AWS Translate text-to-text translations  */
 export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
@@ -122,8 +123,8 @@ export default class SpeechFlowNodeAWSTranslate extends SpeechFlowNode {
                         chunkNew.payload = payload
                         this.push(chunkNew)
                         callback()
-                    }).catch((err) => {
-                        callback(err)
+                    }).catch((error: unknown) => {
+                        callback(utils.ensureError(error))
                     })
                 }
             },

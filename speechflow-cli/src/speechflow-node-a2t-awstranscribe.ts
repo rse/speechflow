@@ -224,8 +224,8 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         audioQueue.push(new Uint8Array(chunk.payload)) /* intentionally discard all time information */
-                        ensureAudioStreamActive().catch((err) => {
-                            self.log("error", `failed to start audio stream: ${err}`)
+                        ensureAudioStreamActive().catch((error: unknown) => {
+                            self.log("error", `failed to start audio stream: ${utils.ensureError(error).message}`)
                         })
                     }
                     callback()
@@ -249,9 +249,9 @@ export default class SpeechFlowNodeAWSTranscribe extends SpeechFlowNode {
                         self.log("debug", `received data (${chunk.payload.length} bytes): "${chunk.payload}"`)
                         this.push(chunk)
                     }
-                }).catch((error) => {
+                }).catch((error: unknown) => {
                     if (!self.destroyed)
-                        self.log("error", `queue read error: ${error.message}`)
+                        self.log("error", `queue read error: ${utils.ensureError(error).message}`)
                 })
             },
             final (callback) {

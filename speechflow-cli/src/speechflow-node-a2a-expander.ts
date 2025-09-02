@@ -176,8 +176,8 @@ export default class SpeechFlowNodeExpander extends SpeechFlowNode {
                         chunk.payload = payload
                         this.push(chunk)
                         callback()
-                    }).catch((error) => {
-                        callback(new Error(`expansion failed: ${error}`))
+                    }).catch((error: unknown) => {
+                        callback(utils.ensureError(error, "expansion failed"))
                     })
                 }
             },

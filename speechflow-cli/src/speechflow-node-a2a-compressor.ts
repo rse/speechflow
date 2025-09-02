@@ -255,8 +255,8 @@ export default class SpeechFlowNodeCompressor extends SpeechFlowNode {
                         }
                         this.push(chunk)
                         callback()
-                    }).catch((error) => {
-                        callback(new Error(`compression failed: ${error}`))
+                    }).catch((error: unknown) => {
+                        callback(utils.ensureError(error, "compression failed"))
                     })
                 }
             },

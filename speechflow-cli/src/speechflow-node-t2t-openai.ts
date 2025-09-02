@@ -12,6 +12,7 @@ import OpenAI from "openai"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as utils                          from "./speechflow-utils"
 
 /*  internal utility types  */
 type ConfigEntry = { systemPrompt: string, chat: OpenAI.ChatCompletionMessageParam[] }
@@ -219,8 +220,8 @@ export default class SpeechFlowNodeOpenAI extends SpeechFlowNode {
                         chunkNew.payload = payload
                         this.push(chunkNew)
                         callback()
-                    }).catch((err) => {
-                        callback(err)
+                    }).catch((error: unknown) => {
+                        callback(utils.ensureError(error))
                     })
                 }
             },
