@@ -115,7 +115,8 @@
         "prefer-event-target":                "off",
         "no-array-reduce":                    "off",
         "no-rest-spread-properties":          "off",
-        "always-return":                      "off"
+        "always-return":                      "off",
+        "no-useless-promise-resolve-reject":  "off"
     }
 }
 
