@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.5.1 (2025-08-31)
+1.5.1 (2025-09-02)
 ------------------
 
 - IMPROVEMENT: add Google Translate node
