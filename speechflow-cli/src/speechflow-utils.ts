@@ -7,6 +7,7 @@
 /*  standard dependencies  */
 import Stream                 from "node:stream"
 import { EventEmitter }       from "node:events"
+import { type, type ArkErrors, type Type } from "arktype"
 
 /*  external dependencies  */
 import { DateTime, Duration } from "luxon"
@@ -25,6 +26,129 @@ export function ensureError (error: unknown, prefix?: string): Error {
     if (prefix)
         msg = `${prefix}: ${msg}`
     return new Error(msg, { cause: error })
+}
+
+/*  helper function for retrieving a Promise object  */
+export function ensurePromise<T> (arg: T | Promise<T>): Promise<T> {
+    if (!(arg instanceof Promise))
+        arg = Promise.resolve(arg)
+    return arg
+}
+
+/*  helper function for running the finally code of "run"  */
+function runFinally (onfinally?: () => void) {
+    if (!onfinally)
+        return
+    try { onfinally() }
+    catch (arg: unknown) { /*  ignored  */ }
+}
+
+/*  helper type for ensuring T contains no Promise  */
+type runNoPromise<T> =
+    [ T ] extends [ Promise<any> ] ? never : T
+
+/*  run a synchronous or asynchronous action  */
+export function run<T, X extends runNoPromise<T> | never> (
+    action:      () => X,
+    oncatch?:    (error: Error) => X,
+    onfinally?:  () => void
+): X
+export function run<T, X extends runNoPromise<T> | never> (
+    description: string,
+    action:      () => X,
+    oncatch?:    (error: Error) => X | never,
+    onfinally?:  () => void
+): X
+export function run<T, X extends (T | Promise<T>)> (
+    action:      () => X,
+    oncatch?:    (error: Error) => X,
+    onfinally?:  () => void
+): Promise<T>
+export function run<T, X extends (T | Promise<T>)> (
+    description: string,
+    action:      () => X,
+    oncatch?:    (error: Error) => X,
+    onfinally?:  () => void
+): Promise<T>
+export function run<T> (
+    ...args: any[]
+): T | Promise<T> | never {
+    /*  support overloaded signatures  */
+    let description: string | undefined
+    let action:      () => T | Promise<T> | never
+    let oncatch:     (error: Error) => T | Promise<T> | never
+    let onfinally:   () => void
+    if (typeof args[0] === "string") {
+        description = args[0]
+        action      = args[1]
+        oncatch     = args[2]
+        onfinally   = args[3]
+    }
+    else {
+        action      = args[0]
+        oncatch     = args[1]
+        onfinally   = args[2]
+    }
+
+    /*  perform the action  */
+    let result: T | Promise<T>
+    try {
+        result = action()
+    }
+    catch (arg: unknown) {
+        /*  synchronous case (error branch)  */
+        let error = ensureError(arg, description)
+        if (oncatch) {
+            try {
+                result = oncatch(error)
+            }
+            catch (arg: unknown) {
+                error = ensureError(arg, description)
+                runFinally(onfinally)
+                throw error
+            }
+            runFinally(onfinally)
+            return result
+        }
+        runFinally(onfinally)
+        throw error
+    }
+    if (result instanceof Promise) {
+        /*  asynchronous case (result or error branch)  */
+        return result.catch((arg: unknown) => {
+            /*  asynchronous case (error branch)  */
+            let error = ensureError(arg, description)
+            if (oncatch) {
+                try {
+                    return ensurePromise(oncatch(error))
+                }
+                catch (arg: unknown) {
+                    error = ensureError(arg, description)
+                    return Promise.reject(error)
+                }
+            }
+            return Promise.reject(error)
+        }).finally(() => {
+            /*  asynchronous case (result and error branch)  */
+            runFinally(onfinally)
+        })
+    }
+    else {
+        /*  synchronous case (result branch)  */
+        runFinally(onfinally)
+        return result
+    }
+}
+
+/*  import an object with parsing and strict error handling  */
+export function importObject<T>(name: string, arg: object | string, validator: Type<T, {}>): T {
+    let obj: object = typeof arg === "string" ?
+        run(`${name}: parsing JSON`, () => JSON.parse(arg)) :
+        arg
+    const result = validator(obj)
+    if (result instanceof type.errors)
+        throw new Error(`${name}: validation: ${result.summary}`)
+    return result as T
 }
 
 /*  calculate duration of an audio buffer  */
