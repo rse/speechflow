@@ -441,11 +441,11 @@ let debug = false
                         cli!.log("error", `creation of node <${id}> failed: ${err}`)
                     process.exit(1)
                 }
-                const params = Object.keys(node.params)
+                const params = Object.keys(node!.params)
                     .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
-                cli!.log("info", `create node <${node.id}> (${params})`)
-                graphNodes.add(node)
-                return node
+                cli!.log("info", `create node <${node!.id}> (${params})`)
+                graphNodes.add(node!)
+                return node!
             },
             connectNodes (node1: SpeechFlowNode, node2: SpeechFlowNode) {
                 cli!.log("info", `connect node <${node1.id}> to node <${node2.id}>`)
