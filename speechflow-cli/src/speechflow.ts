@@ -259,16 +259,7 @@ let debug = false
             throw new Error("invalid configuration file specification (expected \"<id>@<yaml-config-file>\")")
         const [ , id, file ] = m
         const yaml = await cli.input(file, { encoding: "utf8" })
-        let obj: any
-        try {
-            obj = jsYAML.load(yaml)
-        }
-        catch (err) {
-            if (err instanceof Error)
-                throw new Error(`failed to parse YAML configuration: ${err.message}`)
-            else
-                throw new Error(`failed to parse YAML configuration: ${err}`)
-        }
+        const obj: any = utils.run("parsing YAML configuration", () => jsYAML.load(yaml))
         if (obj[id] === undefined)
             throw new Error(`no such id "${id}" found in configuration file "${file}"`)
         config = obj[id] as string
