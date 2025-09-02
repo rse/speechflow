@@ -826,7 +826,6 @@ The following nodes process text chunks only.
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **key**      | *none*    | env.SPEECHFLOW\_GOOGLE\_KEY | *none* |
-  | **prj**      | *none*    | env.SPEECHFLOW\_GOOGLE\_PRJ | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en\|fr\|it)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en\|fr\|it)$/` |
 
