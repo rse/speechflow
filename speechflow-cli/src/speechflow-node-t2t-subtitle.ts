@@ -44,11 +44,11 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            format: { type: "string", pos: 0, val: "srt", match: /^(?:srt|vtt)$/ },
-            words:  { type: "boolean", val: false },
-            mode:   { type: "string",  val: "export", match: /^(?:export|render)$/ },
-            addr:   { type: "string",  val: "127.0.0.1" },
-            port:   { type: "number",  val: 8585 }
+            format: { type: "string",  pos: 0, val: "srt",    match: /^(?:srt|vtt)$/ },
+            words:  { type: "boolean",         val: false },
+            mode:   { type: "string",          val: "export", match: /^(?:export|render)$/ },
+            addr:   { type: "string",          val: "127.0.0.1" },
+            port:   { type: "number",          val: 8585 }
         })
 
         /*  declare node input/output format  */
