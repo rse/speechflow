@@ -441,9 +441,12 @@ let debug = false
                         cli!.log("error", `creation of node <${id}> failed: ${err}`)
                     process.exit(1)
                 }
-                const params = Object.keys(node!.params)
-                    .filter((key) => !key.match(/key/))
-                    .map((key) => `${key}: ${JSON.stringify(node.params[key])}`).join(", ")
+                const params = Object.keys(node!.params).map((key) => {
+                    if (key.match(/key/))
+                        return `${key}: [...]`
+                    else
+                        return `${key}: ${JSON.stringify(node.params[key])}`
+                }).join(", ")
                 cli!.log("info", `create node <${node!.id}> (${params})`)
                 graphNodes.add(node!)
                 return node!
