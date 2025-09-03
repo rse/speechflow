@@ -75,7 +75,7 @@ and real-time translated to English.
 First, the used configuration was a straight linear pipeline in file `sample.conf`:
 
 ```txt
-xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") |
 a2a-meter(interval: 50, dashboard: "meter1") |
 a2t-deepgram(language: "de", model: "nova-2", interim: true) |
 x2x-trace(type: "text", dashboard: "text1") |
@@ -86,7 +86,7 @@ t2t-deepl(src: "de", dst: "en") |
 x2x-trace(type: "text", dashboard: "text3") |
 t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
 a2a-meter(interval: 50, dashboard: "meter2") |
-xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
+xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
 ```
 
 Second, the corresponding **SpeechFlow** command was:
@@ -188,7 +188,7 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
 - **Capturing**: Capture audio from microphone device into WAV audio file:
 
   ```
-  xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r") |
+  xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") |
       a2a-wav(mode: "encode") |
           xio-file(path: "capture.wav", mode: "w", type: "audio")
   ```
@@ -197,10 +197,10 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
   device and in parallel record it to WAV audio file:
 
   ```
-  xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
+  xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") | {
       a2a-wav(mode: "encode") |
           xio-file(path: "capture.wav", mode: "w", type: "audio"),
-      xio-device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
+      xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
   }
   ```
 
@@ -246,7 +246,7 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
   including the capturing of all involved inputs and outputs:
 
   ```
-  xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
+  xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") | {
       a2a-gender() | {
           a2a-meter(interval: 250) |
               a2a-wav(mode: "encode") |
@@ -273,7 +273,7 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
                           } | {
                               a2a-wav(mode: "encode") |
                                   xio-file(path: "program-en.wav", mode: "w", type: "audio"),
-                              xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
+                              xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
                           }
                       }
                   }
@@ -356,7 +356,7 @@ external files, devices and network services.
 
 - Node: **xio-device**<br/>
   Purpose: **Microphone/speaker device source/sink**<br/>
-  Example: `xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r")`
+  Example: `xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r")`
 
   > This node allows the reading/writing from/to audio devices. It is
   > intended to be used as source nodes for microphone devices and as
