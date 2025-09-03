@@ -4,7 +4,7 @@
 
 #   Capture and meter audio from microphone device into WAV audio file
 capturing: |
-    xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+    xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") |
         a2a-vad() |
             a2a-meter(1000) |
                 a2a-wav(mode: "encode") |
@@ -13,10 +13,10 @@ capturing: |
 #   Pass-through audio from microphone device to speaker
 #   device and in parallel record it to WAV audio file
 pass-through: |
-    xio-device(device: "wasapi:VoiceMeeter Out B1", mode: "r") | {
+    xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") | {
         a2a-wav(mode: "encode") |
             xio-file(path: "capture.wav", mode: "w", type: "audio"),
-        xio-device(device: "wasapi:VoiceMeeter VAIO3 Input", mode: "w")
+        xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
     }
 
 #   Generate text file with German transcription of German MP3 audio file
@@ -79,7 +79,7 @@ studio-transcription: |
 #   Real-time studio translation from German to English,
 #   including the capturing of all involved inputs and outputs:
 studio-translation: |
-    xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") | {
+    xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") | {
         a2a-gender() | {
             a2a-meter(interval: 250, dashboard: "meter1") |
                 a2a-wav(mode: "encode") |
@@ -107,7 +107,7 @@ studio-translation: |
                                 a2a-meter(interval: 250, dashboard: "meter2"),
                                 a2a-wav(mode: "encode") |
                                     xio-file(path: "program-en.wav", mode: "w", type: "audio"),
-                                xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
+                                xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
                             }
                         }
                     }
@@ -118,7 +118,7 @@ studio-translation: |
 
 #   Test-drive for development
 test: |
-    xio-device(device: "coreaudio:Elgato Wave:3", mode: "r") |
+    xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") |
         a2a-meter(interval: 50, dashboard: "meter1") |
             a2t-deepgram(language: "de", model: "nova-2", interim: true) |
                 x2x-trace(type: "text", dashboard: "text1") | {
@@ -130,6 +130,6 @@ test: |
                                     x2x-trace(type: "text", dashboard: "text3") |
                                         t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
                                             a2a-meter(interval: 50, dashboard: "meter2") |
-                                                xio-device(device: "coreaudio:USBAudio2.0", mode: "w")
+                                                xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
                 }
 
