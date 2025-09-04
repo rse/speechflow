@@ -68,6 +68,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     process.stdout.setEncoding()
                     const streamR = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
                     process.stdin.pipe(streamR)
+                    process.stdin.on("end", () => { streamR.push(null) })
                     const streamW = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
                     streamW.pipe(process.stdout)
                     this.stream = Stream.Duplex.from({ readable: streamR, writable: streamW })
@@ -77,6 +78,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     process.stdout.setEncoding(this.config.textEncoding)
                     const streamR = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
                     process.stdin.pipe(streamR)
+                    process.stdin.on("end", () => { streamR.push(null) })
                     const streamW = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
                     streamW.pipe(process.stdout)
                     this.stream = Stream.Duplex.from({ readable: streamR, writable: streamW })
@@ -124,6 +126,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     process.stdin.setEncoding(this.config.textEncoding)
                     chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
                 }
+                process.stdin.on("end", () => { chunker.push(null) })
                 const wrapper = utils.createTransformStreamForReadableSide(
                     this.params.type, () => this.timeZero)
                 this.stream = Stream.compose(process.stdin, chunker, wrapper)
