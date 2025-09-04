@@ -335,7 +335,8 @@ export function createTransformStreamForReadableSide (type: "text" | "audio", ge
                 const duration = audioBufferDuration(chunk as Buffer)
                 end = start.plus(duration * 1000)
             }
-            const obj = new SpeechFlowChunk(start, end, "final", type, chunk)
+            const payload = ensureStreamChunk(type, chunk) as Buffer | string
+            const obj = new SpeechFlowChunk(start, end, "final", type, payload)
             this.push(obj)
             callback()
         },
