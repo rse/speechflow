@@ -126,7 +126,6 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     process.stdin.setEncoding(this.config.textEncoding)
                     chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
                 }
-                process.stdin.on("end", () => { chunker.push(null) })
                 const wrapper = utils.createTransformStreamForReadableSide(
                     this.params.type, () => this.timeZero)
                 this.stream = Stream.compose(process.stdin, chunker, wrapper)
@@ -181,18 +180,21 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
     async close () {
         /*  shutdown stream  */
         if (this.stream !== null) {
-            await new Promise<void>((resolve, reject) => {
-                if (this.stream instanceof Stream.Writable || this.stream instanceof Stream.Duplex) {
-                    this.stream.end((err?: Error) => {
-                        if (err)
-                            reject(err)
-                        else
-                            resolve()
-                    })
-                }
-                else
-                    resolve()
-            })
+            await Promise.race([
+                new Promise<void>((resolve, reject) => {
+                    if (this.stream instanceof Stream.Writable || this.stream instanceof Stream.Duplex) {
+                        this.stream.end((err?: Error) => {
+                            if (err)
+                                reject(err)
+                            else
+                                resolve()
+                        })
+                    }
+                    else
+                        resolve()
+                }),
+                new Promise<void>((resolve) => setTimeout(() => resolve(), 5000))
+            ])
             if (this.params.path !== "-")
                 this.stream.destroy()
             this.stream = null
