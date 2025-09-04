@@ -292,6 +292,7 @@ let debug = false
         "./speechflow-node-t2t-deepl.js",
         "./speechflow-node-t2t-format.js",
         "./speechflow-node-t2t-google.js",
+        "./speechflow-node-t2t-modify.js",
         "./speechflow-node-t2t-ollama.js",
         "./speechflow-node-t2t-openai.js",
         "./speechflow-node-t2t-sentence.js",

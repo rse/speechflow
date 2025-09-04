@@ -52,6 +52,7 @@ local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translat
 local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding,
 local WAV speech-to-speech encoding,
 local text-to-text formatting,
+local text-to-text regex-based modification,
 local text-to-text sentencing merging/splitting,
 local text-to-text subtitle generation,
 local text or audio filter, and
@@ -317,6 +318,7 @@ First a short overview of the available processing nodes:
   **t2t-ollama**,
   **t2t-transformers**,
   **t2t-google**,
+  **t2t-modify**,
   **t2t-subtitle**,
   **t2t-format**,
   **t2t-sentence**.
@@ -829,6 +831,24 @@ The following nodes process text chunks only.
   | **key**      | *none*    | env.SPEECHFLOW\_GOOGLE\_KEY | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en\|fr\|it)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en\|fr\|it)$/` |
+
+- Node: **t2t-modify**<br/>
+  Purpose: **regex-based text modification**<br/>
+  Example: `t2t-modify(match: "\\b(hello)\\b", replace: "hi $1")`<br/>
+
+  > This node allows regex-based modification of text chunks using pattern
+  > matching and replacement with support for $n backreferences. It is
+  > primarily intended for text preprocessing, cleanup, or transformation tasks.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement        |
+  | ------------ | --------- | -------- | ------------------ |
+  | **match**    | 0         | ""       | *required*         |
+  | **replace**  | 1         | ""       | *required*         |
 
 - Node: **t2t-sentence**<br/>
   Purpose: **sentence splitting/merging**<br/>

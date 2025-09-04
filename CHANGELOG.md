@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - REFACTORING: all nodes now have a prefix
+- IMPROVEMENT: add "t2t-modify" node for text replacements
 
 1.5.1 (2025-09-02)
 ------------------
