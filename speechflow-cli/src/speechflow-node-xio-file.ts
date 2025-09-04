@@ -181,12 +181,16 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             await Promise.race([
                 new Promise<void>((resolve, reject) => {
                     if (this.stream instanceof Stream.Writable || this.stream instanceof Stream.Duplex) {
-                        this.stream.end((err?: Error) => {
-                            if (err)
-                                reject(err)
-                            else
-                                resolve()
-                        })
+                        if (this.stream.writableEnded || this.stream.destroyed)
+                            resolve()
+                        else {
+                            this.stream.end((err?: Error) => {
+                                if (err)
+                                    reject(err)
+                                else
+                                    resolve()
+                            })
+                        }
                     }
                     else
                         resolve()
