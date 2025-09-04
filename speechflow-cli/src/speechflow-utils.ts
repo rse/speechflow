@@ -40,7 +40,7 @@ function runFinally (onfinally?: () => void) {
     if (!onfinally)
         return
     try { onfinally() }
-    catch (_arg: unknown) { /*  ignored  */ }
+    catch (_error: unknown) { /*  ignored  */ }
 }
 
 /*  helper type for ensuring T contains no Promise  */
@@ -120,14 +120,14 @@ export function run<T> (
             let error = ensureError(arg, description)
             if (oncatch) {
                 try {
-                    return ensurePromise(oncatch(error))
+                    return oncatch(error)
                 }
                 catch (arg: unknown) {
                     error = ensureError(arg, description)
-                    return Promise.reject(error)
+                    throw error
                 }
             }
-            return Promise.reject(error)
+            throw error
         }).finally(() => {
             /*  asynchronous case (result and error branch)  */
             runFinally(onfinally)
