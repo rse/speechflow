@@ -710,6 +710,8 @@ let debug = false
                         const peer = ctx.peer
                         wsPeers.delete(peer)
                         ws.removeAllListeners()
+                        if (ws.readyState === WebSocket.OPEN)
+                            ws.close()
                         cli!.log("info", `HAPI: WebSocket: disconnect: peer ${peer}`)
                     }
                 }
