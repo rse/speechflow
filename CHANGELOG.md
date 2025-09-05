@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.6.0 (2025-09-03)
+1.6.0 (2025-09-06)
 ------------------
 
 - REFACTORING: all nodes now have a prefix
