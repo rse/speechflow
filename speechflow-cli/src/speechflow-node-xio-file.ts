@@ -201,14 +201,11 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     if (this.stream instanceof Stream.Writable || this.stream instanceof Stream.Duplex) {
                         if (this.stream.writableEnded || this.stream.destroyed)
                             resolve()
-                        else {
+                        else
                             this.stream.end((err?: Error) => {
-                                if (err)
-                                    reject(err)
-                                else
-                                    resolve()
+                                if (err) reject(err)
+                                else     resolve()
                             })
-                        }
                     }
                     else
                         resolve()
