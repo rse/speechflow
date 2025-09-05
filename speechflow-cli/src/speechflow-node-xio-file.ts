@@ -59,6 +59,28 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
         if (this.params.path === "")
             throw new Error("required parameter \"path\" has to be given")
 
+        /*  utility function: create a writable stream as chunker that
+            writes to process.stdout but properly handles finish events.
+            This ensures the writable side of the composed stream below
+            properly signals completion while keeping process.stdout open
+            (as it's a global stream that shouldn't be closed by individual nodes). */
+        const createStdoutChunker = () => {
+            return new Stream.Writable({
+                highWaterMark: this.params.type === "audio" ?
+                    highWaterMarkAudio : highWaterMarkText,
+                write (chunk: Buffer | string, encoding, callback) {
+                    const canContinue = process.stdout.write(chunk, encoding)
+                    if (canContinue)
+                        callback()
+                    else
+                        process.stdout.once("drain", callback)
+                },
+                final (callback) {
+                    callback()
+                }
+            })
+        }
+
         /*  dispatch according to mode and path  */
         if (this.params.mode === "rw") {
             if (this.params.path === "-") {
@@ -145,17 +167,13 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
         else if (this.params.mode === "w") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
-                let chunker: Stream.PassThrough
-                if (this.params.type === "audio") {
+                if (this.params.type === "audio")
                     process.stdout.setEncoding()
-                    chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
-                }
-                else {
+                else
                     process.stdout.setEncoding(this.config.textEncoding)
-                    chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
-                }
+                const chunker = createStdoutChunker()
                 const wrapper = utils.createTransformStreamForWritableSide()
-                this.stream = Stream.compose(wrapper, chunker, process.stdout)
+                this.stream = Stream.compose(wrapper, chunker)
             }
             else {
                 /*  file I/O  */
