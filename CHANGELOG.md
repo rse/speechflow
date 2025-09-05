@@ -8,6 +8,7 @@ ChangeLog
 - REFACTORING: all nodes now have a prefix
 - IMPROVEMENT: add "t2t-modify" node for text replacements
 - BUGFIX: fix writing to stdout where the program was hanging
+- UPDATE: upgrade NPM dependencies
 
 1.5.1 (2025-09-02)
 ------------------
