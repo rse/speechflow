@@ -64,8 +64,8 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             This ensures the writable side of the composed stream below
             properly signals completion while keeping process.stdout open
             (as it's a global stream that shouldn't be closed by individual nodes). */
-        const createStdoutChunker = () => {
-            return new Stream.Writable({
+        const createStdoutChunker = () =>
+            new Stream.Writable({
                 highWaterMark: this.params.type === "audio" ?
                     highWaterMarkAudio : highWaterMarkText,
                 write (chunk: Buffer | string, encoding, callback) {
@@ -79,7 +79,6 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     callback()
                 }
             })
-        }
 
         /*  dispatch according to mode and path  */
         if (this.params.mode === "rw") {
