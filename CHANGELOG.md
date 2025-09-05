@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - CLEANUP: cleanup code
+- REFACTOR: splitted large utils code
 
 1.6.0 (2025-09-06)
 ------------------

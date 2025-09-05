@@ -116,7 +116,8 @@
         "no-array-reduce":                    "off",
         "no-rest-spread-properties":          "off",
         "always-return":                      "off",
-        "no-useless-promise-resolve-reject":  "off"
+        "no-useless-promise-resolve-reject":  "off",
+        "no-barrel-file":                     "off"
     }
 }
 

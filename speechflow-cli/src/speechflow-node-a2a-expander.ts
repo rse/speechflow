@@ -14,7 +14,6 @@ import { AudioWorkletNode } from "node-web-audio-api"
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as utils                          from "./speechflow-utils"
-import { WebAudio }                        from "./speechflow-utils-audio"
 
 /*  internal types  */
 interface AudioExpanderConfig {
@@ -28,7 +27,7 @@ interface AudioExpanderConfig {
 }
 
 /*  audio noise expander class  */
-class AudioExpander extends WebAudio {
+class AudioExpander extends utils.WebAudio {
     /*  internal state  */
     private config:       Required<AudioExpanderConfig>
     private expanderNode: AudioWorkletNode | null = null
