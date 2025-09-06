@@ -5,7 +5,6 @@
 */
 
 export * from "./speechflow-util-audio"
-export * from "./speechflow-util-webaudio"
 export * from "./speechflow-util-error"
 export * from "./speechflow-util-stream"
 export * from "./speechflow-util-queue"
