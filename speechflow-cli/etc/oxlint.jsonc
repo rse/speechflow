@@ -117,7 +117,9 @@
         "no-rest-spread-properties":          "off",
         "always-return":                      "off",
         "no-useless-promise-resolve-reject":  "off",
-        "no-barrel-file":                     "off"
+        "no-barrel-file":                     "off",
+        "no-process-exit":                    "off",
+        "no-cycle":                           "off"
     }
 }
 

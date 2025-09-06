@@ -5,13 +5,15 @@
 */
 
 /*  helper function for retrieving an Error object  */
-export function ensureError (error: unknown, prefix?: string): Error {
-    if (error instanceof Error && prefix === undefined)
+export function ensureError (error: unknown, prefix?: string, debug = false): Error {
+    if (error instanceof Error && prefix === undefined && debug === false)
         return error
     let msg = error instanceof Error ?
         error.message : String(error)
     if (prefix)
         msg = `${prefix}: ${msg}`
+    if (debug && error instanceof Error)
+        msg = `${msg}\n${error.stack}`
     return new Error(msg, { cause: error })
 }
 
