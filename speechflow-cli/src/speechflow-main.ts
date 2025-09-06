@@ -23,13 +23,13 @@ export default class Main {
         /*  create CLI environment  */
         const cli = new CLIContext()
 
-        /*  catch and handle uncaught exceptions  */
+        /*  early catch and handle uncaught exceptions (will be replaced later)  */
         process.on("uncaughtException", (err) => {
             const error = utils.ensureError(err, "uncaught exception")
             cli.handleTopLevelError(error)
         })
 
-        /*  catch and handle unhandled promise rejections  */
+        /*  early catch and handle unhandled promise rejections (will be replaced later)  */
         process.on("unhandledRejection", (reason) => {
             const error = utils.ensureError(reason, "unhandled promise rejection")
             cli.handleTopLevelError(error)
