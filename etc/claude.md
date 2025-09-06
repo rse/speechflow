@@ -47,10 +47,10 @@ npm start test          # Run test configuration with sample pipeline
 
 ### Core Engine
 
-- `speechflow-cli/src/speechflow.ts`       - CLI entry point
-- `speechflow-cli/src/speechflow-main*.ts` - Main program and orchestration
-- `speechflow-cli/src/speechflow-node*.ts` - Base node class with stream processing
-- `speechflow-cli/src/speechflow-util*.ts` - Utility functions and helpers
+- `speechflow-cli/src/speechflow.ts`       -- CLI entry point
+- `speechflow-cli/src/speechflow-main*.ts` -- Main program and orchestration
+- `speechflow-cli/src/speechflow-node*.ts` -- Base node classes with stream processing
+- `speechflow-cli/src/speechflow-util*.ts` -- Utility functions and helpers
 
 ### Node Implementations
 
