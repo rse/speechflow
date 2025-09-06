@@ -83,6 +83,84 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
         return device
     }
 
+    /*  NOTICE: "naudion" actually implements Stream.{Readable,Writable,Duplex}, but
+        declares just its sub-interface NodeJS.{Readable,Writable,Duplex}Stream,
+        so it is correct to cast it back to Stream.{Readable,Writable,Duplex}
+        in the following device stream setup functions!  */
+
+    /*  INTERNAL: setup duplex stream  */
+    private setupDuplexStream (device: PortAudio.DeviceInfo, highwaterMark: number) {
+        if (device.maxInputChannels === 0)
+            throw new Error(`device "${device.id}" does not have any input channels (required by read/write mode)`)
+        if (device.maxOutputChannels === 0)
+            throw new Error(`device "${device.id}" does not have any output channels (required by read/write mode)`)
+        this.log("info", `resolved "${this.params.device}" to duplex device "${device.id}"`)
+        this.io = PortAudio.AudioIO({
+            inOptions: {
+                deviceId:     device.id,
+                channelCount: this.config.audioChannels,
+                sampleRate:   this.config.audioSampleRate,
+                sampleFormat: this.config.audioBitDepth,
+                highwaterMark
+            },
+            outOptions: {
+                deviceId:     device.id,
+                channelCount: this.config.audioChannels,
+                sampleRate:   this.config.audioSampleRate,
+                sampleFormat: this.config.audioBitDepth,
+                highwaterMark
+            }
+        })
+        this.stream = this.io as unknown as Stream.Duplex
+
+        /*  convert regular stream into object-mode stream  */
+        const wrapper1 = util.createTransformStreamForWritableSide()
+        const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
+        this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
+    }
+
+    /*  INTERNAL: setup input stream  */
+    private setupInputStream (device: PortAudio.DeviceInfo, highwaterMark: number) {
+        if (device.maxInputChannels === 0)
+            throw new Error(`device "${device.id}" does not have any input channels (required by read mode)`)
+        this.log("info", `resolved "${this.params.device}" to input device "${device.id}"`)
+        this.io = PortAudio.AudioIO({
+            inOptions: {
+                deviceId:      device.id,
+                channelCount:  this.config.audioChannels,
+                sampleRate:    this.config.audioSampleRate,
+                sampleFormat:  this.config.audioBitDepth,
+                highwaterMark
+            }
+        })
+        this.stream = this.io as unknown as Stream.Readable
+
+        /*  convert regular stream into object-mode stream  */
+        const wrapper = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
+        this.stream = Stream.compose(this.stream, wrapper)
+    }
+
+    /*  INTERNAL: setup output stream  */
+    private setupOutputStream (device: PortAudio.DeviceInfo, highwaterMark: number) {
+        if (device.maxOutputChannels === 0)
+            throw new Error(`device "${device.id}" does not have any output channels (required by write mode)`)
+        this.log("info", `resolved "${this.params.device}" to output device "${device.id}"`)
+        this.io = PortAudio.AudioIO({
+            outOptions: {
+                deviceId:     device.id,
+                channelCount: this.config.audioChannels,
+                sampleRate:   this.config.audioSampleRate,
+                sampleFormat: this.config.audioBitDepth,
+                highwaterMark
+            }
+        })
+        this.stream = this.io as unknown as Stream.Writable
+
+        /*  convert regular stream into object-mode stream  */
+        const wrapper = util.createTransformStreamForWritableSide()
+        this.stream = Stream.compose(wrapper, this.stream)
+    }
+
     /*  open node  */
     async open () {
         if (this.params.device === "")
@@ -104,91 +182,21 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
             (this.config.audioBitDepth / 8)
         ) / (1000 / this.params.chunk)
 
-        /*  establish device connection
-            Notice: "naudion" actually implements Stream.{Readable,Writable,Duplex}, but
-            declares just its sub-interface NodeJS.{Readable,Writable,Duplex}Stream,
-            so it is correct to cast it back to Stream.{Readable,Writable,Duplex}  */
-        /*  FIXME: the underlying PortAudio outputs verbose/debugging messages  */
-        if (this.params.mode === "rw") {
-            /*  input/output device  */
-            if (device.maxInputChannels === 0)
-                throw new Error(`device "${device.id}" does not have any input channels (required by read/write mode)`)
-            if (device.maxOutputChannels === 0)
-                throw new Error(`device "${device.id}" does not have any output channels (required by read/write mode)`)
-            this.log("info", `resolved "${this.params.device}" to duplex device "${device.id}"`)
-            this.io = PortAudio.AudioIO({
-                inOptions: {
-                    deviceId:     device.id,
-                    channelCount: this.config.audioChannels,
-                    sampleRate:   this.config.audioSampleRate,
-                    sampleFormat: this.config.audioBitDepth,
-                    highwaterMark
-                },
-                outOptions: {
-                    deviceId:     device.id,
-                    channelCount: this.config.audioChannels,
-                    sampleRate:   this.config.audioSampleRate,
-                    sampleFormat: this.config.audioBitDepth,
-                    highwaterMark
-                }
-            })
-            this.stream = this.io as unknown as Stream.Duplex
-
-            /*  convert regular stream into object-mode stream  */
-            const wrapper1 = util.createTransformStreamForWritableSide()
-            const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
-            this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
-        }
-        else if (this.params.mode === "r") {
-            /*  input device  */
-            if (device.maxInputChannels === 0)
-                throw new Error(`device "${device.id}" does not have any input channels (required by read mode)`)
-            this.log("info", `resolved "${this.params.device}" to input device "${device.id}"`)
-            this.io = PortAudio.AudioIO({
-                inOptions: {
-                    deviceId:      device.id,
-                    channelCount:  this.config.audioChannels,
-                    sampleRate:    this.config.audioSampleRate,
-                    sampleFormat:  this.config.audioBitDepth,
-                    highwaterMark
-                }
-            })
-            this.stream = this.io as unknown as Stream.Readable
-
-            /*  convert regular stream into object-mode stream  */
-            const wrapper = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
-            this.stream = Stream.compose(this.stream, wrapper)
-        }
-        else if (this.params.mode === "w") {
-            /*  output device  */
-            if (device.maxOutputChannels === 0)
-                throw new Error(`device "${device.id}" does not have any output channels (required by write mode)`)
-            this.log("info", `resolved "${this.params.device}" to output device "${device.id}"`)
-            this.io = PortAudio.AudioIO({
-                outOptions: {
-                    deviceId:     device.id,
-                    channelCount: this.config.audioChannels,
-                    sampleRate:   this.config.audioSampleRate,
-                    sampleFormat: this.config.audioBitDepth,
-                    highwaterMark
-                }
-            })
-            this.stream = this.io as unknown as Stream.Writable
-
-            /*  convert regular stream into object-mode stream  */
-            const wrapper = util.createTransformStreamForWritableSide()
-            this.stream = Stream.compose(wrapper, this.stream)
-        }
-        else
-            throw new Error(`device "${device.id}" does not have any input or output channels`)
+        /*  establish device stream  */
+        if (this.params.mode === "rw")
+            this.setupDuplexStream(device, highwaterMark)
+        else if (this.params.mode === "r")
+            this.setupInputStream(device, highwaterMark)
+        else if (this.params.mode === "w")
+            this.setupOutputStream(device, highwaterMark)
 
         /*  pass-through PortAudio errors  */
-        this.io.on("error", (err) => {
+        this.io!.on("error", (err) => {
             this.emit("error", err)
         })
 
         /*  start PortAudio  */
-        this.io.start()
+        this.io!.start()
     }
 
     /*  close node  */
