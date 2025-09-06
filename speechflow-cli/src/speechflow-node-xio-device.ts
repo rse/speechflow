@@ -195,16 +195,27 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
     async close () {
         /*  shutdown PortAudio  */
         if (this.io !== null) {
-            await new Promise<void>((resolve) => {
-                this.io!.abort(() => {
-                    resolve()
-                })
-            })
-            await new Promise<void>((resolve) => {
-                this.io!.quit(() => {
-                    resolve()
-                })
-            })
+            const catchHandler = (err: unknown) => {
+                const error = util.ensureError(err)
+                if (!error.message.match(/AudioIO Quit expects 1 argument/))
+                    throw error
+            }
+            await Promise.race([
+                util.timeoutPromise(2 * 1000, "PortAudio abort timeout"),
+                new Promise<void>((resolve) => {
+                    this.io!.abort(() => {
+                        resolve()
+                    })
+                }).catch(catchHandler)
+            ])
+            await Promise.race([
+                util.timeoutPromise(2 * 1000, "PortAudio quit timeout"),
+                new Promise<void>((resolve) => {
+                    this.io!.quit(() => {
+                        resolve()
+                    })
+                }).catch(catchHandler)
+            ])
             this.io = null
         }
     }
