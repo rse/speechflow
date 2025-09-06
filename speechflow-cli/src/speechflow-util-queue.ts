@@ -13,12 +13,12 @@ import { Duration } from "luxon"
 import * as IntervalTree      from "node-interval-tree"
 
 /*  internal dependencies  */
-import { run }                from "./speechflow-util-error"
+import * as util              from "./speechflow-util"
 
 /*  import an object with parsing and strict error handling  */
 export function importObject<T>(name: string, arg: object | string, validator: Type<T, {}>): T {
     const obj: object = typeof arg === "string" ?
-        run(`${name}: parsing JSON`, () => JSON.parse(arg)) :
+        util.run(`${name}: parsing JSON`, () => JSON.parse(arg)) :
         arg
     const result = validator(obj)
     if (result instanceof type.errors)
