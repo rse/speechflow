@@ -46,14 +46,18 @@ npm start test          # Run test configuration with sample pipeline
 ## Key Implementation Files
 
 ### Core Engine
-- `speechflow-cli/src/speechflow.ts` - Main CLI entry point and orchestration
-- `speechflow-cli/src/speechflow-node.ts` - Base node class with stream processing
-- `speechflow-cli/src/speechflow-utils.ts` - Utility functions and helpers
+
+- `speechflow-cli/src/speechflow.ts`       - CLI entry point
+- `speechflow-cli/src/speechflow-main*.ts` - Main program and orchestration
+- `speechflow-cli/src/speechflow-node*.ts` - Base node class with stream processing
+- `speechflow-cli/src/speechflow-util*.ts` - Utility functions and helpers
 
 ### Node Implementations
+
 All node implementations follow the pattern `speechflow-node-{category}-{name}.ts` in `speechflow-cli/src/`.
 
 ### Stream Processing Architecture
+
 - Uses Node.js object-mode streams with timestamp metadata
 - Audio chunks: PCM format, 16-bit, 16kHz, mono
 - Text chunks: Include timing information and metadata (gender, final/interim)
@@ -105,3 +109,4 @@ This executes a sample pipeline defined in `etc/speechflow.yaml` with dashboard 
 2. **Error Handling**: Nodes emit errors via stream events, captured and logged centrally
 3. **Timestamp Preservation**: Audio/text chunks maintain timing for synchronization across pipeline
 4. **Meta Information**: Chunks carry metadata (gender, final/interim status) for downstream filtering
+
