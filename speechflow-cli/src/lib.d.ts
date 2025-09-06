@@ -4,6 +4,7 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/*  type definitions for Stream.compose  */
 declare module "node:stream" {
     import { Stream, Duplex } from "node:stream"
     export function compose (...streams: Stream[]): Duplex
@@ -33,3 +34,4 @@ declare function registerProcessor(
     name: string,
     processorCtor: new (...args: any[]) => AudioWorkletProcessor
 ): void
+
