@@ -14,7 +14,7 @@ import { loadSpeexModule, SpeexPreprocessor } from "@sapphi-red/speex-preprocess
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Speex based noise suppression in audio-to-audio passing  */
 export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
@@ -79,10 +79,10 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     /*  convert Buffer into Int16Array  */
-                    const payload = utils.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload)
 
                     /*  process Int16Array in necessary fixed-size segments  */
-                    utils.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
+                    util.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
                         if (self.destroyed)
                             throw new Error("stream already destroyed")
                         self.speexProcessor?.processInt16(segment)
@@ -92,7 +92,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                             throw new Error("stream already destroyed")
 
                         /*  convert Int16Array back into Buffer  */
-                        const buf = utils.convertI16ToBuf(payload)
+                        const buf = util.convertI16ToBuf(payload)
 
                         /*  update chunk  */
                         chunk.payload = buf

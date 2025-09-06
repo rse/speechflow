@@ -13,7 +13,7 @@ import UUID   from "pure-uuid"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for MQTT networking  */
 export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
@@ -23,7 +23,7 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
     /*  internal state  */
     private broker: MQTT.MqttClient | null = null
     private clientId: string = (new UUID(1)).format()
-    private chunkQueue: utils.SingleQueue<SpeechFlowChunk> | null = null
+    private chunkQueue: util.SingleQueue<SpeechFlowChunk> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -99,12 +99,12 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
         this.broker.on("disconnect", (packet: MQTT.IDisconnectPacket) => {
             this.log("info", `connection closed to MQTT ${this.params.url}`)
         })
-        this.chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
+        this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
         this.broker.on("message", (topic: string, payload: Buffer, packet: MQTT.IPublishPacket) => {
             if (topic !== this.params.topicRead || this.params.mode === "w")
                 return
             try {
-                const chunk = utils.streamChunkDecode(payload)
+                const chunk = util.streamChunkDecode(payload)
                 this.chunkQueue!.write(chunk)
             }
             catch (_err: any) {
@@ -125,7 +125,7 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
                 else if (!self.broker!.connected)
                     callback(new Error("still no MQTT connection available"))
                 else {
-                    const data = Buffer.from(utils.streamChunkEncode(chunk))
+                    const data = Buffer.from(util.streamChunkEncode(chunk))
                     self.broker!.publish(self.params.topicWrite, data, { qos: 2, retain: false }, (err) => {
                         if (err)
                             callback(new Error(`failed to publish to MQTT topic "${self.params.topicWrite}": ${err}`))

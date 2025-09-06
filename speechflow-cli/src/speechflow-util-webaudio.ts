@@ -40,7 +40,7 @@ export class WebAudio {
             await this.audioContext.resume()
 
         /*  add audio worklet module  */
-        const url = path.resolve(__dirname, "speechflow-utils-webaudio-wt.js")
+        const url = path.resolve(__dirname, "speechflow-util-webaudio-wt.js")
         await this.audioContext.audioWorklet.addModule(url)
 
         /*  create source node  */

@@ -19,7 +19,7 @@ import SpeechFlowNode        from "./speechflow-node"
 import { NodeConfig }        from "./speechflow-main-config"
 import { CLIOptions }        from "./speechflow-main-cli"
 import { APIServer }         from "./speechflow-main-api"
-import * as utils            from "./speechflow-utils"
+import * as util             from "./speechflow-util"
 
 /*  the SpeechFlow node graph management  */
 export class NodeGraph {
@@ -318,7 +318,7 @@ export class NodeGraph {
         /*  re-hook into uncaught exception handler  */
         process.removeAllListeners("uncaughtException")
         process.on("uncaughtException", (err) => {
-            const error = utils.ensureError(err, "uncaught exception")
+            const error = util.ensureError(err, "uncaught exception")
             logError(error)
             shutdownHandler("exception")
         })
@@ -326,7 +326,7 @@ export class NodeGraph {
         /*  re-hook into unhandled promise rejection handler  */
         process.removeAllListeners("unhandledRejection")
         process.on("unhandledRejection", (reason) => {
-            const error = utils.ensureError(reason, "unhandled promise rejection")
+            const error = util.ensureError(reason, "unhandled promise rejection")
             logError(error)
             shutdownHandler("exception")
         })

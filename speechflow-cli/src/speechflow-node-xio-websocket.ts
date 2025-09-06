@@ -13,7 +13,7 @@ import ReconnWebSocket, { ErrorEvent } from "@opensumi/reconnecting-websocket"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Websocket networking  */
 export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
@@ -63,7 +63,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             /*  listen locally on a Websocket port  */
             const url = new URL(this.params.listen)
             const websockets = new Set<ws.WebSocket>()
-            const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
+            const chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
             this.server = new ws.WebSocketServer({
                 host: url.hostname,
                 port: Number.parseInt(url.port, 10),
@@ -101,7 +101,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                         buffer = Buffer.from(data)
                     else
                         buffer = Buffer.concat(data)
-                    const chunk = utils.streamChunkDecode(buffer)
+                    const chunk = util.streamChunkDecode(buffer)
                     chunkQueue.write(chunk)
                 })
             })
@@ -122,7 +122,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     else if (websockets.size === 0)
                         callback(new Error("still no Websocket connections available"))
                     else {
-                        const data = utils.streamChunkEncode(chunk)
+                        const data = util.streamChunkEncode(chunk)
                         const results: Promise<void>[] = []
                         for (const websocket of websockets.values()) {
                             results.push(new Promise<void>((resolve, reject) => {
@@ -172,7 +172,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             this.client.addEventListener("error", (ev: ErrorEvent) => {
                 this.log("error", `error of connection on URL ${this.params.connect}: ${ev.error.message}`)
             })
-            const chunkQueue = new utils.SingleQueue<SpeechFlowChunk>()
+            const chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
             this.client.addEventListener("message", (ev: MessageEvent) => {
                 if (this.params.mode === "w") {
                     this.log("warning", `connection to URL ${this.params.connect}: ` +
@@ -185,7 +185,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     return
                 }
                 const buffer = Buffer.from(ev.data)
-                const chunk = utils.streamChunkDecode(buffer)
+                const chunk = util.streamChunkDecode(buffer)
                 chunkQueue.write(chunk)
             })
             this.client.binaryType = "arraybuffer"
@@ -203,7 +203,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     else if (!self.client!.OPEN)
                         callback(new Error("still no Websocket connection available"))
                     else {
-                        const data = utils.streamChunkEncode(chunk)
+                        const data = util.streamChunkEncode(chunk)
                         self.client!.send(data)
                         callback()
                     }

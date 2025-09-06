@@ -11,7 +11,7 @@ import { Duration }     from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 class AudioFiller extends EventEmitter {
     private emittedEndSamples = 0           /* stream position in samples already emitted */
@@ -111,7 +111,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
     /*  internal state  */
     private destroyed = false
     private filler: AudioFiller | null = null
-    private sendQueue: utils.AsyncQueue<SpeechFlowChunk | null> | null = null
+    private sendQueue: util.AsyncQueue<SpeechFlowChunk | null> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -134,7 +134,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
 
         /*  establish queues  */
         this.filler  = new AudioFiller(this.config.audioSampleRate, this.config.audioChannels)
-        this.sendQueue = new utils.AsyncQueue<SpeechFlowChunk | null>()
+        this.sendQueue = new util.AsyncQueue<SpeechFlowChunk | null>()
 
         /*  shift chunks from filler to send queue  */
         this.filler.on("chunk", (chunk) => {
@@ -182,7 +182,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     }
                 }).catch((error: unknown) => {
                     if (!self.destroyed)
-                        self.log("error", `queue read error: ${utils.ensureError(error).message}`)
+                        self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
             final (callback) {

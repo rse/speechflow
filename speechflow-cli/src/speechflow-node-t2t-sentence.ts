@@ -12,7 +12,7 @@ import { Duration }       from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  text stream queue element */
 type TextQueueElement = {
@@ -29,7 +29,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     public static name = "t2t-sentence"
 
     /*  internal state  */
-    private queue      = new utils.Queue<TextQueueElement>()
+    private queue      = new util.Queue<TextQueueElement>()
     private queueRecv  = this.queue.pointerUse("recv")
     private queueSplit = this.queue.pointerUse("split")
     private queueSend  = this.queue.pointerUse("send")

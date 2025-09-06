@@ -17,7 +17,7 @@ import {
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Amazon Polly text-to-speech conversion  */
 export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
@@ -146,7 +146,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                         this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(utils.ensureError(error, "failed to send to AWS Polly"))
+                        callback(util.ensureError(error, "failed to send to AWS Polly"))
                     })
                 }
                 else

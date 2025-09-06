@@ -13,7 +13,7 @@ import { Converter as FFmpegStream } from "ffmpeg-stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode                from "./speechflow-node"
-import * as utils                    from "./speechflow-utils"
+import * as util                     from "./speechflow-util"
 
 /*  SpeechFlow node for FFmpeg  */
 export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
@@ -90,7 +90,7 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
                 "f":           "opus"
             } : {})
         })
-        utils.run("starting FFmpeg process", () => this.ffmpeg!.run())
+        util.run("starting FFmpeg process", () => this.ffmpeg!.run())
 
         /*  establish a duplex stream and connect it to FFmpeg  */
         this.stream = Stream.Duplex.from({
@@ -99,8 +99,8 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
         })
 
         /*  wrap streams with conversions for chunk vs plain audio  */
-        const wrapper1 = utils.createTransformStreamForWritableSide()
-        const wrapper2 = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
+        const wrapper1 = util.createTransformStreamForWritableSide()
+        const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
         this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
     }
 
@@ -120,7 +120,7 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
 
         /*  shutdown FFmpeg  */
         if (this.ffmpeg !== null) {
-            utils.run(() => this.ffmpeg!.kill(), () => {})
+            util.run(() => this.ffmpeg!.kill(), () => {})
             this.ffmpeg = null
         }
     }

@@ -9,7 +9,7 @@ import Stream from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for data flow filtering (based on meta information)  */
 export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
@@ -17,7 +17,7 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
     public static name = "x2x-filter"
 
     /*  cached regular expression instance  */
-    private cachedRegExp = new utils.CachedRegExp()
+    private cachedRegExp = new util.CachedRegExp()
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {

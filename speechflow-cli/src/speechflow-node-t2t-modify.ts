@@ -9,7 +9,7 @@ import Stream   from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for text-to-text modification via regex  */
 export default class SpeechFlowNodeT2TModify extends SpeechFlowNode {
@@ -38,7 +38,7 @@ export default class SpeechFlowNodeT2TModify extends SpeechFlowNode {
             throw new Error("match parameter cannot be empty")
 
         /*  compile regex pattern  */
-        const regex = utils.run("compiling regex pattern",
+        const regex = util.run("compiling regex pattern",
             () => new RegExp(this.params.match, "g"))
 
         /*  apply regex-based modification  */

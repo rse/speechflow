@@ -19,7 +19,7 @@ import * as arktype       from "arktype"
 import CLIio              from "cli-io"
 
 /*  internal dependencies  */
-import * as utils         from "./speechflow-utils"
+import * as util          from "./speechflow-util"
 import { CLIOptions }     from "./speechflow-main-cli"
 import { NodeGraph }      from "./speechflow-main-graph"
 import pkg                from "../../package.json"
@@ -161,7 +161,7 @@ export class APIServer {
                 this.cli.log("info", `HAPI: peer ${peer}: GET: ${JSON.stringify(req)}`)
                 return consumeExternalRequest(req)
                     .then(()     => h.response({ response: "OK" }).code(200))
-                    .catch((error: unknown) => h.response({ response: "ERROR", data: utils.ensureError(error).message }).code(417))
+                    .catch((error: unknown) => h.response({ response: "ERROR", data: util.ensureError(error).message }).code(417))
             }
         })
         this.hapi.route({
@@ -307,7 +307,7 @@ export class APIServer {
                 new Promise((resolve, reject) =>
                     setTimeout(() => reject(new Error("timeout for all peers")), 5 * 1000))
             ]).catch((error: unknown) => {
-                this.cli.log("warning", `HAPI: WebSockets failed to close: ${utils.ensureError(error).message}`)
+                this.cli.log("warning", `HAPI: WebSockets failed to close: ${util.ensureError(error).message}`)
             })
             this.wsPeers.clear()
         }

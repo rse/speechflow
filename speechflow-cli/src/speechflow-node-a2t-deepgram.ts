@@ -13,7 +13,7 @@ import { DateTime, Duration } from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Deepgram speech-to-text conversion  */
 export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
@@ -25,7 +25,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     private destroyed                                                           = false
     private initTimeout:       ReturnType<typeof setTimeout> | null             = null
     private connectionTimeout: ReturnType<typeof setTimeout> | null             = null
-    private queue:             utils.SingleQueue<SpeechFlowChunk | null> | null = null
+    private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -78,10 +78,10 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         this.destroyed = false
 
         /*  create queue for results  */
-        this.queue = new utils.SingleQueue<SpeechFlowChunk | null>()
+        this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
-        const metastore = new utils.TimeStore<Map<string, any>>()
+        const metastore = new util.TimeStore<Map<string, any>>()
 
         /*  connect to Deepgram API  */
         const deepgram = Deepgram.createClient(this.params.key)
@@ -234,7 +234,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     }
                 }).catch((error: unknown) => {
                     if (!self.destroyed)
-                        self.log("error", `queue read error: ${utils.ensureError(error).message}`)
+                        self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
             final (callback) {

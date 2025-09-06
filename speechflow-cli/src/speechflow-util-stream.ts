@@ -13,7 +13,7 @@ import * as CBOR              from "cbor2"
 
 /*  internal dependencies  */
 import { SpeechFlowChunk }    from "./speechflow-node"
-import { audioBufferDuration } from "./speechflow-utils-audio"
+import { audioBufferDuration } from "./speechflow-util-audio"
 
 /*  create a Duplex/Transform stream which has
     object-mode on Writable side and buffer/string-mode on Readable side  */

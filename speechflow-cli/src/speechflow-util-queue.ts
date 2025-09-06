@@ -13,7 +13,7 @@ import { Duration } from "luxon"
 import * as IntervalTree      from "node-interval-tree"
 
 /*  internal dependencies  */
-import { run }                from "./speechflow-utils-error"
+import { run }                from "./speechflow-util-error"
 
 /*  import an object with parsing and strict error handling  */
 export function importObject<T>(name: string, arg: object | string, validator: Type<T, {}>): T {

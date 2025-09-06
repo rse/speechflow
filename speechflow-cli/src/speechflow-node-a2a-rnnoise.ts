@@ -11,7 +11,7 @@ import { resolve }          from "node:path"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for RNNoise based noise suppression in audio-to-audio passing  */
 export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
@@ -112,14 +112,14 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     /*  convert Buffer into Int16Array  */
-                    const payload = utils.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload)
 
                     /*  process Int16Array in necessary segments  */
-                    utils.processInt16ArrayInSegments(payload, self.sampleSize, (segment) =>
+                    util.processInt16ArrayInSegments(payload, self.sampleSize, (segment) =>
                         workerProcessSegment(segment)
                     ).then((payload: Int16Array<ArrayBuffer>) => {
                         /*  convert Int16Array into Buffer  */
-                        const buf = utils.convertI16ToBuf(payload)
+                        const buf = util.convertI16ToBuf(payload)
 
                         /*  update chunk  */
                         chunk.payload = buf

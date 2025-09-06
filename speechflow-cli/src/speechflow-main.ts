@@ -14,7 +14,7 @@ import { NodeRegistry }       from "./speechflow-main-nodes"
 import { NodeStatusManager }  from "./speechflow-main-status"
 import { NodeGraph }          from "./speechflow-main-graph"
 import { APIServer }          from "./speechflow-main-api"
-import * as utils             from "./speechflow-utils"
+import * as util              from "./speechflow-util"
 
 /*  class of main procedure  */
 export default class Main {
@@ -25,13 +25,13 @@ export default class Main {
 
         /*  early catch and handle uncaught exceptions (will be replaced later)  */
         process.on("uncaughtException", (err) => {
-            const error = utils.ensureError(err, "uncaught exception")
+            const error = util.ensureError(err, "uncaught exception")
             cli.handleTopLevelError(error)
         })
 
         /*  early catch and handle unhandled promise rejections (will be replaced later)  */
         process.on("unhandledRejection", (reason) => {
-            const error = utils.ensureError(reason, "unhandled promise rejection")
+            const error = util.ensureError(reason, "unhandled promise rejection")
             cli.handleTopLevelError(error)
         })
 
@@ -39,7 +39,7 @@ export default class Main {
         const main = new Main(cli)
         main.run().catch((err) => {
             /*  handle errors at the top-level  */
-            const error = utils.ensureError(err, "top-level error")
+            const error = util.ensureError(err, "top-level error")
             cli.handleTopLevelError(error)
         })
     }

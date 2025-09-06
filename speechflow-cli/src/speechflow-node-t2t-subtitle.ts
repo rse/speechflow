@@ -18,7 +18,7 @@ import HAPIWebSocket from "hapi-plugin-websocket"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 type wsPeerCtx = {
     peer: string
@@ -147,7 +147,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                                 this.push(chunkNew)
                                 callback()
                             }).catch((error: unknown) => {
-                                callback(utils.ensureError(error))
+                                callback(util.ensureError(error))
                             })
                         }
                     }

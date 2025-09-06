@@ -13,7 +13,7 @@ import SpeexResampler from "speex-resampler"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Kokoro text-to-speech conversion  */
 export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
@@ -143,7 +143,7 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(utils.ensureError(error))
+                        callback(util.ensureError(error))
                     })
                 }
             },

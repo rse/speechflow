@@ -17,7 +17,7 @@ import syspath           from "syspath"
 import chalk             from "chalk"
 
 /*  internal dependencies  */
-import * as utils        from "./speechflow-utils"
+import * as util         from "./speechflow-util"
 import pkg               from "../../package.json"
 
 /*  command-line options  */
@@ -233,7 +233,7 @@ export class CLIContext {
                 throw new Error("invalid configuration file specification (expected \"<id>@<yaml-config-file>\")")
             const [ , id, file ] = m
             const yaml = await this.cli.input(file, { encoding: "utf8" })
-            const obj: any = utils.run("parsing YAML configuration", () => jsYAML.load(yaml))
+            const obj: any = util.run("parsing YAML configuration", () => jsYAML.load(yaml))
             if (obj[id] === undefined)
                 throw new Error(`no such id "${id}" found in configuration file "${file}"`)
             this.config = obj[id] as string

@@ -4,7 +4,7 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-import * as utils from "./speechflow-utils"
+import * as util from "./speechflow-util"
 
 /*  downward compressor with soft knee  */
 class CompressorProcessor extends AudioWorkletProcessor {
@@ -124,14 +124,14 @@ class CompressorProcessor extends AudioWorkletProcessor {
             this.updateEnvelopeForChannel(ch, input[ch], attackS, releaseS)
 
         /*  determine linear value from decibel makeup value */
-        const makeUpLin = utils.dB2lin(makeupDB)
+        const makeUpLin = util.dB2lin(makeupDB)
 
         /*  iterate over all channels  */
         this.reduction = 0
         for (let ch = 0; ch < nCh; ch++) {
-            const levelDB = utils.lin2dB(this.env[ch])
+            const levelDB = util.lin2dB(this.env[ch])
             const gainDB  = this.gainDBFor(levelDB, thresholdDB, ratio, kneeDB)
-            const gainLin = utils.dB2lin(gainDB) * makeUpLin
+            const gainLin = util.dB2lin(gainDB) * makeUpLin
 
             /*  on first channel, calculate reduction  */
             if (ch === 0)

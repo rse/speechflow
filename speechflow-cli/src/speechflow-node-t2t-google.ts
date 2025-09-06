@@ -13,7 +13,7 @@ import * as arktype                 from "arktype"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Google Translate text-to-text translations  */
 export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
@@ -55,9 +55,9 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  instantiate Google Translate client  */
-        const data = utils.run("Google Cloud API credentials key", () =>
+        const data = util.run("Google Cloud API credentials key", () =>
             JSON.parse(this.params.key))
-        const credentials = utils.importObject("Google Cloud API credentials key",
+        const credentials = util.importObject("Google Cloud API credentials key",
             data,
             arktype.type({
                 project_id:   "string",
@@ -74,7 +74,7 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
         })
 
         /*  provide text-to-text translation  */
-        const translate = utils.runner("Google Translate API", async (text: string) => {
+        const translate = util.runner("Google Translate API", async (text: string) => {
             const [ response ] = await this.client!.translateText({
                 parent:   `projects/${credentials.project_id}/locations/global`,
                 contents: [ text ],
@@ -105,7 +105,7 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
                         this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(utils.ensureError(error))
+                        callback(util.ensureError(error))
                     })
                 }
             },

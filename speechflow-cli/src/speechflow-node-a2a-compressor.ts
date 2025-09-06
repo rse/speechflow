@@ -14,7 +14,7 @@ import { GainNode, AudioWorkletNode } from "node-web-audio-api"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  internal types  */
 interface AudioCompressorConfig {
@@ -27,7 +27,7 @@ interface AudioCompressorConfig {
 }
 
 /*  audio compressor class  */
-class AudioCompressor extends utils.WebAudio {
+class AudioCompressor extends util.WebAudio {
     /*  internal state  */
     private type:              "standalone" | "sidechain"
     private mode:              "compress" | "measure" | "adjust"
@@ -242,20 +242,20 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     /*  compress chunk  */
-                    const payload = utils.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload)
                     self.compressor?.process(payload).then((result) => {
                         if (self.destroyed)
                             throw new Error("stream already destroyed")
                         if ((self.params.type === "standalone" && self.params.mode === "compress") ||
                             (self.params.type === "sidechain"  && self.params.mode === "adjust")     ) {
                             /*  take over compressed data  */
-                            const payload = utils.convertI16ToBuf(result)
+                            const payload = util.convertI16ToBuf(result)
                             chunk.payload = payload
                         }
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(utils.ensureError(error, "compression failed"))
+                        callback(util.ensureError(error, "compression failed"))
                     })
                 }
             },

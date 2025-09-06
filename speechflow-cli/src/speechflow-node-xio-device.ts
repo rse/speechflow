@@ -12,7 +12,7 @@ import PortAudio        from "@gpeng/naudiodon"
 
 /*  internal dependencies  */
 import SpeechFlowNode   from "./speechflow-node"
-import * as utils       from "./speechflow-utils"
+import * as util        from "./speechflow-util"
 
 /*  SpeechFlow node for device access  */
 export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
@@ -135,8 +135,8 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
             this.stream = this.io as unknown as Stream.Duplex
 
             /*  convert regular stream into object-mode stream  */
-            const wrapper1 = utils.createTransformStreamForWritableSide()
-            const wrapper2 = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
+            const wrapper1 = util.createTransformStreamForWritableSide()
+            const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
             this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
         }
         else if (this.params.mode === "r") {
@@ -156,7 +156,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
             this.stream = this.io as unknown as Stream.Readable
 
             /*  convert regular stream into object-mode stream  */
-            const wrapper = utils.createTransformStreamForReadableSide("audio", () => this.timeZero)
+            const wrapper = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
             this.stream = Stream.compose(this.stream, wrapper)
         }
         else if (this.params.mode === "w") {
@@ -176,7 +176,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
             this.stream = this.io as unknown as Stream.Writable
 
             /*  convert regular stream into object-mode stream  */
-            const wrapper = utils.createTransformStreamForWritableSide()
+            const wrapper = util.createTransformStreamForWritableSide()
             this.stream = Stream.compose(wrapper, this.stream)
         }
         else

@@ -12,7 +12,7 @@ import { RealTimeVAD }    from "@ericedouard/vad-node-realtime"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  audio stream queue element */
 type AudioQueueElementSegment = {
@@ -36,7 +36,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
 
     /*  internal state  */
     private vad: RealTimeVAD | null = null
-    private queue     = new utils.Queue<AudioQueueElement>()
+    private queue     = new util.Queue<AudioQueueElement>()
     private queueRecv = this.queue.pointerUse("recv")
     private queueVAD  = this.queue.pointerUse("vad")
     private queueSend = this.queue.pointerUse("send")
@@ -109,7 +109,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                 onSpeechEnd: (audio) => {
                     if (this.destroyed)
                         return
-                    const duration = utils.audioArrayDuration(audio, vadSampleRateTarget)
+                    const duration = util.audioArrayDuration(audio, vadSampleRateTarget)
                     this.log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
                     if (this.params.mode === "unplugged") {
                         tail = true
@@ -189,7 +189,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                 else {
                     try {
                         /*  convert audio samples from PCM/I16 to PCM/F32  */
-                        const data = utils.convertBufToF32(chunk.payload,
+                        const data = util.convertBufToF32(chunk.payload,
                             self.config.audioLittleEndian)
 
                         /*  segment audio samples as individual VAD-sized frames  */

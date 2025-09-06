@@ -14,7 +14,7 @@ import { WaveFile }       from "wavefile"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  audio stream queue element */
 type AudioQueueElement = {
@@ -33,7 +33,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
     /*  internal state  */
     private classifier: Transformers.AudioClassificationPipeline | null = null
-    private queue     = new utils.Queue<AudioQueueElement>()
+    private queue     = new util.Queue<AudioQueueElement>()
     private queueRecv = this.queue.pointerUse("recv")
     private queueAC   = this.queue.pointerUse("ac")
     private queueSend = this.queue.pointerUse("send")
@@ -247,7 +247,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 else {
                     try {
                         /*  convert audio samples from PCM/I16/48KHz to PCM/F32/16KHz  */
-                        let data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
+                        let data = util.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
                         const wav = new WaveFile()
                         wav.fromScratch(self.config.audioChannels, self.config.audioSampleRate, "32f", data)
                         wav.toSampleRate(sampleRateTarget, { method: "cubic" })
@@ -305,7 +305,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                             else if (element.type === "audio-frame"
                                 && element.gender === undefined)
                                 break
-                            const duration = utils.audioArrayDuration(element.data)
+                            const duration = util.audioArrayDuration(element.data)
                             log("debug", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
                             element.chunk.meta.set("gender", element.gender)
                             this.push(element.chunk)

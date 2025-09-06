@@ -19,7 +19,7 @@ import { DateTime, Duration } from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  helper class for an asynchronous queue  */
 class AsyncQueue<T> {
@@ -73,7 +73,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     private destroyed                                                           = false
     private initTimeout:       ReturnType<typeof setTimeout> | null             = null
     private connectionTimeout: ReturnType<typeof setTimeout> | null             = null
-    private queue:             utils.SingleQueue<SpeechFlowChunk | null> | null = null
+    private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -114,10 +114,10 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         this.destroyed = false
 
         /*  create queue for results  */
-        this.queue = new utils.SingleQueue<SpeechFlowChunk | null>()
+        this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
-        const metastore = new utils.TimeStore<Map<string, any>>()
+        const metastore = new util.TimeStore<Map<string, any>>()
 
         /*  connect to Amazon Transcribe API  */
         this.client = new TranscribeStreamingClient({
@@ -225,7 +225,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         audioQueue.push(new Uint8Array(chunk.payload)) /* intentionally discard all time information */
                         ensureAudioStreamActive().catch((error: unknown) => {
-                            self.log("error", `failed to start audio stream: ${utils.ensureError(error).message}`)
+                            self.log("error", `failed to start audio stream: ${util.ensureError(error).message}`)
                         })
                     }
                     callback()
@@ -251,7 +251,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     }
                 }).catch((error: unknown) => {
                     if (!self.destroyed)
-                        self.log("error", `queue read error: ${utils.ensureError(error).message}`)
+                        self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
             final (callback) {
@@ -259,7 +259,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     callback()
                     return
                 }
-                utils.run(
+                util.run(
                     () => self.client!.destroy(),
                     (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
                 )

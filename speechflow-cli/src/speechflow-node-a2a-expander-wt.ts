@@ -4,7 +4,7 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-import * as utils from "./speechflow-utils"
+import * as util from "./speechflow-util"
 
 /*  downward expander with soft knee  */
 class ExpanderProcessor extends AudioWorkletProcessor {
@@ -129,19 +129,19 @@ class ExpanderProcessor extends AudioWorkletProcessor {
             this.updateEnvelopeForChannel(ch, input[ch], attackS, releaseS)
 
         /*  determine linear value from decibel makeup value */
-        const makeUpLin = utils.dB2lin(makeupDB)
+        const makeUpLin = util.dB2lin(makeupDB)
 
         /*  iterate over all channels  */
         for (let ch = 0; ch < nCh; ch++) {
-            const levelDB = utils.lin2dB(this.env[ch])
+            const levelDB = util.lin2dB(this.env[ch])
             const gainDB  = this.gainDBFor(levelDB, thresholdDB, ratio, kneeDB)
-            let gainLin = utils.dB2lin(gainDB) * makeUpLin
+            let gainLin = util.dB2lin(gainDB) * makeUpLin
 
             /*  do not attenuate below floor  */
             const expectedOutLevelDB = levelDB + gainDB + makeupDB
             if (expectedOutLevelDB < floorDB) {
                 const neededLiftDB = floorDB - expectedOutLevelDB
-                gainLin /= utils.dB2lin(neededLiftDB)
+                gainLin /= util.dB2lin(neededLiftDB)
             }
 
             /*  apply gain change to channel  */

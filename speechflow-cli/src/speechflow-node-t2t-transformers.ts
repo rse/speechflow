@@ -13,7 +13,7 @@ import * as Transformers from "@huggingface/transformers"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  internal utility types  */
 type ConfigEntry = { systemPrompt: string, chat: Array<{ role: string, content: string }> }
@@ -214,7 +214,7 @@ export default class SpeechFlowNodeT2TTransformers extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(utils.ensureError(error))
+                        callback(util.ensureError(error))
                     })
                 }
             },

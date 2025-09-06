@@ -12,7 +12,7 @@ import { getLUFS, getRMS, AudioData } from "audio-inspect"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for audio metering  */
 export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
@@ -141,7 +141,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 else {
                     try {
                         /*  convert audio samples from PCM/I16 to PCM/F32  */
-                        const data = utils.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
+                        const data = util.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
 
                         /*  append new data to buffer  */
                         const combinedLength = self.chunkBuffer.length + data.length

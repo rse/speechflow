@@ -9,7 +9,7 @@ import Stream from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for gain adjustment in audio-to-audio passing  */
 export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
@@ -41,7 +41,7 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
         /*  adjust gain  */
         const adjustGain = (chunk: SpeechFlowChunk & { payload: Buffer }, db: number) => {
             const dv = new DataView(chunk.payload.buffer, chunk.payload.byteOffset, chunk.payload.byteLength)
-            const gainFactor = utils.dB2lin(db)
+            const gainFactor = util.dB2lin(db)
             for (let i = 0; i < dv.byteLength; i += 2) {
                 let sample = dv.getInt16(i, true)
                 sample *= gainFactor

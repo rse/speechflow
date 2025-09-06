@@ -12,7 +12,7 @@ import { Ollama, type ListResponse } from "ollama"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  internal utility types  */
 type ConfigEntry = { systemPrompt: string, chat: Array<{ role: string, content: string }> }
@@ -252,7 +252,7 @@ export default class SpeechFlowNodeT2TOllama extends SpeechFlowNode {
                             this.push(chunkNew)
                             callback()
                         }).catch((error: unknown) => {
-                            callback(utils.ensureError(error))
+                            callback(util.ensureError(error))
                         })
                     }
                 }

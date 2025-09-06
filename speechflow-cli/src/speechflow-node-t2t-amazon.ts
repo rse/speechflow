@@ -12,7 +12,7 @@ import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Amazon Translate text-to-text translations  */
 export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
@@ -124,7 +124,7 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
                         this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(utils.ensureError(error))
+                        callback(util.ensureError(error))
                     })
                 }
             },

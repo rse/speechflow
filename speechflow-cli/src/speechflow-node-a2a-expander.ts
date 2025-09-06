@@ -13,7 +13,7 @@ import { AudioWorkletNode } from "node-web-audio-api"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  internal types  */
 interface AudioExpanderConfig {
@@ -27,7 +27,7 @@ interface AudioExpanderConfig {
 }
 
 /*  audio noise expander class  */
-class AudioExpander extends utils.WebAudio {
+class AudioExpander extends util.WebAudio {
     /*  internal state  */
     private config:       Required<AudioExpanderConfig>
     private expanderNode: AudioWorkletNode | null = null
@@ -165,18 +165,18 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     /*  expand chunk  */
-                    const payload = utils.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload)
                     self.expander?.process(payload).then((result) => {
                         if (self.destroyed)
                             throw new Error("stream already destroyed")
 
                         /*  take over expanded data  */
-                        const payload = utils.convertI16ToBuf(result)
+                        const payload = util.convertI16ToBuf(result)
                         chunk.payload = payload
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(utils.ensureError(error, "expansion failed"))
+                        callback(util.ensureError(error, "expansion failed"))
                     })
                 }
             },

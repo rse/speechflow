@@ -15,7 +15,7 @@ import ws                     from "ws"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
-import * as utils                          from "./speechflow-utils"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for OpenAI speech-to-text conversion  */
 export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
@@ -26,7 +26,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
     private static speexInitialized = false
     private openai:     OpenAI | null = null
     private ws:         ws.WebSocket | null = null
-    private queue:      utils.SingleQueue<SpeechFlowChunk | null> | null = null
+    private queue:      util.SingleQueue<SpeechFlowChunk | null> | null = null
     private resampler:  SpeexResampler | null = null
     private destroyed   = false
     private connectionTimeout: ReturnType<typeof setTimeout> | null = null
@@ -64,10 +64,10 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         this.destroyed = false
 
         /*  create queue for results  */
-        this.queue = new utils.SingleQueue<SpeechFlowChunk | null>()
+        this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
-        const metastore = new utils.TimeStore<Map<string, any>>()
+        const metastore = new util.TimeStore<Map<string, any>>()
 
         /*  establish resampler from our standard audio sample rate (48Khz)
             to OpenAI's maximum 24Khz input sample rate  */
@@ -281,7 +281,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     }
                 }).catch((error: unknown) => {
                     if (!self.destroyed)
-                        self.log("error", `queue read error: ${utils.ensureError(error).message}`)
+                        self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
             final (callback) {
