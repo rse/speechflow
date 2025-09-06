@@ -337,11 +337,9 @@ export class NodeGraph {
         if (this.shuttingDown)
             return
         this.shuttingDown = true
-        if (signal === "finished")
-            this.cli.log("info", "**** streams of all nodes finished -- shutting down service ****")
-        else if (signal === "exception")
+        if (signal === "exception")
             this.cli.log("warning", "**** exception occurred -- shutting down service ****")
-        else
+        else if (signal !== "finished")
             this.cli.log("warning", `**** received signal ${signal} -- shutting down service ****`)
 
         /*  shutdown API service  */
