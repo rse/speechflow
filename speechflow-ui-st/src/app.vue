@@ -14,7 +14,7 @@
                 <div v-bind:key="value"
                     v-for="(value, idx) of text"
                     class="text-value">
-                    {{ value as string }}
+                    {{ value }}
                     <span class="cursor" v-if="idx === (text.length - 1) && lastTextBlockKind === 'intermediate'">
                         <spinner-grid class="spinner-grid" size="32"/>
                     </span>
@@ -94,10 +94,7 @@ export default defineComponent({
     }),
     async mounted () {
         /*  determine API URL  */
-        let url = document.location.href
-        url = url.replace(/#.+$/, "")
-        url = url.replace(/\/[^/]*$/, "")
-        url = url + "/api"
+        const url = new URL("/api", document.location.href).toString()
 
         /*  connect to WebSocket API for receiving dashboard information  */
         const ws = new ReconnectingWebSocket(url, [], {
@@ -108,7 +105,14 @@ export default defineComponent({
             minUptime:                   5000
         })
         ws.addEventListener("message", (ev) => {
-            const chunk = JSON.parse(ev.data) as SpeechFlowChunk
+            let chunk: SpeechFlowChunk
+            try {
+                chunk = JSON.parse(ev.data)
+            }
+            catch (error) {
+                this.log("ERROR", "Failed to parse WebSocket message", { error, data: ev.data })
+                return
+            }
             if (this.lastTextBlockKind === "intermediate")
                 this.text[this.text.length - 1] = chunk.payload
             else {

@@ -28,7 +28,7 @@
                         <div v-bind:key="value"
                             v-for="value of block.value"
                             class="text-value">
-                            {{ value as string }}
+                            {{ value }}
                         </div>
                     </div>
                 </div>
@@ -149,22 +149,21 @@ type Info = {
     value:    number | string[],
     lastKind: string
 }
+
+interface WebSocketEvent {
+    response: string,
+    args: [ string, string, string, number | string ]
+}
+
 export default defineComponent({
     name: "app",
-    components: {
-    },
     data: () => ({
         info: [] as Info[],
-        ws: null as ReconnectingWebSocket | null
+        ws:   null as ReconnectingWebSocket | null
     }),
-    created () {
-    },
     async mounted () {
         /*  determine API URL  */
-        let url = document.location.href
-        url = url.replace(/#.+$/, "")
-        url = url.replace(/\/[^/]*$/, "")
-        url = url + "/api"
+        const url = new URL("/api", document.location.href).toString()
 
         /*  load dashboard configuration  */
         const response = await axios.get(`${url}/dashboard`)
@@ -186,7 +185,7 @@ export default defineComponent({
         this.ws.addEventListener("open", (ev) => {
         })
         this.ws.addEventListener("message", (ev) => {
-            let event
+            let event: WebSocketEvent
             try {
                 event = JSON.parse(ev.data)
             }
@@ -196,22 +195,24 @@ export default defineComponent({
             }
             if (event.response !== "DASHBOARD")
                 return
+
+            /*  extract dashboard update parameters: [ type, id, kind, value ]  */
             const [ type, id, kind, value ] = event.args
             for (const block of this.info) {
                 if (block.type === type && block.id === id) {
                     if (block.type === "audio") {
-                        if (kind === "final")
+                        if (kind === "final" && typeof value === "number")
                             block.value = value
                     }
                     else {
-                        if (block.lastKind === "intermediate") {
+                        if (typeof value === "string") {
                             const arr = block.value as string[]
-                            arr[arr.length - 1] = value
-                        }
-                        else {
-                            const arr = block.value as string[]
-                            arr.push(value)
-                            block.value = arr.slice(-20)
+                            if (block.lastKind === "intermediate")
+                                arr[arr.length - 1] = value
+                            else {
+                                arr.push(value)
+                                block.value = arr.slice(-20)
+                            }
                         }
                         block.lastKind = kind
                         this.$nextTick(() => {
