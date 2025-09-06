@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.6.3 (2025-09-xx)
+------------------
+
+- BUGFIX: workaround problems on "device" node close caused by PortAudio's internals
+
 1.6.2 (2025-09-07)
 ------------------
 
