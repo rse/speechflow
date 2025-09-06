@@ -5,15 +5,15 @@
 */
 
 /*  standard dependencies  */
-import Stream from "node:stream"
+import Stream                  from "node:stream"
 
 /*  external dependencies  */
-import { DateTime, Duration } from "luxon"
-import * as CBOR              from "cbor2"
+import { DateTime, Duration }  from "luxon"
+import * as CBOR               from "cbor2"
 
 /*  internal dependencies  */
-import { SpeechFlowChunk }    from "./speechflow-node"
-import { audioBufferDuration } from "./speechflow-util-audio"
+import { SpeechFlowChunk }     from "./speechflow-node"
+import * as util               from "./speechflow-util"
 
 /*  create a Duplex/Transform stream which has
     object-mode on Writable side and buffer/string-mode on Readable side  */
@@ -41,7 +41,7 @@ export function createTransformStreamForReadableSide (type: "text" | "audio", ge
         readableObjectMode: true,
         writableObjectMode: true,
         decodeStrings: false,
-        highWaterMark: (type === "audio" ? 19200 : 65536),
+        highWaterMark: (type === "audio" ? 19200 : 65536), /* audio: 400ms @ 48kHz/16bit/mono, text: 64KB */
         transform (chunk: Buffer | string, encoding, callback) {
             if (chunk === null) {
                 this.push(null)
@@ -52,7 +52,7 @@ export function createTransformStreamForReadableSide (type: "text" | "audio", ge
             const start = DateTime.now().diff(timeZero)
             let end = start
             if (type === "audio") {
-                const duration = audioBufferDuration(chunk as Buffer)
+                const duration = util.audioBufferDuration(chunk as Buffer)
                 end = start.plus(duration * 1000)
             }
             const payload = ensureStreamChunk(type, chunk) as Buffer | string
@@ -117,8 +117,8 @@ export function streamChunkDecode (_data: Uint8Array) {
     try {
         data = CBOR.decode<SpeechFlowChunkSerialized>(_data)
     }
-    catch (err: any) {
-        throw new Error(`CBOR decoding failed: ${err}`)
+    catch (err: unknown) {
+        throw util.ensureError(err, "CBOR decoding failed")
     }
     let payload: Buffer | string
     if (data.type === "audio")
@@ -168,8 +168,8 @@ export class StreamWrapper extends Stream.Transform {
             else
                 throw new Error("foreign stream lacks write method")
         }
-        catch (err) {
-            callback(err as Error)
+        catch (err: unknown) {
+            callback(util.ensureError(err))
         }
     }
     _flush (callback: Stream.TransformCallback): void {
@@ -182,8 +182,8 @@ export class StreamWrapper extends Stream.Transform {
                 this.foreignStream.end()
             callback()
         }
-        catch (err) {
-            callback(err as Error)
+        catch (err: unknown) {
+            callback(util.ensureError(err))
         }
     }
     _destroy (error: Error | null, callback: Stream.TransformCallback): void {
