@@ -84,10 +84,10 @@ studio-translation: |
             a2a-meter(interval: 250, dashboard: "meter1") |
                 a2a-wav(mode: "encode") |
                     xio-file(path: "program-de.wav", mode: "w", type: "audio"),
-            a2t-deepgram(language: "de", key: interim: true) | {
-                x2x-trace(name: "trace1", type: "text", dashboard: "text1")
-                t2t-subtitle(format: "vtt", words: true) |
-                    xio-file(path: "program-de.vtt", mode: "w", type: "text"),
+            a2t-deepgram(language: "de", interim: true) | {
+                x2x-trace(name: "trace1", type: "text", dashboard: "text1") |
+                    t2t-subtitle(format: "vtt", words: true) |
+                        xio-file(path: "program-de.vtt", mode: "w", type: "text"),
                 t2t-sentence() | {
                     x2x-trace(name: "trace2", type: "text", notify: true, dashboard: "text2") |
                         t2t-format(width: 80) |
