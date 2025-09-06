@@ -1,6 +1,6 @@
 {
     "name":             "speechflow",
-    "version":          "1.6.1",
+    "version":          "1.6.2",
     "x-stdver":         "1.6.2-GA",
     "x-release":        "2025-09-07",
     "homepage":         "https://github.com/rse/speechflow",
