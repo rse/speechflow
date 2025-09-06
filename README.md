@@ -769,7 +769,7 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
   | **key**      | *none*    | env.SPEECHFLOW\_OPENAI\_KEY | *none* |
-  | **model**    | *none*    | "gpt-4o-mini" | *none* |
+  | **model**    | *none*    | "gpt-5-mini" | *none* |
 
 - Node: **t2t-ollama**<br/>
   Purpose: **Ollama/Gemma Text-to-Text translation and spelling correction**<br/>
