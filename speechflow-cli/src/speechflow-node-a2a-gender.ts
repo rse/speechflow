@@ -149,9 +149,9 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             const c2 = classified.find((c: any) => c.label === "female")
             const male   = c1 ? c1.score : 0.0
             const female = c2 ? c2.score : 0.0
-            if (male > female)
+            if (male > 0.50 && male > female + 0.25)
                 return "male"
-            else if (male < female)
+            else if (female > 0.50 && female > male + 0.25)
                 return "female"
             else
                 return "unknown"
@@ -176,6 +176,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             }
             this.queue.off("write", workOffQueue)
 
+            /*  workoff the queue  */
             try {
                 let pos0 = this.queueAC.position()
                 const posL = this.queueAC.maxPosition()
