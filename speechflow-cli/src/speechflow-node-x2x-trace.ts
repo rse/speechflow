@@ -18,6 +18,9 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "x2x-trace"
 
+    /*  internal state  */
+    private destroyed = false
+
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
         super(id, cfg, opts, args)
@@ -52,6 +55,9 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
                 this.log(level, msg)
         }
 
+        /*  clear destruction flag  */
+        this.destroyed = false
+
         /*  helper functions for formatting  */
         const fmtTime = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
         const fmtMeta = (meta: Map<string, any>) => {
@@ -78,6 +84,10 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 let error: Error | undefined
+                if (self.destroyed) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (self.params.type === "audio")
                         log("debug", fmtChunkBase(chunk) +
@@ -106,6 +116,10 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
                 }
             },
             final (callback) {
+                if (self.destroyed || self.params.mode === "sink") {
+                    callback()
+                    return
+                }
                 this.push(null)
                 callback()
             }
@@ -119,5 +133,8 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
             this.stream.destroy()
             this.stream = null
         }
+
+        /*  indicate destruction  */
+        this.destroyed = true
     }
 }
