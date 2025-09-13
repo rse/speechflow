@@ -1,5 +1,5 @@
 ##
-##  sample.yaml -- Speechflow Sample Audio Processing Graphs
+##  speechflow.yaml -- Speechflow Sample Audio Processing Graphs
 ##
 
 #   Capture and meter audio from microphone device into WAV audio file
