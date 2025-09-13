@@ -1032,18 +1032,22 @@ The following nodes process any type of chunk, i.e., both audio and text chunks.
   Example: `x2x-trace(type: "audio")`<br/>
 
   > This node allows you to trace the audio and text chunk flow through
-  > the **SpeechFlow** graph. It just passes through its chunks, but
-  > sends information about the chunks to the log.
+  > the **SpeechFlow** graph. It just passes through its chunks (in
+  > mode "filter") or acts as a sink for the chunks (in mode "sink"),
+  > but always sends information about the chunks to the log. For type
+  > "text", the information can be also send to the dashboard.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text, audio |
   | output  | text, audio |
 
-  | Parameter    | Position  | Default  | Requirement           |
-  | ------------ | --------- | -------- | --------------------- |
-  | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
-  | **name**     | 1         | *none*   | *none*                |
+  | Parameter     | Position  | Default  | Requirement            |
+  | ------------- | --------- | -------- | ---------------------- |
+  | **type**      | 0         | "audio"  | `/^(?:audio\|text)$/`  |
+  | **name**      | 1         | "trace"  | *none*                 |
+  | **mode**      | 2         | "filter" | `/^(?:filter\|sink)$/` |
+  | **dashboard** |           | *none*   | *none*                 |
 
 REST/WebSocket API
 ------------------

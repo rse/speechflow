@@ -5,6 +5,7 @@ ChangeLog
 1.6.4 (2025-09-13)
 ------------------
 
+- IMPROVEMENT: allow x2x-trace node to be a sink to simplify configurations
 - UPDATE: upgrade NPM dependencies
 
 1.6.3 (2025-09-08)
