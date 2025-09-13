@@ -174,6 +174,11 @@ export default defineComponent({
                 this.info.push({ type: block.type, id: block.id, name: block.name, value: [], lastKind: "" })
         }
 
+        /*  initialize meters  */
+        for (const block of this.info)
+            if (block.type === "audio")
+                block.value = -60
+
         /*  connect to WebSocket API for receiving dashboard information  */
         this.ws = new ReconnectingWebSocket(url, [], {
             reconnectionDelayGrowFactor: 1.3,
@@ -183,6 +188,15 @@ export default defineComponent({
             minUptime:                   5000
         })
         this.ws.addEventListener("open", (ev) => {
+            this.log("INFO", "WebSocket connection established")
+        })
+        this.ws.addEventListener("close", (ev) => {
+            this.log("INFO", "WebSocket connection destroyed")
+
+            /*  reset meters  */
+            for (const block of this.info)
+                if (block.type === "audio")
+                    block.value = -60
         })
         this.ws.addEventListener("message", (ev) => {
             let event: WebSocketEvent

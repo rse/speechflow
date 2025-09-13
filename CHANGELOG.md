@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: allow a2a-meter node to be a sink to simplify configurations
 - IMPROVEMENT: allow x2x-trace node to be a sink to simplify configurations
+- BUGFIX: clear the meters in the dashboard on connection close
 - UPDATE: upgrade NPM dependencies
 
 1.6.3 (2025-09-08)
