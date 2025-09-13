@@ -9,13 +9,13 @@
 <template>
     <div class="app">
         <div class="block">
-            <div class="text-col"
-                v-bind:class="{ intermediate: lastTextBlockKind === 'intermediate' }">
-                <div v-bind:key="value"
-                    v-for="(value, idx) of text"
-                    class="text-value">
-                    {{ value }}
-                    <span class="cursor" v-if="idx === (text.length - 1) && lastTextBlockKind === 'intermediate'">
+            <div class="text-col">
+                <div v-bind:key="chunk.text"
+                    v-for="(chunk, idx) of text"
+                    class="text-value"
+                    v-bind:class="{ intermediate: chunk.kind === 'intermediate' }">
+                    {{ chunk.text }}
+                    <span class="cursor" v-if="idx === (chunk.text.length - 1) && chunk.kind === 'intermediate'">
                         <spinner-grid class="spinner-grid" size="32"/>
                     </span>
                 </div>
@@ -36,10 +36,10 @@
     justify-content: center
     align-items: center
     .block
-        height: 20vh
+        height: auto
         width: 80vw
         position: absolute
-        bottom: 1vh
+        bottom: 5vh
         .text-col
             width: 100%
             height: 100%
@@ -49,6 +49,7 @@
             flex-direction: column
             align-items: flex-end
             justify-content: flex-end
+            padding-top: 1vw
             .text-value
                 width: calc(100% - 2 * 1.0vw)
                 background-color: #000000c0
@@ -61,20 +62,23 @@
                 .cursor
                     display: inline-block
                     margin-left: 10px
-        .text-col.intermediate
-            .text-value:last-child
-                background-color: #666666c0
+                &.intermediate:last-child
+                    background-color: #666666c0
 </style>
 
 <script setup lang="ts">
-import { defineComponent }   from "vue"
-import { VueSpinnerGrid }    from "vue3-spinners"
-import moment                from "moment"
-import { Duration }          from "luxon"
-import ReconnectingWebSocket from "@opensumi/reconnecting-websocket"
+import { defineComponent }    from "vue"
+import { VueSpinnerGrid }     from "vue3-spinners"
+import { DateTime, Duration } from "luxon"
+import ReconnectingWebSocket  from "@opensumi/reconnecting-websocket"
 </script>
 
 <script lang="ts">
+type TextChunk = {
+    timestamp:      DateTime,
+    kind:           "intermediate" | "final",
+    text:           string
+}
 type SpeechFlowChunk = {
     timestampStart: Duration,
     timestampEnd:   Duration,
@@ -89,12 +93,18 @@ export default defineComponent({
         "spinner-grid":  VueSpinnerGrid
     },
     data: () => ({
-        text: [] as string[],
+        text: [] as TextChunk[],
         lastTextBlockKind: ""
     }),
     async mounted () {
         /*  determine API URL  */
         const url = new URL("/api", document.location.href).toString()
+
+        /*  cleanup still displayed text chunks  */
+        setInterval(() => {
+            if (this.text.length > 0 && this.text[0].timestamp < DateTime.now().minus({ seconds: 8 }))
+                this.text = this.text.slice(1)
+        }, 500)
 
         /*  connect to WebSocket API for receiving dashboard information  */
         const ws = new ReconnectingWebSocket(url, [], {
@@ -103,6 +113,12 @@ export default defineComponent({
             minReconnectionDelay:        1000,
             connectionTimeout:           4000,
             minUptime:                   5000
+        })
+        ws.addEventListener("open", (ev) => {
+            this.log("INFO", "WebSocket connection established")
+        })
+        ws.addEventListener("close", (ev) => {
+            this.log("INFO", "WebSocket connection destroyed")
         })
         ws.addEventListener("message", (ev) => {
             let chunk: SpeechFlowChunk
@@ -113,18 +129,18 @@ export default defineComponent({
                 this.log("ERROR", "Failed to parse WebSocket message", { error, data: ev.data })
                 return
             }
-            if (this.lastTextBlockKind === "intermediate")
-                this.text[this.text.length - 1] = chunk.payload
+            if (this.text.length > 0 && this.text[this.text.length - 1].kind === "intermediate")
+                this.text[this.text.length - 1] =
+                    { text: chunk.payload, kind: chunk.kind, timestamp: DateTime.now() }
             else {
-                this.text.push(chunk.payload)
+                this.text.push({ text: chunk.payload, kind: chunk.kind, timestamp: DateTime.now() })
                 this.text = this.text.slice(-2)
             }
-            this.lastTextBlockKind = chunk.kind
         })
     },
     methods: {
         log (level: string, msg: string, data: { [ key: string ]: any } | null = null) {
-            const timestamp = moment().format("YYYY-MM-DD hh:mm:ss.SSS")
+            const timestamp = DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss.SSS")
             let output = `${timestamp} [${level}]: ${msg}`
             if (data !== null)
                 output += ` (${Object.keys(data)
