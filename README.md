@@ -158,8 +158,10 @@ expr             ::= parallel
                    | group
 parallel         ::= sequential ("," sequential)+
 sequential       ::= node ("|" node)+
-node             ::= id ("(" (param ("," param)*)? ")")?
+node             ::= id ("(" (param ("," param)*)? ")")? links?
 param            ::= array | object | variable | template | string | number | value
+links            ::= link (_ link)*
+link             ::= "<" | "<<" | ">" | ">>" id
 group            ::= "{" expr "}"
 id               ::= /[a-zA-Z_][a-zA-Z0-9_-]*/
 variable         ::= id
