@@ -140,8 +140,6 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected audio input as Buffer chunks"))
-                else if (self.params.mode === "sink")
-                    callback()
                 else if (chunk.payload.byteLength === 0)
                     callback()
                 else {
@@ -157,7 +155,8 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                         self.chunkBuffer = newBuffer
 
                         /*  pass-through original audio chunk  */
-                        this.push(chunk)
+                        if (self.params.mode === "filter")
+                            this.push(chunk)
                         callback()
                     }
                     catch (error) {

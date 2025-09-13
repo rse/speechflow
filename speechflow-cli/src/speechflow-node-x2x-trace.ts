@@ -88,10 +88,6 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
                     callback(new Error("stream already destroyed"))
                     return
                 }
-                if (self.params.mode === "sink") {
-                    callback()
-                    return
-                }
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (self.params.type === "audio")
                         log("debug", fmtChunkBase(chunk) +
@@ -112,7 +108,9 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
                     else
                         error = new Error(`${self.params.type} chunk: seen String instead of Buffer chunk type`)
                 }
-                if (error !== undefined)
+                if (self.params.mode === "sink")
+                    callback()
+                else if (error !== undefined)
                     callback(error)
                 else {
                     this.push(chunk, encoding)
