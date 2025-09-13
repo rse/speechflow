@@ -33,12 +33,16 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             interval:  { type: "number", pos: 0, val: 250 },
+            mode:      { type: "string", pos: 1, val: "filter", match: /^(?:filter|sink)$/ },
             dashboard: { type: "string",         val: "" }
         })
 
         /*  declare node input/output format  */
         this.input  = "audio"
-        this.output = "audio"
+        if (this.params.mode === "filter")
+            this.output = "audio"
+        else if (this.params.mode === "sink")
+            this.output = "none"
     }
 
     /*  open node  */
@@ -136,6 +140,8 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected audio input as Buffer chunks"))
+                else if (self.params.mode === "sink")
+                    callback()
                 else if (chunk.payload.byteLength === 0)
                     callback()
                 else {
@@ -160,7 +166,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.destroyed || self.params.mode === "sink") {
                     callback()
                     return
                 }

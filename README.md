@@ -508,16 +508,19 @@ The following nodes process audio chunks only.
 
   > This node allows measuring the loudness of the audio stream. The
   > results are emitted to both the logfile of **SpeechFlow** and the
-  > WebSockets API (see below).
+  > WebSockets API (see below). It can optionally send the meter
+  > information to the dashboard.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **interval**  | 0 | 250 | *none* |
+  | Parameter     | Position  | Default  | Requirement            |
+  | ------------- | --------- | -------- | ---------------------- |
+  | **interval**  | 0         | 250      | *none*                 |
+  | **mode**      | 1         | "filter" | `/^(?:filter\|sink)$/` |
+  | **dashboard** |           | *none*   | *none*                 |
 
 - Node: **a2a-vad**<br/>
   Purpose: **Voice Audio Detection (VAD) node**<br/>
