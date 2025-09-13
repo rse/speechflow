@@ -176,7 +176,8 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(util.ensureError(error, "expansion failed"))
+                        if (!self.destroyed)
+                            callback(util.ensureError(error, "expansion failed"))
                     })
                 }
             },
