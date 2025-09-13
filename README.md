@@ -152,30 +152,58 @@ The **SpeechFlow** graph expression language is based on
 following the following BNF-style grammar:
 
 ```txt
+#   (sub-)graph expression: set or sequence of nodes, single node, or group
 expr             ::= parallel
                    | sequential
                    | node
                    | group
+
+#   set of nodes, connected in parallel
 parallel         ::= sequential ("," sequential)+
+
+#   sequence of nodes, connected in chain
 sequential       ::= node ("|" node)+
+
+#   single node with optional parameter(s) and optional links
 node             ::= id ("(" (param ("," param)*)? ")")? links?
+
+#   single parameter: array, object, variable reference, template string,
+#   or string/number literal, or special value literal
 param            ::= array | object | variable | template | string | number | value
+
+#   set of links
 links            ::= link (_ link)*
 link             ::= "<" | "<<" | ">" | ">>" id
+
+#   group with sub-graph
 group            ::= "{" expr "}"
+
+#   identifier and variable
 id               ::= /[a-zA-Z_][a-zA-Z0-9_-]*/
 variable         ::= id
+
+#   array of values
 array            ::= "[" (param ("," param)*)? "]"
+
+#   object of key/valus
 object           ::= "{" (id ":" param ("," id ":" param)*)? "}"
+
+#   template string
 template         ::= "`" ("${" variable "}" / ("\\`"|.))* "`"
+
+#   string literal
 string           ::= /"(\\"|.)*"/
                    | /'(\\'|.)*'/
+
+#   number literal
 number           ::= /[+-]?/ number-value
 number-value     ::= "0b" /[01]+/
                    | "0o" /[0-7]+/
                    | "0x" /[0-9a-fA-F]+/
                    | /[0-9]*\.[0-9]+([eE][+-]?[0-9]+)?/
                    | /[0-9]+/
+
+#   special value literal
 value            ::= "true" | "false" | "null" | "NaN" | "undefined"
 ```
 
