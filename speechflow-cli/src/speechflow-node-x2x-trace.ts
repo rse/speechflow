@@ -88,6 +88,10 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
                     callback(new Error("stream already destroyed"))
                     return
                 }
+                if (self.params.mode === "sink") {
+                    callback()
+                    return
+                }
                 if (Buffer.isBuffer(chunk.payload)) {
                     if (self.params.type === "audio")
                         log("debug", fmtChunkBase(chunk) +
