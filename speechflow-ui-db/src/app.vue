@@ -136,7 +136,7 @@
 
 <script setup lang="ts">
 import { defineComponent }   from "vue"
-import moment                from "moment"
+import { DateTime }          from "luxon"
 import ReconnectingWebSocket from "@opensumi/reconnecting-websocket"
 import axios                 from "axios"
 </script>
@@ -246,7 +246,7 @@ export default defineComponent({
     },
     methods: {
         log (level: string, msg: string, data: { [ key: string ]: any } | null = null) {
-            const timestamp = moment().format("YYYY-MM-DD hh:mm:ss.SSS")
+            const timestamp = DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss.SSS")
             let output = `${timestamp} [${level}]: ${msg}`
             if (data !== null)
                 output += ` (${Object.keys(data)

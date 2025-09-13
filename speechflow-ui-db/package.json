@@ -15,7 +15,7 @@
     },
     "dependencies": {
         "vue":                              "3.5.21",
-        "moment":                           "2.30.1",
+        "luxon":                            "3.7.2",
         "@opensumi/reconnecting-websocket": "4.4.0",
         "axios":                            "1.12.1",
         "typopro-web":                      "4.2.7",
@@ -60,7 +60,9 @@
         "vue-tsc":                          "3.0.7",
         "delay-cli":                        "2.0.0",
         "cross-env":                        "10.0.0",
-        "serve":                            "14.2.5"
+        "serve":                            "14.2.5",
+
+        "@types/luxon":                     "3.7.1"
     },
     "overrides": {
         "@liuli-util/vite-plugin-node":     { "vite": ">=6.0.0" }
