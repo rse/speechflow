@@ -118,18 +118,23 @@ studio-translation: |
 
 #   Test-drive for development
 test: |
-    xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") |
-        a2a-meter(interval: 50, dashboard: "meter1") |
-            a2t-deepgram(language: "de", model: "nova-2", interim: true) |
-                x2x-trace(type: "text", dashboard: "text1") | {
-                    t2t-subtitle(mode: "render", addr: "127.0.0.1", port: 8585),
-                    x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") |
-                        t2t-sentence() |
-                            x2x-trace(type: "text", dashboard: "text2") |
-                                t2t-deepl(src: "de", dst: "en") |
-                                    x2x-trace(type: "text", dashboard: "text3") |
-                                        t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") |
-                                            a2a-meter(interval: 50, dashboard: "meter2") |
-                                                xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
+    xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") | {
+        a2a-meter(interval: 50, dashboard: "meter1", mode: "sink"),
+        a2t-deepgram(language: "de", model: "nova-2", interim: true) | {
+            x2x-trace(type: "text", mode: "sink", dashboard: "text1"),
+            t2t-subtitle(mode: "render", addr: "127.0.0.1", port: 8585),
+            x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") | {
+                t2t-sentence() | {
+                    x2x-trace(type: "text", dashboard: "text2", mode: "sink"),
+                    t2t-deepl(src: "de", dst: "en") | {
+                        x2x-trace(type: "text", dashboard: "text3", mode: "sink"),
+                        t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") | {
+                            a2a-meter(interval: 50, dashboard: "meter2", mode: "sink"),
+                            xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
+                        }
+                    }
                 }
+            }
+        }
+    }
 
