@@ -25,39 +25,38 @@ speech-to-speech).
 
 **SpeechFlow** comes with built-in graph nodes for various functionalities:
 
-- local file I/O,
-- local audio device I/O,
-- remote WebSocket network I/O,
-- remote MQTT network I/O,
+- file and audio device I/O for local connectivity,
+- WebSocket and MQTT network I/O for remote connectivity,
 - local Voice Activity Detection (VAD),
 - local voice gender recognition,
 - local audio LUFS-S/RMS metering,
-- local audio Speex noise suppression,
-- local audio RNNoise noise suppression,
-- local audio compressor processing,
-- local audio expander processing,
-- local audio gain processing,
-- local audio filler processing,
-- remote-controlable local audio muting,
-- cloud-based [Amazon Transcribe](https://aws.amazon.com/transcribe/) speech-to-text conversion,
-- cloud-based [OpenAI GPT Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe) speech-to-text conversion,
-- cloud-based [Deepgram](https://deepgram.com) speech-to-text conversion,
-- cloud-based [ElevenLabs](https://elevenlabs.io/) text-to-speech conversion,
-- cloud-based [Amazon Polly](https://aws.amazon.com/polly/) text-to-speech conversion,
-- cloud-based [DeepL](https://deepl.com) text-to-text translation,
-- cloud-based [Amazon Translate](https://aws.amazon.com/translate/) text-to-text translation,
-- cloud-based [Google Cloud Translate](https://cloud.google.com/translate) text-to-text translation,
-- cloud-based [OpenAI/GPT](https://openai.com) text-to-text translation (or spelling correction),
-- local [Ollama/Gemma](https://ollama.com) text-to-text translation (or spelling correction),
-- local [OPUS/ONNX](https://github.com/Helsinki-NLP/Opus-MT) text-to-text translation,
-- local [FFmpeg](https://ffmpeg.org/) speech-to-speech encoding,
-- local WAV speech-to-speech encoding,
-- local text-to-text formatting,
-- local text-to-text regex-based modification,
-- local text-to-text sentencing merging/splitting,
-- local text-to-text subtitle generation,
-- local text or audio filter, and
-- local text or audio tracing.
+- local audio Speex and RNNoise noise suppression,
+- local audio compressor and expander dynamics processing,
+- local audio gain adjustment,
+- local audio gap filler processing,
+- remote-controlable audio muting,
+- cloud-based speech-to-text conversion with
+  [Amazon Transcribe](https://aws.amazon.com/transcribe/),
+  [OpenAI GPT-Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe), or 
+  [Deepgram](https://deepgram.com).
+- cloud-based text-to-text translation (or spelling correction) with 
+  [DeepL](https://deepl.com),
+  [Amazon Translate](https://aws.amazon.com/translate/),
+  [Google Cloud Translate](https://cloud.google.com/translate), or
+  [OpenAI GPT](https://openai.com).
+- local text-to-text translation (or spelling correction) with
+  [Ollama/Gemma](https://ollama.com) or
+  [Transformers/OPUS](https://github.com/Helsinki-NLP/Opus-MT).
+- cloud-based text-to-speech conversion with
+  [ElevenLabs](https://elevenlabs.io/) or
+  [Amazon Polly](https://aws.amazon.com/polly/).
+- local text-to-speech conversion with [Kokoro](https://github.com/nazdridoy/kokoro-tts).
+- local [FFmpeg](https://ffmpeg.org/)-based speech-to-speech conversion,
+- local WAV speech-to-speech decoding/encoding,
+- local text-to-text formatting, regex-based modification,
+  sentencing merging/splitting,
+  subtitle generation, and formatting.
+- local text or audio chunk filtering and tracing.
 
 Additional, **SpeechFlow** graph nodes can be provided externally
 by NPM packages named `speechflow-node-xxx` which expose a class
