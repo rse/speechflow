@@ -94,7 +94,7 @@ type SpeechFlowChunk = {
     kind:           "intermediate" | "final",
     type:           "text",
     payload:        string,
-    meta:           Map<string, any>
+    meta:           Map<string, unknown>
 }
 export default defineComponent({
     name: "app",
