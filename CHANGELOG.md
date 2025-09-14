@@ -2,11 +2,12 @@
 ChangeLog
 =========
 
-1.6.4 (2025-09-13)
+1.6.4 (2025-09-14)
 ------------------
 
 - IMPROVEMENT: allow a2a-meter node to be a sink to simplify configurations
 - IMPROVEMENT: allow x2x-trace node to be a sink to simplify configurations
+- IMPROVEMENT: improve rendering of the subtitle Web UI
 - BUGFIX: in the subtitle Web UI remove texts after time automatically
 - BUGFIX: clear the meters in the dashboard on connection close
 - UPDATE: upgrade NPM dependencies
