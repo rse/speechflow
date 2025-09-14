@@ -57,7 +57,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         /*  internal state  */
         const sampleWindowDuration = 3 /* LUFS-S requires 3s */
         const sampleWindowSize = Math.floor(this.config.audioSampleRate * sampleWindowDuration)
-        let sampleWindow = new Float32Array(sampleWindowSize)
+        const sampleWindow = new Float32Array(sampleWindowSize)
         sampleWindow.fill(0, 0, sampleWindowSize)
         let lufss = -60
         let rms   = -60
@@ -70,10 +70,8 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         /*  define chunk processing function  */
         const processChunk = (chunkData: Float32Array) => {
             /*  update internal audio sample sliding window  */
-            const newWindow = new Float32Array(sampleWindowSize)
-            newWindow.set(sampleWindow.slice(chunkData.length), 0)
-            newWindow.set(chunkData, sampleWindowSize - chunkData.length)
-            sampleWindow = newWindow
+            sampleWindow.set(sampleWindow.subarray(chunkData.length), 0)
+            sampleWindow.set(chunkData, sampleWindowSize - chunkData.length)
 
             /*  calculate the LUFS-S and RMS metric  */
             const audioData = {
