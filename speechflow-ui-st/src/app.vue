@@ -17,7 +17,7 @@
                     v-bind:ref="`chunk-${chunk.id}`">
                     {{ chunk.text }}
                     <span class="cursor" v-if="idx === (text.length - 1) && chunk.kind === 'intermediate'">
-                        <spinner-grid class="spinner-grid" size="32"/>
+                        <spinner-grid class="spinner-grid" size="50"/>
                     </span>
                 </span>
             </div>
@@ -39,11 +39,11 @@
     .area
         height: auto
         min-height: 30vh
-        max-height: 70vh
+        max-height: 60vh
         width: 75vw
         position: absolute
-        bottom: 5vh
-        mask: linear-gradient(to bottom, transparent 0%, black 40%)
+        bottom: 4vh
+        mask: linear-gradient(to bottom, transparent 0%, black 50%)
         overflow-x: hidden
         overflow-y: hidden
         display: flex
@@ -57,12 +57,14 @@
             overflow-wrap: break-word
             .chunk
                 color: #eeeeee
+                background-color: #000000b0
                 text-shadow: 0 0 0.20vw #000000
                 -webkit-text-stroke: 0.05vw #000000
-                border-radius: 1vw
-                font-size: 2.5vw
+                font-size: 2.0vw
                 font-weight: 600
-                margin-right: 0.5vw
+                line-height: 1.4
+                padding-left:  0.20vw
+                padding-right: 0.20vw
                 .cursor
                     display: inline-block
                     margin-left: 10px
@@ -114,7 +116,7 @@ export default defineComponent({
         /*  cleanup still displayed text chunks  */
         this.cleanupIntervalId = setInterval(() => {
             for (const chunk of this.text) {
-                if (chunk.timestamp < DateTime.now().minus({ seconds: 10 }) && !chunk.removing && !chunk.removed) {
+                if (chunk.timestamp < DateTime.now().minus({ seconds: 20 }) && !chunk.removing && !chunk.removed) {
                     const el = this.$refs[`chunk-${chunk.id}`] as HTMLSpanElement
                     if (!el)
                         continue
