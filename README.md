@@ -558,9 +558,11 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **window**  | 0         | 500      | *none*                   |
+  | Parameter      | Position  | Default  | Requirement              |
+  | -------------- | --------- | -------- | ------------------------ |
+  | **window**     | 0         | 500      | *none*                   |
+  | **treshold**   | 1         | 0.50     | *none*                   |
+  | **hysteresis** | 2         | 0.25     | *none*                   |
 
 - Node: **a2a-speex**<br/>
   Purpose: **Speex Noise Suppression node**<br/>

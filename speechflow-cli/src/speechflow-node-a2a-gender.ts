@@ -47,7 +47,9 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            window: { type: "number", pos: 0, val: 500 }
+            window:     { type: "number", pos: 0, val: 500 },
+            threshold:  { type: "number", pos: 1, val: 0.50 },
+            hysteresis: { type: "number", pos: 2, val: 0.25 }
         })
 
         /*  declare node input/output format  */
@@ -145,13 +147,15 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             const classified = Array.isArray(result) ?
                 result as Transformers.AudioClassificationOutput :
                 [ result ]
-            const c1 = classified.find((c: any) => c.label === "male")
-            const c2 = classified.find((c: any) => c.label === "female")
+            const c1 = classified.find((c) => c.label === "male")
+            const c2 = classified.find((c) => c.label === "female")
             const male   = c1 ? c1.score : 0.0
             const female = c2 ? c2.score : 0.0
-            if (male > 0.50 && male > female + 0.25)
+            const threshold  = this.params.threshold
+            const hysteresis = this.params.hysteresis
+            if (male > threshold && male > female + hysteresis)
                 return "male"
-            else if (female > 0.50 && female > male + 0.25)
+            else if (female > threshold && female > male + hysteresis)
                 return "female"
             else
                 return "unknown"
