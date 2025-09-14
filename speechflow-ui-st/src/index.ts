@@ -7,7 +7,11 @@
 /*  external dependencies  */
 import * as Vue from "vue"
 import               "typopro-web/web/TypoPRO-SourceSansPro/TypoPRO-SourceSansPro-Regular.css"
+import               "typopro-web/web/TypoPRO-SourceSansPro/TypoPRO-SourceSansPro-RegularIt.css"
+import               "typopro-web/web/TypoPRO-SourceSansPro/TypoPRO-SourceSansPro-Semibold.css"
+import               "typopro-web/web/TypoPRO-SourceSansPro/TypoPRO-SourceSansPro-SemiboldIt.css"
 import               "typopro-web/web/TypoPRO-SourceSansPro/TypoPRO-SourceSansPro-Bold.css"
+import               "typopro-web/web/TypoPRO-SourceSansPro/TypoPRO-SourceSansPro-BoldIt.css"
 import               "@fortawesome/fontawesome-free/js/all.min.js"
 import               "@fortawesome/fontawesome-free/css/all.min.css"
 

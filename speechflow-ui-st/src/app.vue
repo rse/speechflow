@@ -27,7 +27,6 @@
 
 <style lang="stylus">
 .app
-    background-color: blue
     position: relative
     width:   100vw
     height:  100vh
@@ -40,11 +39,11 @@
     .area
         height: auto
         min-height: 30vh
-        max-height: 60vh
-        width: 60vw
+        max-height: 70vh
+        width: 75vw
         position: absolute
         bottom: 5vh
-        mask: linear-gradient(to bottom, transparent 0%, black 30%)
+        mask: linear-gradient(to bottom, transparent 0%, black 40%)
         overflow-x: hidden
         overflow-y: hidden
         display: flex
@@ -57,10 +56,12 @@
             width: 100%
             overflow-wrap: break-word
             .chunk
-                color: #dddddd
-                text-shadow: 0.20vw 0.20vw 0.20vw #000000
+                color: #eeeeee
+                text-shadow: 0 0 0.20vw #000000
+                -webkit-text-stroke: 0.05vw #000000
                 border-radius: 1vw
-                font-size: 2vw
+                font-size: 2.5vw
+                font-weight: 600
                 margin-right: 0.5vw
                 .cursor
                     display: inline-block
