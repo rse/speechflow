@@ -9,11 +9,12 @@
 <template>
     <div class="app">
         <div class="area">
-            <div class="block">
-                <span v-bind:key="chunk.text"
+            <div class="block" ref="block">
+                <span v-bind:key="chunk.id"
                     v-for="(chunk, idx) of text"
                     class="chunk"
-                    v-bind:class="{ intermediate: chunk.kind === 'intermediate' }">
+                    v-bind:class="{ intermediate: chunk.kind === 'intermediate', removed: chunk.removed }"
+                    v-bind:ref="`chunk-${chunk.id}`">
                     {{ chunk.text }}
                     <span class="cursor" v-if="idx === (text.length - 1) && chunk.kind === 'intermediate'">
                         <spinner-grid class="spinner-grid" size="32"/>
@@ -38,8 +39,9 @@
     align-items: center
     .area
         height: auto
-        min-height: 20vh
-        width: 80vw
+        min-height: 30vh
+        max-height: 60vh
+        width: 60vw
         position: absolute
         bottom: 5vh
         mask: linear-gradient(to bottom, transparent 0%, black 30%)
@@ -50,19 +52,23 @@
         align-items: center
         justify-content: flex-end
         .block
-            text-align: center
+            display: block
+            text-align: left
+            width: 100%
             overflow-wrap: break-word
             .chunk
-                color: #ffffff
+                color: #dddddd
                 text-shadow: 0.20vw 0.20vw 0.20vw #000000
                 border-radius: 1vw
                 font-size: 2vw
-                padding-right: 0.5vw
+                margin-right: 0.5vw
                 .cursor
                     display: inline-block
                     margin-left: 10px
                 &.intermediate:last-child
-                    color: #cccccc
+                    color: #ffffff
+                &.removed
+                    opacity: 0
 </style>
 
 <script setup lang="ts">
@@ -70,13 +76,17 @@ import { defineComponent }    from "vue"
 import { VueSpinnerGrid }     from "vue3-spinners"
 import { DateTime, Duration } from "luxon"
 import ReconnectingWebSocket  from "@opensumi/reconnecting-websocket"
+import * as anime             from "animejs"
 </script>
 
 <script lang="ts">
 type TextChunk = {
+    id:             string,
     timestamp:      DateTime,
     kind:           "intermediate" | "final",
-    text:           string
+    text:           string,
+    removing:       boolean,
+    removed:        boolean
 }
 type SpeechFlowChunk = {
     timestampStart: Duration,
@@ -93,7 +103,7 @@ export default defineComponent({
     },
     data: () => ({
         text: [] as TextChunk[],
-        lastTextBlockKind: ""
+        chunkIdCounter: 0
     }),
     async mounted () {
         /*  determine API URL  */
@@ -101,8 +111,24 @@ export default defineComponent({
 
         /*  cleanup still displayed text chunks  */
         setInterval(() => {
-            if (this.text.length > 0 && this.text[0].timestamp < DateTime.now().minus({ seconds: 8 }))
-                this.text = this.text.slice(1)
+            for (const chunk of this.text) {
+                if (chunk.timestamp < DateTime.now().minus({ seconds: 10 }) && !chunk.removing && !chunk.removed) {
+                    const el = this.$refs[`chunk-${chunk.id}`] as HTMLSpanElement
+                    if (!el)
+                        continue
+                    chunk.removing = true
+                    chunk.removed  = false
+                    anime.animate(el, {
+                        opacity:    [ 1, 0 ],
+                        duration:   2000,
+                        easing:     "easeOutQuad",
+                        onComplete: () => {
+                            chunk.removing = false
+                            chunk.removed  = true
+                        }
+                    })
+                }
+            }
         }, 500)
 
         /*  connect to WebSocket API for receiving dashboard information  */
@@ -128,13 +154,29 @@ export default defineComponent({
                 this.log("ERROR", "Failed to parse WebSocket message", { error, data: ev.data })
                 return
             }
-            if (this.text.length > 0 && this.text[this.text.length - 1].kind === "intermediate")
-                this.text[this.text.length - 1] =
-                    { text: chunk.payload, kind: chunk.kind, timestamp: DateTime.now() }
-            else {
-                this.text.push({ text: chunk.payload, kind: chunk.kind, timestamp: DateTime.now() })
-                this.text = this.text.slice(-4)
+            if (this.text.length > 0 && this.text[this.text.length - 1].kind === "intermediate") {
+                const lastChunk = this.text[this.text.length - 1]
+                lastChunk.text      = chunk.payload
+                lastChunk.kind      = chunk.kind
+                lastChunk.timestamp = DateTime.now()
             }
+            else {
+                const remaining = this.text.filter((chunk) => !chunk.removed)
+                if (remaining.length === 0)
+                    this.text = [] as TextChunk[]
+                this.text.push({
+                    id:        `chunk-${this.chunkIdCounter++}`,
+                    text:      chunk.payload,
+                    kind:      chunk.kind,
+                    timestamp: DateTime.now(),
+                    removing:  false,
+                    removed:   false
+                })
+            }
+            this.$nextTick(() => {
+                const block = this.$refs.block as HTMLDivElement
+                block.scrollTop = block.scrollHeight
+            })
         })
     },
     methods: {

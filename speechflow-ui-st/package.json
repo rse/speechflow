@@ -22,7 +22,8 @@
         "typopro-web":                      "4.2.7",
         "@fortawesome/fontawesome-free":    "7.0.1",
         "patch-package":                    "8.0.0",
-        "@rse/stx":                         "1.1.1"
+        "@rse/stx":                         "1.1.1",
+        "animejs":                          "4.1.3"
     },
     "devDependencies": {
         "vite":                             "7.1.5",
@@ -63,7 +64,8 @@
         "cross-env":                        "10.0.0",
         "serve":                            "14.2.5",
 
-        "@types/luxon":                     "3.7.1"
+        "@types/luxon":                     "3.7.1",
+        "@types/animejs":                   "3.1.13"
     },
     "overrides": {
         "@liuli-util/vite-plugin-node":     { "vite": ">=6.0.0" }
