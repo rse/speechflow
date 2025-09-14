@@ -47,7 +47,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            window:     { type: "number", pos: 0, val: 500 },
+            window:     { type: "number", pos: 0, val: 500  },
             threshold:  { type: "number", pos: 1, val: 0.50 },
             hysteresis: { type: "number", pos: 2, val: 0.25 }
         })
