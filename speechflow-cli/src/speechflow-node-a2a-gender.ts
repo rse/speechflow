@@ -66,9 +66,6 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         /*  clear shutdown flag  */
         this.shutdown = false
 
-        /*  pass-through logging  */
-        const log = this.log.bind(this)
-
         /*  the used model  */
         const model = "Xenova/wav2vec2-large-xlsr-53-gender-recognition-librispeech"
 
@@ -127,14 +124,8 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         const classify = async (data: Float32Array) => {
             if (this.shutdown || this.classifier === null)
                 throw new Error("classifier shutdown during operation")
-            const classifyPromise = this.classifier(data)
-            let timeoutId: ReturnType<typeof setTimeout> | null = null
-            const timeoutPromise = new Promise((resolve, reject) => {
-                timeoutId = setTimeout(() =>
-                    reject(new Error("classification timeout")), 30 * 1000)
-            })
             const result = await Promise.race([
-                classifyPromise,
+                this.classifier(data),
                 util.timeoutPromise(30 * 1000, "classification timeout")
             ]) as Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
             const classified = Array.isArray(result) ?
@@ -206,13 +197,13 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                         pos0++
                     }
                     if (lastGender !== gender && !this.shutdown) {
-                        log("info", `gender now recognized as <${gender}>`)
+                        this.log("info", `gender now recognized as <${gender}>`)
                         lastGender = gender
                     }
                 }
             }
             catch (error) {
-                log("error", `gender classification error: ${error}`)
+                this.log("error", `gender classification error: ${error}`)
             }
 
             /*  re-initiate working off round  */
@@ -304,7 +295,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                                 && element.gender === undefined)
                                 break
                             const duration = util.audioArrayDuration(element.data)
-                            log("debug", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
+                            self.log("debug", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
                             element.chunk.meta.set("gender", element.gender)
                             this.push(element.chunk)
                             self.queueSend.walk(+1)
