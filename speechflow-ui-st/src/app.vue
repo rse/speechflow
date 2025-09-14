@@ -201,7 +201,7 @@ export default defineComponent({
                 })
             }
 
-            /*  ensure we are always scroll the block to the bottom  */
+            /*  ensure we always scrolled the chunks inside the block to the bottom  */
             this.$nextTick(() => {
                 const block = this.$refs.block as HTMLDivElement
                 block.scrollTop = block.scrollHeight
