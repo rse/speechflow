@@ -174,7 +174,7 @@ export class NodeGraph {
             await Promise.race<void>([
                 node.open(),
                 new Promise<never>((resolve, reject) => setTimeout(() =>
-                    reject(new Error("timeout")), 10 * 1000))
+                    reject(new Error("timeout")), 30 * 1000))
             ]).catch((err: Error) => {
                 this.cli.log("error", `<${node.id}>: failed to open node <${node.id}>: ${err.message}`)
                 throw new Error(`failed to open node <${node.id}>: ${err.message}`)
