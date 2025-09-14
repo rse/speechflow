@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.6.4 (2025-09-xx)
+------------------
+
+- IMPROVEMENT: in a2a-gender node, classify an audio chunk as "unknown" if volume is too low
+
 1.6.4 (2025-09-14)
 ------------------
 

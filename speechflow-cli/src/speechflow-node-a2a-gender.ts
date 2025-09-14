@@ -5,12 +5,13 @@
 */
 
 /*  standard dependencies  */
-import path               from "node:path"
-import Stream             from "node:stream"
+import path    from "node:path"
+import Stream  from "node:stream"
 
 /*  external dependencies  */
-import * as Transformers  from "@huggingface/transformers"
-import { WaveFile }       from "wavefile"
+import * as Transformers     from "@huggingface/transformers"
+import { WaveFile }          from "wavefile"
+import { getRMS, AudioData } from "audio-inspect"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -47,9 +48,10 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            window:     { type: "number", pos: 0, val: 500  },
-            threshold:  { type: "number", pos: 1, val: 0.50 },
-            hysteresis: { type: "number", pos: 2, val: 0.25 }
+            window:          { type: "number", pos: 0, val: 500  },
+            threshold:       { type: "number", pos: 1, val: 0.50 },
+            hysteresis:      { type: "number", pos: 2, val: 0.25 },
+            volumeThreshold: { type: "number", pos: 3, val: -45  }
         })
 
         /*  declare node input/output format  */
@@ -120,10 +122,28 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         if (this.classifier === null)
             throw new Error("failed to instantiate classifier pipeline")
 
+        /*  define sample rate required by model  */
+        const sampleRateTarget = 16000
+
         /*  classify a single large-enough concatenated audio frame  */
         const classify = async (data: Float32Array) => {
             if (this.shutdown || this.classifier === null)
                 throw new Error("classifier shutdown during operation")
+
+            /*  check volume level and return "unknown" if too low
+                in order to avoid a wrong classificaton  */
+            const audioData = {
+                sampleRate:       sampleRateTarget,
+                numberOfChannels: 1,
+                channelData:      [ data ],
+                duration:         data.length / sampleRateTarget,
+                length:           data.length
+            } satisfies AudioData
+            const rms = getRMS(audioData, { asDB: true })
+            if (rms < this.params.volumeThreshold)
+                return "unknown"
+
+            /*  classify audio  */
             const result = await Promise.race([
                 this.classifier(data),
                 util.timeoutPromise(30 * 1000, "classification timeout")
@@ -144,9 +164,6 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             else
                 return "unknown"
         }
-
-        /*  define sample rate required by model  */
-        const sampleRateTarget = 16000
 
         /*  work off queued audio frames  */
         const frameWindowDuration = this.params.window / 1000
