@@ -26,6 +26,7 @@
 </template>
 
 <style lang="stylus">
+/*  entire app  */
 .app
     position: relative
     width:   100vw
@@ -36,6 +37,8 @@
     flex-direction: column
     justify-content: center
     align-items: center
+
+    /*  rendering area  */
     .area
         height: auto
         min-height: 30vh
@@ -50,11 +53,15 @@
         flex-direction: column
         align-items: center
         justify-content: flex-end
+
+        /*  content block  */
         .block
             display: block
             text-align: left
             width: 100%
             overflow-wrap: break-word
+
+            /*  content chunk  */
             .chunk
                 color: #eeeeee
                 background-color: #000000b0
@@ -113,13 +120,15 @@ export default defineComponent({
         /*  determine API URL  */
         const url = new URL("/api", document.location.href).toString()
 
-        /*  cleanup still displayed text chunks  */
+        /*  optically remove outdated text chunks  */
         this.cleanupIntervalId = setInterval(() => {
             for (const chunk of this.text) {
                 if (chunk.timestamp < DateTime.now().minus({ seconds: 20 }) && !chunk.removing && !chunk.removed) {
                     const el = this.$refs[`chunk-${chunk.id}`] as HTMLSpanElement
                     if (!el)
                         continue
+
+                    /*  start removing  */
                     chunk.removing = true
                     chunk.removed  = false
                     anime.animate(el, {
@@ -127,6 +136,7 @@ export default defineComponent({
                         duration:   2000,
                         easing:     "easeOutQuad",
                         onComplete: () => {
+                            /*  end removing  */
                             chunk.removing = false
                             chunk.removed  = true
                         }
@@ -143,13 +153,18 @@ export default defineComponent({
             connectionTimeout:           4000,
             minUptime:                   5000
         })
+
+        /*  track connection open/close  */
         ws.addEventListener("open", (ev) => {
             this.log("INFO", "WebSocket connection established")
         })
         ws.addEventListener("close", (ev) => {
             this.log("INFO", "WebSocket connection destroyed")
         })
+
+        /*  receive messages  */
         ws.addEventListener("message", (ev) => {
+            /*  parse message  */
             let chunk: SpeechFlowChunk
             try {
                 chunk = JSON.parse(ev.data)
@@ -158,15 +173,24 @@ export default defineComponent({
                 this.log("ERROR", "Failed to parse WebSocket message", { error, data: ev.data })
                 return
             }
+
+            /*  process text chunks  */
             if (this.text.length > 0 && this.text[this.text.length - 1].kind === "intermediate") {
+                /*  override previous intermediate text chunk
+                    with either another intermediate one or a final one  */
                 const lastChunk = this.text[this.text.length - 1]
                 lastChunk.text      = chunk.payload
                 lastChunk.kind      = chunk.kind
                 lastChunk.timestamp = DateTime.now()
             }
             else {
+                /*  remove content in case all chunks were removed
+                    (this way new next chunk starts at the left edge again
+                    and the overall memory consumption is reduced)  */
                 if (this.text.every((chunk) => chunk.removed))
                     this.text = []
+
+                /*  add new text chunk  */
                 this.text.push({
                     id:        `chunk-${this.chunkIdCounter++}`,
                     text:      chunk.payload,
@@ -176,6 +200,8 @@ export default defineComponent({
                     removed:   false
                 })
             }
+
+            /*  ensure we are always scroll the block to the bottom  */
             this.$nextTick(() => {
                 const block = this.$refs.block as HTMLDivElement
                 block.scrollTop = block.scrollHeight
@@ -183,12 +209,14 @@ export default defineComponent({
         })
     },
     beforeUnmount () {
+        /*  cleanup  */
         if (this.cleanupIntervalId !== null) {
             clearInterval(this.cleanupIntervalId)
             this.cleanupIntervalId = null
         }
     },
     methods: {
+        /*  helper function for console logging  */
         log (level: string, msg: string, data: { [ key: string ]: any } | null = null) {
             const timestamp = DateTime.now().toFormat("yyyy-MM-dd HH:mm:ss.SSS")
             let output = `${timestamp} [${level}]: ${msg}`
