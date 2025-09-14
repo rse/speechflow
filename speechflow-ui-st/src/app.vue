@@ -8,17 +8,17 @@
 
 <template>
     <div class="app">
-        <div class="block">
-            <div class="text-col">
-                <div v-bind:key="chunk.text"
+        <div class="area">
+            <div class="block">
+                <span v-bind:key="chunk.text"
                     v-for="(chunk, idx) of text"
-                    class="text-value"
+                    class="chunk"
                     v-bind:class="{ intermediate: chunk.kind === 'intermediate' }">
                     {{ chunk.text }}
-                    <span class="cursor" v-if="idx === (chunk.text.length - 1) && chunk.kind === 'intermediate'">
+                    <span class="cursor" v-if="idx === (text.length - 1) && chunk.kind === 'intermediate'">
                         <spinner-grid class="spinner-grid" size="32"/>
                     </span>
-                </div>
+                </span>
             </div>
         </div>
     </div>
@@ -26,6 +26,7 @@
 
 <style lang="stylus">
 .app
+    background-color: blue
     position: relative
     width:   100vw
     height:  100vh
@@ -35,35 +36,33 @@
     flex-direction: column
     justify-content: center
     align-items: center
-    .block
+    .area
         height: auto
+        min-height: 20vh
         width: 80vw
         position: absolute
         bottom: 5vh
-        .text-col
-            width: 100%
-            height: 100%
-            overflow-x: hidden
-            overflow-y: scroll
-            display: flex
-            flex-direction: column
-            align-items: flex-end
-            justify-content: flex-end
-            padding-top: 1vw
-            .text-value
-                width: calc(100% - 2 * 1.0vw)
-                background-color: #000000c0
+        mask: linear-gradient(to bottom, transparent 0%, black 30%)
+        overflow-x: hidden
+        overflow-y: hidden
+        display: flex
+        flex-direction: column
+        align-items: center
+        justify-content: flex-end
+        .block
+            text-align: center
+            overflow-wrap: break-word
+            .chunk
                 color: #ffffff
+                text-shadow: 0.20vw 0.20vw 0.20vw #000000
                 border-radius: 1vw
                 font-size: 2vw
-                padding: 0.5vw 1.0vw
-                margin-bottom: 0.5vw
-                overflow-wrap: break-word
+                padding-right: 0.5vw
                 .cursor
                     display: inline-block
                     margin-left: 10px
                 &.intermediate:last-child
-                    background-color: #666666c0
+                    color: #cccccc
 </style>
 
 <script setup lang="ts">
@@ -134,7 +133,7 @@ export default defineComponent({
                     { text: chunk.payload, kind: chunk.kind, timestamp: DateTime.now() }
             else {
                 this.text.push({ text: chunk.payload, kind: chunk.kind, timestamp: DateTime.now() })
-                this.text = this.text.slice(-2)
+                this.text = this.text.slice(-4)
             }
         })
     },
