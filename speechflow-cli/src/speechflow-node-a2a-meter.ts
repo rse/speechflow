@@ -88,8 +88,8 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 calculateLoudnessRange: false,
                 calculateTruePeak:      false
             })
-            lufss = lufs.shortTerm ? lufs.shortTerm[0] : -60
-            rms = getRMS(audioData, { asDB: true })
+            lufss = lufs.shortTerm ? Math.max(-60, lufs.shortTerm[0]) : -60
+            rms   = Math.max(-60, getRMS(audioData, { asDB: true }))
             if (this.silenceTimer !== null)
                 clearTimeout(this.silenceTimer)
             this.silenceTimer = setTimeout(() => {
