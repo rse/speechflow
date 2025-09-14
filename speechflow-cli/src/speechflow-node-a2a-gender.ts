@@ -104,17 +104,10 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 device:    "auto",
                 progress_callback: progressCallback
             })
-            let timeoutId: ReturnType<typeof setTimeout> | null = null
-            const timeoutPromise = new Promise((resolve, reject) => {
-                timeoutId = setTimeout(() =>
-                    reject(new Error("model initialization timeout")), 30 * 1000)
-            })
             this.classifier = await Promise.race([
-                pipelinePromise, timeoutPromise
-            ]).finally(() => {
-                if (timeoutId !== null)
-                    clearTimeout(timeoutId)
-            }) as Transformers.AudioClassificationPipeline
+                pipelinePromise,
+                util.timeoutPromise(30 * 1000, "model initialization timeout")
+            ]) as Transformers.AudioClassificationPipeline
         }
         catch (error) {
             if (this.progressInterval) {
@@ -140,10 +133,10 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 timeoutId = setTimeout(() =>
                     reject(new Error("classification timeout")), 30 * 1000)
             })
-            const result = await Promise.race([ classifyPromise, timeoutPromise ]).finally(() => {
-                if (timeoutId !== null)
-                    clearTimeout(timeoutId)
-            }) as Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
+            const result = await Promise.race([
+                classifyPromise,
+                util.timeoutPromise(30 * 1000, "classification timeout")
+            ]) as Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
             const classified = Array.isArray(result) ?
                 result as Transformers.AudioClassificationOutput :
                 [ result ]
