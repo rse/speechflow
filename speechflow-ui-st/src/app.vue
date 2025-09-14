@@ -163,7 +163,7 @@ export default defineComponent({
             else {
                 const remaining = this.text.filter((chunk) => !chunk.removed)
                 if (remaining.length === 0)
-                    this.text = [] as TextChunk[]
+                    this.text = []
                 this.text.push({
                     id:        `chunk-${this.chunkIdCounter++}`,
                     text:      chunk.payload,
