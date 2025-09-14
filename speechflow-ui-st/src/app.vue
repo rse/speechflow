@@ -103,14 +103,15 @@ export default defineComponent({
     },
     data: () => ({
         text: [] as TextChunk[],
-        chunkIdCounter: 0
+        chunkIdCounter: 0,
+        cleanupIntervalId: null as ReturnType<typeof setInterval> | null
     }),
     async mounted () {
         /*  determine API URL  */
         const url = new URL("/api", document.location.href).toString()
 
         /*  cleanup still displayed text chunks  */
-        setInterval(() => {
+        this.cleanupIntervalId = setInterval(() => {
             for (const chunk of this.text) {
                 if (chunk.timestamp < DateTime.now().minus({ seconds: 10 }) && !chunk.removing && !chunk.removed) {
                     const el = this.$refs[`chunk-${chunk.id}`] as HTMLSpanElement
@@ -161,8 +162,7 @@ export default defineComponent({
                 lastChunk.timestamp = DateTime.now()
             }
             else {
-                const remaining = this.text.filter((chunk) => !chunk.removed)
-                if (remaining.length === 0)
+                if (this.text.every((chunk) => chunk.removed))
                     this.text = []
                 this.text.push({
                     id:        `chunk-${this.chunkIdCounter++}`,
@@ -178,6 +178,12 @@ export default defineComponent({
                 block.scrollTop = block.scrollHeight
             })
         })
+    },
+    beforeUnmount () {
+        if (this.cleanupIntervalId !== null) {
+            clearInterval(this.cleanupIntervalId)
+            this.cleanupIntervalId = null
+        }
     },
     methods: {
         log (level: string, msg: string, data: { [ key: string ]: any } | null = null) {
