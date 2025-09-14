@@ -5,8 +5,8 @@
 */
 
 /*  helper function for promise-based timeout  */
-export function timeoutPromise (duration: number = 10 * 1000, info = "timeout") {
-    return new Promise<void>((resolve, reject) => {
+export function timeoutPromise<T = void> (duration: number = 10 * 1000, info = "timeout") {
+    return new Promise<T>((resolve, reject) => {
         setTimeout(() => { reject(new Error(info)) }, duration)
     })
 }
