@@ -36,12 +36,12 @@ export function createTransformStreamForWritableSide () {
 
 /*  create a Duplex/Transform stream which has
     object-mode on Readable side and buffer/string-mode on Writable side  */
-export function createTransformStreamForReadableSide (type: "text" | "audio", getTimeZero: () => DateTime) {
+export function createTransformStreamForReadableSide (type: "text" | "audio", getTimeZero: () => DateTime, highWaterMark?: number) {
     return new Stream.Transform({
         readableObjectMode: true,
         writableObjectMode: true,
         decodeStrings: false,
-        highWaterMark: (type === "audio" ? 19200 : 65536), /* audio: 400ms @ 48kHz/16bit/mono, text: 64KB */
+        highWaterMark: highWaterMark ?? (type === "audio" ? 19200 : 65536), /* audio: 400ms @ 48kHz/16bit/mono, text: 64KB */
         transform (chunk: Buffer | string, encoding, callback) {
             if (chunk === null) {
                 this.push(null)

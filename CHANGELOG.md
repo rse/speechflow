@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: in a2a-gender node, classify an audio chunk as "unknown" if volume is too low
+- BUGFIX: allow xio-device node to correctly produce audio chunks of arbitrary size
 
 1.6.4 (2025-09-14)
 ------------------
