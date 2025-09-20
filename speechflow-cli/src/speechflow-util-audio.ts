@@ -132,6 +132,36 @@ export async function processInt16ArrayInSegments (
     return data
 }
 
+/*  update envelope (smoothed amplitude contour) for single channel  */
+export function updateEnvelopeForChannel(
+    env:            number[],
+    sampleRate:     number,
+    chan:           number,
+    samples:        Float32Array,
+    attack:         number,
+    release:        number
+): number {
+    /*  fetch old envelope value  */
+    if (env[chan] === undefined)
+        env[chan] = 1e-12
+    let currentEnv = env[chan]
+
+    /*  calculate attack/release alpha values  */
+    const alphaA = Math.exp(-1 / (attack  * sampleRate))
+    const alphaR = Math.exp(-1 / (release * sampleRate))
+
+    /*  iterate over all samples and calculate RMS  */
+    for (const s of samples) {
+        const x = Math.abs(s)
+        const det = x * x
+        if (det > currentEnv)
+            currentEnv = alphaA * currentEnv + (1 - alphaA) * det
+        else
+            currentEnv = alphaR * currentEnv + (1 - alphaR) * det
+    }
+    return Math.sqrt(Math.max(currentEnv, 1e-12))
+}
+
 /*  helper functions for linear/decibel conversions  */
 export function lin2dB (x: number): number {
     return 20 * Math.log10(Math.max(x, 1e-12))

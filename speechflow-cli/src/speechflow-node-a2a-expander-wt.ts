@@ -61,34 +61,6 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         return targetOut - levelDB
     }
 
-    /*  update envelope (smoothed amplitude contour) for single channel  */
-    private updateEnvelopeForChannel (
-        chan:           number,
-        samples:        Float32Array,
-        attack:         number,
-        release:        number
-    ): void {
-        /*  fetch old envelope value  */
-        if (this.env[chan] === undefined)
-            this.env[chan] = 1e-12
-        let env = this.env[chan]
-
-        /*  calculate attack/release alpha values  */
-        const alphaA = Math.exp(-1 / (attack  * this.sampleRate))
-        const alphaR = Math.exp(-1 / (release * this.sampleRate))
-
-        /*  iterate over all samples and calculate RMS  */
-        for (const s of samples) {
-            const x = Math.abs(s)
-            const det = x * x
-            if (det > env)
-                env = alphaA * env + (1 - alphaA) * det
-            else
-                env = alphaR * env + (1 - alphaR) * det
-        }
-        this.env[chan] = Math.sqrt(Math.max(env, 1e-12))
-    }
-
     /*  process a single sample frame  */
     process(
         inputs:     Float32Array[][],
@@ -126,7 +98,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
 
         /*  update envelope per channel  */
         for (let ch = 0; ch < nCh; ch++)
-            this.updateEnvelopeForChannel(ch, input[ch], attackS, releaseS)
+            this.env[ch] = util.updateEnvelopeForChannel(this.env, this.sampleRate, ch, input[ch], attackS, releaseS)
 
         /*  determine linear value from decibel makeup value */
         const makeUpLin = util.dB2lin(makeupDB)
