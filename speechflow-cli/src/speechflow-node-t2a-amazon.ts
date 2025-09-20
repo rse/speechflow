@@ -26,7 +26,6 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
 
     /*  internal state  */
     private client: PollyClient | null = null
-    private static speexInitialized = false
     private destroyed = false
     private resampler: SpeexResampler | null = null
 
@@ -114,11 +113,6 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
 
         /*  establish resampler from AWS Polly's maximum 16Khz output
             (for PCM output) to our standard audio sample rate (48KHz)  */
-        if (!SpeechFlowNodeT2AAmazon.speexInitialized) {
-            /*  at least once initialize resampler  */
-            await SpeexResampler.initPromise
-            SpeechFlowNodeT2AAmazon.speexInitialized = true
-        }
         this.resampler = new SpeexResampler(1, 16000, this.config.audioSampleRate, 7)
 
         /*  create transform stream and connect it to the AWS Polly API  */

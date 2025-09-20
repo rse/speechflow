@@ -6,6 +6,7 @@
 
 /*  standard dependencies  */
 import { EventEmitter }       from "node:events"
+import SpeexResampler         from "speex-resampler"
 
 /*  internal dependencies  */
 import { CLIContext }         from "./speechflow-main-cli"
@@ -82,6 +83,9 @@ export default class Main {
             await statusManager.showNodeStatus(nodes.nodes, cfg, accessBus)
             process.exit(0)
         }
+
+        /*  global library initialization  */
+        await SpeexResampler.initPromise
 
         /*  initialize graph processor  */
         const graph = new NodeGraph(cli, debug)

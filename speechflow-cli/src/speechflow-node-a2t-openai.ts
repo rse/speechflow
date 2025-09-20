@@ -23,7 +23,6 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
     public static name = "a2t-openai"
 
     /*  internal state  */
-    private static speexInitialized = false
     private openai:     OpenAI | null = null
     private ws:         ws.WebSocket | null = null
     private queue:      util.SingleQueue<SpeechFlowChunk | null> | null = null
@@ -71,11 +70,6 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
 
         /*  establish resampler from our standard audio sample rate (48Khz)
             to OpenAI's maximum 24Khz input sample rate  */
-        if (!SpeechFlowNodeA2TOpenAI.speexInitialized) {
-            /*  at least once initialize resampler  */
-            await SpeexResampler.initPromise
-            SpeechFlowNodeA2TOpenAI.speexInitialized = true
-        }
         this.resampler = new SpeexResampler(1, this.config.audioSampleRate, 24000, 7)
 
         /*  instantiate OpenAI API  */

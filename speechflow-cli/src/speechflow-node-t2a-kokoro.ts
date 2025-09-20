@@ -23,7 +23,6 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
     /*  internal state  */
     private kokoro: KokoroTTS | null = null
     private resampler: SpeexResampler | null = null
-    private static speexInitialized = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -82,11 +81,6 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
 
         /*  establish resampler from Kokoro's maximum 24Khz
             output to our standard audio sample rate (48KHz)  */
-        if (!SpeechFlowNodeT2AKokoro.speexInitialized) {
-            /*  at least once initialize resampler  */
-            SpeechFlowNodeT2AKokoro.speexInitialized = true
-            await SpeexResampler.initPromise
-        }
         this.resampler = new SpeexResampler(1, 24000, this.config.audioSampleRate, 7)
 
         /*  determine voice for text-to-speech operation  */
