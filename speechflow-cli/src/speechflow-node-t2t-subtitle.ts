@@ -28,6 +28,14 @@ type wsPeerInfo = {
     ws:         WebSocket
     req:        http.IncomingMessage
 }
+interface HapiWebSocketConnectArgs {
+    ctx: wsPeerCtx
+    ws:  WebSocket
+    req: http.IncomingMessage
+}
+interface HapiWebSocketDisconnectArgs {
+    ctx: wsPeerCtx
+}
 
 /*  SpeechFlow node for subtitle (text-to-text) "translations"  */
 export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
@@ -205,17 +213,13 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     plugins: {
                         websocket: {
                             autoping: 30 * 1000,
-                            connect: (args: any) => {
-                                const ctx: wsPeerCtx            = args.ctx
-                                const ws:  WebSocket            = args.ws
-                                const req: http.IncomingMessage = args.req
+                            connect: ({ ctx, ws, req }: HapiWebSocketConnectArgs) => {
                                 const peer = `${req.socket.remoteAddress}:${req.socket.remotePort}`
                                 ctx.peer = peer
                                 wsPeers.set(peer, { ctx, ws, req })
                                 this.log("info", `HAPI: WebSocket: connect: peer ${peer}`)
                             },
-                            disconnect: (args: any) => {
-                                const ctx: wsPeerCtx = args.ctx
+                            disconnect: ({ ctx }: HapiWebSocketDisconnectArgs) => {
                                 const peer = ctx.peer
                                 wsPeers.delete(peer)
                                 this.log("info", `HAPI: WebSocket: disconnect: peer ${peer}`)

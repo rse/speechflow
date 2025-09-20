@@ -33,6 +33,15 @@ type WSPeerInfo = {
     ws:         WebSocket
     req:        http.IncomingMessage
 }
+interface HapiWebSocketConnectArgs {
+    ctx: WSPeerContext
+    ws:  WebSocket
+    req: http.IncomingMessage
+}
+interface HapiWebSocketDisconnectArgs {
+    ctx: WSPeerContext
+    ws:  WebSocket
+}
 
 /*  Application Programming Interface (API) server management class  */
 export class APIServer {
@@ -177,18 +186,13 @@ export class APIServer {
                 plugins: {
                     websocket: {
                         autoping: 30 * 1000,
-                        connect: (argList: any) => {
-                            const ctx: WSPeerContext        = argList.ctx
-                            const ws:  WebSocket            = argList.ws
-                            const req: http.IncomingMessage = argList.req
+                        connect: ({ ctx, ws, req }: HapiWebSocketConnectArgs) => {
                             const peer = `${req.socket.remoteAddress}:${req.socket.remotePort}`
                             ctx.peer = peer
                             this.wsPeers.set(peer, { ctx, ws, req })
                             this.cli.log("info", `HAPI: WebSocket: connect: peer ${peer}`)
                         },
-                        disconnect: (argList: any) => {
-                            const ctx: WSPeerContext = argList.ctx
-                            const ws: WebSocket = argList.ws
+                        disconnect: ({ ctx, ws }: HapiWebSocketDisconnectArgs) => {
                             const peer = ctx.peer
                             this.wsPeers.delete(peer)
                             ws.removeAllListeners()
