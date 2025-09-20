@@ -93,7 +93,7 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
         util.run("starting FFmpeg process", () => this.ffmpeg!.run())
 
         /*  establish a duplex stream and connect it to FFmpeg  */
-        this.stream = Stream.Duplex.from({
+        const ffmpegStream = Stream.Duplex.from({
             writable: streamInput,
             readable: streamOutput
         })
@@ -101,7 +101,7 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
         /*  wrap streams with conversions for chunk vs plain audio  */
         const wrapper1 = util.createTransformStreamForWritableSide()
         const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
-        this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
+        this.stream = Stream.compose(wrapper1, ffmpegStream, wrapper2)
     }
 
     /*  close node  */
