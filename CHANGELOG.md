@@ -2,11 +2,12 @@
 ChangeLog
 =========
 
-1.6.4 (2025-09-xx)
+1.6.5 (2025-09-21)
 ------------------
 
 - IMPROVEMENT: in a2a-gender node, classify an audio chunk as "unknown" if volume is too low
 - BUGFIX: allow xio-device node to correctly produce audio chunks of arbitrary size
+- UPDATE: upgrade NPM dependencies
 
 1.6.4 (2025-09-14)
 ------------------
