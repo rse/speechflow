@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - BUGFIX: fix meta handling in a2t-deepgram, a2t-amazon and a2t-openai nodes to not destroy a2a-gender information
+- CLEANUP: align destruction handling in a2a-gender node with other nodes
 
 1.6.5 (2025-09-21)
 ------------------
