@@ -236,7 +236,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
 
         /*  close Websocket client  */
         if (this.client !== null) {
-            this.client!.close()
+            this.client.close()
             this.client = null
         }
 
