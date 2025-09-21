@@ -1,8 +1,8 @@
 {
     "name":             "speechflow",
-    "version":          "1.6.4",
-    "x-stdver":         "1.6.4-GA",
-    "x-release":        "2025-09-14",
+    "version":          "1.6.5",
+    "x-stdver":         "1.6.5-GA",
+    "x-release":        "2025-09-21",
     "homepage":         "https://github.com/rse/speechflow",
     "description":      "Speech Processing Flow Graph",
     "keywords":         [ "speech", "audio", "flow", "graph" ],
