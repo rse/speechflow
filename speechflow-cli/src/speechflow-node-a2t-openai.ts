@@ -172,7 +172,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                         const start = DateTime.now().diff(this.timeOpen!) // FIXME: OpenAI does not provide timestamps
                         const end   = start                               // FIXME: OpenAI does not provide timestamps
                         const metas = metastore.fetch(start, end)
-                        const meta = metas.reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                        const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
                             curr.forEach((val, key) => { prev.set(key, val) })
                             return prev
                         }, new Map<string, any>())
@@ -187,7 +187,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     const start = DateTime.now().diff(this.timeOpen!) // FIXME: OpenAI does not provide timestamps
                     const end   = start                               // FIXME: OpenAI does not provide timestamps
                     const metas = metastore.fetch(start, end)
-                    const meta = metas.reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                    const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
                         curr.forEach((val, key) => { prev.set(key, val) })
                         return prev
                     }, new Map<string, any>())

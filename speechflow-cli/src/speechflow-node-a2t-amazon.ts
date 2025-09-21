@@ -172,7 +172,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                         const tsStart = Duration.fromMillis((result.StartTime ?? 0) * 1000).plus(this.timeZeroOffset)
                         const tsEnd   = Duration.fromMillis((result.EndTime   ?? 0) * 1000).plus(this.timeZeroOffset)
                         const metas = metastore.fetch(tsStart, tsEnd)
-                        const meta = metas.reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                        const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
                             curr.forEach((val, key) => { prev.set(key, val) })
                             return prev
                         }, new Map<string, any>())
