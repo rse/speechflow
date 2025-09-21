@@ -12,17 +12,19 @@ import Stream  from "node:stream"
 import * as Transformers     from "@huggingface/transformers"
 import { WaveFile }          from "wavefile"
 import { getRMS, AudioData } from "audio-inspect"
+import { Duration }          from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
 /*  audio stream queue element */
+type Gender = "male" | "female" | "unknown"
 type AudioQueueElement = {
     type:         "audio-frame",
     chunk:        SpeechFlowChunk,
     data:         Float32Array,
-    gender?:      "male" | "female" | "unknown"
+    gender?:      Gender
 } | {
     type:         "audio-eof"
 }
@@ -126,6 +128,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         const sampleRateTarget = 16000
 
         /*  classify a single large-enough concatenated audio frame  */
+        let genderLast: Gender = "unknown"
         const classify = async (data: Float32Array) => {
             if (this.shutdown || this.classifier === null)
                 throw new Error("classifier shutdown during operation")
@@ -141,7 +144,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             } satisfies AudioData
             const rms = getRMS(audioData, { asDB: true })
             if (rms < this.params.volumeThreshold)
-                return "unknown"
+                return genderLast
 
             /*  classify audio  */
             const result = await Promise.race([
@@ -157,18 +160,21 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             const female = c2 ? c2.score : 0.0
             const threshold  = this.params.threshold
             const hysteresis = this.params.hysteresis
+            let genderNow: Gender = genderLast
             if (male > threshold && male > female + hysteresis)
-                return "male"
+                genderNow = "male"
             else if (female > threshold && female > male + hysteresis)
-                return "female"
-            else
-                return "unknown"
+                genderNow = "female"
+            if (genderNow !== genderLast) {
+                this.log("info", `switching detected gender from <${genderLast}> to <${genderNow}>`)
+                genderLast = genderNow
+            }
+            return genderNow
         }
 
         /*  work off queued audio frames  */
         const frameWindowDuration = this.params.window / 1000
         const frameWindowSamples  = Math.floor(frameWindowDuration * sampleRateTarget)
-        let lastGender = ""
         let workingOff = false
         const workOffQueue = async () => {
             /*  control working off round  */
@@ -212,10 +218,6 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                         this.queueAC.touch()
                         this.queueAC.walk(+1)
                         pos0++
-                    }
-                    if (lastGender !== gender && !this.shutdown) {
-                        this.log("info", `gender now recognized as <${gender}>`)
-                        lastGender = gender
                     }
                 }
             }
@@ -312,7 +314,11 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                                 && element.gender === undefined)
                                 break
                             const duration = util.audioArrayDuration(element.data)
-                            self.log("debug", `send chunk (${duration.toFixed(3)}s) with gender <${element.gender}>`)
+                            const fmtTime = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
+                            const times = `start: ${fmtTime(element.chunk.timestampStart)}, ` +
+                                `end: ${fmtTime(element.chunk.timestampEnd)}`
+                            self.log("debug", `send chunk (${times}, duration: ${duration.toFixed(3)}s) ` +
+                                `with gender <${element.gender}>`)
                             element.chunk.meta.set("gender", element.gender)
                             this.push(element.chunk)
                             self.queueSend.walk(+1)
