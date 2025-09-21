@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.6.6 (2025-09-21)
+------------------
+
+- BUGFIX: reverse meta handling in a2t-deepgram node to not destroy a2a-gender information
+
 1.6.5 (2025-09-21)
 ------------------
 

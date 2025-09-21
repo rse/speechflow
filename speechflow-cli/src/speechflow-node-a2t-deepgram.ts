@@ -130,7 +130,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
                 const end   = start.plus({ seconds: data.duration })
                 const metas = metastore.fetch(start, end)
-                const meta = metas.reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
                     curr.forEach((val, key) => { prev.set(key, val) })
                     return prev
                 }, new Map<string, any>())
