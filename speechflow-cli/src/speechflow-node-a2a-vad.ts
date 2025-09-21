@@ -308,6 +308,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
 
                     /*  await forthcoming audio chunks  */
                     const awaitForthcomingChunks = () => {
+                        self.activeEventListeners.delete(awaitForthcomingChunks)
                         if (self.destroyed)
                             return
                         const element = self.queueSend.peek()
