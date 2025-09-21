@@ -158,14 +158,14 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         }
                     }
                     catch (error) {
-                        this.log("error", `VAD frame processing error: ${error}`)
+                        this.log("error", `VAD frame processing error: ${error}`, { cause: error })
                     }
                 }
             })
             this.vad.start()
         }
         catch (error) {
-            throw new Error(`failed to initialize VAD: ${error}`)
+            throw new Error(`failed to initialize VAD: ${error}`, { cause: error })
         }
 
         /*  provide Duplex stream and internally attach to VAD  */

@@ -177,7 +177,7 @@ export default class SpeechFlowNodeT2TOllama extends SpeechFlowNode {
             models = await this.ollama.list()
         }
         catch (err) {
-            throw new Error(`failed to connect to Ollama API at ${this.params.api}: ${err}`)
+            throw new Error(`failed to connect to Ollama API at ${this.params.api}: ${err}`, { cause: err })
         }
         const exists = models.models.some((m) => m.name === this.params.model)
         if (!exists) {

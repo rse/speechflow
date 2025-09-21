@@ -113,7 +113,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 clearInterval(this.progressInterval)
                 this.progressInterval = null
             }
-            throw new Error(`failed to initialize classifier pipeline: ${error}`)
+            throw new Error(`failed to initialize classifier pipeline: ${error}`, { cause: error })
         }
         if (this.progressInterval) {
             clearInterval(this.progressInterval)
