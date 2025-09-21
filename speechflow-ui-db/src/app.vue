@@ -162,11 +162,13 @@ export default defineComponent({
         ws:   null as ReconnectingWebSocket | null
     }),
     async mounted () {
-        /*  determine API URL  */
-        const url = new URL("/api", document.location.href).toString()
+        /*  determine API URLs  */
+        const urlHTTP = new URL("/api", document.location.href)
+        const urlWS   = new URL("/api", document.location.href)
+        urlWS.protocol = (urlHTTP.protocol === "https:" ? "wss:" : "ws:")
 
         /*  load dashboard configuration  */
-        const response = await axios.get(`${url}/dashboard`)
+        const response = await axios.get(`${urlHTTP.toString()}/dashboard`)
         for (const block of response.data) {
             if (block.type === "audio")
                 this.info.push({ type: block.type, id: block.id, name: block.name, value: 0, lastKind: "" })
@@ -180,7 +182,7 @@ export default defineComponent({
                 block.value = -60
 
         /*  connect to WebSocket API for receiving dashboard information  */
-        this.ws = new ReconnectingWebSocket(url, [], {
+        this.ws = new ReconnectingWebSocket(urlWS.toString(), [], {
             reconnectionDelayGrowFactor: 1.3,
             maxReconnectionDelay:        4000,
             minReconnectionDelay:        1000,

@@ -117,8 +117,10 @@ export default defineComponent({
         cleanupIntervalId: null as ReturnType<typeof setInterval> | null
     }),
     async mounted () {
-        /*  determine API URL  */
-        const url = new URL("/api", document.location.href).toString()
+        /*  determine API URLs  */
+        const urlHTTP = new URL("/api", document.location.href)
+        const urlWS   = new URL("/api", document.location.href)
+        urlWS.protocol = (urlHTTP.protocol === "https:" ? "wss:" : "ws:")
 
         /*  optically remove outdated text chunks  */
         this.cleanupIntervalId = setInterval(() => {
@@ -146,7 +148,7 @@ export default defineComponent({
         }, 500)
 
         /*  connect to WebSocket API for receiving dashboard information  */
-        const ws = new ReconnectingWebSocket(url, [], {
+        const ws = new ReconnectingWebSocket(urlWS.toString(), [], {
             reconnectionDelayGrowFactor: 1.3,
             maxReconnectionDelay:        4000,
             minReconnectionDelay:        1000,
