@@ -21,7 +21,13 @@ export function ensureError (error: unknown, prefix?: string, debug = false): Er
         msg = `${prefix}: ${msg}`
     if (debug && error instanceof Error)
         msg = `${msg}\n${error.stack}`
-    return new Error(msg, { cause: error })
+    if (error instanceof Error) {
+        const err = new Error(msg, { cause: error })
+        err.stack = error.stack
+        return err
+    }
+    else
+        return new Error(msg)
 }
 
 /*  helper function for retrieving a Promise object  */
