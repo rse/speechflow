@@ -259,7 +259,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                         const wav = new WaveFile()
                         wav.fromScratch(self.config.audioChannels, self.config.audioSampleRate, "32f", data)
                         wav.toSampleRate(sampleRateTarget, { method: "cubic" })
-                        data = wav.getSamples(false, Float32Array) as any as Float32Array<ArrayBuffer>
+                        data = wav.getSamples(false, Float32Array) as unknown as Float32Array<ArrayBuffer>
 
                         /*  queue chunk and converted data  */
                         self.queueRecv.append({ type: "audio-frame", chunk, data })
