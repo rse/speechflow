@@ -44,6 +44,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
         this.worker = new Worker(resolve(__dirname, "speechflow-node-a2a-rnnoise-wt.js"))
         this.worker.on("error", (err) => {
             this.log("error", `RNNoise worker thread error: ${err}`)
+            this.stream?.emit("error", err)
         })
         this.worker.on("exit", (code) => {
             if (code !== 0)

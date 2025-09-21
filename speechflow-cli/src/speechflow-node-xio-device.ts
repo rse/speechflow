@@ -193,6 +193,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
         /*  pass-through PortAudio errors  */
         this.io!.on("error", (err) => {
             this.emit("error", err)
+            this.stream?.emit("error", err)
         })
 
         /*  start PortAudio  */
