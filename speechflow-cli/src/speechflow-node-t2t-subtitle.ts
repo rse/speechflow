@@ -20,21 +20,10 @@ import HAPIWebSocket from "hapi-plugin-websocket"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
-type wsPeerCtx = {
-    peer: string
-}
-type wsPeerInfo = {
-    ctx:        wsPeerCtx
-    ws:         WebSocket
-    req:        http.IncomingMessage
-}
-interface HapiWebSocketConnectArgs {
-    ctx: wsPeerCtx
-    ws:  WebSocket
-    req: http.IncomingMessage
-}
-interface HapiWebSocketDisconnectArgs {
-    ctx: wsPeerCtx
+type WSPeerInfo = {
+    ctx:  Record<string, any>
+    ws:   WebSocket
+    req:  http.IncomingMessage
 }
 
 /*  SpeechFlow node for subtitle (text-to-text) "translations"  */
@@ -168,7 +157,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
         }
         else if (this.params.mode === "render") {
             /*  establish REST/WebSocket API  */
-            const wsPeers = new Map<string, wsPeerInfo>()
+            const wsPeers = new Map<string, WSPeerInfo>()
             this.hapi = new HAPI.Server({
                 address: this.params.addr,
                 port:    this.params.port
@@ -213,15 +202,18 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     plugins: {
                         websocket: {
                             autoping: 30 * 1000,
-                            connect: ({ ctx, ws, req }: HapiWebSocketConnectArgs) => {
+                            connect: ({ ctx, ws, req }) => {
                                 const peer = `${req.socket.remoteAddress}:${req.socket.remotePort}`
                                 ctx.peer = peer
                                 wsPeers.set(peer, { ctx, ws, req })
                                 this.log("info", `HAPI: WebSocket: connect: peer ${peer}`)
                             },
-                            disconnect: ({ ctx }: HapiWebSocketDisconnectArgs) => {
+                            disconnect: ({ ctx, ws }) => {
                                 const peer = ctx.peer
                                 wsPeers.delete(peer)
+                                ws.removeAllListeners()
+                                if (ws.readyState === WebSocket.OPEN)
+                                    ws.close()
                                 this.log("info", `HAPI: WebSocket: disconnect: peer ${peer}`)
                             }
                         }

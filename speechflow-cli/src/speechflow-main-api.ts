@@ -25,22 +25,10 @@ import { NodeGraph }      from "./speechflow-main-graph"
 import pkg                from "../../package.json"
 
 /*  internal helper type definitions  */
-type WSPeerContext = {
-    peer:       string
-}
 type WSPeerInfo = {
-    ctx:        WSPeerContext
-    ws:         WebSocket
-    req:        http.IncomingMessage
-}
-interface HapiWebSocketConnectArgs {
-    ctx: WSPeerContext
-    ws:  WebSocket
-    req: http.IncomingMessage
-}
-interface HapiWebSocketDisconnectArgs {
-    ctx: WSPeerContext
-    ws:  WebSocket
+    ctx:  Record<string, any>
+    ws:   WebSocket
+    req:  http.IncomingMessage
 }
 
 /*  Application Programming Interface (API) server management class  */
@@ -85,6 +73,7 @@ export class APIServer {
                         reject(new Error("timeout")), 10 * 1000))
                 ]).catch((err: Error) => {
                     this.cli.log("warning", `external request to node <${name}> failed: ${err.message}`)
+                    throw err
                 })
             }
         }
@@ -186,13 +175,13 @@ export class APIServer {
                 plugins: {
                     websocket: {
                         autoping: 30 * 1000,
-                        connect: ({ ctx, ws, req }: HapiWebSocketConnectArgs) => {
+                        connect: ({ ctx, ws, req }) => {
                             const peer = `${req.socket.remoteAddress}:${req.socket.remotePort}`
                             ctx.peer = peer
                             this.wsPeers.set(peer, { ctx, ws, req })
                             this.cli.log("info", `HAPI: WebSocket: connect: peer ${peer}`)
                         },
-                        disconnect: ({ ctx, ws }: HapiWebSocketDisconnectArgs) => {
+                        disconnect: ({ ctx, ws }) => {
                             const peer = ctx.peer
                             this.wsPeers.delete(peer)
                             ws.removeAllListeners()
