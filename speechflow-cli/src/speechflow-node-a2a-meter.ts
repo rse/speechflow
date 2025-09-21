@@ -109,8 +109,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             lufsm = lufs.momentary ? Math.max(-60, lufs.momentary[0]) : -60
 
             /*  calculate the RMS metric  */
-            const bytesPerSample = this.config.audioBitDepth / 8
-            const totalSamples   = chunkData.length / (bytesPerSample * this.config.audioChannels)
+            const totalSamples   = chunkData.length / this.config.audioChannels
             const duration       = totalSamples / this.config.audioSampleRate
             const audioDataRMS = {
                 sampleRate:       this.config.audioSampleRate,
