@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: in a2a-gender node, classify an audio chunk as "unknown" if volume is too low
+- IMPROVEMENT: switch a2a-meter node fom 3s LUFS-S to 0.4s LUFS-M measurement to be faster
 - BUGFIX: allow xio-device node to correctly produce audio chunks of arbitrary size
 - BUGFIX: correctly construct the API URLs for WebSocket connections in UIs
 - UPDATE: upgrade NPM dependencies

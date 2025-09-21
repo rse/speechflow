@@ -17,7 +17,7 @@
                         }">
                             <div class="audio-value">
                                 {{ (block.value as number).toFixed(1) }}
-                                <div class="audio-unit">LUFS-S</div>
+                                <div class="audio-unit">LUFS-M</div>
                             </div>
                         </div>
                     </div>

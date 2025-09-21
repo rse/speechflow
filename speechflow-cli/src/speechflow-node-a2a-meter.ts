@@ -55,11 +55,11 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         this.destroyed = false
 
         /*  internal state  */
-        const sampleWindowDuration = 3 /* LUFS-S requires 3s */
+        const sampleWindowDuration = 0.4 /* LUFS-M requires 400ms */
         const sampleWindowSize = Math.floor(this.config.audioSampleRate * sampleWindowDuration)
         const sampleWindow = new Float32Array(sampleWindowSize)
         sampleWindow.fill(0, 0, sampleWindowSize)
-        let lufss = -60
+        let lufsm = -60
         let rms   = -60
 
         /*  chunk processing state  */
@@ -73,7 +73,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             sampleWindow.set(sampleWindow.subarray(chunkData.length), 0)
             sampleWindow.set(chunkData, sampleWindowSize - chunkData.length)
 
-            /*  calculate the LUFS-S and RMS metric  */
+            /*  calculate the LUFS-M and RMS metric  */
             const audioData = {
                 sampleRate:       this.config.audioSampleRate,
                 numberOfChannels: this.config.audioChannels,
@@ -83,17 +83,17 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             } satisfies AudioData
             const lufs = getLUFS(audioData, {
                 channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
-                calculateShortTerm:     true,
-                calculateMomentary:     false,
+                calculateShortTerm:     false,
+                calculateMomentary:     true,
                 calculateLoudnessRange: false,
                 calculateTruePeak:      false
             })
-            lufss = lufs.shortTerm ? Math.max(-60, lufs.shortTerm[0]) : -60
+            lufsm = lufs.momentary ? Math.max(-60, lufs.momentary[0]) : -60
             rms   = Math.max(-60, getRMS(audioData, { asDB: true }))
             if (this.silenceTimer !== null)
                 clearTimeout(this.silenceTimer)
             this.silenceTimer = setTimeout(() => {
-                lufss = -60
+                lufsm = -60
                 rms   = -60
             }, 500)
         }
@@ -115,11 +115,11 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         this.emitInterval = setInterval(() => {
             if (this.destroyed)
                 return
-            this.log("debug", `LUFS-S: ${lufss.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
-            this.sendResponse([ "meter", "LUFS-S", lufss ])
+            this.log("debug", `LUFS-M: ${lufsm.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
+            this.sendResponse([ "meter", "LUFS-M", lufsm ])
             this.sendResponse([ "meter", "RMS", rms ])
             if (this.params.dashboard !== "")
-                this.sendDashboard("audio", this.params.dashboard, "final", lufss)
+                this.sendDashboard("audio", this.params.dashboard, "final", lufsm)
         }, this.params.interval)
 
         /*  provide Duplex stream and internally attach to meter  */
