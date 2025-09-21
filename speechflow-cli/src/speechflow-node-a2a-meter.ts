@@ -196,6 +196,9 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate destruction immediately to stop any ongoing operations  */
+        this.destroyed = true
+
         /*  stop intervals  */
         if (this.emitInterval !== null) {
             clearInterval(this.emitInterval)
@@ -215,8 +218,5 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             this.stream.destroy()
             this.stream = null
         }
-
-        /*  indicate destruction  */
-        this.destroyed = true
     }
 }
