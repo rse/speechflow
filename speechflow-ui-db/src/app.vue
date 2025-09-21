@@ -189,6 +189,11 @@ export default defineComponent({
             connectionTimeout:           4000,
             minUptime:                   5000
         })
+        this.ws.addEventListener("error", (ev) => {
+            this.log("ERROR", `WebSocket error: ${ev.message}`)
+        })
+
+        /*  track connection open/close  */
         this.ws.addEventListener("open", (ev) => {
             this.log("INFO", "WebSocket connection established")
         })
@@ -200,6 +205,8 @@ export default defineComponent({
                 if (block.type === "audio")
                     block.value = -60
         })
+
+        /*  receive messages  */
         this.ws.addEventListener("message", (ev) => {
             let event: WebSocketEvent
             try {

@@ -155,6 +155,9 @@ export default defineComponent({
             connectionTimeout:           4000,
             minUptime:                   5000
         })
+        ws.addEventListener("error", (ev) => {
+            this.log("ERROR", `WebSocket error: ${ev.message}`)
+        })
 
         /*  track connection open/close  */
         ws.addEventListener("open", (ev) => {
