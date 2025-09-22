@@ -131,13 +131,13 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate destruction  */
+        this.destroyed = true
+
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
             this.stream = null
         }
-
-        /*  indicate destruction  */
-        this.destroyed = true
     }
 }
