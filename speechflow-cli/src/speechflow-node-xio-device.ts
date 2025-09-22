@@ -36,6 +36,10 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
             chunk:  { type: "number", pos: 2, val: 200,  match: (n: number) => n >= 10 && n <= 1000 }
         })
 
+        /*  sanity check parameters  */
+        if (this.params.device === "")
+            throw new Error("required parameter \"device\" has to be given")
+
         /*  declare node input/output format  */
         if (this.params.mode === "rw") {
             this.input  = "audio"
@@ -163,9 +167,6 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        if (this.params.device === "")
-            throw new Error("required parameter \"device\" has to be given")
-
         /*  determine device  */
         const device = this.audioDeviceFromURL(this.params.mode, this.params.device)
 

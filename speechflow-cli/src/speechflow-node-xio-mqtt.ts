@@ -40,6 +40,18 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             type:       { type: "string", pos: 6, val: "text", match: /^(?:audio|text)$/ }
         })
 
+        /*  sanity check parameters  */
+        if (this.params.url === "")
+            throw new Error("required parameter \"url\" has to be given")
+        if ((this.params.mode === "w" || this.params.mode === "rw") && this.params.topicWrite === "")
+            throw new Error("writing to MQTT requires a topicWrite parameter")
+        if ((this.params.mode === "r" || this.params.mode === "rw") && this.params.topicRead === "")
+            throw new Error("reading from MQTT requires a topicRead parameter")
+        if (this.params.username !== "" && this.params.password === "")
+            throw new Error("username provided but password is missing")
+        if (this.params.username === "" && this.params.password !== "")
+            throw new Error("password provided but username is missing")
+
         /*  declare node input/output format  */
         if (this.params.mode === "rw") {
             this.input  = this.params.type
@@ -57,18 +69,6 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        /*  logical parameter sanity check  */
-        if (this.params.url === "")
-            throw new Error("required parameter \"url\" has to be given")
-        if ((this.params.mode === "w" || this.params.mode === "rw") && this.params.topicWrite === "")
-            throw new Error("writing to MQTT requires a topicWrite parameter")
-        if ((this.params.mode === "r" || this.params.mode === "rw") && this.params.topicRead === "")
-            throw new Error("reading from MQTT requires a topicRead parameter")
-        if (this.params.username !== "" && this.params.password === "")
-            throw new Error("username provided but password is missing")
-        if (this.params.username === "" && this.params.password !== "")
-            throw new Error("password provided but username is missing")
-
         /*  connect remotely to a MQTT broker  */
         this.broker = MQTT.connect(this.params.url, {
             protocolId:      "MQTT",

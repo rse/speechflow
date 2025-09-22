@@ -36,6 +36,12 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             type:    { type: "string", val: "text", match: /^(?:audio|text)$/ }
         })
 
+        /*  sanity check parameters  */
+        if (this.params.listen !== "" && this.params.connect !== "")
+            throw new Error("Websocket node cannot listen and connect at the same time")
+        else if (this.params.listen === "" && this.params.connect === "")
+            throw new Error("Websocket node requires either listen or connect mode")
+
         /*  declare node input/output format  */
         if (this.params.mode === "rw") {
             this.input  = this.params.type
@@ -53,12 +59,6 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        /*  sanity check usage  */
-        if (this.params.listen !== "" && this.params.connect !== "")
-            throw new Error("Websocket node cannot listen and connect at the same time")
-        else if (this.params.listen === "" && this.params.connect === "")
-            throw new Error("Websocket node requires either listen or connect mode")
-
         if (this.params.listen !== "") {
             /*  listen locally on a Websocket port  */
             const url = new URL(this.params.listen)

@@ -11,6 +11,7 @@ ChangeLog
 - CLEANUP: align destruction handling in a2a-gender node with other nodes
 - CLEANUP: use consistent Error object handling in throwing exceptions
 - CLEANUP: consistently use stream destruction procedure
+- CLEANUP: move parameter sanity checking to constructor of all nodes
 
 1.6.5 (2025-09-21)
 ------------------

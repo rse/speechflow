@@ -30,6 +30,10 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             chunkt: { type: "number",         val: 65536,   match: (n: number) => n >= 1024 && n <= 131072 }
         })
 
+        /*  sanity check parameters  */
+        if (this.params.path === "")
+            throw new Error("required parameter \"path\" has to be given")
+
         /*  declare node input/output format  */
         if (this.params.mode === "rw") {
             this.input  = this.params.type
@@ -54,10 +58,6 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             (this.config.audioBitDepth / 8)
         ) / (1000 / this.params.chunka)
         const highWaterMarkText = this.params.chunkt
-
-        /*  sanity check  */
-        if (this.params.path === "")
-            throw new Error("required parameter \"path\" has to be given")
 
         /*  utility function: create a writable stream as chunker that
             writes to process.stdout but properly handles finish events.

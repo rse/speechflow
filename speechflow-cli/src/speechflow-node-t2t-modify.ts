@@ -26,6 +26,10 @@ export default class SpeechFlowNodeT2TModify extends SpeechFlowNode {
             replace: { type: "string", val: "" }
         })
 
+        /*  sanity check parameters  */
+        if (this.params.match === "")
+            throw new Error("match parameter cannot be empty")
+
         /*  declare node input/output format  */
         this.input  = "text"
         this.output = "text"
@@ -33,10 +37,6 @@ export default class SpeechFlowNodeT2TModify extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        /*  validate parameters  */
-        if (this.params.match === "")
-            throw new Error("match parameter cannot be empty")
-
         /*  compile regex pattern  */
         const regex = util.run("compiling regex pattern",
             () => new RegExp(this.params.match, "g"))
