@@ -159,8 +159,8 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                         self.filler.add(chunk)
                         callback()
                     }
-                    catch (error: any) {
-                        callback(error)
+                    catch (error: unknown) {
+                        callback(util.ensureError(error))
                     }
                 }
             },

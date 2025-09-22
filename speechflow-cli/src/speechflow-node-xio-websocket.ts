@@ -136,8 +136,8 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                         }
                         Promise.all(results).then(() => {
                             callback()
-                        }).catch((error: Error) => {
-                            callback(error)
+                        }).catch((error: unknown) => {
+                            callback(util.ensureError(error))
                         })
                     }
                 },

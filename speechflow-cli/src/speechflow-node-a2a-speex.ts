@@ -100,9 +100,10 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                         /*  forward updated chunk  */
                         this.push(chunk)
                         callback()
-                    }).catch((err: Error) => {
-                        self.log("warning", `processing of chunk failed: ${err}`)
-                        callback(err)
+                    }).catch((err: unknown) => {
+                        const error = util.ensureError(err)
+                        self.log("warning", `processing of chunk failed: ${error.message}`)
+                        callback(error)
                     })
                 }
             },
