@@ -230,7 +230,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         callback()
                     }
                     catch (error) {
-                        callback(error instanceof Error ? error : new Error("VAD processing failed"))
+                        callback(util.ensureError(error, "VAD processing failed"))
                     }
                 }
             },

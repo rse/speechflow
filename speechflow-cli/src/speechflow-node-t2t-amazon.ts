@@ -101,7 +101,7 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
                     await new Promise((resolve) => setTimeout(resolve, delayMs))
                 }
             }
-            throw lastError instanceof Error ? lastError : new Error(String(lastError))
+            throw util.ensureError(lastError)
         }
 
         /*  establish a duplex stream and connect it to AWS Translate  */

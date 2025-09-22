@@ -14,6 +14,7 @@ import SpeexResampler        from "speex-resampler"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for Elevenlabs text-to-speech conversion  */
 export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
@@ -180,7 +181,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                         }
                         catch (error) {
                             clearProcessTimeout()
-                            callback(error instanceof Error ? error : new Error("ElevenLabs processing failed"))
+                            callback(util.ensureError(error, "ElevenLabs processing failed"))
                         }
                     })()
                 }

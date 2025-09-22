@@ -178,7 +178,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                         callback()
                     }
                     catch (error) {
-                        callback(error instanceof Error ? error : new Error("meter processing failed"))
+                        callback(util.ensureError(error, "meter processing failed"))
                     }
                 }
             },

@@ -210,7 +210,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                             self.dg.send(chunk.payload.buffer) /* intentionally discard all time information */
                         }
                         catch (error) {
-                            callback(error instanceof Error ? error : new Error("failed to send to Deepgram"))
+                            callback(util.ensureError(error, "failed to send to Deepgram"))
                             return
                         }
                     }

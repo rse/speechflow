@@ -248,7 +248,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                             })
                         }
                         catch (error) {
-                            callback(error instanceof Error ? error : new Error("failed to send to OpenAI transcribe"))
+                            callback(util.ensureError(error, "failed to send to OpenAI transcribe"))
                             return
                         }
                     }
@@ -291,7 +291,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                 }
                 catch (error) {
                     self.log("warning", `error closing OpenAI connection: ${error}`)
-                    callback(error instanceof Error ? error : new Error("failed to close OpenAI connection"))
+                    callback(util.ensureError(error, "failed to close OpenAI connection"))
                 }
             }
         })

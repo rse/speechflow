@@ -266,7 +266,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                         callback()
                     }
                     catch (error) {
-                        callback(error instanceof Error ? error : new Error("audio processing failed"))
+                        callback(util.ensureError(error, "audio processing failed"))
                     }
                 }
             },
