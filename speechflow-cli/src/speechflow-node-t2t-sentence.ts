@@ -33,7 +33,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     private queueRecv  = this.queue.pointerUse("recv")
     private queueSplit = this.queue.pointerUse("split")
     private queueSend  = this.queue.pointerUse("send")
-    private destroyed  = false
+    private closing  = false
     private workingOffTimer: ReturnType<typeof setTimeout> | null = null
 
     /*  construct node  */
@@ -51,12 +51,12 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  work off queued text frames  */
         let workingOff = false
         const workOffQueue = async () => {
-            if (this.destroyed)
+            if (this.closing)
                 return
 
             /*  control working off round  */
@@ -70,7 +70,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             this.queue.off("write", workOffQueue)
 
             /*  try to work off one or more chunks  */
-            while (!this.destroyed) {
+            while (!this.closing) {
                 const element = this.queueSplit.peek()
                 if (element === undefined)
                     break
@@ -134,7 +134,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
             /*  re-initiate working off round (if still not destroyed)  */
             workingOff = false
-            if (!this.destroyed) {
+            if (!this.closing) {
                 this.workingOffTimer = setTimeout(workOffQueue, 100)
                 this.queue.once("write", workOffQueue)
             }
@@ -151,7 +151,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
             /*  receive text chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed)
+                if (self.closing)
                     callback(new Error("stream already destroyed"))
                 else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected text input as string chunks"))
@@ -166,7 +166,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
             /*  receive no more text chunks (writable side of stream)  */
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -179,7 +179,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             read (_size) {
                 /*  flush pending text chunks  */
                 const flushPendingChunks = () => {
-                    if (self.destroyed) {
+                    if (self.closing) {
                         this.push(null)
                         return
                     }
@@ -210,7 +210,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             self.queue.trim()
                         }
                     }
-                    else if (!self.destroyed)
+                    else if (!self.closing)
                         self.queue.once("write", flushPendingChunks)
                 }
                 flushPendingChunks()
@@ -220,8 +220,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  clean up timer  */
         if (this.workingOffTimer !== null) {

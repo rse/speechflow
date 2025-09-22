@@ -26,7 +26,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
 
     /*  internal state  */
     private client: PollyClient | null = null
-    private destroyed = false
+    private closing = false
     private resampler: SpeexResampler | null = null
 
     /*  construct node  */
@@ -61,7 +61,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  establish AWS Polly connection  */
         this.client = new PollyClient({
@@ -123,7 +123,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -132,7 +132,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                 else if (chunk.payload.length > 0) {
                     self.log("debug", `send data (${chunk.payload.length} bytes): "${chunk.payload}"`)
                     textToSpeech(chunk.payload as string).then((buffer) => {
-                        if (self.destroyed)
+                        if (self.closing)
                             throw new Error("stream destroyed during processing")
                         const chunkNew = chunk.clone()
                         chunkNew.type = "audio"
@@ -147,7 +147,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                     callback()
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -159,8 +159,8 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  destroy resampler  */
         if (this.resampler !== null)

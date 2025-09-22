@@ -109,7 +109,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
     public static name = "a2a-filler"
 
     /*  internal state  */
-    private destroyed = false
+    private closing = false
     private filler: AudioFiller | null = null
     private sendQueue: util.AsyncQueue<SpeechFlowChunk | null> | null = null
 
@@ -130,7 +130,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  establish queues  */
         this.filler  = new AudioFiller(this.config.audioSampleRate, this.config.audioChannels)
@@ -148,7 +148,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             write (chunk: SpeechFlowChunk & { type: "audio", payload: Buffer }, encoding, callback) {
-                if (self.destroyed || self.filler === null)
+                if (self.closing || self.filler === null)
                     callback(new Error("stream already destroyed"))
                 else if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
@@ -163,12 +163,12 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                 }
             },
             read (size) {
-                if (self.destroyed || self.sendQueue === null) {
+                if (self.closing || self.sendQueue === null) {
                     this.push(null)
                     return
                 }
                 self.sendQueue.read().then((chunk) => {
-                    if (self.destroyed) {
+                    if (self.closing) {
                         this.push(null)
                         return
                     }
@@ -181,12 +181,12 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                         this.push(chunk)
                     }
                 }).catch((error: unknown) => {
-                    if (!self.destroyed)
+                    if (!self.closing)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -198,8 +198,8 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  destroy queues  */
         if (this.sendQueue !== null) {

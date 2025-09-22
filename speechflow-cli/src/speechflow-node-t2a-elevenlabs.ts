@@ -23,7 +23,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
 
     /*  internal state  */
     private elevenlabs: ElevenLabs.ElevenLabsClient | null = null
-    private destroyed = false
+    private closing = false
     private resampler: SpeexResampler | null = null
 
     /*  construct node  */
@@ -68,7 +68,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  establish ElevenLabs API connection  */
         this.elevenlabs = new ElevenLabs.ElevenLabsClient({
@@ -141,7 +141,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed)
+                if (self.closing)
                     callback(new Error("stream already destroyed"))
                 else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
@@ -158,14 +158,14 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                             }
                         }
                         try {
-                            if (self.destroyed) {
+                            if (self.closing) {
                                 clearProcessTimeout()
                                 callback(new Error("stream destroyed during processing"))
                                 return
                             }
                             const stream = await speechStream(chunk.payload as string)
                             const buffer = await getStreamAsBuffer(stream)
-                            if (self.destroyed) {
+                            if (self.closing) {
                                 clearProcessTimeout()
                                 callback(new Error("stream destroyed during processing"))
                                 return
@@ -187,7 +187,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -199,8 +199,8 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  shutdown stream  */
         if (this.stream !== null) {

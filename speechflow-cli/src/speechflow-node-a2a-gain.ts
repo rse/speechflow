@@ -17,7 +17,7 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
     public static name = "a2a-gain"
 
     /*  internal state  */
-    private destroyed = false
+    private closing = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -36,7 +36,7 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  adjust gain  */
         const adjustGain = (chunk: SpeechFlowChunk & { payload: Buffer }, db: number) => {
@@ -57,7 +57,7 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk & { payload: Buffer }, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -73,7 +73,7 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -85,8 +85,8 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  shutdown stream  */
         if (this.stream !== null) {

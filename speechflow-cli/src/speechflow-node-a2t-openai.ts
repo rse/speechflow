@@ -27,7 +27,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
     private ws:         ws.WebSocket | null = null
     private queue:      util.SingleQueue<SpeechFlowChunk | null> | null = null
     private resampler:  SpeexResampler | null = null
-    private destroyed   = false
+    private closing   = false
     private connectionTimeout: ReturnType<typeof setTimeout> | null = null
 
     /*  construct node  */
@@ -60,7 +60,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             throw new Error("OpenAI transcribe node currently supports PCM-S16LE audio only")
 
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  create queue for results  */
         this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
@@ -226,7 +226,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed || self.ws === null) {
+                if (self.closing || self.ws === null) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -256,12 +256,12 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                 }
             },
             read (size) {
-                if (self.destroyed || self.queue === null) {
+                if (self.closing || self.queue === null) {
                     this.push(null)
                     return
                 }
                 self.queue.read().then((chunk) => {
-                    if (self.destroyed) {
+                    if (self.closing) {
                         this.push(null)
                         return
                     }
@@ -274,12 +274,12 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                         this.push(chunk)
                     }
                 }).catch((error: unknown) => {
-                    if (!self.destroyed)
+                    if (!self.closing)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
             final (callback) {
-                if (self.destroyed || self.ws === null) {
+                if (self.closing || self.ws === null) {
                     callback()
                     return
                 }
@@ -299,8 +299,8 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction first to stop all async operations  */
-        this.destroyed = true
+        /*  indicate closing first to stop all async operations  */
+        this.closing = true
 
         /*  clear connection timeout  */
         if (this.connectionTimeout !== null) {

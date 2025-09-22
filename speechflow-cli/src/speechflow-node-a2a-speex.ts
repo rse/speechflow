@@ -22,7 +22,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
     public static name = "a2a-speex"
 
     /*  internal state  */
-    private destroyed = false
+    private closing = false
     private sampleSize = 480 /* = 10ms at 48KHz */
     private speexProcessor: SpeexPreprocessor | null = null
 
@@ -43,7 +43,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  validate sample rate compatibility  */
         if (this.config.audioSampleRate !== 48000)
@@ -71,7 +71,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk & { payload: Buffer }, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -83,12 +83,12 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
 
                     /*  process Int16Array in necessary fixed-size segments  */
                     util.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
-                        if (self.destroyed)
+                        if (self.closing)
                             throw new Error("stream already destroyed")
                         self.speexProcessor?.processInt16(segment)
                         return Promise.resolve(segment)
                     }).then((payload: Int16Array<ArrayBuffer>) => {
-                        if (self.destroyed)
+                        if (self.closing)
                             throw new Error("stream already destroyed")
 
                         /*  convert Int16Array back into Buffer  */
@@ -107,7 +107,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -119,8 +119,8 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  destroy processor  */
         if (this.speexProcessor !== null) {

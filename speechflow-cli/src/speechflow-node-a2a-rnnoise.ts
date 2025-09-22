@@ -19,7 +19,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
     public static name = "a2a-rnnoise"
 
     /*  internal state  */
-    private destroyed = false
+    private closing = false
     private sampleSize = 480 /* = 10ms at 48KHz, as required by RNNoise! */
     private worker: Worker | null = null
 
@@ -38,7 +38,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  initialize worker  */
         this.worker = new Worker(resolve(__dirname, "speechflow-node-a2a-rnnoise-wt.js"))
@@ -89,7 +89,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
         /*  send message to worker  */
         let seq = 0
         const workerProcessSegment = async (segment: Int16Array<ArrayBuffer>) => {
-            if (this.destroyed)
+            if (this.closing)
                 return segment
             const id = `${seq++}`
             return new Promise<Int16Array<ArrayBuffer>>((resolve) => {
@@ -105,7 +105,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk & { payload: Buffer }, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -135,7 +135,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -147,8 +147,8 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  shutdown worker  */
         if (this.worker !== null) {

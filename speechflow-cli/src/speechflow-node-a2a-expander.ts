@@ -103,7 +103,7 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
     public static name = "a2a-expander"
 
     /*  internal state  */
-    private destroyed = false
+    private closing = false
     private expander: AudioExpander | null = null
 
     /*  construct node  */
@@ -133,7 +133,7 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  setup expander  */
         this.expander = new AudioExpander(
@@ -157,7 +157,7 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk & { payload: Buffer }, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -167,7 +167,7 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                     /*  expand chunk  */
                     const payload = util.convertBufToI16(chunk.payload)
                     self.expander?.process(payload).then((result) => {
-                        if (self.destroyed)
+                        if (self.closing)
                             throw new Error("stream already destroyed")
 
                         /*  take over expanded data  */
@@ -176,13 +176,13 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        if (!self.destroyed)
+                        if (!self.closing)
                             callback(util.ensureError(error, "expansion failed"))
                     })
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -194,8 +194,8 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  destroy expander  */
         if (this.expander !== null) {

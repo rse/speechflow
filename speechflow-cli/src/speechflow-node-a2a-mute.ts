@@ -24,7 +24,7 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
 
     /*  internal state  */
     private muteMode: MuteMode = "none"
-    private destroyed = false
+    private closing = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -40,7 +40,7 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
 
     /*  receive external request  */
     async receiveRequest (params: any[]) {
-        if (this.destroyed)
+        if (this.closing)
             throw new Error("mute: node already destroyed")
         try {
             if (params.length === 2 && params[0] === "mode") {
@@ -62,7 +62,7 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
 
     /*  change mute mode  */
     setMuteMode (mode: MuteMode) {
-        if (this.destroyed) {
+        if (this.closing) {
             this.log("warning", "attempted to set mute mode on destroyed node")
             return
         }
@@ -73,7 +73,7 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  establish a transform stream  */
         const self = this
@@ -82,7 +82,7 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -107,7 +107,7 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -119,8 +119,8 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  shutdown stream  */
         if (this.stream !== null) {

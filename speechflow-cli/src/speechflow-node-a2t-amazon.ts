@@ -70,7 +70,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     /*  internal state  */
     private client:            TranscribeStreamingClient     | null             = null
     private clientStream:      AsyncIterable<TranscriptResultStream> | null     = null
-    private destroyed                                                           = false
+    private closing                                                           = false
     private initTimeout:       ReturnType<typeof setTimeout> | null             = null
     private connectionTimeout: ReturnType<typeof setTimeout> | null             = null
     private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
@@ -111,7 +111,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
             throw new Error("Amazon Transcribe node currently supports PCM-S16LE audio only")
 
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  create queue for results  */
         this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
@@ -140,7 +140,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
 
         /*  start streaming  */
         const ensureAudioStreamActive = async () => {
-            if (this.clientStream !== null || this.destroyed)
+            if (this.clientStream !== null || this.closing)
                 return
             const language: LanguageCode = this.params.language === "de" ? "de-DE" : "en-US"
             const command = new StartStreamTranscriptionCommand({
@@ -210,7 +210,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed || self.client === null) {
+                if (self.closing || self.client === null) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -232,12 +232,12 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                 }
             },
             read (size) {
-                if (self.destroyed || self.queue === null) {
+                if (self.closing || self.queue === null) {
                     this.push(null)
                     return
                 }
                 self.queue.read().then((chunk) => {
-                    if (self.destroyed) {
+                    if (self.closing) {
                         this.push(null)
                         return
                     }
@@ -250,12 +250,12 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                         this.push(chunk)
                     }
                 }).catch((error: unknown) => {
-                    if (!self.destroyed)
+                    if (!self.closing)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
             final (callback) {
-                if (self.destroyed || self.client === null) {
+                if (self.closing || self.client === null) {
                     callback()
                     return
                 }
@@ -272,8 +272,8 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction first to stop all async operations  */
-        this.destroyed = true
+        /*  indicate closing first to stop all async operations  */
+        this.closing = true
 
         /*  cleanup all timers  */
         if (this.initTimeout !== null) {

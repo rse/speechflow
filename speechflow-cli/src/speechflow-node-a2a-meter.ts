@@ -24,7 +24,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
     private calcInterval: ReturnType<typeof setInterval> | null = null
     private silenceTimer: ReturnType<typeof setTimeout>  | null = null
     private chunkBuffer = new Float32Array(0)
-    private destroyed = false
+    private closing = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -52,7 +52,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             throw new Error("meter node currently supports PCM-S16LE audio only")
 
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  internal state  */
         let lufsm = -60
@@ -72,7 +72,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         /*  setup chunking interval  */
         this.calcInterval = setInterval(() => {
             /*  short-circuit during destruction  */
-            if (this.destroyed)
+            if (this.closing)
                 return
 
             /*  short-circuit if still not enough chunk data  */
@@ -133,7 +133,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
 
         /*  setup loudness emitting interval  */
         this.emitInterval = setInterval(() => {
-            if (this.destroyed)
+            if (this.closing)
                 return
             this.log("debug", `LUFS-M: ${lufsm.toFixed(1)} dB, RMS: ${rms.toFixed(1)} dB`)
             this.sendResponse([ "meter", "LUFS-M", lufsm ])
@@ -152,7 +152,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
 
             /*  transform audio chunk  */
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -183,7 +183,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.destroyed || self.params.mode === "sink") {
+                if (self.closing || self.params.mode === "sink") {
                     callback()
                     return
                 }
@@ -195,8 +195,8 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction immediately to stop any ongoing operations  */
-        this.destroyed = true
+        /*  indicate closing immediately to stop any ongoing operations  */
+        this.closing = true
 
         /*  stop intervals  */
         if (this.emitInterval !== null) {

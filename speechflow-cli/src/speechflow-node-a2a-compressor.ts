@@ -157,7 +157,7 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
     public static name = "a2a-compressor"
 
     /*  internal state  */
-    private destroyed = false
+    private closing = false
     private compressor: AudioCompressor | null = null
     private bus: EventEmitter | null = null
     private intervalId: ReturnType<typeof setInterval> | null = null
@@ -193,7 +193,7 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  setup compressor  */
         this.compressor = new AudioCompressor(
@@ -234,7 +234,7 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
             writableObjectMode: true,
             decodeStrings:      false,
             transform (chunk: SpeechFlowChunk & { payload: Buffer }, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -244,7 +244,7 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                     /*  compress chunk  */
                     const payload = util.convertBufToI16(chunk.payload)
                     self.compressor?.process(payload).then((result) => {
-                        if (self.destroyed)
+                        if (self.closing)
                             throw new Error("stream already destroyed")
                         if ((self.params.type === "standalone" && self.params.mode === "compress") ||
                             (self.params.type === "sidechain"  && self.params.mode === "adjust")     ) {
@@ -255,13 +255,13 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        if (!self.destroyed)
+                        if (!self.closing)
                             callback(util.ensureError(error, "compression failed"))
                     })
                 }
             },
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -273,8 +273,8 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  clear interval  */
         if (this.intervalId !== null) {

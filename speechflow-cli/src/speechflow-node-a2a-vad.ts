@@ -40,7 +40,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
     private queueRecv = this.queue.pointerUse("recv")
     private queueVAD  = this.queue.pointerUse("vad")
     private queueSend = this.queue.pointerUse("send")
-    private destroyed = false
+    private closing = false
     private tailTimer: ReturnType<typeof setTimeout> | null = null
     private activeEventListeners = new Set<() => void>()
 
@@ -71,7 +71,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
             throw new Error("VAD node currently supports PCM-S16LE audio only")
 
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  internal processing constants  */
         const vadSampleRateTarget = 16000 /* internal target of VAD */
@@ -98,7 +98,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                 redemptionFrames:        this.params.redemptionFrames,
                 preSpeechPadFrames:      this.params.preSpeechPadFrames,
                 onSpeechStart: () => {
-                    if (this.destroyed)
+                    if (this.closing)
                         return
                     this.log("info", "VAD: speech start")
                     if (this.params.mode === "unplugged") {
@@ -107,7 +107,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                     }
                 },
                 onSpeechEnd: (audio) => {
-                    if (this.destroyed)
+                    if (this.closing)
                         return
                     const duration = util.audioArrayDuration(audio, vadSampleRateTarget)
                     this.log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
@@ -115,7 +115,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         tail = true
                         clearTailTimer()
                         this.tailTimer = setTimeout(() => {
-                            if (this.destroyed || this.tailTimer === null)
+                            if (this.closing || this.tailTimer === null)
                                 return
                             tail = false
                             this.tailTimer = null
@@ -123,14 +123,14 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                     }
                 },
                 onVADMisfire: () => {
-                    if (this.destroyed)
+                    if (this.closing)
                         return
                     this.log("info", "VAD: speech end (segment too short)")
                     if (this.params.mode === "unplugged") {
                         tail = true
                         clearTailTimer()
                         this.tailTimer = setTimeout(() => {
-                            if (this.destroyed || this.tailTimer === null)
+                            if (this.closing || this.tailTimer === null)
                                 return
                             tail = false
                             this.tailTimer = null
@@ -138,7 +138,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                     }
                 },
                 onFrameProcessed: (audio) => {
-                    if (this.destroyed)
+                    if (this.closing)
                         return
                     try {
                         /*  annotate the current audio segment  */
@@ -178,7 +178,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
 
             /*  receive audio chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -217,7 +217,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         })
 
                         /*  push segments through Voice Activity Detection (VAD)  */
-                        if (self.vad && !self.destroyed) {
+                        if (self.vad && !self.closing) {
                             try {
                                 for (const segment of segmentData)
                                     self.vad.processAudio(segment.data)
@@ -237,7 +237,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
 
             /*  receive no more audio chunks (writable side of stream)  */
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -249,14 +249,14 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
 
             /*  send audio chunk(s) (readable side of stream)  */
             read (_size) {
-                if (self.destroyed) {
+                if (self.closing) {
                     this.push(null)
                     return
                 }
 
                 /*  try to perform read operation from scratch  */
                 const tryToRead = () => {
-                    if (self.destroyed) {
+                    if (self.closing) {
                         this.push(null)
                         return
                     }
@@ -265,7 +265,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                     const flushPendingChunks = () => {
                         let pushed = 0
                         while (true) {
-                            if (self.destroyed) {
+                            if (self.closing) {
                                 this.push(null)
                                 return
                             }
@@ -297,7 +297,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                                     mode we else would be never called again until
                                     we at least once push a new chunk as the result  */
                                 setTimeout(() => {
-                                    if (self.destroyed)
+                                    if (self.closing)
                                         return
                                     tryToRead()
                                 }, 0)
@@ -309,14 +309,14 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                     /*  await forthcoming audio chunks  */
                     const awaitForthcomingChunks = () => {
                         self.activeEventListeners.delete(awaitForthcomingChunks)
-                        if (self.destroyed)
+                        if (self.closing)
                             return
                         const element = self.queueSend.peek()
                         if (element !== undefined
                             && element.type === "audio-frame"
                             && element.isSpeech !== undefined)
                             flushPendingChunks()
-                        else if (!self.destroyed && !self.activeEventListeners.has(awaitForthcomingChunks)) {
+                        else if (!self.closing && !self.activeEventListeners.has(awaitForthcomingChunks)) {
                             self.queue.once("write", awaitForthcomingChunks)
                             self.activeEventListeners.add(awaitForthcomingChunks)
                         }
@@ -329,7 +329,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         && element.type === "audio-frame"
                         && element.isSpeech !== undefined)
                         flushPendingChunks()
-                    else if (!self.destroyed && !self.activeEventListeners.has(awaitForthcomingChunks)) {
+                    else if (!self.closing && !self.activeEventListeners.has(awaitForthcomingChunks)) {
                         self.queue.once("write", awaitForthcomingChunks)
                         self.activeEventListeners.add(awaitForthcomingChunks)
                     }
@@ -341,8 +341,8 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  cleanup tail timer  */
         if (this.tailTimer !== null) {

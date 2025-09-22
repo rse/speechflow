@@ -40,7 +40,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
     private queueRecv = this.queue.pointerUse("recv")
     private queueAC   = this.queue.pointerUse("ac")
     private queueSend = this.queue.pointerUse("send")
-    private destroyed = false
+    private closing = false
     private workingOffTimer:  ReturnType<typeof setTimeout>  | null = null
     private progressInterval: ReturnType<typeof setInterval> | null = null
 
@@ -68,7 +68,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             throw new Error("Gender node currently supports PCM-S16LE audio only")
 
         /*  clear destruction flag  */
-        this.destroyed = false
+        this.closing = false
 
         /*  the used model  */
         const model = "Xenova/wav2vec2-large-xlsr-53-gender-recognition-librispeech"
@@ -76,7 +76,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         /*  track download progress when instantiating Transformers engine and model  */
         const progressState = new Map<string, number>()
         const progressCallback: Transformers.ProgressCallback = (progress: any) => {
-            if (this.destroyed)
+            if (this.closing)
                 return
             let artifact = model
             if (typeof progress.file === "string")
@@ -90,7 +90,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 progressState.set(artifact, percent)
         }
         this.progressInterval = setInterval(() => {
-            if (this.destroyed)
+            if (this.closing)
                 return
             for (const [ artifact, percent ] of progressState) {
                 this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
@@ -130,7 +130,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         /*  classify a single large-enough concatenated audio frame  */
         let genderLast: Gender = "unknown"
         const classify = async (data: Float32Array) => {
-            if (this.destroyed || this.classifier === null)
+            if (this.closing || this.classifier === null)
                 throw new Error("classifier destroyed during operation")
 
             /*  check volume level and return "unknown" if too low
@@ -178,7 +178,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         let workingOff = false
         const workOffQueue = async () => {
             /*  control working off round  */
-            if (workingOff || this.destroyed)
+            if (workingOff || this.closing)
                 return
             workingOff = true
             if (this.workingOffTimer !== null) {
@@ -195,7 +195,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 data.fill(0)
                 let samples = 0
                 let pos = pos0
-                while (pos < posL && samples < frameWindowSamples && !this.destroyed) {
+                while (pos < posL && samples < frameWindowSamples && !this.closing) {
                     const element = this.queueAC.peek(pos)
                     if (element === undefined || element.type !== "audio-frame")
                         break
@@ -205,12 +205,12 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                     }
                     pos++
                 }
-                if (pos0 < pos && samples > frameWindowSamples * 0.75 && !this.destroyed) {
+                if (pos0 < pos && samples > frameWindowSamples * 0.75 && !this.closing) {
                     const gender = await classify(data)
-                    if (this.destroyed)
+                    if (this.closing)
                         return
                     const posM = pos0 + Math.trunc((pos - pos0) * 0.25)
-                    while (pos0 < posM && pos0 < posL && !this.destroyed) {
+                    while (pos0 < posM && pos0 < posL && !this.closing) {
                         const element = this.queueAC.peek(pos0)
                         if (element === undefined || element.type !== "audio-frame")
                             break
@@ -227,7 +227,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
             /*  re-initiate working off round  */
             workingOff = false
-            if (!this.destroyed) {
+            if (!this.closing) {
                 this.workingOffTimer = setTimeout(workOffQueue, 100)
                 this.queue.once("write", workOffQueue)
             }
@@ -244,7 +244,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
             /*  receive audio chunk (writable side of stream)  */
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -273,7 +273,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
             /*  receive no more audio chunks (writable side of stream)  */
             final (callback) {
-                if (self.destroyed) {
+                if (self.closing) {
                     callback()
                     return
                 }
@@ -287,7 +287,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             read (_size) {
                 /*  flush pending audio chunks  */
                 const flushPendingChunks = () => {
-                    if (self.destroyed) {
+                    if (self.closing) {
                         this.push(null)
                         return
                     }
@@ -299,7 +299,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                         && element.type === "audio-frame"
                         && element.gender !== undefined) {
                         while (true) {
-                            if (self.destroyed) {
+                            if (self.closing) {
                                 this.push(null)
                                 return
                             }
@@ -325,7 +325,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                             self.queue.trim()
                         }
                     }
-                    else if (!self.destroyed)
+                    else if (!self.closing)
                         self.queue.once("write", flushPendingChunks)
                 }
                 flushPendingChunks()
@@ -335,8 +335,8 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate destruction  */
-        this.destroyed = true
+        /*  indicate closing  */
+        this.closing = true
 
         /*  cleanup working-off timer  */
         if (this.workingOffTimer !== null) {
