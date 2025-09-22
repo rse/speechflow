@@ -41,7 +41,7 @@ export function createTransformStreamForReadableSide (type: "text" | "audio", ge
         readableObjectMode: true,
         writableObjectMode: true,
         decodeStrings: false,
-        highWaterMark: highWaterMark ?? (type === "audio" ? 19200 : 65536), /* audio: 400ms @ 48kHz/16bit/mono, text: 64KB */
+        highWaterMark: highWaterMark ?? (type === "audio" ? 19200 /* 400ms */: 65536 /* 64KB */),
         transform (chunk: Buffer | string, encoding, callback) {
             if (chunk === null) {
                 this.push(null)

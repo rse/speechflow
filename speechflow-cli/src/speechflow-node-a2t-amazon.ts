@@ -130,7 +130,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         if (this.client === null)
             throw new Error("failed to establish Amazon Transcribe client")
 
-        /* create an AudioStream for Amazon Transcribe  */
+        /*  create an AudioStream for Amazon Transcribe  */
         const audioQueue = new AsyncQueue<Uint8Array>()
         const audioStream = (async function *(q: AsyncQueue<Uint8Array>): AsyncIterable<AudioStream> {
             for await (const chunk of q) {
@@ -223,7 +223,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                         self.log("debug", `send data (${chunk.payload.byteLength} bytes)`)
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
-                        audioQueue.push(new Uint8Array(chunk.payload)) /* intentionally discard all time information */
+                        audioQueue.push(new Uint8Array(chunk.payload)) /*  intentionally discard all time information  */
                         ensureAudioStreamActive().catch((error: unknown) => {
                             self.log("error", `failed to start audio stream: ${util.ensureError(error).message}`)
                         })
@@ -263,7 +263,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     () => self.client!.destroy(),
                     (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
                 )
-                audioQueue.push(null) /* do not push null to stream, let Amazon Transcribe do it */
+                audioQueue.push(null) /*  do not push null to stream, let Amazon Transcribe do it  */
                 audioQueue.destroy()
                 callback()
             }

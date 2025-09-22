@@ -288,7 +288,7 @@ export class WebAudio {
             this.pendingPromises.clear()
         }
         catch (_err) {
-            /* ignored - cleanup during shutdown */
+            /*  ignored -- cleanup during shutdown  */
         }
 
         /*  disconnect nodes  */

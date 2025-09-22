@@ -44,12 +44,12 @@ export default class SpeechFlowNode extends Events.EventEmitter {
 
     /*  general constant configuration (for reference)  */
     config = {
-        audioChannels:     1,                            /* audio mono channel        */
-        audioBitDepth:     16 as (1 | 8 | 16 | 24 | 32), /* audio PCM 16-bit integer  */
-        audioLittleEndian: true,                         /* audio PCM little-endian   */
-        audioSampleRate:   48000,                        /* audio 48kHz sample rate   */
-        textEncoding:      "utf8" as BufferEncoding,     /* UTF-8 text encoding       */
-        cacheDir:          ""                            /* directory for cache files */
+        audioChannels:     1,                            /*  audio mono channel         */
+        audioBitDepth:     16 as (1 | 8 | 16 | 24 | 32), /*  audio PCM 16-bit integer   */
+        audioLittleEndian: true,                         /*  audio PCM little-endian    */
+        audioSampleRate:   48000,                        /*  audio 48kHz sample rate    */
+        textEncoding:      "utf8" as BufferEncoding,     /*  UTF-8 text encoding        */
+        cacheDir:          ""                            /*  directory for cache files  */
     }
 
     /*  announced information  */

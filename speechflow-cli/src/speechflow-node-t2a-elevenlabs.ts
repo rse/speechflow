@@ -117,7 +117,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                 modelId:          model,
                 languageCode:     this.params.language,
                 outputFormat:     `pcm_${maxSampleRate}` as ElevenLabs.ElevenLabs.OutputFormat,
-                seed:             815, /* arbitrary, but fixated by us */
+                seed:             815, /*  arbitrary, but fixated by us  */
                 voiceSettings: {
                     speed:           this.params.speed,
                     stability:       this.params.stability,
