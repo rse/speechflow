@@ -154,6 +154,8 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     try {
+                        if (self.closing || self.filler === null)
+                            throw new Error("stream already destroyed")
                         self.filler.add(chunk)
                         callback()
                     }
@@ -168,7 +170,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     return
                 }
                 self.sendQueue.read().then((chunk) => {
-                    if (self.closing) {
+                    if (self.closing || self.sendQueue === null) {
                         this.push(null)
                         return
                     }
@@ -181,7 +183,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                         this.push(chunk)
                     }
                 }).catch((error: unknown) => {
-                    if (!self.closing)
+                    if (!self.closing && self.sendQueue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },

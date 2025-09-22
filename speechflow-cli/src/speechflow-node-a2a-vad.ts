@@ -297,7 +297,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                                     mode we else would be never called again until
                                     we at least once push a new chunk as the result  */
                                 setTimeout(() => {
-                                    if (self.closing)
+                                    if (self.closing || self.queue === null)
                                         return
                                     tryToRead()
                                 }, 0)

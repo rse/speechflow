@@ -223,7 +223,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     return
                 }
                 self.queue.read().then((chunk) => {
-                    if (self.closing) {
+                    if (self.closing || self.queue === null) {
                         this.push(null)
                         return
                     }
@@ -236,7 +236,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                         this.push(chunk)
                     }
                 }).catch((error: unknown) => {
-                    if (!self.closing)
+                    if (!self.closing && self.queue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 })
             },
