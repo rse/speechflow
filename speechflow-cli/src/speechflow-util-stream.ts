@@ -199,3 +199,19 @@ export class StreamWrapper extends Stream.Transform {
         super._destroy(error, callback)
     }
 }
+
+/*  helper function for destruction of a stream  */
+export async function destroyStream(
+    stream: Stream.Readable | Stream.Writable | Stream.Duplex | Stream.Transform
+) {
+    /*  signal the end for a writable stream  */
+    if (stream instanceof Stream.Duplex    ||
+        stream instanceof Stream.Transform ||
+        stream instanceof Stream.Writable    )
+        await new Promise<void>((resolve) => {
+            stream.end(() => { resolve() })
+        })
+
+    /*  destroy the stream  */
+    stream.destroy()
+}
