@@ -119,7 +119,7 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
         }
 
         /*  create transform stream and connect it to the Kokoro API  */
-        const log = (level: string, msg: string) => { this.log(level, msg) }
+        const self = this
         this.stream = new Stream.Transform({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -130,7 +130,7 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     text2speech(chunk.payload).then((buffer) => {
-                        log("info", `Kokoro: received audio (buffer length: ${buffer.byteLength})`)
+                        self.log("info", `Kokoro: received audio (buffer length: ${buffer.byteLength})`)
                         chunk = chunk.clone()
                         chunk.type = "audio"
                         chunk.payload = buffer
