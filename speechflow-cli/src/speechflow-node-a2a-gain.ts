@@ -88,9 +88,9 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
         /*  indicate destruction  */
         this.destroyed = true
 
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }

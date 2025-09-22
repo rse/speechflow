@@ -12,6 +12,7 @@ import { Duration } from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for data flow tracing  */
 export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
@@ -130,9 +131,9 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
 

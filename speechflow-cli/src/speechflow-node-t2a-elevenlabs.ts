@@ -202,9 +202,9 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
         /*  indicate destruction  */
         this.destroyed = true
 
-        /*  destroy stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
 

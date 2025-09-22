@@ -106,15 +106,9 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close duplex stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            await new Promise<void>((resolve) => {
-                if (this.stream instanceof Stream.Duplex)
-                    this.stream.end(() => { resolve() })
-                else
-                    resolve()
-            })
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
 

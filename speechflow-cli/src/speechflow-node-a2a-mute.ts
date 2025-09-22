@@ -9,6 +9,7 @@ import Stream from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as util                           from "./speechflow-util"
 
 /*  the type of muting  */
 type MuteMode =
@@ -121,9 +122,9 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
         /*  indicate destruction  */
         this.destroyed = true
 
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }

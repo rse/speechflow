@@ -240,9 +240,9 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             this.client = null
         }
 
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }

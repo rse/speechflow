@@ -150,9 +150,9 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  destroy stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
 

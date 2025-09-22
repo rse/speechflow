@@ -356,9 +356,9 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
         })
         this.activeEventListeners.clear()
 
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
 

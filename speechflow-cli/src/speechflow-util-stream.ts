@@ -205,12 +205,17 @@ export async function destroyStream(
     stream: Stream.Readable | Stream.Writable | Stream.Duplex | Stream.Transform
 ) {
     /*  signal the end for a writable stream  */
-    if (stream instanceof Stream.Duplex    ||
-        stream instanceof Stream.Transform ||
-        stream instanceof Stream.Writable    )
-        await new Promise<void>((resolve) => {
-            stream.end(() => { resolve() })
-        })
+    if ((stream instanceof Stream.Duplex    ||
+         stream instanceof Stream.Transform ||
+         stream instanceof Stream.Writable    ) &&
+        (!stream.writableEnded &&
+         !stream.destroyed       )                )
+        await Promise.race([
+            new Promise<void>((resolve) => {
+                stream.end(() => { resolve() })
+            }),
+            util.timeoutPromise(5000, "stream end timeout")
+        ])
 
     /*  destroy the stream  */
     stream.destroy()

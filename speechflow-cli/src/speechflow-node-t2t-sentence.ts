@@ -232,9 +232,9 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         /*  remove any pending event listeners  */
         this.queue.removeAllListeners("write")
 
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }

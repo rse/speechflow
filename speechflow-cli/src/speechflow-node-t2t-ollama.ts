@@ -266,9 +266,9 @@ export default class SpeechFlowNodeT2TOllama extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
 

@@ -195,24 +195,25 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
     async close () {
         /*  shutdown stream  */
         if (this.stream !== null) {
-            await Promise.race([
-                new Promise<void>((resolve, reject) => {
-                    if (this.stream instanceof Stream.Writable || this.stream instanceof Stream.Duplex) {
-                        if (this.stream.writableEnded || this.stream.destroyed)
-                            resolve()
-                        else
-                            this.stream.end((err?: Error) => {
+            /*  only destroy non-stdio streams  */
+            if (this.params.path !== "-")
+                await util.destroyStream(this.stream)
+            else {
+                /*  for stdio streams, just end without destroying  */
+                const stream = this.stream
+                if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex) &&
+                    (!stream.writableEnded && !stream.destroyed)                             ) {
+                    await Promise.race([
+                        new Promise<void>((resolve, reject) => {
+                            stream.end((err?: Error) => {
                                 if (err) reject(err)
                                 else     resolve()
                             })
-                    }
-                    else
-                        resolve()
-                }),
-                new Promise<void>((resolve) => setTimeout(() => resolve(), 5000))
-            ])
-            if (this.params.path !== "-")
-                this.stream.destroy()
+                        }),
+                        util.timeoutPromise(5000)
+                    ])
+                }
+            }
             this.stream = null
         }
     }

@@ -9,6 +9,7 @@ ChangeLog
 - BUGFIX: do not loose meta information in chunk processing
 - CLEANUP: align destruction handling in a2a-gender node with other nodes
 - CLEANUP: use consistent Error object handling in throwing exceptions
+- CLEANUP: consistently use stream destruction procedure
 
 1.6.5 (2025-09-21)
 ------------------

@@ -12,6 +12,7 @@ import wrapText from "wrap-text"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for text-to-text formatting  */
 export default class SpeechFlowNodeT2TFormat extends SpeechFlowNode {
@@ -71,9 +72,9 @@ export default class SpeechFlowNodeT2TFormat extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }

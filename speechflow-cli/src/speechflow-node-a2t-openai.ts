@@ -322,9 +322,9 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         if (this.openai !== null)
             this.openai = null
 
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }

@@ -9,6 +9,7 @@ import Stream           from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as util                           from "./speechflow-util"
 
 /*  write WAV header  */
 const writeWavHeader = (
@@ -190,13 +191,7 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
     async close () {
         /*  shutdown stream  */
         if (this.stream !== null) {
-            await new Promise<void>((resolve) => {
-                if (this.stream instanceof Stream.Duplex)
-                    this.stream.end(() => { resolve() })
-                else
-                    resolve()
-            })
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }

@@ -297,9 +297,9 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
             this.client = null
         }
 
-        /*  close stream  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
-            this.stream.destroy()
+            await util.destroyStream(this.stream)
             this.stream = null
         }
     }
