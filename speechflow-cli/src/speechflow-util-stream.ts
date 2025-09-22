@@ -88,7 +88,8 @@ type SpeechFlowChunkSerialized = {
     timestampEnd:   number,
     kind:           string,
     type:           string,
-    payload:        Uint8Array
+    payload:        Uint8Array,
+    meta?:          Array<[ string, any ]>
 }
 
 /*  encode/serialize chunk of data  */
@@ -100,13 +101,15 @@ export function streamChunkEncode (chunk: SpeechFlowChunk) {
         const encoder = new TextEncoder()
         payload = encoder.encode(chunk.payload)
     }
-    const data = {
+    const data: SpeechFlowChunkSerialized = {
         timestampStart: chunk.timestampStart.toMillis(),
         timestampEnd:   chunk.timestampEnd.toMillis(),
         kind:           chunk.kind,
         type:           chunk.type,
         payload
-    } satisfies SpeechFlowChunkSerialized
+    }
+    if (chunk.meta.size > 0)
+        data.meta = Array.from(chunk.meta.entries())
     const _data = CBOR.encode(data)
     return _data
 }
@@ -130,7 +133,8 @@ export function streamChunkDecode (_data: Uint8Array) {
         Duration.fromMillis(data.timestampEnd),
         data.kind as "intermediate" | "final",
         data.type as "audio" | "text",
-        payload
+        payload,
+        data.meta ? new Map(data.meta) : undefined
     )
     return chunk
 }

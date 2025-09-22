@@ -44,14 +44,14 @@ class AudioFiller extends EventEmitter {
     }
 
     /*  emit a chunk of silence  */
-    private emitSilence (fromSamples: number, toSamples: number) {
+    private emitSilence (fromSamples: number, toSamples: number, meta?: Map<string, any>) {
         const frames = Math.max(0, Math.floor(toSamples - fromSamples))
         if (frames <= 0)
             return
         const payload = Buffer.alloc(frames * this.bytesPerFrame) /* already zeroed */
         const timestampStart = this.durationFromSamples(fromSamples)
         const timestampEnd   = this.durationFromSamples(toSamples)
-        const chunk = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload)
+        const chunk = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload, meta ? new Map(meta) : undefined)
         this.emit("chunk", chunk)
     }
 
@@ -64,7 +64,7 @@ class AudioFiller extends EventEmitter {
 
         /*  if chunk starts beyond what we've emitted, insert silence for the gap  */
         if (startSamp > this.emittedEndSamples + this.sampleTolerance) {
-            this.emitSilence(this.emittedEndSamples, startSamp)
+            this.emitSilence(this.emittedEndSamples, startSamp, chunk.meta)
             this.emittedEndSamples = startSamp
         }
 
@@ -95,7 +95,7 @@ class AudioFiller extends EventEmitter {
         const outEndSamples   = outStartSamples + Math.floor(payload.length / this.bytesPerFrame)
         const timestampStart  = this.durationFromSamples(outStartSamples)
         const timestampEnd    = this.durationFromSamples(outEndSamples)
-        const c = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload)
+        const c = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload, new Map(chunk.meta))
         this.emit("chunk", c)
 
         /*  advance emitted cursor  */
