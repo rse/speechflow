@@ -5,6 +5,7 @@
         "module":                  "nodenext",
         "moduleResolution":        "nodenext",
         "useDefineForClassFields": true,
+        "allowSyntheticDefaultImports": true,
         "composite":               false,
         "strict":                  true,
         "resolveJsonModule":       true,
