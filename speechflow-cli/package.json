@@ -23,7 +23,6 @@
         "@deepgram/sdk":                        "4.11.2",
         "deepl-node":                           "1.19.1",
         "@elevenlabs/elevenlabs-js":            "2.15.0",
-        "stream-transform":                     "3.4.0",
         "get-stream":                           "9.0.1",
         "@dotenvx/dotenvx":                     "1.50.1",
         "speex-resampler":                      "3.0.1",
