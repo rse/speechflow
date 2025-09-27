@@ -98,23 +98,31 @@ class PitchShifter {
             windowed[i] = frame[i] * window
         }
 
+        /*  prepare real array for FFT (fft.js expects real values in specific format)  */
+        const realInput = new Float32Array(this.config.frameSize)
+        for (let i = 0; i < this.config.frameSize; i++)
+            realInput[i] = windowed[i]
+
         /*  apply forward Fast Fourier Transform (FFT)  */
-        const spectrum = new Float32Array(this.fft.createComplexArray())
-        this.fft.realTransform(spectrum, windowed)
+        const spectrum = this.fft.createComplexArray()
+        this.fft.realTransform(spectrum, realInput)
 
         /*  shift spectrum for pitch change  */
         const shiftedSpectrum = this.shiftSpectrum(spectrum, this.config.shift)
 
         /*  apply inverse Fast Fourier Transform (FFT)  */
         const output = new Float32Array(this.config.frameSize)
-        this.fft.inverseTransform(shiftedSpectrum, output)
+        this.fft.completeSpectrum(shiftedSpectrum)
+        this.fft.inverseTransform(output, shiftedSpectrum)
 
-        /*  normalize output (FFT scaling)  */
-        const scale = 1.0 / this.config.frameSize
-        for (let i = 0; i < this.config.frameSize; i++)
-            output[i] *= scale
+        /*  apply window function to output (for overlap-add)  */
+        const realOutput = new Float32Array(this.config.frameSize)
+        for (let i = 0; i < this.config.frameSize; i++) {
+            const window = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.config.frameSize - 1)))
+            realOutput[i] = output[i] * window
+        }
 
-        return output
+        return realOutput
     }
 
     /*  shift frequency spectrum for pitch change  */
@@ -124,37 +132,62 @@ class PitchShifter {
         if (spectrum.length % 2 !== 0)
             throw new Error("invalid spectrum: length must be even for complex data")
 
+        /*  early return for no pitch change  */
+        if (Math.abs(shift - 1.0) < 0.001)
+            return new Float32Array(spectrum)
+
         const shifted = new Float32Array(spectrum.length)
         const numBins = spectrum.length / 2
 
         /*  preserve Direct Current (DC) component  */
         shifted[0] = spectrum[0]
-        shifted[1] = 0
+        shifted[1] = spectrum[1]
 
-        /*  shift frequencies with interpolation  */
-        for (let bin = 1; bin < numBins; bin++) {
-            const targetBin = bin * shift
-            const targetBinInt = Math.floor(targetBin)
-            const frac = targetBin - targetBinInt
+        /*  shift up: process from high to low to avoid overwriting  */
+        if (shift > 1.0) {
+            for (let bin = numBins - 1; bin >= 1; bin--) {
+                const sourceBin = bin / shift
+                const sourceBinInt = Math.floor(sourceBin)
+                const frac = sourceBin - sourceBinInt
 
-            if (targetBinInt < numBins - 1) {
-                const realIdx = bin * 2
-                const imagIdx = bin * 2 + 1
-                const targetRealIdx = targetBinInt * 2
-                const targetImagIdx = targetBinInt * 2 + 1
+                if (sourceBinInt >= 0 && sourceBinInt < numBins - 1) {
+                    const targetRealIdx = bin * 2
+                    const targetImagIdx = bin * 2 + 1
+                    const sourceRealIdx = sourceBinInt * 2
+                    const sourceImagIdx = sourceBinInt * 2 + 1
 
-                /*  get complex values  */
-                const real = spectrum[realIdx]
-                const imag = spectrum[imagIdx]
+                    /*  linear interpolation between two source bins  */
+                    const real1 = spectrum[sourceRealIdx]
+                    const imag1 = spectrum[sourceImagIdx]
+                    const real2 = sourceBinInt + 1 < numBins ? spectrum[sourceRealIdx + 2] : 0
+                    const imag2 = sourceBinInt + 1 < numBins ? spectrum[sourceImagIdx + 2] : 0
 
-                /*  simple frequency shifting without interpolation for now  */
-                if (targetBinInt > 0 && targetBinInt < numBins) {
-                    shifted[targetRealIdx] += real * (1 - frac)
-                    shifted[targetImagIdx] += imag * (1 - frac)
-                    if (targetBinInt + 1 < numBins) {
-                        shifted[targetRealIdx + 2] += real * frac
-                        shifted[targetImagIdx + 2] += imag * frac
-                    }
+                    shifted[targetRealIdx] = real1 * (1 - frac) + real2 * frac
+                    shifted[targetImagIdx] = imag1 * (1 - frac) + imag2 * frac
+                }
+            }
+        }
+        /*  shift down: process from low to high  */
+        else {
+            for (let bin = 1; bin < numBins; bin++) {
+                const sourceBin = bin / shift
+                const sourceBinInt = Math.floor(sourceBin)
+                const frac = sourceBin - sourceBinInt
+
+                if (sourceBinInt < numBins - 1) {
+                    const targetRealIdx = bin * 2
+                    const targetImagIdx = bin * 2 + 1
+                    const sourceRealIdx = sourceBinInt * 2
+                    const sourceImagIdx = sourceBinInt * 2 + 1
+
+                    /*  linear interpolation between two source bins  */
+                    const real1 = spectrum[sourceRealIdx]
+                    const imag1 = spectrum[sourceImagIdx]
+                    const real2 = sourceBinInt + 1 < numBins ? spectrum[sourceRealIdx + 2] : 0
+                    const imag2 = sourceBinInt + 1 < numBins ? spectrum[sourceImagIdx + 2] : 0
+
+                    shifted[targetRealIdx] = real1 * (1 - frac) + real2 * frac
+                    shifted[targetImagIdx] = imag1 * (1 - frac) + imag2 * frac
                 }
             }
         }
