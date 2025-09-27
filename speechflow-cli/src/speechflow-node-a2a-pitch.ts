@@ -15,29 +15,32 @@ import { AudioWorkletNode } from "node-web-audio-api"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
+/*  parameter configuration  */
 type AudioPitchShifterConfig = {
-    shift?:     number
-    frameSize?: number
-    overlap?:   number
+    rate?:      number
+    tempo?:     number
+    pitch?:     number
+    semitones?: number
 }
 
-/*  audio pitch shifter class using WebAudio  */
+/*  audio pitch shifter class using SoundTouch WebAudio worklet  */
 class AudioPitchShifter extends util.WebAudio {
     /*  internal state  */
     private pitchNode: AudioWorkletNode | null = null
     private config: Required<AudioPitchShifterConfig>
 
     /*  construct object  */
-    constructor(
+    constructor (
         sampleRate: number,
         channels:   number,
         config:     AudioPitchShifterConfig = {}
     ) {
         super(sampleRate, channels)
         this.config = {
-            shift:     config.shift     ?? 1.0,
-            frameSize: config.frameSize ?? 2048,
-            overlap:   config.overlap   ?? 0.5
+            rate:      config.rate      ?? 1.0,
+            tempo:     config.tempo     ?? 1.0,
+            pitch:     config.pitch     ?? 1.0,
+            semitones: config.semitones ?? 0.0
         }
     }
 
@@ -45,40 +48,56 @@ class AudioPitchShifter extends util.WebAudio {
     public async setup (): Promise<void> {
         await super.setup()
 
-        /*  add pitch shifter worklet module  */
-        const url = path.resolve(__dirname, "speechflow-node-a2a-pitch-wt.js")
-        await this.audioContext.audioWorklet.addModule(url)
+        /*  add SoundTouch worklet module  */
+        const packagePath = path.join(__dirname, "../node_modules/@soundtouchjs/audio-worklet")
+        const workletPath = path.join(packagePath, "dist/soundtouch-worklet.js")
+        await this.audioContext.audioWorklet.addModule(workletPath)
 
-        /*  create pitch shifter worklet node  */
-        this.pitchNode = new AudioWorkletNode(this.audioContext, "pitch-shifter", {
+        /*  create SoundTouch worklet node  */
+        this.pitchNode = new AudioWorkletNode(this.audioContext, "soundtouch-processor", {
             numberOfInputs:  1,
             numberOfOutputs: 1,
-            outputChannelCount: [ this.channels ],
-            processorOptions: {
-                shift:     this.config.shift,
-                frameSize: this.config.frameSize,
-                overlap:   this.config.overlap
-            }
+            outputChannelCount: [ this.channels ]
         })
+
+        /*  set initial parameter values  */
+        const params = this.pitchNode.parameters as Map<string, AudioParam>
+        params.get("rate")!.value           = this.config.rate
+        params.get("tempo")!.value          = this.config.tempo
+        params.get("pitch")!.value          = this.config.pitch
+        params.get("pitchSemitones")!.value = this.config.semitones
 
         /*  connect nodes: source -> pitch -> capture  */
         this.sourceNode!.connect(this.pitchNode)
         this.pitchNode.connect(this.captureNode!)
+    }
 
-        /*  configure initial pitch shift  */
-        const currentTime = this.audioContext.currentTime
-        const params = this.pitchNode.parameters as Map<string, AudioParam>
-        params.get("shift")?.setValueAtTime(this.config.shift, currentTime)
+    /*  update rate value  */
+    public setRate (rate: number): void {
+        const params = this.pitchNode?.parameters as Map<string, AudioParam>
+        params?.get("rate")?.setValueAtTime(rate, this.audioContext.currentTime)
+        this.config.rate = rate
+    }
+
+    /*  update tempo value  */
+    public setTempo (tempo: number): void {
+        const params = this.pitchNode?.parameters as Map<string, AudioParam>
+        params?.get("tempo")?.setValueAtTime(tempo, this.audioContext.currentTime)
+        this.config.tempo = tempo
     }
 
     /*  update pitch shift value  */
-    public setShift (shift: number): void {
-        if (this.pitchNode !== null) {
-            const currentTime = this.audioContext.currentTime
-            const params = this.pitchNode.parameters as Map<string, AudioParam>
-            params.get("shift")?.setTargetAtTime(shift, currentTime, 0.01)
-        }
-        this.config.shift = shift
+    public setPitch (pitch: number): void {
+        const params = this.pitchNode?.parameters as Map<string, AudioParam>
+        params?.get("pitch")?.setValueAtTime(pitch, this.audioContext.currentTime)
+        this.config.pitch = pitch
+    }
+
+    /*  update pitch semitones setting  */
+    public setSemitones (semitones: number): void {
+        const params = this.pitchNode?.parameters as Map<string, AudioParam>
+        params?.get("pitchSemitones")?.setValueAtTime(semitones, this.audioContext.currentTime)
+        this.config.semitones = semitones
     }
 
     /*  destroy the pitch shifter  */
@@ -94,10 +113,10 @@ class AudioPitchShifter extends util.WebAudio {
     }
 }
 
-/*  SpeechFlow node for pitch adjustment using WebAudio  */
-export default class SpeechFlowNodeA2APitch2 extends SpeechFlowNode {
+/*  SpeechFlow node for pitch adjustment using SoundTouch WebAudio  */
+export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "a2a-pitch2"
+    public static name = "a2a-pitch"
 
     /*  internal state  */
     private closing = false
@@ -109,9 +128,10 @@ export default class SpeechFlowNodeA2APitch2 extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            shift:     { type: "number", val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
-            frameSize: { type: "number", val: 2048, match: (n: number) => n >= 256  && n <= 8192 && (n & (n - 1)) === 0 },
-            overlap:   { type: "number", val: 0.5,  match: (n: number) => n >= 0.0  && n <= 0.9 }
+            rate:      { type: "number",  val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
+            tempo:     { type: "number",  val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
+            pitch:     { type: "number",  val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
+            semitones: { type: "number",  val: 0.0,  match: (n: number) => n >= -24  && n <= 24  }
         })
 
         /*  declare node input/output format  */
@@ -128,9 +148,10 @@ export default class SpeechFlowNodeA2APitch2 extends SpeechFlowNode {
         this.pitchShifter = new AudioPitchShifter(
             this.config.audioSampleRate,
             this.config.audioChannels, {
-                shift:     this.params.shift,
-                frameSize: this.params.frameSize,
-                overlap:   this.params.overlap
+                rate:      this.params.rate,
+                tempo:     this.params.tempo,
+                pitch:     this.params.pitch,
+                semitones: this.params.semitones
             }
         )
         await this.pitchShifter.setup()
@@ -156,13 +177,8 @@ export default class SpeechFlowNodeA2APitch2 extends SpeechFlowNode {
                             throw new Error("stream already destroyed")
 
                         /*  take over pitch-shifted data  */
-                        const outputPayload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
-
-                        /*  final check before pushing to avoid race condition  */
-                        if (self.closing)
-                            throw new Error("stream already destroyed")
-
-                        chunk.payload = outputPayload
+                        const payload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
+                        chunk.payload = payload
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {

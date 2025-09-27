@@ -65,7 +65,7 @@
         "node-interval-tree":                   "2.1.2",
         "wrap-text":                            "1.0.10",
         "cli-table3":                           "0.6.5",
-        "fft.js":                               "4.0.4",
+        "@soundtouchjs/audio-worklet":          "0.2.1",
         "@rse/stx":                             "1.1.2"
     },
     "devDependencies": {
