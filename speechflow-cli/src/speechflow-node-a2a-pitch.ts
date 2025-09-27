@@ -90,14 +90,19 @@ class PitchShifter {
         return outputFloat
     }
 
+    /*  apply Hann window function  */
+    private applyHannWindow (input: Float32Array, output: Float32Array): void {
+        for (let i = 0; i < this.config.frameSize; i++) {
+            const window = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.config.frameSize - 1)))
+            output[i] = input[i] * window
+        }
+    }
+
     /*  process single frame with pitch shifting  */
     private processFrame (frame: Float32Array): Float32Array {
         /*  apply window function (Hann window)  */
         const windowed = new Float32Array(this.config.frameSize)
-        for (let i = 0; i < this.config.frameSize; i++) {
-            const window = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.config.frameSize - 1)))
-            windowed[i] = frame[i] * window
-        }
+        this.applyHannWindow(frame, windowed)
 
         /*  prepare real array for FFT (fft.js expects real values in specific format)  */
         const realInput = new Float32Array(this.config.frameSize)
@@ -118,10 +123,7 @@ class PitchShifter {
 
         /*  apply window function to output (for overlap-add)  */
         const realOutput = new Float32Array(this.config.frameSize)
-        for (let i = 0; i < this.config.frameSize; i++) {
-            const window = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.config.frameSize - 1)))
-            realOutput[i] = output[i] * window
-        }
+        this.applyHannWindow(output, realOutput)
 
         return realOutput
     }
