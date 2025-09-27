@@ -5,203 +5,103 @@
 */
 
 /*  standard dependencies  */
-import Stream  from "node:stream"
+import path   from "node:path"
+import Stream from "node:stream"
 
 /*  external dependencies  */
-import FFT     from "fft.js"
+import { AudioWorkletNode } from "node-web-audio-api"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
-/*  internal types  */
-interface PitchConfig {
+type AudioPitchShifterConfig = {
     shift?:     number
     frameSize?: number
     overlap?:   number
 }
 
-/*  audio pitch shifter class  */
-class PitchShifter {
+/*  audio pitch shifter class using WebAudio  */
+class AudioPitchShifter extends util.WebAudio {
     /*  internal state  */
-    private config:        Required<PitchConfig>
-    private fft:           FFT
-    private frameBuffer:   Float32Array
-    private frameBufferIdx: number
-    private outputBuffer:  Float32Array
-    private overlapBuffer: Float32Array
+    private pitchNode: AudioWorkletNode | null = null
+    private config: Required<AudioPitchShifterConfig>
 
     /*  construct object  */
     constructor(
-        config: PitchConfig = {}
+        sampleRate: number,
+        channels:   number,
+        config:     AudioPitchShifterConfig = {}
     ) {
-        /*  store configuration  */
+        super(sampleRate, channels)
         this.config = {
-            shift:     config.shift     ?? 1.2,
-            frameSize: config.frameSize ?? 1024,
+            shift:     config.shift     ?? 1.0,
+            frameSize: config.frameSize ?? 2048,
             overlap:   config.overlap   ?? 0.5
         }
-
-        /*  initialize FFT  */
-        this.fft = new FFT(this.config.frameSize)
-
-        /*  initialize buffers  */
-        this.frameBuffer    = new Float32Array(this.config.frameSize)
-        this.frameBufferIdx = 0
-        this.outputBuffer   = new Float32Array(this.config.frameSize)
-        this.overlapBuffer  = new Float32Array(this.config.frameSize)
     }
 
-    /*  process audio data with pitch shifting  */
-    async process (inputFloat: Float32Array): Promise<Float32Array> {
-        /*  process input frames  */
-        const outputFloat = new Float32Array(inputFloat.length)
-        let outputIndex = 0
+    /*  setup object  */
+    public async setup (): Promise<void> {
+        await super.setup()
 
-        for (let i = 0; i < inputFloat.length; i++) {
-            this.frameBuffer[this.frameBufferIdx++] = inputFloat[i]
-            if (this.frameBufferIdx >= this.config.frameSize) {
-                /*  process current frame  */
-                const processedFrame = this.processFrame(this.frameBuffer)
+        /*  add pitch shifter worklet module  */
+        const url = path.resolve(__dirname, "speechflow-node-a2a-pitch-wt.js")
+        await this.audioContext.audioWorklet.addModule(url)
 
-                /*  merge processed and overlap frame  */
-                for (let j = 0; j < this.config.frameSize; j++)
-                    this.outputBuffer[j] = processedFrame[j] + this.overlapBuffer[j]
-
-                /*  store overlap for next frame  */
-                const hopSize = Math.floor(this.config.frameSize * (1 - this.config.overlap))
-                for (let j = 0; j < this.config.frameSize - hopSize; j++)
-                    this.overlapBuffer[j] = processedFrame[j + hopSize]
-                for (let j = this.config.frameSize - hopSize; j < this.config.frameSize; j++)
-                    this.overlapBuffer[j] = 0
-
-                /*  copy output samples  */
-                const samplesToOutput = Math.min(hopSize, outputFloat.length - outputIndex)
-                for (let j = 0; j < samplesToOutput; j++)
-                    outputFloat[outputIndex++] = this.outputBuffer[j]
-
-                /*  shift frame buffer for overlap  */
-                for (let j = 0; j < this.config.frameSize - hopSize; j++)
-                    this.frameBuffer[j] = this.frameBuffer[j + hopSize]
-                this.frameBufferIdx = this.config.frameSize - hopSize
+        /*  create pitch shifter worklet node  */
+        this.pitchNode = new AudioWorkletNode(this.audioContext, "pitch-shifter", {
+            numberOfInputs:  1,
+            numberOfOutputs: 1,
+            outputChannelCount: [ this.channels ],
+            processorOptions: {
+                shift:     this.config.shift,
+                frameSize: this.config.frameSize,
+                overlap:   this.config.overlap
             }
-        }
+        })
 
-        return outputFloat
+        /*  connect nodes: source -> pitch -> capture  */
+        this.sourceNode!.connect(this.pitchNode)
+        this.pitchNode.connect(this.captureNode!)
+
+        /*  configure initial pitch shift  */
+        const currentTime = this.audioContext.currentTime
+        const params = this.pitchNode.parameters as Map<string, AudioParam>
+        params.get("shift")?.setValueAtTime(this.config.shift, currentTime)
     }
 
-    /*  apply Hann window function  */
-    private applyHannWindow (input: Float32Array, output: Float32Array): void {
-        for (let i = 0; i < this.config.frameSize; i++) {
-            const window = 0.5 * (1 - Math.cos(2 * Math.PI * i / (this.config.frameSize - 1)))
-            output[i] = input[i] * window
+    /*  update pitch shift value  */
+    public setShift (shift: number): void {
+        if (this.pitchNode !== null) {
+            const currentTime = this.audioContext.currentTime
+            const params = this.pitchNode.parameters as Map<string, AudioParam>
+            params.get("shift")?.setTargetAtTime(shift, currentTime, 0.01)
         }
+        this.config.shift = shift
     }
 
-    /*  process single frame with pitch shifting  */
-    private processFrame (frame: Float32Array): Float32Array {
-        /*  apply window function (Hann window)  */
-        const windowed = new Float32Array(this.config.frameSize)
-        this.applyHannWindow(frame, windowed)
-
-        /*  apply forward Fast Fourier Transform (FFT)  */
-        const spectrum = this.fft.createComplexArray()
-        this.fft.realTransform(spectrum, windowed)
-
-        /*  shift spectrum for pitch change  */
-        const shiftedSpectrum = this.shiftSpectrum(new Float32Array(spectrum), this.config.shift)
-
-        /*  apply inverse Fast Fourier Transform (FFT)  */
-        const output = new Float32Array(this.config.frameSize)
-        this.fft.completeSpectrum(shiftedSpectrum)
-        this.fft.inverseTransform(output, shiftedSpectrum)
-
-        /*  apply window function to output (for overlap-add)  */
-        const realOutput = new Float32Array(this.config.frameSize)
-        this.applyHannWindow(output, realOutput)
-
-        return realOutput
-    }
-
-    /*  shift frequency spectrum for pitch change  */
-    private shiftSpectrum (spectrum: Float32Array, shift: number): Float32Array {
-        if (!spectrum || spectrum.length === 0)
-            throw new Error("invalid spectrum: must be non-empty Float32Array")
-        if (spectrum.length % 2 !== 0)
-            throw new Error("invalid spectrum: length must be even for complex data")
-
-        /*  early return for no pitch change  */
-        if (Math.abs(shift - 1.0) < 0.001)
-            return new Float32Array(spectrum)
-
-        const shifted = new Float32Array(spectrum.length)
-        const numBins = spectrum.length / 2
-
-        /*  preserve Direct Current (DC) component  */
-        shifted[0] = spectrum[0]
-        shifted[1] = spectrum[1]
-
-        /*  shift up: process from high to low to avoid overwriting  */
-        if (shift > 1.0) {
-            for (let bin = numBins - 1; bin >= 1; bin--) {
-                const sourceBin = bin / shift
-                const sourceBinInt = Math.floor(sourceBin)
-                const frac = sourceBin - sourceBinInt
-
-                if (sourceBinInt >= 0 && sourceBinInt < numBins - 1) {
-                    const targetRealIdx = bin * 2
-                    const targetImagIdx = bin * 2 + 1
-                    const sourceRealIdx = sourceBinInt * 2
-                    const sourceImagIdx = sourceBinInt * 2 + 1
-
-                    /*  linear interpolation between two source bins  */
-                    const real1 = spectrum[sourceRealIdx]
-                    const imag1 = spectrum[sourceImagIdx]
-                    const real2 = sourceBinInt + 1 < numBins ? spectrum[sourceRealIdx + 2] : 0
-                    const imag2 = sourceBinInt + 1 < numBins ? spectrum[sourceImagIdx + 2] : 0
-
-                    shifted[targetRealIdx] = real1 * (1 - frac) + real2 * frac
-                    shifted[targetImagIdx] = imag1 * (1 - frac) + imag2 * frac
-                }
-            }
+    /*  destroy the pitch shifter  */
+    public async destroy (): Promise<void> {
+        /*  disconnect pitch node  */
+        if (this.pitchNode !== null) {
+            this.pitchNode.disconnect()
+            this.pitchNode = null
         }
-        /*  shift down: process from low to high  */
-        else {
-            for (let bin = 1; bin < numBins; bin++) {
-                const sourceBin = bin / shift
-                const sourceBinInt = Math.floor(sourceBin)
-                const frac = sourceBin - sourceBinInt
 
-                if (sourceBinInt < numBins - 1) {
-                    const targetRealIdx = bin * 2
-                    const targetImagIdx = bin * 2 + 1
-                    const sourceRealIdx = sourceBinInt * 2
-                    const sourceImagIdx = sourceBinInt * 2 + 1
-
-                    /*  linear interpolation between two source bins  */
-                    const real1 = spectrum[sourceRealIdx]
-                    const imag1 = spectrum[sourceImagIdx]
-                    const real2 = sourceBinInt + 1 < numBins ? spectrum[sourceRealIdx + 2] : 0
-                    const imag2 = sourceBinInt + 1 < numBins ? spectrum[sourceImagIdx + 2] : 0
-
-                    shifted[targetRealIdx] = real1 * (1 - frac) + real2 * frac
-                    shifted[targetImagIdx] = imag1 * (1 - frac) + imag2 * frac
-                }
-            }
-        }
-        return shifted
+        /*  destroy parent  */
+        await super.destroy()
     }
 }
 
-/*  SpeechFlow node for pitch adjustment in audio-to-audio passing  */
-export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
+/*  SpeechFlow node for pitch adjustment using WebAudio  */
+export default class SpeechFlowNodeA2APitch2 extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "a2a-pitch"
+    public static name = "a2a-pitch2"
 
     /*  internal state  */
     private closing = false
-    private pitchShifter: PitchShifter | null = null
-    private processingQueue: Promise<void> = Promise.resolve()
+    private pitchShifter: AudioPitchShifter | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -209,9 +109,9 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            shift:     { type: "number", val: 1.2,  match: (n: number) => n >= 0.5 && n <= 2.0 },
-            frameSize: { type: "number", val: 1024, match: (n: number) => n >= 256 && n <= 4096 && (n & (n - 1)) === 0 },
-            overlap:   { type: "number", val: 0.5,  match: (n: number) => n >= 0.0 && n <= 0.9 }
+            shift:     { type: "number", val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
+            frameSize: { type: "number", val: 2048, match: (n: number) => n >= 256  && n <= 8192 && (n & (n - 1)) === 0 },
+            overlap:   { type: "number", val: 0.5,  match: (n: number) => n >= 0.0  && n <= 0.9 }
         })
 
         /*  declare node input/output format  */
@@ -224,15 +124,16 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
         /*  clear destruction flag  */
         this.closing = false
 
-        /*  reset processing queue  */
-        this.processingQueue = Promise.resolve()
-
         /*  setup pitch shifter  */
-        this.pitchShifter = new PitchShifter({
-            shift:     this.params.shift,
-            frameSize: this.params.frameSize,
-            overlap:   this.params.overlap
-        })
+        this.pitchShifter = new AudioPitchShifter(
+            this.config.audioSampleRate,
+            this.config.audioChannels, {
+                shift:     this.params.shift,
+                frameSize: this.params.frameSize,
+                overlap:   this.params.overlap
+            }
+        )
+        await this.pitchShifter.setup()
 
         /*  establish a transform stream  */
         const self = this
@@ -248,21 +149,19 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
-                    /*  queue processing to maintain order  */
-                    self.processingQueue = self.processingQueue.then(async () => {
-                        if (self.closing)
-                            throw new Error("stream already destroyed")
-                        if (self.pitchShifter === null)
-                            throw new Error("pitch shifter not initialized")
-
-                        /*  shift pitch of audio chunk  */
-                        const payload = util.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
-                        const result = await self.pitchShifter.process(payload)
+                    /*  shift pitch of audio chunk  */
+                    const payload = util.convertBufToI16(chunk.payload, self.config.audioLittleEndian)
+                    self.pitchShifter?.process(payload).then((result) => {
                         if (self.closing)
                             throw new Error("stream already destroyed")
 
                         /*  take over pitch-shifted data  */
-                        const outputPayload = util.convertF32ToBuf(result)
+                        const outputPayload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
+
+                        /*  final check before pushing to avoid race condition  */
+                        if (self.closing)
+                            throw new Error("stream already destroyed")
+
                         chunk.payload = outputPayload
                         this.push(chunk)
                         callback()
@@ -289,8 +188,10 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
         this.closing = true
 
         /*  destroy pitch shifter  */
-        if (this.pitchShifter !== null)
+        if (this.pitchShifter !== null) {
+            await this.pitchShifter.destroy()
             this.pitchShifter = null
+        }
 
         /*  shutdown stream  */
         if (this.stream !== null) {
