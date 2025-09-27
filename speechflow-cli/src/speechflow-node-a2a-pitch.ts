@@ -72,32 +72,35 @@ class AudioPitchShifter extends util.WebAudio {
         this.pitchNode.connect(this.captureNode!)
     }
 
+    /*  update an audio parameter value  */
+    private updateParameter (
+        paramName:   string,
+        value:       number,
+        configField: keyof Required<AudioPitchShifterConfig>
+    ): void {
+        const params = this.pitchNode?.parameters as Map<string, AudioParam>
+        params?.get(paramName)?.setValueAtTime(value, this.audioContext.currentTime)
+        this.config[configField] = value
+    }
+
     /*  update rate value  */
     public setRate (rate: number): void {
-        const params = this.pitchNode?.parameters as Map<string, AudioParam>
-        params?.get("rate")?.setValueAtTime(rate, this.audioContext.currentTime)
-        this.config.rate = rate
+        this.updateParameter("rate", rate, "rate")
     }
 
     /*  update tempo value  */
     public setTempo (tempo: number): void {
-        const params = this.pitchNode?.parameters as Map<string, AudioParam>
-        params?.get("tempo")?.setValueAtTime(tempo, this.audioContext.currentTime)
-        this.config.tempo = tempo
+        this.updateParameter("tempo", tempo, "tempo")
     }
 
     /*  update pitch shift value  */
     public setPitch (pitch: number): void {
-        const params = this.pitchNode?.parameters as Map<string, AudioParam>
-        params?.get("pitch")?.setValueAtTime(pitch, this.audioContext.currentTime)
-        this.config.pitch = pitch
+        this.updateParameter("pitch", pitch, "pitch")
     }
 
     /*  update pitch semitones setting  */
     public setSemitones (semitones: number): void {
-        const params = this.pitchNode?.parameters as Map<string, AudioParam>
-        params?.get("pitchSemitones")?.setValueAtTime(semitones, this.audioContext.currentTime)
-        this.config.semitones = semitones
+        this.updateParameter("pitchSemitones", semitones, "semitones")
     }
 
     /*  destroy the pitch shifter  */
