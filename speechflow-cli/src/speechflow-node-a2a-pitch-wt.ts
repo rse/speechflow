@@ -89,13 +89,11 @@ class PitchShifterProcessor extends AudioWorkletProcessor {
             const outputChannel = output[ch]
 
             /*  bypass processing if no pitch shift needed  */
-            /*
             if (Math.abs(this.shift - 1.0) < 0.001) {
                 for (let i = 0; i < frameCount; i++)
                     outputChannel[i] = inputChannel[i]
                 continue
             }
-            */
 
             /*  process each sample  */
             for (let i = 0; i < frameCount; i++) {
