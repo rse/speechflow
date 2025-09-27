@@ -27,7 +27,7 @@ class PitchShifter {
     private config:        Required<PitchConfig>
     private fft:           FFT
     private frameBuffer:   Float32Array
-    private frameBufferIdx = 0
+    private frameBufferIdx: number
     private outputBuffer:  Float32Array
     private overlapBuffer: Float32Array
 
@@ -46,9 +46,10 @@ class PitchShifter {
         this.fft = new FFT(this.config.frameSize)
 
         /*  initialize buffers  */
-        this.frameBuffer   = new Float32Array(this.config.frameSize)
-        this.outputBuffer  = new Float32Array(this.config.frameSize)
-        this.overlapBuffer = new Float32Array(this.config.frameSize)
+        this.frameBuffer    = new Float32Array(this.config.frameSize)
+        this.frameBufferIdx = 0
+        this.outputBuffer   = new Float32Array(this.config.frameSize)
+        this.overlapBuffer  = new Float32Array(this.config.frameSize)
     }
 
     /*  process audio data with pitch shifting  */
