@@ -252,15 +252,17 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
                     self.processingQueue = self.processingQueue.then(async () => {
                         if (self.closing)
                             throw new Error("stream already destroyed")
+                        if (self.pitchShifter === null)
+                            throw new Error("pitch shifter not initialized")
 
                         /*  shift pitch of audio chunk  */
                         const payload = util.convertBufToF32(chunk.payload, self.config.audioLittleEndian)
-                        const result = await self.pitchShifter?.process(payload)
+                        const result = await self.pitchShifter.process(payload)
                         if (self.closing)
                             throw new Error("stream already destroyed")
 
                         /*  take over pitch-shifted data  */
-                        const outputPayload = util.convertF32ToBuf(result!)
+                        const outputPayload = util.convertF32ToBuf(result)
                         chunk.payload = outputPayload
                         this.push(chunk)
                         callback()
