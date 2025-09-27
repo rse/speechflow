@@ -33,6 +33,7 @@ speech-to-speech).
 - local audio Speex and RNNoise noise suppression,
 - local audio compressor and expander dynamics processing,
 - local audio gain adjustment,
+- local audio pitch shifting and time stretching,
 - local audio gap filler processing,
 - remote-controlable audio muting,
 - cloud-based speech-to-text conversion with
@@ -336,6 +337,7 @@ First a short overview of the available processing nodes:
   **a2a-compressor**,
   **a2a-expander**,
   **a2a-gain**,
+  **a2a-pitch**,
   **a2a-filler**.
 - Audio-to-Text nodes:
   **a2t-openai**,
@@ -653,6 +655,27 @@ The following nodes process audio chunks only.
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
   | **db** | *none* | 12 | `n >= -60 && n <= -60` |
+
+- Node: **a2a-pitch**<br/>
+  Purpose: **audio pitch shifting and time stretching**<br/>
+  Example: `a2a-pitch(pitch: 1.2, semitones: 3)`
+
+  > This node performs real-time pitch shifting and time stretching on
+  > audio streams using the SoundTouch algorithm. It can adjust pitch
+  > without changing tempo, change tempo without affecting pitch, or
+  > modify both independently.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter      | Position  | Default  | Requirement              |
+  | -------------- | --------- | -------- | ------------------------ |
+  | **rate**       | *none*    | 1.0      | `0.25 <= n <= 4.0`       |
+  | **tempo**      | *none*    | 1.0      | `0.25 <= n <= 4.0`       |
+  | **pitch**      | *none*    | 1.0      | `0.25 <= n <= 4.0`       |
+  | **semitones**  | *none*    | 0.0      | `-24 <= n <= 24`         |
 
 - Node: **a2a-filler**<br/>
   Purpose: **audio filler node**<br/>
