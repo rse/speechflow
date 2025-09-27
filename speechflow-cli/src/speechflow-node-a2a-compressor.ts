@@ -137,8 +137,6 @@ class AudioCompressor extends util.WebAudio {
 
     /*  destroy the compressor  */
     public async destroy (): Promise<void> {
-        await super.destroy()
-
         /*  destroy nodes  */
         if (this.compressorNode !== null) {
             this.compressorNode.disconnect()
@@ -148,6 +146,9 @@ class AudioCompressor extends util.WebAudio {
             this.gainNode.disconnect()
             this.gainNode = null
         }
+
+        /*  destroy parent  */
+        await super.destroy()
     }
 }
 

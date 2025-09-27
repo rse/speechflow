@@ -87,13 +87,14 @@ class AudioExpander extends util.WebAudio {
     }
 
     public async destroy (): Promise<void> {
-        await super.destroy()
-
         /*  destroy expander node  */
         if (this.expanderNode !== null) {
             this.expanderNode.disconnect()
             this.expanderNode = null
         }
+
+        /*  destroy parent  */
+        await super.destroy()
     }
 }
 
