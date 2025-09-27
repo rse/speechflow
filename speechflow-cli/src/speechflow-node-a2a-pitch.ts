@@ -104,14 +104,9 @@ class PitchShifter {
         const windowed = new Float32Array(this.config.frameSize)
         this.applyHannWindow(frame, windowed)
 
-        /*  prepare real array for FFT (fft.js expects real values in specific format)  */
-        const realInput = new Float32Array(this.config.frameSize)
-        for (let i = 0; i < this.config.frameSize; i++)
-            realInput[i] = windowed[i]
-
         /*  apply forward Fast Fourier Transform (FFT)  */
         const spectrum = this.fft.createComplexArray()
-        this.fft.realTransform(spectrum, realInput)
+        this.fft.realTransform(spectrum, windowed)
 
         /*  shift spectrum for pitch change  */
         const shiftedSpectrum = this.shiftSpectrum(spectrum, this.config.shift)
