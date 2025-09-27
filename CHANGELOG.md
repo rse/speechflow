@@ -5,6 +5,7 @@ ChangeLog
 1.6.6 (2025-09-21)
 ------------------
 
+- IMPROVEMENT: implement new a2a-pitch node for GDPR-supporting pitch shifting
 - BUGFIX: fix meta handling in a2t-deepgram, a2t-amazon and a2t-openai nodes to not destroy a2a-gender information
 - BUGFIX: do not loose meta information in chunk processing
 - BUGFIX: prevent more race conditions during closing of nodes
