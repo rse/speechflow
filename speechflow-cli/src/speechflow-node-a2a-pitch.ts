@@ -109,7 +109,7 @@ class PitchShifter {
         this.fft.realTransform(spectrum, windowed)
 
         /*  shift spectrum for pitch change  */
-        const shiftedSpectrum = this.shiftSpectrum(spectrum, this.config.shift)
+        const shiftedSpectrum = this.shiftSpectrum(new Float32Array(spectrum), this.config.shift)
 
         /*  apply inverse Fast Fourier Transform (FFT)  */
         const output = new Float32Array(this.config.frameSize)
