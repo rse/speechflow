@@ -59,7 +59,7 @@ export function audioArrayDuration (
 export function convertBufToF32 (buf: Buffer, littleEndian = true) {
     if (buf.length % 2 !== 0)
         throw new Error("buffer length must be even for 16-bit samples")
-    const dataView = new DataView(buf.buffer)
+    const dataView = new DataView(buf.buffer, buf.byteOffset, buf.byteLength)
     const arr = new Float32Array(buf.length / 2)
     for (let i = 0; i < arr.length; i++)
         arr[i] = dataView.getInt16(i * 2, littleEndian) / 32768
