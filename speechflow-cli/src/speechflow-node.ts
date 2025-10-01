@@ -75,7 +75,7 @@ export default class SpeechFlowNode extends Events.EventEmitter {
         for (const key of Object.keys(cfg)) {
             const idx = key as keyof typeof this.config
             if (this.config[idx] !== undefined)
-                (this.config[idx] as any) = cfg[key]
+                Reflect.set(this.config, idx, cfg[key])
         }
     }
 
