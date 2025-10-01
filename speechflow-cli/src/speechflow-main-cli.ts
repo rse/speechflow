@@ -252,7 +252,7 @@ export class CLIContext {
             if (this.debug)
                 process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}\n${err.stack}\n`)
             else
-                process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}`)
+                process.stderr.write(`${pkg.name}: ${chalk.red("ERROR")}: ${err.message}\n`)
         }
         process.exit(1)
     }
