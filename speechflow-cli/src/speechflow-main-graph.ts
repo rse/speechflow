@@ -76,7 +76,8 @@ export class NodeGraph {
                     if (!objectPath.has(variables, id))
                         throw new Error(`failed to resolve variable "${id}"`)
                     const value = objectPath.get(variables, id)
-                    this.cli.log("info", `resolve variable: "${id}" -> "${value}"`)
+                    const sensitive = /(?:key|secret|token|password)/i.test(id)
+                    this.cli.log("info", `resolve variable: "${id}" -> "${sensitive ? "***" : value}"`)
                     return value
                 },
                 createNode: (id: string, opts: { [ id: string ]: any }, args: any[]) => {
@@ -100,8 +101,8 @@ export class NodeGraph {
                         process.exit(1)
                     }
                     const params = Object.keys(node.params).map((key) => {
-                        if (key.match(/key/))
-                            return `${key}: [...]`
+                        if (/(?:key|secret|token|password)/i.test(key))
+                            return `${key}: ***`
                         else
                             return `${key}: ${JSON.stringify(node.params[key])}`
                     }).join(", ")
