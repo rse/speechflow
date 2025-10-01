@@ -69,7 +69,7 @@ export class CLIContext {
                 "[-p|--port <tcp-port>] " +
                 "[-C|--cache <directory>] " +
                 "[-d|--dashboard <type>:<id>:<name>[,...]] " +
-                "[-o|--osc <ip-address>:<udp-port> " +
+                "[-o|--osc <ip-address>:<udp-port>] " +
                 "[-e|--expression <expression>] " +
                 "[-f|--file <file>] " +
                 "[-c|--config <id>@<yaml-config-file>] " +
