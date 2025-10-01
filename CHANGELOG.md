@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - CLEANUP: use reflection API instead of casting
+- CLEANUP: various code cleanups
 
 1.6.6 (2025-09-21)
 ------------------
