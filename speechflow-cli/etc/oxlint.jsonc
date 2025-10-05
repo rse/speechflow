@@ -120,7 +120,8 @@
         "no-barrel-file":                     "off",
         "no-process-exit":                    "off",
         "no-cycle":                           "off",
-        "class-methods-use-this":             "off"
+        "class-methods-use-this":             "off",
+        "no-named-export":                    "off"
     }
 }
 

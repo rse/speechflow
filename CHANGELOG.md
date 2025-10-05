@@ -7,6 +7,7 @@ ChangeLog
 
 - CLEANUP: use reflection API instead of casting
 - CLEANUP: various code cleanups
+- UPDATE: upgrade NPM dependencies
 
 1.6.6 (2025-09-21)
 ------------------
