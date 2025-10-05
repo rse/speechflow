@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.6.7 (2025-10-01)
+1.6.7 (2025-10-05)
 ------------------
 
 - CLEANUP: use reflection API instead of casting
