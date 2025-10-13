@@ -121,7 +121,10 @@
         "no-process-exit":                    "off",
         "no-cycle":                           "off",
         "class-methods-use-this":             "off",
-        "no-named-export":                    "off"
+        "no-named-export":                    "off",
+        "prefer-at":                          "off",
+        "no-param-reassign":                  "off",
+        "prefer-top-level-await":             "off"
     }
 }
 
