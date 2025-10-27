@@ -124,7 +124,8 @@
         "no-named-export":                    "off",
         "prefer-at":                          "off",
         "no-param-reassign":                  "off",
-        "prefer-top-level-await":             "off"
+        "prefer-top-level-await":             "off",
+        "no-process-env":                     "off"
     }
 }
 
