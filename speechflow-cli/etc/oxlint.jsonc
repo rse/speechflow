@@ -125,7 +125,8 @@
         "prefer-at":                          "off",
         "no-param-reassign":                  "off",
         "prefer-top-level-await":             "off",
-        "no-process-env":                     "off"
+        "no-process-env":                     "off",
+        "no-warning-comments":                "off"
     }
 }
 
