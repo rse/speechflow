@@ -93,6 +93,7 @@
         "@types/luxon":                         "3.7.1",
         "@types/wrap-text":                     "1.0.2",
 
+        "check-dependencies":                   "2.0.0",
         "patch-package":                        "8.0.1",
         "stmux":                                "1.8.11",
         "nodemon":                              "3.1.11",
