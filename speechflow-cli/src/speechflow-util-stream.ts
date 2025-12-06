@@ -43,11 +43,6 @@ export function createTransformStreamForReadableSide (type: "text" | "audio", ge
         decodeStrings: false,
         highWaterMark: highWaterMark ?? (type === "audio" ? 19200 /* 400ms */: 65536 /* 64KB */),
         transform (chunk: Buffer | string, encoding, callback) {
-            if (chunk === null) {
-                this.push(null)
-                callback()
-                return
-            }
             const timeZero = getTimeZero()
             const start = DateTime.now().diff(timeZero)
             let end = start
