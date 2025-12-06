@@ -51,7 +51,8 @@ class AudioFiller extends EventEmitter {
         const payload = Buffer.alloc(frames * this.bytesPerFrame) /* already zeroed */
         const timestampStart = this.durationFromSamples(fromSamples)
         const timestampEnd   = this.durationFromSamples(toSamples)
-        const chunk = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload, meta ? new Map(meta) : undefined)
+        const chunk = new SpeechFlowChunk(timestampStart, timestampEnd,
+            "final", "audio", payload, meta ? new Map(meta) : undefined)
         this.emit("chunk", chunk, "silence")
     }
 
