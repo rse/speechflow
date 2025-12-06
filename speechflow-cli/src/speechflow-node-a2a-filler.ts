@@ -178,8 +178,12 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                         self.log("info", "received EOF signal")
                         this.push(null)
                     }
+                    else if (!(chunk.payload instanceof Buffer)) {
+                        self.log("warning", "invalid chunk (expected audio buffer)")
+                        this.push(null)
+                    }
                     else {
-                        self.log("debug", `received data (${chunk.payload.length} bytes)`)
+                        self.log("debug", `received data (${chunk.payload.byteLength} bytes)`)
                         this.push(chunk)
                     }
                 }).catch((error: unknown) => {
