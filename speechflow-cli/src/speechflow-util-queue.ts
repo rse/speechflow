@@ -321,3 +321,17 @@ export class CachedRegExp {
         return this.cache.size
     }
 }
+
+/*  set of promises  */
+export class PromiseSet<T> {
+    private promises = new Set<Promise<T>>()
+    add (promise: Promise<T>) {
+        this.promises.add(promise)
+        promise.finally(() => {
+            this.promises.delete(promise)
+        }).catch(() => {})
+    }
+    async awaitAll () {
+        await Promise.all(this.promises)
+    }
+}
