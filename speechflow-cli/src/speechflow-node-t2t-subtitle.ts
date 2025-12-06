@@ -95,11 +95,18 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     }
                     return text
                 }
-                let output = ""
+
+                /*  determine start and end timestamp,
+                    by using first word's start time and last word's end time (if available),
+                    to exclude leading and trailing silence parts  */
+                const words: { word: string, start: Duration, end: Duration }[] = chunk.meta.get("words") ?? []
+                const timestampStart = words.length > 0 ? words[0].start              : chunk.timestampStart
+                const timestampEnd   = words.length > 0 ? words[words.length - 1].end : chunk.timestampEnd
+
+                /*  produce SRT/VTT blocks  */
+                let output = convertSingle(timestampStart, timestampEnd, chunk.payload)
                 if (this.params.words) {
-                    output += convertSingle(chunk.timestampStart, chunk.timestampEnd, chunk.payload)
-                    const words = (chunk.meta.get("words") ?? []) as
-                        { word: string, start: Duration, end: Duration }[]
+                    /*  produce additional SRT/VTT blocks with each word highlighted  */
                     const occurrences = new Map<string, number>()
                     for (const word of words) {
                         let occurrence = occurrences.get(word.word) ?? 0
@@ -108,8 +115,6 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                         output += convertSingle(word.start, word.end, chunk.payload, word.word, occurrence)
                     }
                 }
-                else
-                    output += convertSingle(chunk.timestampStart, chunk.timestampEnd, chunk.payload)
                 return output
             }
 
