@@ -287,6 +287,10 @@ export class AsyncQueue<T> {
             return this.queue.shift()!
         else
             return new Promise<T | null>((resolve) => this.resolvers.push(resolve))
+        }
+    }
+    empty () {
+        return this.queue.length === 0
     }
     destroy () {
         for (const resolve of this.resolvers)
