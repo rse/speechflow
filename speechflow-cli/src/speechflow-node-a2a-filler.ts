@@ -25,7 +25,7 @@ class AudioFiller extends EventEmitter {
     }
 
     /*  optional helper to allow subscribing with strong typing  */
-    public on(event: "chunk", listener: (chunk: SpeechFlowChunk) => void): this
+    public on(event: "chunk", listener: (chunk: SpeechFlowChunk, type: string) => void): this
     public on(event: string, listener: (...args: any[]) => void): this {
         return super.on(event, listener)
     }
@@ -52,7 +52,7 @@ class AudioFiller extends EventEmitter {
         const timestampStart = this.durationFromSamples(fromSamples)
         const timestampEnd   = this.durationFromSamples(toSamples)
         const chunk = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload, meta ? new Map(meta) : undefined)
-        this.emit("chunk", chunk)
+        this.emit("chunk", chunk, "silence")
     }
 
     /*  add a chunk of audio for processing  */
@@ -96,7 +96,7 @@ class AudioFiller extends EventEmitter {
         const timestampStart  = this.durationFromSamples(outStartSamples)
         const timestampEnd    = this.durationFromSamples(outEndSamples)
         const c = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload, new Map(chunk.meta))
-        this.emit("chunk", c)
+        this.emit("chunk", c, "content")
 
         /*  advance emitted cursor  */
         this.emittedEndSamples = Math.max(this.emittedEndSamples, outEndSamples)
@@ -137,7 +137,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
         this.sendQueue = new util.AsyncQueue<SpeechFlowChunk | null>()
 
         /*  shift chunks from filler to send queue  */
-        this.filler.on("chunk", (chunk) => {
+        this.filler.on("chunk", (chunk, type) => {
             this.sendQueue?.write(chunk)
         })
 
