@@ -96,7 +96,8 @@ class AudioFiller extends EventEmitter {
         const outEndSamples   = outStartSamples + Math.floor(payload.length / this.bytesPerFrame)
         const timestampStart  = this.durationFromSamples(outStartSamples)
         const timestampEnd    = this.durationFromSamples(outEndSamples)
-        const c = new SpeechFlowChunk(timestampStart, timestampEnd, "final", "audio", payload, new Map(chunk.meta))
+        const c = new SpeechFlowChunk(timestampStart, timestampEnd,
+            "final", "audio", payload, new Map(chunk.meta))
         this.emit("chunk", c, "content")
 
         /*  advance emitted cursor  */
