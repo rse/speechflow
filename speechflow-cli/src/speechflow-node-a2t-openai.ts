@@ -9,7 +9,7 @@ import Stream from "node:stream"
 
 /*  external dependencies  */
 import OpenAI                 from "openai"
-import { DateTime }           from "luxon"
+import { DateTime, Duration } from "luxon"
 import SpeexResampler         from "speex-resampler"
 import ws                     from "ws"
 
@@ -147,6 +147,19 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         this.ws.on("error", (err) => {
             this.log("error", `WebSocket connection error: ${err}`)
         })
+
+        /*  track speech timing by item_id (OpenAI provides timestamps via VAD events)  */
+        const speechTiming = new Map<string, { startMs: number, endMs: number }>()
+
+        /*  helper function for aggregating meta information  */
+        const aggregateMeta = (start: Duration, end: Duration): Map<string, any> => {
+            const metas = metastore.fetch(start, end)
+            return metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                curr.forEach((val, key) => { prev.set(key, val) })
+                return prev
+            }, new Map<string, any>())
+        }
+
         let text = ""
         this.ws.on("message", (data) => {
             let ev: any
@@ -164,53 +177,66 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             switch (ev.type) {
                 case "transcription_session.created":
                     break
-                case "conversation.item.created":
+                case "conversation.item.created": {
                     text = ""
                     break
+                }
                 case "conversation.item.input_audio_transcription.delta": {
                     text += ev.delta as string
-                    if (this.params.interim) {
-                        const start = DateTime.now().diff(this.timeOpen!) // FIXME: OpenAI does not provide timestamps
-                        const end   = start                               // FIXME: OpenAI does not provide timestamps
-                        const metas = metastore.fetch(start, end)
-                        const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
-                            curr.forEach((val, key) => { prev.set(key, val) })
-                            return prev
-                        }, new Map<string, any>())
-                        const chunk = new SpeechFlowChunk(start, end, "intermediate", "text", text)
-                        chunk.meta = meta
-                        this.queue!.write(chunk)
+                    if (this.params.interim && !this.closing && this.queue !== null) {
+                        const itemId = ev.item_id as string
+                        const timing = speechTiming.get(itemId)
+                        const start  = timing ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
+                        const end    = timing ? Duration.fromMillis(timing.endMs)   : start
+                        const chunk  = new SpeechFlowChunk(start, end, "intermediate", "text", text)
+                        chunk.meta = aggregateMeta(start, end)
+                        this.queue.write(chunk)
                     }
                     break
                 }
                 case "conversation.item.input_audio_transcription.completed": {
-                    text = ev.transcript as string
-                    const start = DateTime.now().diff(this.timeOpen!) // FIXME: OpenAI does not provide timestamps
-                    const end   = start                               // FIXME: OpenAI does not provide timestamps
-                    const metas = metastore.fetch(start, end)
-                    const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
-                        curr.forEach((val, key) => { prev.set(key, val) })
-                        return prev
-                    }, new Map<string, any>())
-                    metastore.prune(start)
-                    const chunk = new SpeechFlowChunk(start, end, "final", "text", text)
-                    chunk.meta = meta
-                    this.queue!.write(chunk)
-                    text = ""
+                    if (!this.closing && this.queue !== null) {
+                        text = ev.transcript as string
+                        const itemId = ev.item_id as string
+                        const timing = speechTiming.get(itemId)
+                        const start  = timing ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
+                        const end    = timing ? Duration.fromMillis(timing.endMs)   : start
+                        const chunk  = new SpeechFlowChunk(start, end, "final", "text", text)
+                        chunk.meta = aggregateMeta(start, end)
+                        metastore.prune(start)
+
+                        /*  clean up speech timing for this item  */
+                        speechTiming.delete(itemId)
+
+                        this.queue.write(chunk)
+                        text = ""
+                    }
                     break
                 }
-                case "input_audio_buffer.speech_started":
+                case "input_audio_buffer.speech_started": {
                     this.log("info", "VAD: speech started")
+                    const itemId = ev.item_id as string
+                    const audioStartMs = ev.audio_start_ms as number
+                    speechTiming.set(itemId, { startMs: audioStartMs, endMs: audioStartMs })
                     break
-                case "input_audio_buffer.speech_stopped":
+                }
+                case "input_audio_buffer.speech_stopped": {
                     this.log("info", "VAD: speech stopped")
+                    const itemId = ev.item_id as string
+                    const audioEndMs = ev.audio_end_ms as number
+                    const timing = speechTiming.get(itemId)
+                    if (timing)
+                        timing.endMs = audioEndMs
                     break
-                case "input_audio_buffer.committed":
+                }
+                case "input_audio_buffer.committed": {
                     this.log("info", "input buffer committed")
                     break
-                case "error":
+                }
+                case "error": {
                     this.log("error", `error: ${ev.error?.message}`)
                     break
+                }
                 default:
                     break
             }
