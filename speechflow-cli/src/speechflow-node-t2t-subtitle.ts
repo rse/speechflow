@@ -120,20 +120,20 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
 
             /*  establish a duplex stream  */
             const self = this
-            let firstChunk = true
+            let headerEmitted = false
             this.stream = new Stream.Transform({
                 readableObjectMode: true,
                 writableObjectMode: true,
                 decodeStrings:      false,
                 highWaterMark:      1,
                 transform (chunk: SpeechFlowChunk, encoding, callback) {
-                    if (firstChunk && self.params.format === "vtt") {
+                    if (!headerEmitted && self.params.format === "vtt") {
                         this.push(new SpeechFlowChunk(
                             Duration.fromMillis(0), Duration.fromMillis(0),
                             "final", "text",
                             "WEBVTT\n\n"
                         ))
-                        firstChunk = false
+                        headerEmitted = true
                     }
                     if (Buffer.isBuffer(chunk.payload))
                         callback(new Error("invalid chunk payload type"))
