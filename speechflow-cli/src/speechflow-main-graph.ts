@@ -225,11 +225,11 @@ export class NodeGraph {
                     this.shutdown("finished", args, api)
                 }
             }
-            node.stream.on("end", () => {
-                deactivateNode(node, `readable stream side of node <${node.id}> raised "end" event`)
-            })
             node.stream.on("finish", () => {
-                deactivateNode(node, `writable stream side of node <${node.id}> raised "finish" event`)
+                deactivateNode(node, `writable stream side (input) of node <${node.id}> raised "finish" event`)
+            })
+            node.stream.on("end", () => {
+                deactivateNode(node, `readable stream side (output) of node <${node.id}> raised "end" event`)
             })
         }
 
