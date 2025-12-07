@@ -10,6 +10,7 @@ import Stream from "node:stream"
 /*  external dependencies  */
 import * as ElevenLabs       from "@elevenlabs/elevenlabs-js"
 import { getStreamAsBuffer } from "get-stream"
+import { Duration }          from "luxon"
 import SpeexResampler        from "speex-resampler"
 
 /*  internal dependencies  */
@@ -170,11 +171,20 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                                 callback(new Error("stream destroyed during processing"))
                                 return
                             }
-                            const bufferResampled = self.resampler!.processChunk(buffer)
                             self.log("info", `ElevenLabs: received audio (buffer length: ${buffer.byteLength})`)
+                            const bufferResampled = self.resampler!.processChunk(buffer)
+                            self.log("info", "ElevenLabs: forwarding resampled audio " +
+                                `(buffer length: ${bufferResampled.byteLength})`)
+
+                            /*  calculate actual audio duration from PCM buffer size  */
+                            const durationMs = util.audioBufferDuration(bufferResampled,
+                                self.config.audioSampleRate, self.config.audioBitDepth) * 1000
+
+                            /*  create new chunk with recalculated timestamps  */
                             const chunkNew = chunk.clone()
-                            chunkNew.type = "audio"
-                            chunkNew.payload = bufferResampled
+                            chunkNew.type         = "audio"
+                            chunkNew.payload      = bufferResampled
+                            chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
                             clearProcessTimeout()
                             this.push(chunkNew)
                             callback()
