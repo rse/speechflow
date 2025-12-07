@@ -137,21 +137,25 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     }
                     if (Buffer.isBuffer(chunk.payload))
                         callback(new Error("invalid chunk payload type"))
+                    else if (chunk.payload === "") {
+                        this.push(chunk)
+                        callback()
+                    }
                     else {
-                        if (chunk.payload === "") {
-                            this.push(chunk)
+                        convert(chunk).then((payload) => {
+                            const chunkNew = chunk.clone()
+                            chunkNew.payload = payload
+                            this.push(chunkNew)
                             callback()
                         }
-                        else {
-                            convert(chunk).then((payload) => {
-                                const chunkNew = chunk.clone()
-                                chunkNew.payload = payload
-                                this.push(chunkNew)
-                                callback()
-                            }).catch((error: unknown) => {
-                                callback(util.ensureError(error))
-                            })
-                        }
+
+                        /*  clear buffer after successful parse  */
+                        buffer = ""
+                        callback()
+                    }
+                    catch (error: unknown) {
+                        buffer = ""
+                        callback(util.ensureError(error))
                     }
                 },
                 final (callback) {
@@ -244,13 +248,11 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                 write (chunk: SpeechFlowChunk, encoding, callback) {
                     if (Buffer.isBuffer(chunk.payload))
                         callback(new Error("invalid chunk payload type"))
+                    else if (chunk.payload === "")
+                        callback()
                     else {
-                        if (chunk.payload === "")
-                            callback()
-                        else {
-                            emit(chunk)
-                            callback()
-                        }
+                        emit(chunk)
+                        callback()
                     }
                 },
                 final (callback) {
