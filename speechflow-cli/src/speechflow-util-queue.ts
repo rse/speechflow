@@ -35,11 +35,9 @@ export class SingleQueue<T> extends EventEmitter {
     }
     read () {
         return new Promise<T>((resolve, reject) => {
-            const consume = () =>
-                this.queue.length > 0 ? this.queue.pop()! : null
             const tryToConsume = () => {
-                const item = consume()
-                if (item !== null)
+                const item = this.queue.pop()
+                if (item !== undefined)
                     resolve(item)
                 else
                     this.once("dequeue", tryToConsume)
@@ -67,17 +65,17 @@ export class DoubleQueue<T0, T1> extends EventEmitter {
     }
     read () {
         return new Promise<[ T0, T1 ]>((resolve, reject) => {
-            const consume = (): [ T0, T1 ] | null => {
+            const consume = (): [ T0, T1 ] | undefined => {
                 if (this.queue0.length > 0 && this.queue1.length > 0) {
                     const item0 = this.queue0.pop() as T0
                     const item1 = this.queue1.pop() as T1
                     return [ item0, item1 ]
                 }
-                return null
+                return undefined
             }
             const tryToConsume = () => {
                 const items = consume()
-                if (items !== null)
+                if (items !== undefined)
                     resolve(items)
                 else
                     this.once("dequeue", tryToConsume)
