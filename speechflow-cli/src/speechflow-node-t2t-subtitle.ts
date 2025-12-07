@@ -20,10 +20,16 @@ import HAPIWebSocket from "hapi-plugin-websocket"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
+/*  internal helper types  */
 type WSPeerInfo = {
-    ctx:  Record<string, any>
-    ws:   WebSocket
-    req:  http.IncomingMessage
+    ctx:   Record<string, any>
+    ws:    WebSocket
+    req:   http.IncomingMessage
+}
+type TextChunk = {
+    start: Duration
+    end:   Duration
+    text:  string
 }
 
 /*  SpeechFlow node for subtitle (text-to-text) "translations"  */
@@ -43,14 +49,14 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
         this.configure({
             format: { type: "string",  pos: 0, val: "srt",    match: /^(?:srt|vtt)$/ },
             words:  { type: "boolean",         val: false },
-            mode:   { type: "string",          val: "export", match: /^(?:export|render)$/ },
+            mode:   { type: "string",          val: "export", match: /^(?:export|import|render)$/ },
             addr:   { type: "string",          val: "127.0.0.1" },
             port:   { type: "number",          val: 8585 }
         })
 
         /*  declare node input/output format  */
         this.input  = "text"
-        this.output = this.params.mode === "export" ? "text" : "none"
+        this.output = (this.params.mode === "export" || this.params.mode === "import") ? "text" : "none"
     }
 
     /*  open node  */
@@ -147,6 +153,151 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                             chunkNew.payload = payload
                             this.push(chunkNew)
                             callback()
+                        }).catch((error: unknown) => {
+                            callback(util.ensureError(error))
+                        })
+                    }
+                },
+                final (callback) {
+                    this.push(null)
+                    callback()
+                }
+            })
+        }
+        else if (this.params.mode === "import") {
+            /*  parse timestamp in SRT format ("HH:MM:SS,mmm") or VTT format ("HH:MM:SS.mmm")  */
+            const parseTimestamp = (ts: string): Duration => {
+                const match = ts.match(/^(\d{2}):(\d{2}):(\d{2})[,.](\d{3})$/)
+                if (!match)
+                    throw new Error(`invalid timestamp format: "${ts}"`)
+                const hours        = Number.parseInt(match[1], 10)
+                const minutes      = Number.parseInt(match[2], 10)
+                const seconds      = Number.parseInt(match[3], 10)
+                const milliseconds = Number.parseInt(match[4], 10)
+                if (minutes > 59 || seconds > 59)
+                    throw new Error(`invalid timestamp value "${ts}"`)
+                return Duration.fromObject({ hours, minutes, seconds, milliseconds })
+            }
+
+            /*  strip arbitrary HTML tags  */
+            const stripHtmlTags = (text: string): string =>
+                text.replace(/<\/?[a-zA-Z][^>]*>/g, "")
+
+            /*  parse SRT format  */
+            const parseSRT = (input: string): TextChunk[] => {
+                const results: TextChunk[] = []
+
+                /*  iterate over all blocks  */
+                const blocks = input.trim().split(/\r?\n\r?\n+/)
+                for (const block of blocks) {
+                    const lines = block.trim().split(/\r?\n/)
+                    if (lines.length < 2) {
+                        this.log("warning", "SRT block contains less than 2 lines")
+                        continue
+                    }
+
+                    /*  skip optional sequence number line (first line)  */
+                    let lineIdx = 0
+                    if (/^\d+$/.test(lines[0].trim()))
+                        lineIdx = 1
+
+                    /*  parse timestamp line  */
+                    const timeLine  = lines[lineIdx]
+                    const timeMatch = timeLine.match(/^(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})/)
+                    if (!timeMatch) {
+                        this.log("warning", "SRT contains invalid timestamp line")
+                        continue
+                    }
+                    const start = parseTimestamp(timeMatch[1])
+                    const end   = parseTimestamp(timeMatch[2])
+
+                    /*  collect text lines  */
+                    const textLines = lines.slice(lineIdx + 1).join("\n")
+                    const text = stripHtmlTags(textLines).trim()
+                    if (text !== "")
+                        results.push({ start, end, text })
+                }
+                return results
+            }
+
+            /*  parse VTT format  */
+            const parseVTT = (input: string): TextChunk[] => {
+                const results: TextChunk[] = []
+
+                /*  remove VTT header and any metadata  */
+                const content = input.trim().replace(/^WEBVTT[^\r\n]*\r?\n*/, "")
+
+                /*  iterate over all blocks  */
+                const blocks = content.trim().split(/\r?\n\r?\n+/)
+                for (const block of blocks) {
+                    const lines = block.trim().split(/\r?\n/)
+                    if (lines.length < 1) {
+                        this.log("warning", "VTT block contains less than 1 line")
+                        continue
+                    }
+
+                    /*  skip optional cue identifier lines  */
+                    let lineIdx = 0
+                    while (lineIdx < lines.length && !lines[lineIdx].includes("-->"))
+                        lineIdx++
+                    if (lineIdx >= lines.length)
+                        continue
+
+                    /*  parse timestamp line  */
+                    const timeLine  = lines[lineIdx]
+                    const timeMatch = timeLine.match(/^(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})/)
+                    if (!timeMatch) {
+                        this.log("warning", "VTT contains invalid timestamp line")
+                        continue
+                    }
+                    const start = parseTimestamp(timeMatch[1])
+                    const end   = parseTimestamp(timeMatch[2])
+
+                    /*  collect text lines  */
+                    const textLines = lines.slice(lineIdx + 1).join("\n")
+                    const text = stripHtmlTags(textLines).trim()
+                    if (text !== "")
+                        results.push({ start, end, text })
+                }
+                return results
+            }
+
+            /*  buffer for accumulating input  */
+            let buffer = ""
+
+            /*  establish a duplex stream  */
+            const self = this
+            this.stream = new Stream.Transform({
+                readableObjectMode: true,
+                writableObjectMode: true,
+                decodeStrings:      false,
+                highWaterMark:      1,
+                transform (chunk: SpeechFlowChunk, encoding, callback) {
+                    /*  sanity check text chunks  */
+                    if (Buffer.isBuffer(chunk.payload)) {
+                        callback(new Error("invalid chunk payload type"))
+                        return
+                    }
+
+                    /*  short-circuit processing in case of empty payloads  */
+                    if (chunk.payload === "") {
+                        this.push(chunk)
+                        callback()
+                        return
+                    }
+
+                    /*  accumulate input  */
+                    buffer += chunk.payload
+
+                    /*  parse accumulated input  */
+                    try {
+                        /*  parse entries  */
+                        const entries = (self.params.format === "srt" ? parseSRT(buffer) : parseVTT(buffer))
+
+                        /*  emit parsed entries as individual chunks  */
+                        for (const entry of entries) {
+                            const chunkNew = new SpeechFlowChunk(entry.start, entry.end, "final", "text", entry.text)
+                            this.push(chunkNew)
                         }
 
                         /*  clear buffer after successful parse  */
@@ -159,6 +310,22 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     }
                 },
                 final (callback) {
+                    /*  process any remaining buffer content  */
+                    if (buffer.trim() !== "") {
+                        try {
+                            /*  parse entries  */
+                            const entries = self.params.format === "srt" ? parseSRT(buffer) : parseVTT(buffer)
+
+                            /*  emit parsed entries as individual chunks  */
+                            for (const entry of entries) {
+                                const chunkNew = new SpeechFlowChunk(entry.start, entry.end, "final", "text", entry.text)
+                                this.push(chunkNew)
+                            }
+                        }
+                        catch (_error: unknown) {
+                            /*  ignore parse errors on final flush  */
+                        }
+                    }
                     this.push(null)
                     callback()
                 }
