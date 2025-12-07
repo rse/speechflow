@@ -5,6 +5,7 @@ ChangeLog
 1.6.8 (2025-10-13)
 ------------------
 
+- IMPROVEMENT: support timestamps on chunks also for OpenAI speech-to-text
 - UPDATE: upgrade NPM dependencies
 - BUGFIX: fix subtitle node by more correctly handling silence parts
 - BUGFIX: fix stream finalization handling in many nodes
