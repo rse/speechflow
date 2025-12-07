@@ -172,8 +172,6 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     try {
-                        if (self.closing || self.filler === null)
-                            throw new Error("stream already destroyed")
                         self.filler.add(chunk)
                         callback()
                     }
