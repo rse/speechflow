@@ -141,7 +141,8 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         })
         this.ws.on("close", () => {
             this.log("info", "WebSocket connection closed")
-            this.queue!.write(null)
+            if (!this.closing && this.queue !== null)
+                this.queue.write(null)
         })
         this.ws.on("error", (err) => {
             this.log("error", `WebSocket connection error: ${err}`)
@@ -322,11 +323,14 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
 
         /*  close OpenAI connection  */
         if (this.ws !== null) {
+            this.ws.removeAllListeners()
             this.ws.close()
             this.ws = null
         }
         if (this.openai !== null)
             this.openai = null
+        if (this.resampler !== null)
+            this.resampler = null
 
         /*  shutdown stream  */
         if (this.stream !== null) {
