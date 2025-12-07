@@ -232,6 +232,23 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     callback()
                 }
             },
+            async final (callback) {
+                if (self.closing || self.client === null) {
+                    callback()
+                    return
+                }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
+
+                util.run(
+                    () => self.client!.destroy(),
+                    (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
+                )
+                audioQueue.push(null) /*  do not push null to stream, let Amazon Transcribe do it  */
+                audioQueue.destroy()
+                callback()
+            },
             read (size) {
                 if (self.closing || self.queue === null) {
                     this.push(null)
@@ -254,23 +271,6 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     if (!self.closing && self.queue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 }))
-            },
-            async final (callback) {
-                if (self.closing || self.client === null) {
-                    callback()
-                    return
-                }
-
-                /*  await all read operations  */
-                await reads.awaitAll()
-
-                util.run(
-                    () => self.client!.destroy(),
-                    (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
-                )
-                audioQueue.push(null) /*  do not push null to stream, let Amazon Transcribe do it  */
-                audioQueue.destroy()
-                callback()
             }
         })
     }

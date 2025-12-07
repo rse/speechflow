@@ -280,6 +280,27 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     callback()
                 }
             },
+            async final (callback) {
+                if (self.closing || self.ws === null) {
+                    callback()
+                    return
+                }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
+
+                try {
+                    sendMessage({ type: "input_audio_buffer.commit" })
+                    self.ws.close()
+
+                    /*  NOTICE: do not push null here -- let the OpenAI close event handle it  */
+                    callback()
+                }
+                catch (error) {
+                    self.log("warning", `error closing OpenAI connection: ${error}`)
+                    callback(util.ensureError(error, "failed to close OpenAI connection"))
+                }
+            },
             read (size) {
                 if (self.closing || self.queue === null) {
                     this.push(null)
@@ -302,27 +323,6 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     if (!self.closing && self.queue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 }))
-            },
-            async final (callback) {
-                if (self.closing || self.ws === null) {
-                    callback()
-                    return
-                }
-
-                /*  await all read operations  */
-                await reads.awaitAll()
-
-                try {
-                    sendMessage({ type: "input_audio_buffer.commit" })
-                    self.ws.close()
-
-                    /*  NOTICE: do not push null here -- let the OpenAI close event handle it  */
-                    callback()
-                }
-                catch (error) {
-                    self.log("warning", `error closing OpenAI connection: ${error}`)
-                    callback(util.ensureError(error, "failed to close OpenAI connection"))
-                }
             }
         })
     }

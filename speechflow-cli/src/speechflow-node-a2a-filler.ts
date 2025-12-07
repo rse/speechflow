@@ -182,6 +182,31 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     }
                 }
             },
+            async final (callback) {
+                /*  short-circuit processing in case of own closing  */
+                if (self.closing) {
+                    callback()
+                    return
+                }
+
+                /*  signal end of stream  */
+                if (self.filler !== null && self.sendQueue !== null) {
+                    /*  optionally emit trailing silence
+                        (we have to wait for its internal "emit" operation to happen)  */
+                    self.filler.done()
+                    await new Promise((resolve) => setTimeout(resolve, 10))
+
+                    /*  signal end of stream  */
+                    self.sendQueue.write(null)
+                }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
+
+                /*  signal end of streaming  */
+                this.push(null)
+                callback()
+            },
             read (size) {
                 if (self.closing || self.sendQueue === null) {
                     this.push(null)
@@ -208,31 +233,6 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     if (!self.closing && self.sendQueue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 }))
-            },
-            async final (callback) {
-                /*  short-circuit processing in case of own closing  */
-                if (self.closing) {
-                    callback()
-                    return
-                }
-
-                /*  signal end of stream  */
-                if (self.filler !== null && self.sendQueue !== null) {
-                    /*  optionally emit trailing silence
-                        (we have to wait for its internal "emit" operation to happen)  */
-                    self.filler.done()
-                    await new Promise((resolve) => setTimeout(resolve, 10))
-
-                    /*  signal end of stream  */
-                    self.sendQueue.write(null)
-                }
-
-                /*  await all read operations  */
-                await reads.awaitAll()
-
-                /*  signal end of streaming  */
-                this.push(null)
-                callback()
             }
         })
     }

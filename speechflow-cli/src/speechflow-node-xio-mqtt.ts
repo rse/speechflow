@@ -135,6 +135,10 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
                     })
                 }
             },
+            async final (callback) {
+                await reads.awaitAll()
+                callback()
+            },
             read (size: number) {
                 if (self.params.mode === "w")
                     throw new Error("read operation on write-only node")
@@ -143,10 +147,6 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
                 }).catch((err: Error) => {
                     self.log("warning", `read on chunk queue operation failed: ${err}`)
                 }))
-            },
-            async final (callback) {
-                await reads.awaitAll()
-                callback()
             }
         })
     }

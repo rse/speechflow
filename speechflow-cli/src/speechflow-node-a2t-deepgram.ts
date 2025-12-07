@@ -218,6 +218,27 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     callback()
                 }
             },
+            async final (callback) {
+                /*  short-circuiting in case of own closing  */
+                if (self.closing || self.dg === null) {
+                    callback()
+                    return
+                }
+
+                /*  close Deepgram API  */
+                try {
+                    self.dg.requestClose()
+                }
+                catch (error) {
+                    self.log("warning", `error closing Deepgram connection: ${error}`)
+                }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
+
+                /*  NOTICE: do not push null here -- let the Deepgram close event handle it  */
+                callback()
+            },
             read (size) {
                 if (self.closing || self.queue === null) {
                     this.push(null)
@@ -240,27 +261,6 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     if (!self.closing && self.queue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
                 }))
-            },
-            async final (callback) {
-                /*  short-circuiting in case of own closing  */
-                if (self.closing || self.dg === null) {
-                    callback()
-                    return
-                }
-
-                /*  close Deepgram API  */
-                try {
-                    self.dg.requestClose()
-                }
-                catch (error) {
-                    self.log("warning", `error closing Deepgram connection: ${error}`)
-                }
-
-                /*  await all read operations  */
-                await reads.awaitAll()
-
-                /*  NOTICE: do not push null here -- let the Deepgram close event handle it  */
-                callback()
             }
         })
     }
