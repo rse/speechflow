@@ -937,10 +937,13 @@ The following nodes process text chunks only.
   | input   | text        |
   | output  | text        |
 
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **format**   | *none*    | "srt"    | /^(?:srt\|vtt)$/   |
-  | **words**    | *none*    | false    | *none*             |
+  | Parameter    | Position  | Default     | Requirement        |
+  | ------------ | --------- | ----------- | ------------------ |
+  | **format**   | 0         | "srt"       | `/^(?:srt\|vtt)$/` |
+  | **words**    | *none*    | false       | *none*             |
+  | **mode**     | *none*    | "export"    | `/^(?:export|import|render)$/` |
+  | **addr**     | *none*    | "127.0.0.1" | *none*             |
+  | **port**     | *none*    | 8585        | *none*             |
 
 - Node: **t2t-format**<br/>
   Purpose: **text paragraph formatting**<br/>
