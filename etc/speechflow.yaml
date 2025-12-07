@@ -27,22 +27,31 @@ transcription: |
                 t2t-format(width: 80) |
                     xio-file(path: argv.1, mode: "w", type: "text")
 
-#   Generate WebVTT file with German closed captions of German MP3 audio file
+#   Generate WebVTT file with German closed captions of German WAV audio file
 captioning: |
     xio-file(path: argv.0, mode: "r", type: "audio") |
-        a2a-ffmpeg(src: "mp3", dst: "pcm") |
+        a2a-wav(mode: "decode") |
             a2t-deepgram(language: "de") |
                 t2t-subtitle(format: "vtt") |
                     xio-file(path: argv.1, mode: "w", type: "text")
 
-#   Generate WebVTT file with English subtitles of German MP3 audio file
+#   Generate WebVTT file with English subtitles of German WAV audio file
 subtitling: |
     xio-file(path: argv.0, mode: "r", type: "audio") |
-        a2a-ffmpeg(src: "mp3", dst: "pcm") |
+        a2a-wav(mode: "decode") |
             a2t-deepgram(language: "de") |
                 t2t-deepl(src: "de", dst: "en") |
                     t2t-subtitle(format: "vtt") |
                         xio-file(path: argv.1, mode: "w", type: "text")
+
+#   Generate German WAV audio file from WebVTT file containing German subtitles
+synthesis: |
+    xio-file(path: argv.0, mode: "r", type: "text") |
+        t2t-subtitle(format: "vtt", mode: "import") |
+            t2a-elevenlabs(voice: "Mark", optimize: "quality", speed: 1.05, language: "en") |
+                a2a-filler() |
+                    a2a-wav(mode: "encode") |
+                        xio-file(path: argv.1, mode: "w", type: "audio")
 
 #   Ad-Hoc text translation from German to English
 translation: |
