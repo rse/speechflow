@@ -38,9 +38,9 @@ speech-to-speech).
 - remote-controlable audio muting,
 - cloud-based speech-to-text conversion with
   [Amazon Transcribe](https://aws.amazon.com/transcribe/),
-  [OpenAI GPT-Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe), or 
+  [OpenAI GPT-Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe), or
   [Deepgram](https://deepgram.com).
-- cloud-based text-to-text translation (or spelling correction) with 
+- cloud-based text-to-text translation (or spelling correction) with
   [DeepL](https://deepl.com),
   [Amazon Translate](https://aws.amazon.com/translate/),
   [Google Cloud Translate](https://cloud.google.com/translate), or
@@ -236,24 +236,35 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
   }
   ```
 
-- **Transcription**: Generate text file with German transcription of MP3 audio file:
+- **Transcription**: Generate text file with German transcription of WAV audio file:
 
   ```
   xio-file(path: argv.0, mode: "r", type: "audio") |
-      a2a-ffmpeg(src: "mp3", dst: "pcm") |
-          a2t-deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
+      a2a-wav("mode: "decode") |
+          a2t-deepgram(language: "de") |
               t2t-format(width: 80) |
                   xio-file(path: argv.1, mode: "w", type: "text")
   ```
 
-- **Subtitling**: Generate text file with German subtitles of MP3 audio file:
+- **Subtitling**: Generate WebVTT file with German subtitles of WAV audio file:
 
   ```
   xio-file(path: argv.0, mode: "r", type: "audio") |
-      a2a-ffmpeg(src: "mp3", dst: "pcm") |
-          a2t-deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) |
+      a2a-wav("mode: "decode") |
+          a2t-deepgram(language: "de") |
               t2t-subtitle(format: "vtt") |
                   xio-file(path: argv.1, mode: "w", type: "text")
+  ```
+
+- **Synthesis**: Generate WAV audio file from WebVTT file containing German subtitles:
+
+  ```
+  xio-file(path: argv.0, mode: "r", type: "text") |
+      t2t-subtitle(format: "vtt", mode: "import") |
+          t2a-elevenlabs(voice: "Mark", optimize: "quality", speed: 1.05, language: "en") |
+              a2a-filler() |
+                  a2a-wav(mode: "encode") |
+                      xio-file(path: argv.1, mode: "w", type: "audio")
   ```
 
 - **Speaking**: Generate audio file with English voice for a text file:
@@ -283,11 +294,11 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
           a2a-meter(interval: 250) |
               a2a-wav(mode: "encode") |
                   xio-file(path: "program-de.wav", mode: "w", type: "audio"),
-          a2t-deepgram(language: "de", key: env.SPEECHFLOW_DEEPGRAM_KEY) | {
+          a2t-deepgram(language: "de") | {
               t2t-sentence() | {
                   t2t-format(width: 80) |
                       xio-file(path: "program-de.txt", mode: "w", type: "text"),
-                  t2t-deepl(src: "de", dst: "en", key: env.SPEECHFLOW_DEEPL_KEY) | {
+                  t2t-deepl(src: "de", dst: "en") | {
                       x2x-trace(name: "text", type: "text") | {
                           t2t-format(width: 80) |
                               xio-file(path: "program-en.txt", mode: "w", type: "text"),
