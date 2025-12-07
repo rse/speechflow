@@ -91,7 +91,7 @@ export function convertBufToI16 (buf: Buffer, littleEndian = true) {
     return arr
 }
 
-/*  helper function: convert In16Array in PCM/I16 to Buffer  */
+/*  helper function: convert Int16Array in PCM/I16 to Buffer  */
 export function convertI16ToBuf (arr: Int16Array, littleEndian = true) {
     if (arr.length === 0)
         return Buffer.alloc(0)
