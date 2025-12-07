@@ -15,6 +15,8 @@ import * as util                           from "./speechflow-util"
 
 class AudioFiller extends EventEmitter {
     private emittedEndSamples = 0           /* stream position in samples already emitted */
+    private maxInputEndSamples = 0
+    private lastMeta: Map<string, any> | undefined = undefined
     private readonly bytesPerSample = 2     /* PCM I16 */
     private readonly bytesPerFrame: number
     private readonly sampleTolerance = 0.5  /* tolerance for floating-point sample comparisons */
@@ -63,6 +65,12 @@ class AudioFiller extends EventEmitter {
         if (endSamp < startSamp)
             throw new Error("invalid timestamps")
 
+        /*  track maximum input end timestamp and last metadata for trailing silence  */
+        if (endSamp > this.maxInputEndSamples) {
+            this.maxInputEndSamples = endSamp
+            this.lastMeta = chunk.meta ? new Map(chunk.meta) : undefined
+        }
+
         /*  if chunk starts beyond what we've emitted, insert silence for the gap  */
         if (startSamp > this.emittedEndSamples + this.sampleTolerance) {
             this.emitSilence(this.emittedEndSamples, startSamp, chunk.meta)
@@ -102,6 +110,13 @@ class AudioFiller extends EventEmitter {
 
         /*  advance emitted cursor  */
         this.emittedEndSamples = Math.max(this.emittedEndSamples, outEndSamples)
+    }
+
+    /*  signal end of processing and emit trailing silence  */
+    public done (): void {
+        /*  emit trailing silence if there's a gap between emitted and max input  */
+        if (this.maxInputEndSamples > this.emittedEndSamples + this.sampleTolerance)
+            this.emitSilence(this.emittedEndSamples, this.maxInputEndSamples, this.lastMeta)
     }
 }
 
@@ -145,6 +160,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
 
         /*  establish a duplex stream  */
         const self = this
+        const reads = new util.PromiseSet<void>()
         this.stream = new Stream.Duplex({
             readableObjectMode: true,
             writableObjectMode: true,
@@ -171,7 +187,7 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     this.push(null)
                     return
                 }
-                self.sendQueue.read().then((chunk) => {
+                reads.add(self.sendQueue.read().then((chunk) => {
                     if (self.closing || self.sendQueue === null) {
                         this.push(null)
                         return
@@ -191,13 +207,29 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                 }).catch((error: unknown) => {
                     if (!self.closing && self.sendQueue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
-                })
+                }))
             },
-            final (callback) {
+            async final (callback) {
+                /*  short-circuit processing in case of own closing  */
                 if (self.closing) {
                     callback()
                     return
                 }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
+
+                /*  signal end of stream to filler (emits trailing silence)  */
+                if (self.filler !== null && self.sendQueue !== null) {
+                    self.filler.done()
+                    if (!self.sendQueue.empty()) {
+                        await self.sendQueue.read().then((chunk) => {
+                            this.push(chunk)
+                        })
+                    }
+                }
+
+                /*  signal end of streaming  */
                 this.push(null)
                 callback()
             }
