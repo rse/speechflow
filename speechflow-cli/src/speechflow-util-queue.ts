@@ -45,6 +45,11 @@ export class SingleQueue<T> extends EventEmitter {
             tryToConsume()
         })
     }
+    drain () {
+        const items = this.queue
+        this.queue = new Array<T>()
+        return items
+    }
 }
 
 /*  helper class for double-item queue  */
