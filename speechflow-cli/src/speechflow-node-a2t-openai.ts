@@ -23,11 +23,11 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
     public static name = "a2t-openai"
 
     /*  internal state  */
-    private openai:     OpenAI | null = null
-    private ws:         ws.WebSocket | null = null
-    private queue:      util.SingleQueue<SpeechFlowChunk | null> | null = null
-    private resampler:  SpeexResampler | null = null
-    private closing   = false
+    private openai:            OpenAI | null = null
+    private ws:                ws.WebSocket | null = null
+    private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
+    private resampler:         SpeexResampler | null = null
+    private closing            = false
     private connectionTimeout: ReturnType<typeof setTimeout> | null = null
 
     /*  construct node  */
