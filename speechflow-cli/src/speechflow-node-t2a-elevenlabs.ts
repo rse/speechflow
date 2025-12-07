@@ -141,67 +141,60 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
             readableObjectMode: true,
             decodeStrings:      false,
             highWaterMark:      1,
-            transform (chunk: SpeechFlowChunk, encoding, callback) {
+            async transform (chunk: SpeechFlowChunk, encoding, callback) {
                 if (self.closing)
                     callback(new Error("stream already destroyed"))
                 else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
-                    (async () => {
-                        let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+                    let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+                        processTimeout = null
+                        callback(new Error("ElevenLabs API timeout"))
+                    }, 60 * 1000)
+                    const clearProcessTimeout = () => {
+                        if (processTimeout !== null) {
+                            clearTimeout(processTimeout)
                             processTimeout = null
-                            callback(new Error("ElevenLabs API timeout"))
-                        }, 60 * 1000)
-                        const clearProcessTimeout = () => {
-                            if (processTimeout !== null) {
-                                clearTimeout(processTimeout)
-                                processTimeout = null
-                            }
                         }
-                        try {
-                            if (self.closing) {
-                                clearProcessTimeout()
-                                callback(new Error("stream destroyed during processing"))
-                                return
-                            }
-                            const stream = await speechStream(chunk.payload as string)
-                            const buffer = await getStreamAsBuffer(stream)
-                            if (self.closing) {
-                                clearProcessTimeout()
-                                callback(new Error("stream destroyed during processing"))
-                                return
-                            }
-                            self.log("info", `ElevenLabs: received audio (buffer length: ${buffer.byteLength})`)
-                            const bufferResampled = self.resampler!.processChunk(buffer)
-                            self.log("info", "ElevenLabs: forwarding resampled audio " +
-                                `(buffer length: ${bufferResampled.byteLength})`)
-
-                            /*  calculate actual audio duration from PCM buffer size  */
-                            const durationMs = util.audioBufferDuration(bufferResampled,
-                                self.config.audioSampleRate, self.config.audioBitDepth) * 1000
-
-                            /*  create new chunk with recalculated timestamps  */
-                            const chunkNew = chunk.clone()
-                            chunkNew.type         = "audio"
-                            chunkNew.payload      = bufferResampled
-                            chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
+                    }
+                    try {
+                        if (self.closing) {
                             clearProcessTimeout()
-                            this.push(chunkNew)
-                            callback()
+                            callback(new Error("stream destroyed during processing"))
+                            return
                         }
-                        catch (error) {
+                        const stream = await speechStream(chunk.payload as string)
+                        const buffer = await getStreamAsBuffer(stream)
+                        if (self.closing) {
                             clearProcessTimeout()
-                            callback(util.ensureError(error, "ElevenLabs processing failed"))
+                            callback(new Error("stream destroyed during processing"))
+                            return
                         }
-                    })()
+                        self.log("info", `ElevenLabs: received audio (buffer length: ${buffer.byteLength})`)
+                        const bufferResampled = self.resampler!.processChunk(buffer)
+                        self.log("info", "ElevenLabs: forwarding resampled audio " +
+                            `(buffer length: ${bufferResampled.byteLength})`)
+
+                        /*  calculate actual audio duration from PCM buffer size  */
+                        const durationMs = util.audioBufferDuration(bufferResampled,
+                            self.config.audioSampleRate, self.config.audioBitDepth) * 1000
+
+                        /*  create new chunk with recalculated timestamps  */
+                        const chunkNew = chunk.clone()
+                        chunkNew.type         = "audio"
+                        chunkNew.payload      = bufferResampled
+                        chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
+                        clearProcessTimeout()
+                        this.push(chunkNew)
+                        callback()
+                    }
+                    catch (error) {
+                        clearProcessTimeout()
+                        callback(util.ensureError(error, "ElevenLabs processing failed"))
+                    }
                 }
             },
             final (callback) {
-                if (self.closing) {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })
