@@ -252,7 +252,7 @@ export class WebAudio {
 
                 /*  start capture first  */
                 if (this.captureNode !== null) {
-                    this.captureNode?.port.postMessage({
+                    this.captureNode.port.postMessage({
                         type: "start-capture",
                         chunkId,
                         expectedSamples: int16Array.length
