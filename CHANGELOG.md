@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.6.8 (2025-12-07)
+1.7.0 (2025-12-08)
 ------------------
 
 - IMPROVEMENT: support timestamps on chunks also for OpenAI speech-to-text
