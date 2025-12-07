@@ -204,10 +204,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                         const chunk  = new SpeechFlowChunk(start, end, "final", "text", text)
                         chunk.meta = aggregateMeta(start, end)
                         metastore.prune(start)
-
-                        /*  clean up speech timing for this item  */
                         speechTiming.delete(itemId)
-
                         this.queue.write(chunk)
                         text = ""
                     }
