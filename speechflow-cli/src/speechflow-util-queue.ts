@@ -274,9 +274,9 @@ export class AsyncQueue<T> {
     private queue: Array<T> = []
     private resolvers: { resolve: (v: T) => void, reject: (err: Error) => void }[] = []
     write (v: T) {
-        const resolve = this.resolvers.shift()
-        if (resolve)
-            resolve.resolve(v)
+        const resolver = this.resolvers.shift()
+        if (resolver)
+            resolver.resolve(v)
         else
             this.queue.push(v)
     }
@@ -290,8 +290,8 @@ export class AsyncQueue<T> {
         return this.queue.length === 0
     }
     destroy () {
-        for (const resolve of this.resolvers)
-            resolve.reject(new Error("AsyncQueue destroyed"))
+        for (const resolver of this.resolvers)
+            resolver.reject(new Error("AsyncQueue destroyed"))
         this.resolvers = []
         this.queue = []
     }
