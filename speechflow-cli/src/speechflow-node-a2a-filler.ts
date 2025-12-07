@@ -216,18 +216,19 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     return
                 }
 
+                /*  signal end of stream  */
+                if (self.filler !== null && self.sendQueue !== null) {
+                    /*  optionally emit trailing silence
+                        (we have to wait for its internal "emit" operation to happen)  */
+                    self.filler.done()
+                    await new Promise((resolve) => setTimeout(resolve, 10))
+
+                    /*  signal end of stream  */
+                    self.sendQueue.write(null)
+                }
+
                 /*  await all read operations  */
                 await reads.awaitAll()
-
-                /*  signal end of stream to filler (emits trailing silence)  */
-                if (self.filler !== null && self.sendQueue !== null) {
-                    self.filler.done()
-                    if (!self.sendQueue.empty()) {
-                        await self.sendQueue.read().then((chunk) => {
-                            this.push(chunk)
-                        })
-                    }
-                }
 
                 /*  signal end of streaming  */
                 this.push(null)
