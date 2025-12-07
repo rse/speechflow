@@ -242,20 +242,22 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 }))
             },
             async final (callback) {
+                /*  short-circuiting in case of own closing  */
                 if (self.closing || self.dg === null) {
                     callback()
                     return
                 }
 
-                /*  await all read operations  */
-                await reads.awaitAll()
-
+                /*  close Deepgram API  */
                 try {
                     self.dg.requestClose()
                 }
                 catch (error) {
                     self.log("warning", `error closing Deepgram connection: ${error}`)
                 }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
 
                 /*  NOTICE: do not push null here -- let the Deepgram close event handle it  */
                 callback()
