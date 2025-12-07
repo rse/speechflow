@@ -112,6 +112,7 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             }
         })
         const self = this
+        const reads = new util.PromiseSet<void>()
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -137,11 +138,15 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             read (size: number) {
                 if (self.params.mode === "w")
                     throw new Error("read operation on write-only node")
-                self.chunkQueue!.read().then((chunk) => {
+                reads.add(self.chunkQueue!.read().then((chunk) => {
                     this.push(chunk, "binary")
                 }).catch((err: Error) => {
                     self.log("warning", `read on chunk queue operation failed: ${err}`)
-                })
+                }))
+            },
+            async final (callback) {
+                await reads.awaitAll()
+                callback()
             }
         })
     }

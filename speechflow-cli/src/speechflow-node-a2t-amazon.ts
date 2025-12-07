@@ -202,8 +202,9 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         /*  remember opening time to receive time zero offset  */
         this.timeOpen = DateTime.now()
 
-        /*  provide Duplex stream and internally attach to Deepgram API  */
+        /*  provide Duplex stream and internally attach to Amazon Transcribe API  */
         const self = this
+        const reads = new util.PromiseSet<void>()
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -236,7 +237,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     this.push(null)
                     return
                 }
-                self.queue.read().then((chunk) => {
+                reads.add(self.queue.read().then((chunk) => {
                     if (self.closing || self.queue === null) {
                         this.push(null)
                         return
@@ -252,13 +253,17 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                 }).catch((error: unknown) => {
                     if (!self.closing && self.queue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
-                })
+                }))
             },
-            final (callback) {
+            async final (callback) {
                 if (self.closing || self.client === null) {
                     callback()
                     return
                 }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
+
                 util.run(
                     () => self.client!.destroy(),
                     (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)

@@ -187,6 +187,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
 
         /*  provide Duplex stream and internally attach to Deepgram API  */
         const self = this
+        const reads = new util.PromiseSet<void>()
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
             readableObjectMode: true,
@@ -222,7 +223,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     this.push(null)
                     return
                 }
-                self.queue.read().then((chunk) => {
+                reads.add(self.queue.read().then((chunk) => {
                     if (self.closing || self.queue === null) {
                         this.push(null)
                         return
@@ -238,19 +239,24 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 }).catch((error: unknown) => {
                     if (!self.closing && self.queue !== null)
                         self.log("error", `queue read error: ${util.ensureError(error).message}`)
-                })
+                }))
             },
-            final (callback) {
+            async final (callback) {
                 if (self.closing || self.dg === null) {
                     callback()
                     return
                 }
+
+                /*  await all read operations  */
+                await reads.awaitAll()
+
                 try {
                     self.dg.requestClose()
                 }
                 catch (error) {
                     self.log("warning", `error closing Deepgram connection: ${error}`)
                 }
+
                 /*  NOTICE: do not push null here -- let the Deepgram close event handle it  */
                 callback()
             }

@@ -109,6 +109,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 this.log("error", `error of some connection on URL ${this.params.listen}: ${error.message}`)
             })
             const self = this
+            const reads = new util.PromiseSet<void>()
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
                 readableObjectMode: true,
@@ -144,11 +145,15 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 read (size: number) {
                     if (self.params.mode === "w")
                         throw new Error("read operation on write-only node")
-                    chunkQueue.read().then((chunk) => {
+                    reads.add(chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
                     }).catch((err: Error) => {
                         self.log("warning", `read on chunk queue operation failed: ${err}`)
-                    })
+                    }))
+                },
+                async final (callback) {
+                    await reads.awaitAll()
+                    callback()
                 }
             })
         }
@@ -190,6 +195,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             })
             this.client.binaryType = "arraybuffer"
             const self = this
+            const reads = new util.PromiseSet<void>()
             this.stream = new Stream.Duplex({
                 writableObjectMode: true,
                 readableObjectMode: true,
@@ -211,11 +217,15 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 read (size: number) {
                     if (self.params.mode === "w")
                         throw new Error("read operation on write-only node")
-                    chunkQueue.read().then((chunk) => {
+                    reads.add(chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
                     }).catch((err: Error) => {
                         self.log("warning", `read on chunk queue operation failed: ${err}`)
-                    })
+                    }))
+                },
+                async final (callback) {
+                    await reads.awaitAll()
+                    callback()
                 }
             })
         }
