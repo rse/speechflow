@@ -119,11 +119,6 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.closing || self.params.mode === "sink") {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })

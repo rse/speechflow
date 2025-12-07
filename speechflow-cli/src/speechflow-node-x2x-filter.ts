@@ -117,7 +117,6 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
                 callback()
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

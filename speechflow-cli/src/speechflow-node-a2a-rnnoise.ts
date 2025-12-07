@@ -136,11 +136,6 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.closing) {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })

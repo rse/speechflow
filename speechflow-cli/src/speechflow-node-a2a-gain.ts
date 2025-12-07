@@ -73,11 +73,6 @@ export default class SpeechFlowNodeA2AGain extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                if (self.closing) {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })

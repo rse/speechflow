@@ -226,7 +226,6 @@ export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

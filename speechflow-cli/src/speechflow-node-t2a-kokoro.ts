@@ -142,7 +142,6 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

@@ -258,7 +258,6 @@ export default class SpeechFlowNodeT2TOllama extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

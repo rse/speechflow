@@ -64,7 +64,6 @@ export default class SpeechFlowNodeT2TFormat extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

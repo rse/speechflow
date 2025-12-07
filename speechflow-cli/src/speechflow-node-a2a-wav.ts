@@ -181,7 +181,6 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

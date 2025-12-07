@@ -67,7 +67,6 @@ export default class SpeechFlowNodeT2TModify extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

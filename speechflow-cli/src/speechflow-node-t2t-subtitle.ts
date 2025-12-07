@@ -159,7 +159,6 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     }
                 },
                 final (callback) {
-                    this.push(null)
                     callback()
                 }
             })
@@ -326,7 +325,6 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                             /*  ignore parse errors on final flush  */
                         }
                     }
-                    this.push(null)
                     callback()
                 }
             })

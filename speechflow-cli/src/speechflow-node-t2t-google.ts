@@ -110,7 +110,6 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

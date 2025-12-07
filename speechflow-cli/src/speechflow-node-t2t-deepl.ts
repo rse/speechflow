@@ -100,7 +100,6 @@ export default class SpeechFlowNodeT2TDeepL extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })

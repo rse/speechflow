@@ -33,7 +33,6 @@ export function createTransformStreamForWritableSide (
             callback()
         },
         final (callback) {
-            this.push(null)
             callback()
         }
     })
@@ -67,7 +66,6 @@ export function createTransformStreamForReadableSide (
             callback()
         },
         final (callback) {
-            this.push(null)
             callback()
         }
     })
