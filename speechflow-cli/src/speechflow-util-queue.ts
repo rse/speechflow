@@ -271,12 +271,12 @@ export class TimeStore<T> extends EventEmitter {
 
 /*  asynchronous queue  */
 export class AsyncQueue<T> {
-    private queue: Array<T | null> = []
-    private resolvers: ((v: T | null) => void)[] = []
-    write (v: T | null) {
+    private queue: Array<T> = []
+    private resolvers: { resolve: (v: T) => void, reject: (err: Error) => void }[] = []
+    write (v: T) {
         const resolve = this.resolvers.shift()
         if (resolve)
-            resolve(v)
+            resolve.resolve(v)
         else
             this.queue.push(v)
     }
@@ -284,14 +284,14 @@ export class AsyncQueue<T> {
         if (this.queue.length > 0)
             return this.queue.shift()!
         else
-            return new Promise<T | null>((resolve) => this.resolvers.push(resolve))
+            return new Promise<T>((resolve, reject) => this.resolvers.push({ resolve, reject }))
     }
     empty () {
         return this.queue.length === 0
     }
     destroy () {
         for (const resolve of this.resolvers)
-            resolve(null)
+            resolve.reject(new Error("AsyncQueue destroyed"))
         this.resolvers = []
         this.queue = []
     }
