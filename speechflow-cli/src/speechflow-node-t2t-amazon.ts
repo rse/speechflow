@@ -98,7 +98,7 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
                     if (!retriable || attempt >= maxRetries)
                         break
                     const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000)
-                    await new Promise((resolve) => setTimeout(resolve, delayMs))
+                    await util.sleep(delayMs)
                 }
             }
             throw util.ensureError(lastError)

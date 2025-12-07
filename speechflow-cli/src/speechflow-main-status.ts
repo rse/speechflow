@@ -15,6 +15,7 @@ import chalk                 from "chalk"
 /*  internal dependencies  */
 import SpeechFlowNode        from "./speechflow-node"
 import { NodeConfig }        from "./speechflow-main-config"
+import * as util             from "./speechflow-util"
 
 /*  the node status manager  */
 export class NodeStatusManager {
@@ -48,8 +49,7 @@ export class NodeStatusManager {
             node._accessBus = accessBus
             const status = await Promise.race<{ [ key: string ]: string | number }>([
                 node.status(),
-                new Promise<never>((resolve, reject) => setTimeout(() =>
-                    reject(new Error("timeout")), 10 * 1000))
+                util.timeout(10 * 1000)
             ]).catch((err: Error) => {
                 this.cli.log("warning", `[${node.id}]: failed to gather status of node <${node.id}>: ${err.message}`)
                 return {} as { [ key: string ]: string | number }

@@ -4,6 +4,20 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-export async function sleep (durationMs: number) {
-    await new Promise((resolve) => setTimeout(resolve, durationMs))
+/*  sleep: wait a duration of time and then resolve  */
+export function sleep (durationMs: number) {
+    return new Promise<void>((resolve, reject) => {
+        setTimeout(() => {
+            resolve()
+        }, durationMs)
+    })
+}
+
+/*  timeout: wait a duration of time and then reject  */
+export function timeout (durationMs: number) {
+    return new Promise<never>((resolve, reject) => {
+        setTimeout(() => {
+            reject(new Error("timeout"))
+        }, durationMs)
+    })
 }

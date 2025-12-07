@@ -363,8 +363,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
         if (this.classifier !== null) {
             try {
                 const disposePromise = this.classifier.dispose()
-                const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 5000))
-                await Promise.race([ disposePromise, timeoutPromise ])
+                await Promise.race([ disposePromise, util.sleep(5000) ])
             }
             catch (error) {
                 this.log("warning", `error during classifier cleanup: ${error}`)

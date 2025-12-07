@@ -69,8 +69,7 @@ export class APIServer {
             else {
                 await Promise.race<void>([
                     foundNode.receiveRequest(argList),
-                    new Promise<never>((resolve, reject) => setTimeout(() =>
-                        reject(new Error("timeout")), 10 * 1000))
+                    util.timeout(10 * 1000)
                 ]).catch((err: Error) => {
                     this.cli.log("warning", `external request to node <${name}> failed: ${err.message}`)
                     throw err
@@ -255,8 +254,7 @@ export class APIServer {
                 for (const n of graph.getGraphNodes()) {
                     Promise.race<void>([
                         n.receiveDashboard(info.type, info.id, info.kind, info.value),
-                        new Promise<never>((resolve, reject) => setTimeout(() =>
-                            reject(new Error("timeout")), 10 * 1000))
+                        util.timeout(10 * 1000)
                     ]).catch((err: Error) => {
                         this.cli.log("warning", `sending dashboard info to node <${n.id}> failed: ${err.message}`)
                     })
@@ -297,8 +295,7 @@ export class APIServer {
             }
             await Promise.race([
                 Promise.all(closePromises),
-                new Promise((resolve, reject) =>
-                    setTimeout(() => reject(new Error("timeout for all peers")), 5 * 1000))
+                util.timeout(5 * 1000)
             ]).catch((error: unknown) => {
                 this.cli.log("warning", `HAPI: WebSockets failed to close: ${util.ensureError(error).message}`)
             })

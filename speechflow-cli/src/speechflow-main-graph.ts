@@ -174,8 +174,7 @@ export class NodeGraph {
             node.setTimeZero(this.timeZero)
             await Promise.race<void>([
                 node.open(),
-                new Promise<never>((resolve, reject) => setTimeout(() =>
-                    reject(new Error("timeout")), 30 * 1000))
+                util.timeout(30 * 1000)
             ]).catch((err: Error) => {
                 this.cli.log("error", `<${node.id}>: failed to open node <${node.id}>: ${err.message}`)
                 throw new Error(`failed to open node <${node.id}>: ${err.message}`)
@@ -271,8 +270,7 @@ export class NodeGraph {
             this.cli.log("info", `close node <${node.id}>`)
             await Promise.race<void>([
                 node.close(),
-                new Promise<never>((resolve, reject) => setTimeout(() =>
-                    reject(new Error("timeout")), 10 * 1000))
+                util.timeout(10 * 1000)
             ]).catch((err: Error) => {
                 this.cli.log("warning", `node <${node.id}> failed to close: ${err.message}`)
             })
