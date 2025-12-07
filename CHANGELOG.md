@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-1.6.8 (2025-10-13)
+1.6.8 (2025-12-07)
 ------------------
 
 - IMPROVEMENT: support timestamps on chunks also for OpenAI speech-to-text
@@ -10,6 +10,7 @@ ChangeLog
 - BUGFIX: fix subtitle node by more correctly handling silence parts
 - BUGFIX: fix stream finalization handling in many nodes
 - CLEANUP: cleanup chunk handling
+- CLEANUP: various code cleanups
 
 1.6.7 (2025-10-05)
 ------------------
