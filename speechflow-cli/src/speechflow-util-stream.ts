@@ -105,8 +105,7 @@ export function streamChunkEncode (chunk: SpeechFlowChunk) {
     }
     if (chunk.meta.size > 0)
         data.meta = Array.from(chunk.meta.entries())
-    const _data = CBOR.encode(data)
-    return _data
+    return CBOR.encode(data)
 }
 
 /*  decode/unserialize chunk of data  */
