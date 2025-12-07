@@ -118,7 +118,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
         this.stream = this.io as unknown as Stream.Duplex
 
         /*  convert regular stream into object-mode stream  */
-        const wrapper1 = util.createTransformStreamForWritableSide()
+        const wrapper1 = util.createTransformStreamForWritableSide("audio", 1)
         const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero, highwaterMark)
         this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
     }
@@ -161,7 +161,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
         this.stream = this.io as unknown as Stream.Writable
 
         /*  convert regular stream into object-mode stream  */
-        const wrapper = util.createTransformStreamForWritableSide()
+        const wrapper = util.createTransformStreamForWritableSide("audio", 1)
         this.stream = Stream.compose(wrapper, this.stream)
     }
 

@@ -128,7 +128,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             }
 
             /*  convert regular stream into object-mode stream  */
-            const wrapper1 = util.createTransformStreamForWritableSide()
+            const wrapper1 = util.createTransformStreamForWritableSide(this.params.type, 1)
             const wrapper2 = util.createTransformStreamForReadableSide(
                 this.params.type, () => this.timeZero)
             this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
@@ -171,7 +171,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                 else
                     process.stdout.setEncoding(this.config.textEncoding)
                 const chunker = createStdoutChunker()
-                const wrapper = util.createTransformStreamForWritableSide()
+                const wrapper = util.createTransformStreamForWritableSide(this.params.type, 1)
                 this.stream = Stream.compose(wrapper, chunker)
             }
             else {
@@ -183,7 +183,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                 else
                     writable = fs.createWriteStream(this.params.path,
                         { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
-                const wrapper = util.createTransformStreamForWritableSide()
+                const wrapper = util.createTransformStreamForWritableSide(this.params.type, 1)
                 this.stream = Stream.compose(wrapper, writable)
             }
         }

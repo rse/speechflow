@@ -16,13 +16,18 @@ import { SpeechFlowChunk }     from "./speechflow-node"
 import * as util               from "./speechflow-util"
 
 /*  create a Duplex/Transform stream which has
-    object-mode on Writable side and buffer/string-mode on Readable side  */
-export function createTransformStreamForWritableSide () {
+    object-mode        on Writable side and
+    buffer/string-mode on Readable side  */
+export function createTransformStreamForWritableSide (
+    type: "text" | "audio",
+    readableHighWaterMark?: number
+) {
     return new Stream.Transform({
-        readableObjectMode: true,
-        writableObjectMode: true,
-        decodeStrings: false,
-        highWaterMark: 1,
+        writableObjectMode:    true,
+        readableObjectMode:    false,
+        writableHighWaterMark: 1,
+        readableHighWaterMark: readableHighWaterMark ?? (type === "audio" ? 19200 /* 400ms */ : 65536 /* 64KB */),
+        decodeStrings:         false,
         transform (chunk: SpeechFlowChunk, encoding, callback) {
             this.push(chunk.payload)
             callback()
@@ -35,13 +40,19 @@ export function createTransformStreamForWritableSide () {
 }
 
 /*  create a Duplex/Transform stream which has
-    object-mode on Readable side and buffer/string-mode on Writable side  */
-export function createTransformStreamForReadableSide (type: "text" | "audio", getTimeZero: () => DateTime, highWaterMark?: number) {
+    buffer/string-mode on Writable side and
+    object-mode        on Readable side  */
+export function createTransformStreamForReadableSide (
+    type: "text" | "audio",
+    getTimeZero: () => DateTime,
+    writableHighWaterMark?: number
+) {
     return new Stream.Transform({
-        readableObjectMode: true,
-        writableObjectMode: true,
-        decodeStrings: false,
-        highWaterMark: highWaterMark ?? (type === "audio" ? 19200 /* 400ms */: 65536 /* 64KB */),
+        writableObjectMode:    false,
+        readableObjectMode:    true,
+        writableHighWaterMark: writableHighWaterMark ?? (type === "audio" ? 19200 /* 400ms */ : 65536 /* 64KB */),
+        readableHighWaterMark: 1,
+        decodeStrings:         false,
         transform (chunk: Buffer | string, encoding, callback) {
             const timeZero = getTimeZero()
             const start = DateTime.now().diff(timeZero)
