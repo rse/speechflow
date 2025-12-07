@@ -7,6 +7,7 @@ ChangeLog
 
 - UPDATE: upgrade NPM dependencies
 - BUGFIX: fix subtitle node by more correctly handling silence parts
+- BUGFIX: fix stream finalization handling in many nodes
 - CLEANUP: cleanup chunk handling
 
 1.6.7 (2025-10-05)
