@@ -28,10 +28,10 @@ export default class SpeechFlowNodeX2XTrace extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            type:      { type: "string", pos: 0, val: "audio", match: /^(?:audio|text)$/ },
-            name:      { type: "string", pos: 1, val: "trace" },
+            type:      { type: "string", pos: 0, val: "audio",  match: /^(?:audio|text)$/  },
+            name:      { type: "string", pos: 1, val: "trace"                              },
             mode:      { type: "string", pos: 2, val: "filter", match: /^(?:filter|sink)$/ },
-            dashboard: { type: "string",         val: "" }
+            dashboard: { type: "string",         val: ""                                   }
         })
 
         /*  sanity check parameters  */
