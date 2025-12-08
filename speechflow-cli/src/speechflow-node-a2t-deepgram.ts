@@ -21,11 +21,11 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     public static name = "a2t-deepgram"
 
     /*  internal state  */
-    private dg:                Deepgram.LiveClient | null                       = null
-    private closing                                                           = false
-    private initTimeout:       ReturnType<typeof setTimeout> | null             = null
-    private connectionTimeout: ReturnType<typeof setTimeout> | null             = null
-    private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
+    private dg:                Deepgram.LiveClient                        | null = null
+    private closing                                                              = false
+    private initTimeout:       ReturnType<typeof setTimeout>              | null = null
+    private connectionTimeout: ReturnType<typeof setTimeout>              | null = null
+    private queue:             util.SingleQueue<SpeechFlowChunk | null>   | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
