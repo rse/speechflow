@@ -172,8 +172,10 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         /*  wait for Deepgram API to be available  */
         await new Promise((resolve, reject) => {
             this.connectionTimeout = setTimeout(() => {
-                this.connectionTimeout = null
-                reject(new Error("Deepgram: timeout waiting for connection open"))
+                if (this.connectionTimeout !== null) {
+                    this.connectionTimeout = null
+                    reject(new Error("Deepgram: timeout waiting for connection open"))
+                }
             }, 8000)
             this.dg!.once(Deepgram.LiveTranscriptionEvents.Open, () => {
                 this.log("info", "connection open")
