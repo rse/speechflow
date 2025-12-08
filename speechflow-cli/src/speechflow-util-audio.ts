@@ -242,7 +242,7 @@ export class WebAudio {
             const timeout = setTimeout(() => {
                 this.pendingPromises.delete(chunkId)
                 reject(new Error("processing timeout"))
-            }, (int16Array.length / this.audioContext.sampleRate) * 1000 + 250)
+            }, (int16Array.length / this.channels / this.audioContext.sampleRate) * 1000 + 250)
             if (this.captureNode !== null)
                 this.pendingPromises.set(chunkId, { resolve, reject, timeout })
             try {
