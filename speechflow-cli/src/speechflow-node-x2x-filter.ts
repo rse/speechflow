@@ -19,6 +19,9 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
     /*  cached regular expression instance  */
     private cachedRegExp = new util.CachedRegExp()
 
+    /*  internal state  */
+    private closing = false
+
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
         super(id, cfg, opts, args)
@@ -39,6 +42,9 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        /*  clear destruction flag  */
+        this.closing = false
+
         /*  helper function for comparing two values  */
         const comparison = (val1: any, op: string, val2: any) => {
             if (op === "==" || op === "!=") {
@@ -93,6 +99,10 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
+                if (self.closing) {
+                    callback(new Error("stream already destroyed"))
+                    return
+                }
                 let val1: any
                 const val2: any = self.params.val
                 const m = self.params.var.match(/^meta:(.+)$/)
@@ -124,6 +134,9 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate closing  */
+        this.closing = true
+
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
