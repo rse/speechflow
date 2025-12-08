@@ -14,10 +14,10 @@ export function sleep (durationMs: number) {
 }
 
 /*  timeout: wait a duration of time and then reject  */
-export function timeout (durationMs: number) {
+export function timeout (durationMs: number, info = "timeout") {
     return new Promise<never>((_resolve, reject) => {
         setTimeout(() => {
-            reject(new Error("timeout"))
+            reject(new Error(info))
         }, durationMs)
     })
 }
