@@ -353,10 +353,10 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             this.ws.close()
             this.ws = null
         }
-        if (this.openai !== null)
-            this.openai = null
-        if (this.resampler !== null)
-            this.resampler = null
+        this.openai = null
+
+        /*  close resampler  */
+        this.resampler = null
 
         /*  shutdown stream  */
         if (this.stream !== null) {
