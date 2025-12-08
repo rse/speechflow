@@ -187,9 +187,7 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        if (self.closing)
-                            callback(new Error("stream already destroyed"))
-                        else
+                        if (!self.closing)
                             callback(util.ensureError(error, "pitch shifting failed"))
                     })
                 }
