@@ -108,7 +108,7 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
                 const chunk = util.streamChunkDecode(payload)
                 this.chunkQueue!.write(chunk)
             }
-            catch (_err: any) {
+            catch (_err: unknown) {
                 this.log("warning", `received invalid CBOR chunk from MQTT ${this.params.url}`)
             }
         })
