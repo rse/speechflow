@@ -41,6 +41,11 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
         this.output = "audio"
     }
 
+    /*  one-time status of node  */
+    async status () {
+        return {}
+    }
+
     /*  open node  */
     async open () {
         /*  clear destruction flag  */
