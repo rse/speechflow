@@ -43,13 +43,13 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
         const comparison = (val1: any, op: string, val2: any) => {
             if (op === "==" || op === "!=") {
                 /*  equal comparison  */
-                const str1 = (typeof val1 === "string" ? val1 : val1.toString()) as string
-                const str2 = (typeof val2 === "string" ? val2 : val2.toString()) as string
+                const str1 = (typeof val1 === "string" ? val1 : val1.toString())
+                const str2 = (typeof val2 === "string" ? val2 : val2.toString())
                 return (op === "==" ? (str1 === str2) : (str1 !== str2))
             }
             else if (op === "~~" || op === "!~") {
                 /*  regular expression comparison  */
-                const str = (typeof val1 === "string" ? val1 : val1.toString()) as string
+                const str = (typeof val1 === "string" ? val1 : val1.toString())
                 const regexp = (
                     val2 instanceof RegExp ?
                         val2 :
