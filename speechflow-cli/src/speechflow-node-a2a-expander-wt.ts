@@ -113,7 +113,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
             const expectedOutLevelDB = levelDB + gainDB + makeupDB
             if (expectedOutLevelDB < floorDB) {
                 const neededLiftDB = floorDB - expectedOutLevelDB
-                gainLin /= util.dB2lin(neededLiftDB)
+                gainLin *= util.dB2lin(neededLiftDB)
             }
 
             /*  apply gain change to channel  */
