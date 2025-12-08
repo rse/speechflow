@@ -54,6 +54,11 @@ export class NodeGraph {
         variables: { argv: any[], env: any },
         accessBus: (name: string) => EventEmitter
     ): Promise<void> {
+        /*  internal helper for extracting error messages  */
+        const flowlinkErrorMsg = (err: unknown): string =>
+            err instanceof Error && err.name === "FlowLinkError"
+                ? err.toString() : (err instanceof Error ? err.message : "internal error")
+
         const flowlink = new FlowLink<SpeechFlowNode>({
             trace: (msg: string) => {
                 this.cli.log("debug", msg)
@@ -65,9 +70,7 @@ export class NodeGraph {
             ast = flowlink.compile(config)
         }
         catch (err) {
-            const errorMsg = err instanceof Error && err.name === "FlowLinkError"
-                ? err.toString() : (err instanceof Error ? err.message : "internal error")
-            this.cli.log("error", `failed to parse SpeechFlow configuration: ${errorMsg}`)
+            this.cli.log("error", `failed to parse SpeechFlow configuration: ${flowlinkErrorMsg(err)}`)
             process.exit(1)
         }
         try {
@@ -117,9 +120,7 @@ export class NodeGraph {
             })
         }
         catch (err) {
-            const errorMsg = err instanceof Error && err.name === "FlowLinkError"
-                ? err.toString() : (err instanceof Error ? err.message : "internal error")
-            this.cli.log("error", `failed to materialize SpeechFlow configuration: ${errorMsg}`)
+            this.cli.log("error", `failed to materialize SpeechFlow configuration: ${flowlinkErrorMsg(err)}`)
             process.exit(1)
         }
     }
@@ -217,9 +218,9 @@ export class NodeGraph {
                 this.cli.log("info", `${msg} (${this.activeNodes.size} active nodes remaining)`)
                 if (this.activeNodes.size === 0) {
                     const timeFinished = DateTime.now()
-                    const duration = timeFinished.diff(this.timeZero!)
+                    const duration = this.timeZero !== null ? timeFinished.diff(this.timeZero) : null
                     this.cli.log("info", "**** everything finished -- stream processing in SpeechFlow graph stops " +
-                        `(total duration: ${duration.toFormat("hh:mm:ss.SSS")}) ****`)
+                        `(total duration: ${duration?.toFormat("hh:mm:ss.SSS") ?? "unknown"}) ****`)
                     this.finishEvents.emit("finished")
                     this.shutdown("finished", args, api)
                 }
