@@ -33,7 +33,7 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
         this.configure({
             voice:    { type: "string", val: "Aoede", pos: 0, match: /^(?:Aoede|Heart|Puck|Fenrir)$/ },
             language: { type: "string", val: "en",    pos: 1, match: /^(?:en)$/ },
-            speed:    { type: "number", val: 1.25,    pos: 2, match: (n: number) => n >= 1.0 && n <= 1.30 },
+            speed:    { type: "number", val: 1.25,    pos: 2, match: (n: number) => n >= 1.0 && n <= 1.30 }
         })
 
         /*  declare node input/output format  */
