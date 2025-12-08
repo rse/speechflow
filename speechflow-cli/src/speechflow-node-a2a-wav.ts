@@ -144,7 +144,7 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
                         const header = readWavHeader(chunk.payload)
                         self.log("info", "WAV audio stream: " +
                             `audioFormat=${header.audioFormat === 0x0001 ? "PCM" :
-                                "0x" + (header.audioFormat as number).toString(16).padStart(4, "0")} ` +
+                                "0x" + header.audioFormat.toString(16).padStart(4, "0")} ` +
                             `channels=${header.channels} ` +
                             `sampleRate=${header.sampleRate} ` +
                             `bitDepth=${header.bitDepth}`)
