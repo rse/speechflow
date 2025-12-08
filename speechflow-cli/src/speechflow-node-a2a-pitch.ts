@@ -176,8 +176,10 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
                     /*  shift pitch of audio chunk  */
                     const payload = util.convertBufToI16(chunk.payload, self.config.audioLittleEndian)
                     self.pitchShifter?.process(payload).then((result) => {
-                        if (self.closing)
-                            throw new Error("stream already destroyed")
+                        if (self.closing) {
+                            callback(new Error("stream already destroyed"))
+                            return
+                        }
 
                         /*  take over pitch-shifted data  */
                         const payload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
@@ -185,7 +187,9 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        if (!self.closing)
+                        if (self.closing)
+                            callback(new Error("stream already destroyed"))
+                        else
                             callback(util.ensureError(error, "pitch shifting failed"))
                     })
                 }
