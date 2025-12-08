@@ -162,6 +162,12 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
         /*  indicate closing  */
         this.closing = true
 
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
+        }
+
         /*  destroy resampler  */
         if (this.resampler !== null)
             this.resampler = null
@@ -170,12 +176,6 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
         if (this.client !== null) {
             this.client.destroy()
             this.client = null
-        }
-
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
         }
     }
 }
