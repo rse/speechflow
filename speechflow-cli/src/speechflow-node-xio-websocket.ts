@@ -175,7 +175,8 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 this.log("info", `connection closed to URL ${this.params.connect}`)
             })
             this.client.addEventListener("error", (ev: ErrorEvent) => {
-                this.log("error", `error of connection on URL ${this.params.connect}: ${ev.error.message}`)
+                const error = util.ensureError(ev.error)
+                this.log("error", `error of connection on URL ${this.params.connect}: ${error.message}`)
             })
             const chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
             this.client.addEventListener("message", (ev: MessageEvent) => {
