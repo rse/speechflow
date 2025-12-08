@@ -194,8 +194,8 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                         this.queue?.write(chunk)
                     }
                 }
-            })().catch((err: Error) => {
-                this.log("warning", `failed to establish connectivity to Amazon Transcribe: ${err}`)
+            })().catch((err: unknown) => {
+                this.log("warning", `failed to establish connectivity to Amazon Transcribe: ${util.ensureError(err).message}`)
             })
         }
 
