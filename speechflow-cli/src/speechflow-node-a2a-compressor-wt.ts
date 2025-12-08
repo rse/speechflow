@@ -76,6 +76,10 @@ class CompressorProcessor extends AudioWorkletProcessor {
         /*  determine number of channels  */
         const nCh = input.length
 
+        /*  reset envelope array if channel count changed  */
+        if (nCh !== this.env.length)
+            this.env = []
+
         /*  initially just copy input to output (pass-through)  */
         for (let c = 0; c < output.length; c++) {
             if (!output[c] || !input[c])
