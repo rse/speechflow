@@ -227,7 +227,7 @@ export class APIServer {
             if (m === null)
                 throw new Error("invalid OSC/UDP endpoint (expected <ip-address>:<udp-port>)")
             const host = m[1]
-            const port = m[2]
+            const port = parseInt(m[2], 10)
             this.sendOSC = (url: string, ...argList: any[]) => {
                 const msg = new OSC.Message(url, ...argList)
                 osc.send(msg, { host, port })
