@@ -168,8 +168,10 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                     /*  expand chunk  */
                     const payload = util.convertBufToI16(chunk.payload)
                     self.expander?.process(payload).then((result) => {
-                        if (self.closing)
-                            throw new Error("stream already destroyed")
+                        if (self.closing) {
+                            callback(new Error("stream already destroyed"))
+                            return
+                        }
 
                         /*  take over expanded data  */
                         const payload = util.convertI16ToBuf(result)

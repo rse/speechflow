@@ -245,8 +245,10 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                     /*  compress chunk  */
                     const payload = util.convertBufToI16(chunk.payload)
                     self.compressor?.process(payload).then((result) => {
-                        if (self.closing)
-                            throw new Error("stream already destroyed")
+                        if (self.closing) {
+                            callback(new Error("stream already destroyed"))
+                            return
+                        }
                         if ((self.params.type === "standalone" && self.params.mode === "compress") ||
                             (self.params.type === "sidechain"  && self.params.mode === "adjust")     ) {
                             /*  take over compressed data  */
