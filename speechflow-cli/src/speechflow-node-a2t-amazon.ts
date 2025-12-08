@@ -71,7 +71,6 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     private client:            TranscribeStreamingClient                  | null = null
     private clientStream:      AsyncIterable<TranscriptResultStream>      | null = null
     private closing                                                              = false
-    private initTimeout:       ReturnType<typeof setTimeout>              | null = null
     private connectionTimeout: ReturnType<typeof setTimeout>              | null = null
     private queue:             util.SingleQueue<SpeechFlowChunk | null>   | null = null
 
@@ -281,10 +280,6 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         this.closing = true
 
         /*  cleanup all timers  */
-        if (this.initTimeout !== null) {
-            clearTimeout(this.initTimeout)
-            this.initTimeout = null
-        }
         if (this.connectionTimeout !== null) {
             clearTimeout(this.connectionTimeout)
             this.connectionTimeout = null
