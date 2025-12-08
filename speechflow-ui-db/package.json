@@ -24,10 +24,10 @@
         "@rse/stx":                         "1.1.2"
     },
     "devDependencies": {
-        "vite":                             "7.2.6",
-        "typescript-eslint":                "8.48.1",
-        "@typescript-eslint/eslint-plugin": "8.48.1",
-        "@typescript-eslint/parser":        "8.48.1",
+        "vite":                             "7.2.7",
+        "typescript-eslint":                "8.49.0",
+        "@typescript-eslint/eslint-plugin": "8.49.0",
+        "@typescript-eslint/parser":        "8.49.0",
         "@vitejs/plugin-vue":               "6.0.2",
         "@rollup/plugin-yaml":              "4.1.2",
         "vite-plugin-node-polyfills":       "0.24.0",
