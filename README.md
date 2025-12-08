@@ -437,11 +437,12 @@ external files, devices and network services.
   | ----------- | --------- | -------- | --------------------- |
   | **listen**  | *none*    | *none*   | `/^(?:\|ws:\/\/(.+?):(\d+))$/` |
   | **connect** | *none*    | *none*   | `/^(?:\|ws:\/\/(.+?):(\d+)(?:\/.*)?)$/` |
-  | **type**    | *none*    | "audio"  | `/^(?:audio\|text)$/` |
+  | **mode**    | *none*    | "r"      | `/^(?:r\|w\|rw)$/`    |
+  | **type**    | *none*    | "text"   | `/^(?:audio\|text)$/` |
 
 - Node: **xio-mqtt**<br/>
-  Purpose: **MQTT sink**<br/>
-  Example: `xio-mqtt(url: "mqtt://127.0.0.1:1883", username: "foo", password: "bar", topic: "quux")`
+  Purpose: **MQTT source/sink**<br/>
+  Example: `xio-mqtt(url: "mqtt://127.0.0.1:1883", username: "foo", password: "bar", topicWrite: "quux")`
   Notice: this node requires a peer MQTT broker!
 
   > This node allows reading/writing from/to MQTT broker topics. It is
@@ -450,15 +451,18 @@ external files, devices and network services.
 
   | Port    | Payload     |
   | ------- | ----------- |
-  | input   | text        |
-  | output  | none        |
+  | input   | text, audio |
+  | output  | text, audio |
 
-  | Parameter    | Position  | Default  | Requirement           |
-  | ------------ | --------- | -------- | --------------------- |
-  | **url**      | 0         | *none*   | `/^(?:\|(?:ws\|mqtt):\/\/(.+?):(\d+))$/` |
-  | **username** | 1         | *none*   | `/^.+$/` |
-  | **password** | 2         | *none*   | `/^.+$/` |
-  | **topic**    | 3         | *none*   | `/^.+$/` |
+  | Parameter      | Position  | Default  | Requirement           |
+  | -------------- | --------- | -------- | --------------------- |
+  | **url**        | 0         | *none*   | `/^(?:\|(?:ws\|mqtt):\/\/(.+?):(\d+)(?:\/.*)?)$/` |
+  | **username**   | 1         | *none*   | `/^.+$/` |
+  | **password**   | 2         | *none*   | `/^.+$/` |
+  | **topicRead**  | 3         | *none*   | `/^.+$/` |
+  | **topicWrite** | 4         | *none*   | `/^.+$/` |
+  | **mode**       | 5         | "w"      | `/^(?:r\|w\|rw)$/` |
+  | **type**       | 6         | "text"   | `/^(?:audio\|text)$/` |
 
 ### Audio-to-Audio Nodes
 
@@ -531,7 +535,7 @@ The following nodes process audio chunks only.
 
   | Parameter     | Position  | Default  | Requirement            |
   | ------------- | --------- | -------- | ---------------------- |
-  | **interval**  | 0         | 250      | *none*                 |
+  | **interval**  | 0         | 100      | *none*                 |
   | **mode**      | 1         | "filter" | `/^(?:filter\|sink)$/` |
   | **dashboard** |           | *none*   | *none*                 |
 
@@ -571,11 +575,12 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter      | Position  | Default  | Requirement              |
-  | -------------- | --------- | -------- | ------------------------ |
-  | **window**     | 0         | 500      | *none*                   |
-  | **treshold**   | 1         | 0.50     | *none*                   |
-  | **hysteresis** | 2         | 0.25     | *none*                   |
+  | Parameter           | Position  | Default  | Requirement              |
+  | ------------------- | --------- | -------- | ------------------------ |
+  | **window**          | 0         | 500      | *none*                   |
+  | **threshold**       | 1         | 0.50     | *none*                   |
+  | **hysteresis**      | 2         | 0.25     | *none*                   |
+  | **volumeThreshold** | 3         | -45      | *none*                   |
 
 - Node: **a2a-speex**<br/>
   Purpose: **Speex Noise Suppression node**<br/>
@@ -621,14 +626,17 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **thresholdDb** | *none* | -18 | `n <= 0 && n >= -60` |
-  | **ratio**       | *none* | 4   | `n >= 1 && n <= 20`  |
-  | **attackMs**    | *none* | 10  | `n >= 0 && n <= 100` |
-  | **releaseMs**   | *none* | 50  | `n >= 0 && n <= 100` |
-  | **kneeDb**      | *none* | 6   | `n >= 0 && n <= 100` |
-  | **makeupDb**    | *none* | 0   | `n >= 0 && n <= 100` |
+  | Parameter       | Position  | Default      | Requirement              |
+  | --------------- | --------- | ------------ | ------------------------ |
+  | **type**        | *none*    | "standalone" | `/^(?:standalone\|sidechain)$/` |
+  | **mode**        | *none*    | "compress"   | `/^(?:compress\|measure\|adjust)$/` |
+  | **bus**         | *none*    | "compressor" | `/^.+$/`             |
+  | **thresholdDb** | *none*    | -23          | `n <= 0 && n >= -100`|
+  | **ratio**       | *none*    | 4.0          | `n >= 1 && n <= 20`  |
+  | **attackMs**    | *none*    | 10           | `n >= 0 && n <= 1000`|
+  | **releaseMs**   | *none*    | 50           | `n >= 0 && n <= 1000`|
+  | **kneeDb**      | *none*    | 6.0          | `n >= 0 && n <= 40`  |
+  | **makeupDb**    | *none*    | 0            | `n >= -24 && n <= 24`|
 
 - Node: **a2a-expander**<br/>
   Purpose: **audio expander node**<br/>
@@ -642,14 +650,15 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **thresholdDb** | *none* | -45 | `n <= 0 && n >= -60` |
-  | **ratio**       | *none* | 4   | `n >= 1 && n <= 20`  |
-  | **attackMs**    | *none* | 10  | `n >= 0 && n <= 100` |
-  | **releaseMs**   | *none* | 50  | `n >= 0 && n <= 100` |
-  | **kneeDb**      | *none* | 6   | `n >= 0 && n <= 100` |
-  | **makeupDb**    | *none* | 0   | `n >= 0 && n <= 100` |
+  | Parameter       | Position  | Default  | Requirement              |
+  | --------------- | --------- | -------- | ------------------------ |
+  | **thresholdDb** | *none*    | -45      | `n <= 0 && n >= -100`|
+  | **floorDb**     | *none*    | -64      | `n <= 0 && n >= -100`|
+  | **ratio**       | *none*    | 4.0      | `n >= 1 && n <= 20`  |
+  | **attackMs**    | *none*    | 10       | `n >= 0 && n <= 1000`|
+  | **releaseMs**   | *none*    | 50       | `n >= 0 && n <= 1000`|
+  | **kneeDb**      | *none*    | 6.0      | `n >= 0 && n <= 40`  |
+  | **makeupDb**    | *none*    | 0        | `n >= -24 && n <= 24`|
 
 - Node: **a2a-gain**<br/>
   Purpose: **audio gain adjustment node**<br/>
@@ -665,7 +674,7 @@ The following nodes process audio chunks only.
 
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
-  | **db** | *none* | 12 | `n >= -60 && n <= -60` |
+  | **db**      | 0         | 0        | `n >= -60 && n <= 60`    |
 
 - Node: **a2a-pitch**<br/>
   Purpose: **audio pitch shifting and time stretching**<br/>
@@ -703,6 +712,7 @@ The following nodes process audio chunks only.
 
   | Parameter   | Position  | Default  | Requirement              |
   | ----------- | --------- | -------- | ------------------------ |
+  | **segment** | 0         | 50       | `n >= 10 && n <= 1000`   |
 
 ### Audio-to-Text Nodes
 
@@ -719,7 +729,7 @@ The following nodes convert audio to text chunks.
 
   | Port    | Payload     |
   | ------- | ----------- |
-  | input   | text        |
+  | input   | audio       |
   | output  | text        |
 
   | Parameter    | Position  | Default  | Requirement        |
@@ -770,9 +780,10 @@ The following nodes convert audio to text chunks.
   | ------------ | --------- | -------- | ------------------ |
   | **key**      | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY | *none* |
   | **keyAdm**   | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY\_ADM | *none* |
-  | **model**    | 0         | "nova-3" | *none* |
+  | **model**    | 0         | "nova-2" | *none* |
   | **version**  | 1         | "latest" | *none* |
   | **language** | 2         | "multi"  | *none* |
+  | **interim**  | 3         | false    | *none* |
 
 ### Text-to-Text Nodes
 
@@ -1064,8 +1075,8 @@ The following nodes process any type of chunk, i.e., both audio and text chunks.
   | Parameter    | Position  | Default  | Requirement           |
   | ------------ | --------- | -------- | --------------------- |
   | **type**     | 0         | "audio"  | `/^(?:audio\|text)$/` |
-  | **name**     | 1         | "filter" | `/^.+$/` |
-  | **var**      | 2         | ""       | `/^(?:meta:.+\|payload:(?:length\|text)\|time:(?:start\|end))$/` |
+  | **name**     | 1         | "filter" | `/^.+?$/` |
+  | **var**      | 2         | ""       | `/^(?:meta:.+\|payload:(?:length\|text)\|time:(?:start\|end)\|kind\|type)$/` |
   | **op**       | 3         | "=="     | `/^(?:<\|<=\|==\|!=\|~~\|!~\|>=\|>)$/` |
   | **val**      | 4         | ""       | `/^.*$/` |
 
