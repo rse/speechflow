@@ -22,6 +22,7 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
 
     /*  internal state  */
     private kokoro: KokoroTTS | null = null
+    private closing = false
     private resampler: SpeexResampler | null = null
 
     /*  construct node  */
@@ -42,6 +43,9 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
+        /*  clear destruction flag  */
+        this.closing = false
+
         /*  establish Kokoro  */
         const model = "onnx-community/Kokoro-82M-v1.0-ONNX"
         const progressState = new Map<string, number>()
@@ -126,15 +130,19 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (Buffer.isBuffer(chunk.payload))
+                if (self.closing)
+                    callback(new Error("stream already destroyed"))
+                else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else {
                     text2speech(chunk.payload).then((buffer) => {
+                        if (self.closing)
+                            throw new Error("stream destroyed during processing")
                         self.log("info", `Kokoro: received audio (buffer length: ${buffer.byteLength})`)
-                        chunk = chunk.clone()
-                        chunk.type = "audio"
-                        chunk.payload = buffer
-                        this.push(chunk)
+                        const chunkNew = chunk.clone()
+                        chunkNew.type = "audio"
+                        chunkNew.payload = buffer
+                        this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
                         callback(util.ensureError(error))
@@ -149,6 +157,9 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  indicate closing  */
+        this.closing = true
+
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
