@@ -101,7 +101,7 @@ export class APIServer {
                 "response=" + ("statusCode" in request.response ? request.response.statusCode : "<unknown>")
             this.cli.log("info", `HAPI: request: ${msg}`)
         })
-        this.hapi.events.on({ name: "request", channels: [ "error" ] }, (request: HAPI.Request, event: HAPI.RequestEvent, tags: { [key: string]: true }) => {
+        this.hapi.events.on({ name: "request", channels: [ "error" ] }, (_request: HAPI.Request, event: HAPI.RequestEvent, _tags: { [key: string]: true }) => {
             if (event.error instanceof Error)
                 this.cli.log("error", `HAPI: request-error: ${event.error.message}`)
             else
@@ -247,9 +247,10 @@ export class APIServer {
                     node:     "",
                     args:     [ info.type, info.id, info.kind, info.value ]
                 })
-                for (const [ peer, info ] of this.wsPeers.entries()) {
+                for (const [ peer, peerInfo ] of this.wsPeers.entries()) {
                     this.cli.log("debug", `HAPI: dashboard peer ${peer}: send ${data}`)
-                    info.ws.send(data)
+                    if (peerInfo.ws.readyState === WebSocket.OPEN)
+                        peerInfo.ws.send(data)
                 }
                 for (const n of graph.getGraphNodes()) {
                     Promise.race<void>([
