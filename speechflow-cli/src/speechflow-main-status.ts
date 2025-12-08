@@ -56,13 +56,9 @@ export class NodeStatusManager {
             })
 
             /*  render output as a table row  */
-            if (Object.keys(status).length > 0) {
-                let first = true
-                for (const key of Object.keys(status)) {
-                    table.push([ first ? chalk.bold(name) : "", key, chalk.blue(status[key]) ])
-                    first = false
-                }
-            }
+            const keys = Object.keys(status)
+            for (let i = 0; i < keys.length; i++)
+                table.push([ i === 0 ? chalk.bold(name) : "", keys[i], chalk.blue(status[keys[i]]) ])
         }
         const output = table.toString()
         process.stdout.write(output + "\n")
