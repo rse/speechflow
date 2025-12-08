@@ -228,7 +228,7 @@ export class Queue<T extends QueueElement> extends EventEmitter {
     }
     pointerDelete (name: string): void {
         if (!this.pointers.has(name))
-            throw new Error("pointer not exists")
+            throw new Error("pointer does not exist")
         this.pointers.delete(name)
     }
     trim (): void {

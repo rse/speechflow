@@ -38,7 +38,7 @@ class AudioSourceProcessor extends AudioWorkletProcessor {
     private currentOffset = 0
 
     /*  node construction  */
-    constructor() {
+    constructor () {
         super()
 
         /*  receive input chunks  */
@@ -50,7 +50,7 @@ class AudioSourceProcessor extends AudioWorkletProcessor {
     }
 
     /*  process audio frame  */
-    process(
+    process (
         inputs:     Float32Array[][],            /* unused */
         outputs:    Float32Array[][],
         parameters: Record<string, Float32Array> /* unused */
@@ -117,7 +117,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
     private activeCaptures = new Map<string, { data: number[], expectedSamples: number }>()
 
     /*  node construction  */
-    constructor() {
+    constructor () {
         super()
 
         /*  receive start of capturing command  */
@@ -133,7 +133,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
     }
 
     /*  process audio frame  */
-    process(
+    process (
         inputs:     Float32Array[][],
         outputs:    Float32Array[][],             /* unused */
         parameters: Record<string, Float32Array>  /* unused */

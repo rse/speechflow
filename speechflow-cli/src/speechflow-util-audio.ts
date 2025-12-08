@@ -182,7 +182,7 @@ export class WebAudio {
     }>()
 
     /*  construct object  */
-    constructor(
+    constructor (
         public sampleRate: number,
         public channels: number
     ) {

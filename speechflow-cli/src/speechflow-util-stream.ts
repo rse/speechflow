@@ -204,7 +204,7 @@ export class StreamWrapper extends Stream.Transform {
 }
 
 /*  helper function for destruction of a stream  */
-export async function destroyStream(
+export async function destroyStream (
     stream: Stream.Readable | Stream.Writable | Stream.Duplex | Stream.Transform
 ) {
     /*  signal the end for a writable stream  */
@@ -218,7 +218,9 @@ export async function destroyStream(
                 stream.end(() => { resolve() })
             }),
             util.timeout(5000, "stream end timeout")
-        ])
+        ]).catch(() => {
+            /*  ignore timeout -- stream will be destroyed anyway  */
+        })
 
     /*  destroy the stream  */
     stream.destroy()
