@@ -147,11 +147,6 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                     callback()
             },
             final (callback) {
-                if (self.closing) {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })
