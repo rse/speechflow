@@ -4,7 +4,7 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-/*  internal dependencies  */
+/*  standard dependencies  */
 import { EventEmitter }      from "node:events"
 
 /*  external dependencies  */
