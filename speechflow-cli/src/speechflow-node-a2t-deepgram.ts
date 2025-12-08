@@ -126,7 +126,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 this.log("info", `text received (start: ${data.start}s, ` +
                     `duration: ${data.duration.toFixed(2)}s, ` +
                     `kind: ${isFinal ? "final" : "intermediate"}): ` +
-                    `${text}"`)
+                    `"${text}"`)
                 const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
                 const end   = start.plus({ seconds: data.duration })
                 const metas = metastore.fetch(start, end)
