@@ -90,7 +90,7 @@ export class DoubleQueue<T0, T1> extends EventEmitter {
     }
 }
 
-/*  queue element */
+/*  queue element  */
 export type QueueElement = { type: string }
 
 /*  queue pointer  */
