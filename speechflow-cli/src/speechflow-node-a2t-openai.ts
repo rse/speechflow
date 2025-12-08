@@ -43,6 +43,10 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             interim:  { type: "boolean", val: false }
         })
 
+        /*  sanity check parameters  */
+        if (!this.params.key)
+            throw new Error("OpenAI API key not configured")
+
         /*  declare node input/output format  */
         this.input  = "audio"
         this.output = "text"

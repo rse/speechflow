@@ -41,6 +41,10 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             interim:  { type: "boolean", val: false,    pos: 3 }
         })
 
+        /*  sanity check parameters  */
+        if (!this.params.key)
+            throw new Error("Deepgram API key not configured")
+
         /*  declare node input/output format  */
         this.input  = "audio"
         this.output = "text"
