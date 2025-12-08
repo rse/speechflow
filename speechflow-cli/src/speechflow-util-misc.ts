@@ -6,7 +6,7 @@
 
 /*  sleep: wait a duration of time and then resolve  */
 export function sleep (durationMs: number) {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve) => {
         setTimeout(() => {
             resolve()
         }, durationMs)
@@ -15,7 +15,7 @@ export function sleep (durationMs: number) {
 
 /*  timeout: wait a duration of time and then reject  */
 export function timeout (durationMs: number) {
-    return new Promise<never>((resolve, reject) => {
+    return new Promise<never>((_resolve, reject) => {
         setTimeout(() => {
             reject(new Error("timeout"))
         }, durationMs)
