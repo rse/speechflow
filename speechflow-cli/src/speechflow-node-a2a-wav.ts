@@ -141,7 +141,14 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
                             callback(new Error("WAV header too short, expected at least 44 bytes"))
                             return
                         }
-                        const header = readWavHeader(chunk.payload)
+                        let header: ReturnType<typeof readWavHeader>
+                        try {
+                            header = readWavHeader(chunk.payload)
+                        }
+                        catch (error) {
+                            callback(util.ensureError(error, "WAV header parsing failed"))
+                            return
+                        }
                         self.log("info", "WAV audio stream: " +
                             `audioFormat=${header.audioFormat === 0x0001 ? "PCM" :
                                 "0x" + header.audioFormat.toString(16).padStart(4, "0")} ` +
