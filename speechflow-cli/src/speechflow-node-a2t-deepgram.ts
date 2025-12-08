@@ -167,7 +167,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             this.log("error", `error: ${error.message}`)
             if (!this.closing && this.queue !== null)
                 this.queue.write(null)
-            this.emit("error")
+            this.emit("error", error)
         })
 
         /*  wait for Deepgram API to be available  */
