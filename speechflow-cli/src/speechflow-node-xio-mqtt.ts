@@ -97,7 +97,8 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             this.log("info", `connection re-opened to MQTT ${this.params.url}`)
         })
         this.broker.on("disconnect", (packet: MQTT.IDisconnectPacket) => {
-            this.log("info", `connection closed to MQTT ${this.params.url}`)
+            const reasonCode = packet.reasonCode ?? 0
+            this.log("info", `connection closed to MQTT ${this.params.url} (reason code: ${reasonCode})`)
         })
         this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
         this.broker.on("message", (topic: string, payload: Buffer, packet: MQTT.IPublishPacket) => {
