@@ -133,7 +133,7 @@ export async function processInt16ArrayInSegments (
 }
 
 /*  update envelope (smoothed amplitude contour) for single channel  */
-export function updateEnvelopeForChannel(
+export function updateEnvelopeForChannel (
     env:            number[],
     sampleRate:     number,
     chan:           number,
