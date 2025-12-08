@@ -109,9 +109,9 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
         this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
         /*  perform text-to-speech operation with Elevenlabs API  */
-        const model = this.params.optimize === "quality" ?
-            "eleven_turbo_v2_5" :
-            "eleven_flash_v2_5"
+        const model = this.params.optimize === "quality"
+            ? "eleven_turbo_v2_5"
+            : "eleven_flash_v2_5"
         const speechStream = (text: string) => {
             this.log("info", `ElevenLabs: send text "${text}"`)
             return this.elevenlabs!.textToSpeech.convert(voice.voiceId, {
