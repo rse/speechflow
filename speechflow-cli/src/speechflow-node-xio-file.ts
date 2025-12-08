@@ -210,7 +210,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                                 else     resolve()
                             })
                         }),
-                        util.timeoutPromise(5000)
+                        util.timeout(5000)
                     ])
                 }
             }

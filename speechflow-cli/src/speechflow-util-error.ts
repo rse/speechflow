@@ -4,13 +4,6 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-/*  helper function for promise-based timeout  */
-export function timeoutPromise<T = void> (duration: number = 10 * 1000, info = "timeout") {
-    return new Promise<T>((resolve, reject) => {
-        setTimeout(() => { reject(new Error(info)) }, duration)
-    })
-}
-
 /*  helper function for retrieving an Error object  */
 export function ensureError (error: unknown, prefix?: string, debug = false): Error {
     if (error instanceof Error && prefix === undefined && debug === false)

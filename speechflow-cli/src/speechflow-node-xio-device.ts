@@ -208,7 +208,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
                     throw error
             }
             await Promise.race([
-                util.timeoutPromise(2 * 1000, "PortAudio abort timeout"),
+                util.timeout(2 * 1000, "PortAudio abort timeout"),
                 new Promise<void>((resolve) => {
                     this.io!.abort(() => {
                         resolve()
@@ -216,7 +216,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
                 }).catch(catchHandler)
             ])
             await Promise.race([
-                util.timeoutPromise(2 * 1000, "PortAudio quit timeout"),
+                util.timeout(2 * 1000, "PortAudio quit timeout"),
                 new Promise<void>((resolve) => {
                     this.io!.quit(() => {
                         resolve()

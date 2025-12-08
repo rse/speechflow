@@ -217,7 +217,7 @@ export async function destroyStream(
             new Promise<void>((resolve) => {
                 stream.end(() => { resolve() })
             }),
-            util.timeoutPromise(5000, "stream end timeout")
+            util.timeout(5000, "stream end timeout")
         ])
 
     /*  destroy the stream  */
