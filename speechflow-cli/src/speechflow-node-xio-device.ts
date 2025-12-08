@@ -20,7 +20,8 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
     public static name = "xio-device"
 
     /*  internal state  */
-    private io: PortAudio.IoStreamRead
+    private io:
+        | PortAudio.IoStreamRead
         | PortAudio.IoStreamWrite
         | PortAudio.IoStreamDuplex
         | null = null
