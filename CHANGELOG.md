@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+1.7.1 (2025-12-08)
+------------------
+
+- CLEANUP: appy a large bunch of code cleanups
+
 1.7.0 (2025-12-08)
 ------------------
 
