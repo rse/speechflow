@@ -225,7 +225,7 @@ export class APIServer {
             const osc = new OSC({ plugin: new OSC.DatagramPlugin({ type: "udp4" }) })
             const m = args.o.match(/^(.+?):(\d+)$/)
             if (m === null)
-                throw new Error("invalid OSC/UDP endpoint (expected <ip-adress>:<udp-port>)")
+                throw new Error("invalid OSC/UDP endpoint (expected <ip-address>:<udp-port>)")
             const host = m[1]
             const port = m[2]
             this.sendOSC = (url: string, ...argList: any[]) => {
