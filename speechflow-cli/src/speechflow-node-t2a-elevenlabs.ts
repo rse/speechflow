@@ -103,8 +103,9 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                 throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
         }
         const labels = voice.labels ?? {}
-        const info = Object.keys(labels).length > 0 ?
-            ", " + Object.entries(labels).map(([ key, val ]) => `${key}: "${val}"`).join(", ") : ""
+        const info = Object.keys(labels).length > 0
+            ? ", " + Object.entries(labels).map(([ key, val ]) => `${key}: "${val}"`).join(", ")
+            : ""
         this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
         /*  perform text-to-speech operation with Elevenlabs API  */
