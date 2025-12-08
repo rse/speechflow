@@ -215,7 +215,7 @@ export class WebAudio {
             numberOfInputs:  1,
             numberOfOutputs: 0
         })
-        this.captureNode!.port.addEventListener("message", (event) => {
+        this.captureNode.port.addEventListener("message", (event) => {
             const { type, chunkId, data } = event.data ?? {}
             if (type === "capture-complete") {
                 const promise = this.pendingPromises.get(chunkId)
@@ -232,7 +232,7 @@ export class WebAudio {
 
         /*  start ports  */
         this.sourceNode.port.start()
-        this.captureNode!.port.start()
+        this.captureNode.port.start()
     }
 
     /*  process single audio chunk  */
