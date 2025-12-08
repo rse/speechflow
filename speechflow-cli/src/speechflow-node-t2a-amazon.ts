@@ -83,7 +83,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
             "Ruth":     { language: "en", languageCode: "en-US", engine: "generative" },
             "Stephen":  { language: "en", languageCode: "en-US", engine: "generative" },
             "Vicki":    { language: "de", languageCode: "de-DE", engine: "generative" },
-            "Daniel":   { language: "de", languageCode: "de-DE", engine: "generative" },
+            "Daniel":   { language: "de", languageCode: "de-DE", engine: "generative" }
         }
         const voiceConfig = voices[this.params.voice as keyof typeof voices]
         if (voiceConfig === undefined)
