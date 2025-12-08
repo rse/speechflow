@@ -171,6 +171,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
             this.client.destroy()
             this.client = null
         }
+
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
