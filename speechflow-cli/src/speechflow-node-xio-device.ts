@@ -88,7 +88,7 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
         return device
     }
 
-    /*  NOTICE: "naudion" actually implements Stream.{Readable,Writable,Duplex}, but
+    /*  NOTICE: "naudiodon" actually implements Stream.{Readable,Writable,Duplex}, but
         declares just its sub-interface NodeJS.{Readable,Writable,Duplex}Stream,
         so it is correct to cast it back to Stream.{Readable,Writable,Duplex}
         in the following device stream setup functions!  */
