@@ -45,9 +45,14 @@ interface SupertonicConfig {
 
 /*  convert lengths to binary mask  */
 function lengthToMask (lengths: number[], maxLen: number | null = null): number[][][] {
+    /*  handle empty input  */
     if (lengths.length === 0)
         return []
+
+    /*  determine maximum length  */
     maxLen = maxLen ?? Math.max(...lengths)
+
+    /*  build mask array  */
     const mask: number[][][] = []
     for (let i = 0; i < lengths.length; i++) {
         const row: number[] = []
@@ -60,31 +65,39 @@ function lengthToMask (lengths: number[], maxLen: number | null = null): number[
 
 /*  get latent mask from wav lengths  */
 function getLatentMask (wavLengths: number[], baseChunkSize: number, chunkCompressFactor: number): number[][][] {
+    /*  calculate latent size and lengths  */
     const latentSize = baseChunkSize * chunkCompressFactor
     const latentLengths = wavLengths.map((len) =>
         Math.floor((len + latentSize - 1) / latentSize))
+
+    /*  generate mask from latent lengths  */
     return lengthToMask(latentLengths)
 }
 
 /*  convert array to ONNX tensor  */
 function arrayToTensor (array: number[] | number[][] | number[][][], dims: number[]): ORT.Tensor {
+    /*  flatten array and create float32 tensor  */
     const flat = array.flat(Infinity) as number[]
     return new ORT.Tensor("float32", Float32Array.from(flat), dims)
 }
 
 /*  convert int array to ONNX tensor  */
 function intArrayToTensor (array: number[][], dims: number[]): ORT.Tensor {
+    /*  flatten array and create int64 tensor  */
     const flat = array.flat(Infinity) as number[]
     return new ORT.Tensor("int64", BigInt64Array.from(flat.map(BigInt)), dims)
 }
 
 /*  chunk text into manageable segments  */
 function chunkText (text: string, maxLen = 300): string[] {
+    /*  validate input type  */
     if (typeof text !== "string")
         throw new Error(`chunkText expects a string, got ${typeof text}`)
 
     /*  split by paragraph (two or more newlines)  */
     const paragraphs = text.trim().split(/\n\s*\n+/).filter((p) => p.trim())
+
+    /*  process each paragraph into chunks  */
     const chunks: string[] = []
     for (let paragraph of paragraphs) {
         paragraph = paragraph.trim()
@@ -95,6 +108,7 @@ function chunkText (text: string, maxLen = 300): string[] {
             but exclude common abbreviations like Mr., Mrs., Dr., etc. and single capital letters like F.  */
         const sentences = paragraph.split(/(?<!Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.|Sr\.|Jr\.|Ph\.D\.|etc\.|e\.g\.|i\.e\.|vs\.|Inc\.|Ltd\.|Co\.|Corp\.|St\.|Ave\.|Blvd\.)(?<!\b[A-Z]\.)(?<=[.!?])\s+/)
 
+        /*  accumulate sentences into chunks respecting max length  */
         let currentChunk = ""
         for (const sentence of sentences) {
             if (currentChunk.length + sentence.length + 1 <= maxLen)
@@ -105,6 +119,8 @@ function chunkText (text: string, maxLen = 300): string[] {
                 currentChunk = sentence
             }
         }
+
+        /*  push remaining chunk  */
         if (currentChunk)
             chunks.push(currentChunk.trim())
     }
@@ -116,6 +132,7 @@ class SupertonicTextProcessor {
     private indexer: Record<number, number>
 
     constructor (unicodeIndexerJsonPath: string) {
+        /*  load and parse unicode indexer JSON  */
         try {
             this.indexer = JSON.parse(fs.readFileSync(unicodeIndexerJsonPath, "utf8"))
         }
@@ -164,7 +181,7 @@ class SupertonicTextProcessor {
 
         /*  replace known expressions  */
         const exprReplacements: Record<string, string> = {
-            "@": " at ",
+            "@":     " at ",
             "e.g.,": "for example, ",
             "i.e.,": "that is, "
         }
@@ -181,12 +198,9 @@ class SupertonicTextProcessor {
         text = text.replace(/ '/g,  "'")
 
         /*  remove duplicate quotes  */
-        while (text.includes("\"\""))
-            text = text.replace("\"\"", "\"")
-        while (text.includes("''"))
-            text = text.replace("''", "'")
-        while (text.includes("``"))
-            text = text.replace("``", "`")
+        text = text.replace(/""+/g, "\"")
+        text = text.replace(/''+/g, "'")
+        text = text.replace(/``+/g, "`")
 
         /*  remove extra spaces  */
         text = text.replace(/\s+/g, " ").trim()
@@ -198,15 +212,21 @@ class SupertonicTextProcessor {
     }
 
     private textToUnicodeValues (text: string): number[] {
+        /*  convert text characters to unicode code points  */
         return Array.from(text).map((char) => char.charCodeAt(0))
     }
 
     call (textList: string[]): { textIds: number[][], textMask: number[][][] } {
+        /*  handle empty input  */
         if (textList.length === 0)
             return { textIds: [], textMask: [] }
+
+        /*  preprocess all texts  */
         const processedTexts = textList.map((t) => this.preprocessText(t))
         const textIdsLengths = processedTexts.map((t) => t.length)
         const maxLen = Math.max(...textIdsLengths)
+
+        /*  convert texts to indexed token arrays  */
         const textIds: number[][] = []
         for (let i = 0; i < processedTexts.length; i++) {
             const row = Array.from<number>({ length: maxLen }).fill(0)
@@ -215,6 +235,8 @@ class SupertonicTextProcessor {
                 row[j] = this.indexer[unicodeVals[j]] ?? 0
             textIds.push(row)
         }
+
+        /*  generate text mask from lengths  */
         const textMask = lengthToMask(textIdsLengths)
         return { textIds, textMask }
     }
@@ -242,12 +264,15 @@ class SupertonicTTS {
         vectorEstOrt:  ORT.InferenceSession,
         vocoderOrt:    ORT.InferenceSession
     ) {
+        /*  store configuration and dependencies  */
         this.cfgs                = cfgs
         this.textProcessor       = textProcessor
         this.dpOrt               = dpOrt
         this.textEncOrt          = textEncOrt
         this.vectorEstOrt        = vectorEstOrt
         this.vocoderOrt          = vocoderOrt
+
+        /*  extract configuration values  */
         this.sampleRate          = cfgs.ae.sample_rate
         this.baseChunkSize       = cfgs.ae.base_chunk_size
         this.chunkCompressFactor = cfgs.ttl.chunk_compress_factor
@@ -255,6 +280,7 @@ class SupertonicTTS {
     }
 
     private sampleNoisyLatent (duration: number[]): { noisyLatent: number[][][], latentMask: number[][][] } {
+        /*  calculate dimensions for latent space  */
         const wavLenMax  = Math.max(...duration) * this.sampleRate
         const wavLengths = duration.map((d) => Math.floor(d * this.sampleRate))
         const chunkSize  = this.baseChunkSize * this.chunkCompressFactor
@@ -268,6 +294,7 @@ class SupertonicTTS {
             for (let d = 0; d < latentDimExpanded; d++) {
                 const row: number[] = Array.from({ length: latentLen })
                 for (let t = 0; t < latentLen; t++) {
+
                     /*  Box-Muller transform for normal distribution  */
                     const eps = 1e-10
                     const u1 = Math.max(eps, Math.random())
@@ -291,13 +318,18 @@ class SupertonicTTS {
     }
 
     private async infer (textList: string[], style: SupertonicStyle, totalStep: number, speed: number): Promise<{ wav: number[], duration: number[] }> {
+        /*  validate batch size matches style vectors  */
         if (textList.length !== style.ttl.dims[0])
             throw new Error("Number of texts must match number of style vectors")
+
+        /*  process text into token IDs and masks  */
         const batchSize = textList.length
         const { textIds, textMask } = this.textProcessor.call(textList)
         const textIdsShape = [ batchSize, textIds[0].length ]
         const textMaskShape = [ batchSize, 1, textMask[0][0].length ]
         const textMaskTensor = arrayToTensor(textMask, textMaskShape)
+
+        /*  run duration predictor model  */
         const dpResult = await this.dpOrt.run({
             text_ids:  intArrayToTensor(textIds, textIdsShape),
             style_dp:  style.dp,
@@ -309,27 +341,30 @@ class SupertonicTTS {
         for (let i = 0; i < predictedDurations.length; i++)
             predictedDurations[i] /= speed
 
+        /*  run text encoder model  */
         const textEncResult = await this.textEncOrt.run({
             text_ids:  intArrayToTensor(textIds, textIdsShape),
             style_ttl: style.ttl,
             text_mask: textMaskTensor
         })
-
         const textEmbTensor = textEncResult.text_emb
 
+        /*  sample initial noisy latent vectors  */
         const { noisyLatent, latentMask } = this.sampleNoisyLatent(predictedDurations)
         const latentShape = [ batchSize, noisyLatent[0].length, noisyLatent[0][0].length ]
         const latentMaskShape = [ batchSize, 1, latentMask[0][0].length ]
-
         const latentMaskTensor = arrayToTensor(latentMask, latentMaskShape)
 
+        /*  prepare step tensors  */
         const totalStepArray = Array.from<number>({ length: batchSize }).fill(totalStep)
         const scalarShape = [ batchSize ]
         const totalStepTensor = arrayToTensor(totalStepArray, scalarShape)
 
+        /*  iteratively denoise latent vectors  */
         for (let step = 0; step < totalStep; step++) {
             const currentStepArray = Array.from<number>({ length: batchSize }).fill(step)
 
+            /*  run vector estimator model  */
             const vectorEstResult = await this.vectorEstOrt.run({
                 noisy_latent: arrayToTensor(noisyLatent, latentShape),
                 text_emb:     textEmbTensor,
@@ -339,7 +374,6 @@ class SupertonicTTS {
                 total_step:   totalStepTensor,
                 current_step: arrayToTensor(currentStepArray, scalarShape)
             })
-
             const denoisedLatent = Array.from(vectorEstResult.denoised_latent.data as Float32Array)
 
             /*  update latent with the denoised output  */
@@ -350,24 +384,31 @@ class SupertonicTTS {
                         noisyLatent[b][d][t] = denoisedLatent[idx++]
         }
 
+        /*  run vocoder to generate audio waveform  */
         const vocoderResult = await this.vocoderOrt.run({
             latent: arrayToTensor(noisyLatent, latentShape)
         })
-
         const wav = Array.from(vocoderResult.wav_tts.data as Float32Array)
         return { wav, duration: predictedDurations }
     }
 
     async synthesize (text: string, style: SupertonicStyle, totalStep: number, speed: number, silenceDuration = 0.3): Promise<{ wav: number[], duration: number }> {
+        /*  validate single speaker mode  */
         if (style.ttl.dims[0] !== 1)
             throw new Error("Single speaker text to speech only supports single style")
+
+        /*  chunk text into segments  */
         const textList = chunkText(text)
         if (textList.length === 0)
             return { wav: [], duration: 0 }
+
+        /*  synthesize each chunk and concatenate with silence  */
         const wavParts: number[][] = []
         let totalDuration = 0
         for (const chunk of textList) {
             const { wav, duration } = await this.infer([ chunk ], style, totalStep, speed)
+
+            /*  insert silence between chunks  */
             if (wavParts.length > 0) {
                 const silenceLen = Math.floor(silenceDuration * this.sampleRate)
                 wavParts.push(Array.from<number>({ length: silenceLen }).fill(0))
@@ -380,6 +421,7 @@ class SupertonicTTS {
     }
 
     async release (): Promise<void> {
+        /*  release all ONNX inference sessions  */
         await Promise.all([
             this.dpOrt.release(),
             this.textEncOrt.release(),
@@ -397,6 +439,7 @@ interface VoiceStyleJSON {
 
 /*  load voice style from JSON file  */
 async function loadVoiceStyle (voiceStylePath: string): Promise<SupertonicStyle> {
+    /*  read and parse voice style JSON  */
     let voiceStyle: VoiceStyleJSON
     try {
         voiceStyle = JSON.parse(await fs.promises.readFile(voiceStylePath, "utf8")) as VoiceStyleJSON
@@ -404,10 +447,14 @@ async function loadVoiceStyle (voiceStylePath: string): Promise<SupertonicStyle>
     catch (err) {
         throw new Error(`failed to parse voice style JSON "${voiceStylePath}"`, { cause: err })
     }
+
+    /*  extract dimensions and data  */
     const ttlDims  = voiceStyle.style_ttl.dims
     const dpDims   = voiceStyle.style_dp.dims
     const ttlData  = voiceStyle.style_ttl.data.flat(Infinity) as number[]
     const dpData   = voiceStyle.style_dp.data.flat(Infinity) as number[]
+
+    /*  create ONNX tensors for style vectors  */
     const ttlStyle = new ORT.Tensor("float32", Float32Array.from(ttlData), ttlDims)
     const dpStyle  = new ORT.Tensor("float32", Float32Array.from(dpData), dpDims)
     return { ttl: ttlStyle, dp: dpStyle }
@@ -437,7 +484,6 @@ async function loadSupertonic (assetsDir: string): Promise<SupertonicTTS> {
         ORT.InferenceSession.create(path.join(assetsDir, "onnx", "vector_estimator.onnx"), opts),
         ORT.InferenceSession.create(path.join(assetsDir, "onnx", "vocoder.onnx"), opts)
     ])
-
     return new SupertonicTTS(cfgs, textProcessor, dpOrt, textEncOrt, vectorEstOrt, vocoderOrt)
 }
 
@@ -460,9 +506,9 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            voice:  { type: "string", val: "M1", pos: 0, match: /^(?:M1|M2|F1|F2)$/ },
-            speed:  { type: "number", val: 1.40, pos: 1, match: (n: number) => n >= 0.5 && n <= 2.0 },
-            steps:  { type: "number", val: 20,   pos: 2, match: (n: number) => n >= 1   && n <= 20 }
+            voice: { type: "string", val: "M1", pos: 0, match: /^(?:M1|M2|F1|F2)$/ },
+            speed: { type: "number", val: 1.40, pos: 1, match: (n: number) => n >= 0.5 && n <= 2.0 },
+            steps: { type: "number", val: 20,   pos: 2, match: (n: number) => n >= 1   && n <= 20 }
         })
 
         /*  declare node input/output format  */
@@ -477,6 +523,7 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
 
     /*  download HuggingFace assets  */
     private async downloadAssets () {
+        /*  define HuggingFace repository and required files  */
         const assetRepo = "Supertone/supertonic"
         const assetFiles = [
             "voice_styles/F1.json",
@@ -490,9 +537,13 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
             "onnx/vector_estimator.onnx",
             "onnx/vocoder.onnx",
         ]
+
+        /*  create asset directories  */
         const assetDir = path.join(this.config.cacheDir, "supertonic")
         await mkdirp(path.join(assetDir, "voice_styles"), { mode: 0o750 })
         await mkdirp(path.join(assetDir, "onnx"), { mode: 0o750 })
+
+        /*  download missing asset files  */
         for (const assetFile of assetFiles) {
             const url = `${assetRepo}/${assetFile}`
             const file = path.join(assetDir, assetFile)
@@ -511,7 +562,6 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        /*  clear destruction flag  */
         this.closing = false
 
         /*  download assets  */
@@ -530,11 +580,12 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
         this.style = await loadVoiceStyle(voiceStylePath)
         this.log("info", `loaded voice style "${this.params.voice}"`)
 
-        /*  establish resampler from Supertonic's 44.1kHz output to our standard audio sample rate (48kHz)  */
+        /*  establish resampler from Supertonic's output sample rate to our standard audio sample rate (48kHz)  */
         this.resampler = new SpeexResampler(1, this.supertonic.sampleRate, this.config.audioSampleRate, 7)
 
         /*  perform text-to-speech operation with Supertonic  */
         const text2speech = async (text: string) => {
+            /*  synthesize speech from text  */
             this.log("info", `Supertonic: input: "${text}"`)
             const { wav, duration } = await this.supertonic!.synthesize(
                 text,
@@ -602,11 +653,15 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                         chunkNew.type         = "audio"
                         chunkNew.payload      = buffer
                         chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
+
+                        /*  push chunk and complete transform  */
                         clearProcessTimeout()
                         this.push(chunkNew)
                         callback()
                     }
                     catch (error) {
+
+                        /*  handle processing errors  */
                         clearProcessTimeout()
                         callback(util.ensureError(error, "Supertonic processing failed"))
                     }
