@@ -68,13 +68,13 @@ function getLatentMask (wavLengths: number[], baseChunkSize: number, chunkCompre
 
 /*  convert array to ONNX tensor  */
 function arrayToTensor (array: number[] | number[][] | number[][][], dims: number[]): ORT.Tensor {
-    const flat = (array as number[]).flat(Infinity) as number[]
+    const flat = array.flat(Infinity) as number[]
     return new ORT.Tensor("float32", Float32Array.from(flat), dims)
 }
 
 /*  convert int array to ONNX tensor  */
 function intArrayToTensor (array: number[][], dims: number[]): ORT.Tensor {
-    const flat = (array as number[][]).flat(Infinity) as number[]
+    const flat = array.flat(Infinity) as number[]
     return new ORT.Tensor("int64", BigInt64Array.from(flat.map(BigInt)), dims)
 }
 
@@ -303,11 +303,11 @@ class SupertonicTTS {
             style_dp:  style.dp,
             text_mask: textMaskTensor
         })
-        const durOnnx = Array.from(dpResult.duration.data as Float32Array)
+        const predictedDurations = Array.from(dpResult.duration.data as Float32Array)
 
         /*  apply speed factor to duration  */
-        for (let i = 0; i < durOnnx.length; i++)
-            durOnnx[i] /= speed
+        for (let i = 0; i < predictedDurations.length; i++)
+            predictedDurations[i] /= speed
 
         const textEncResult = await this.textEncOrt.run({
             text_ids:  intArrayToTensor(textIds, textIdsShape),
@@ -317,7 +317,7 @@ class SupertonicTTS {
 
         const textEmbTensor = textEncResult.text_emb
 
-        const { noisyLatent, latentMask } = this.sampleNoisyLatent(durOnnx)
+        const { noisyLatent, latentMask } = this.sampleNoisyLatent(predictedDurations)
         const latentShape = [ batchSize, noisyLatent[0].length, noisyLatent[0][0].length ]
         const latentMaskShape = [ batchSize, 1, latentMask[0][0].length ]
 
@@ -355,7 +355,7 @@ class SupertonicTTS {
         })
 
         const wav = Array.from(vocoderResult.wav_tts.data as Float32Array)
-        return { wav, duration: durOnnx }
+        return { wav, duration: predictedDurations }
     }
 
     async synthesize (text: string, style: SupertonicStyle, totalStep: number, speed: number, silenceDuration = 0.3): Promise<{ wav: number[], duration: number }> {
@@ -365,18 +365,18 @@ class SupertonicTTS {
         if (textList.length === 0)
             return { wav: [], duration: 0 }
         const wavParts: number[][] = []
-        let durCat = 0
+        let totalDuration = 0
         for (const chunk of textList) {
             const { wav, duration } = await this.infer([ chunk ], style, totalStep, speed)
             if (wavParts.length > 0) {
                 const silenceLen = Math.floor(silenceDuration * this.sampleRate)
                 wavParts.push(Array.from<number>({ length: silenceLen }).fill(0))
-                durCat += silenceDuration
+                totalDuration += silenceDuration
             }
             wavParts.push(wav)
-            durCat += duration[0]
+            totalDuration += duration[0]
         }
-        return { wav: wavParts.flat(), duration: durCat }
+        return { wav: wavParts.flat(), duration: totalDuration }
     }
 
     async release (): Promise<void> {
@@ -518,7 +518,7 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
         const assetsDir = await this.downloadAssets()
 
         /*  download ONNX models  */
-        this.log("info", `loading ONNX models (asset dir: "${assetsDir}"`)
+        this.log("info", `loading ONNX models (asset dir: "${assetsDir}")`)
         this.supertonic = await loadSupertonic(assetsDir)
         this.log("info", `loaded ONNX models (sample rate: ${this.supertonic.sampleRate}Hz)`)
 
