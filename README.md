@@ -1002,6 +1002,9 @@ The following nodes convert text chunks to audio chunks.
   > conversion, i.e., it converts the input text stream into an output
   > audio stream. It supports six built-in voices and two models:
   > `tts-1` for lower latency and `tts-1-hd` for higher quality.
+  > The language is automatically detected from the input text and
+  > supports many languages including German, English, French, Spanish,
+  > Chinese, Japanese, and more (no language parameter needed).
 
   | Port    | Payload     |
   | ------- | ----------- |
