@@ -51,7 +51,9 @@ speech-to-speech).
 - cloud-based text-to-speech conversion with
   [ElevenLabs](https://elevenlabs.io/) or
   [Amazon Polly](https://aws.amazon.com/polly/).
-- local text-to-speech conversion with [Kokoro](https://github.com/nazdridoy/kokoro-tts).
+- local text-to-speech conversion with
+  [Kokoro](https://github.com/nazdridoy/kokoro-tts) or
+  [Supertonic](https://huggingface.co/Supertone/supertonic).
 - local [FFmpeg](https://ffmpeg.org/)-based speech-to-speech conversion,
 - local WAV speech-to-speech decoding/encoding,
 - local text-to-text formatting, regex-based modification,
@@ -368,7 +370,8 @@ First a short overview of the available processing nodes:
 - Text-to-Audio nodes:
   **t2a-amazon**,
   **t2a-elevenlabs**,
-  **t2a-kokoro**.
+  **t2a-kokoro**,
+  **t2a-supertonic**.
 - Any-to-Any nodes:
   **x2x-filter**,
   **x2x-trace**.
@@ -1053,6 +1056,26 @@ The following nodes convert text chunks to audio chunks.
   | **voice**    | 0         | "Aoede"  | `/^(?:Aoede\|Heart\|Puck\|Fenrir)$/` |
   | **language** | 1         | "en"     | `/^en$/`    |
   | **speed**    | 2         | 1.25     | 1.0...1.30  |
+
+- Node: **t2a-supertonic**<br/>
+  Purpose: **Supertonic Text-to-Speech conversion**<br/>
+  Example: `t2a-supertonic(voice: "M1", speed: 1.40)`<br/>
+
+  > This node uses Supertonic to perform Text-to-Speech (T2S) conversion,
+  > i.e., it converts the input text stream into an output audio stream.
+  > It is intended to generate speech. The ONNX models are automatically
+  > downloaded from HuggingFace on first use. It supports English language only.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | audio       |
+
+  | Parameter    | Position  | Default  | Requirement |
+  | ------------ | --------- | -------- | ----------- |
+  | **voice**    | 0         | "M1"     | `/^(?:M1\|M2\|F1\|F2)$/` |
+  | **speed**    | 1         | 1.40     | `0.5 <= n <= 2.0` |
+  | **steps**    | 2         | 20       | `1 <= n <= 20` |
 
 ### Any-to-Any Nodes
 
