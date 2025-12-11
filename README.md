@@ -49,6 +49,7 @@ speech-to-speech).
   [Ollama/Gemma](https://ollama.com) or
   [Transformers/OPUS](https://github.com/Helsinki-NLP/Opus-MT).
 - cloud-based text-to-speech conversion with
+  [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech),
   [ElevenLabs](https://elevenlabs.io/) or
   [Amazon Polly](https://aws.amazon.com/polly/).
 - local text-to-speech conversion with
@@ -368,6 +369,7 @@ First a short overview of the available processing nodes:
   **t2t-format**,
   **t2t-sentence**.
 - Text-to-Audio nodes:
+  **t2a-openai**,
   **t2a-amazon**,
   **t2a-elevenlabs**,
   **t2a-kokoro**,
@@ -990,6 +992,29 @@ The following nodes process text chunks only.
 ### Text-to-Audio Nodes
 
 The following nodes convert text chunks to audio chunks.
+
+- Node: **t2a-openai**<br/>
+  Purpose: **OpenAI Text-to-Speech conversion**<br/>
+  Example: `t2a-openai(voice: "nova", model: "tts-1-hd")`<br/>
+  Notice: this node requires an OpenAI API key!
+
+  > This node uses OpenAI TTS to perform Text-to-Speech (T2S)
+  > conversion, i.e., it converts the input text stream into an output
+  > audio stream. It supports six built-in voices and two models:
+  > `tts-1` for lower latency and `tts-1-hd` for higher quality.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | audio       |
+
+  | Parameter      | Position  | Default   | Requirement        |
+  | -------------- | --------- | --------- | ------------------ |
+  | **key**        | *none*    | env.SPEECHFLOW\_OPENAI\_KEY | *none* |
+  | **api**        | *none*    | "https://api.openai.com/v1" | `/^https?:\/\/.+/` |
+  | **voice**      | 0         | "alloy"   | `/^(?:alloy\|echo\|fable\|onyx\|nova\|shimmer)$/` |
+  | **model**      | 1         | "tts-1"   | `/^(?:tts-1\|tts-1-hd)$/` |
+  | **speed**      | 2         | 1.0       | `0.25 <= n <= 4.0` |
 
 - Node: **t2a-amazon**<br/>
   Purpose: **Amazon Polly Text-to-Speech conversion**<br/>

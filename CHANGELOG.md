@@ -5,6 +5,7 @@ ChangeLog
 1.7.2 (2025-12-08)
 ------------------
 
+- FEATURE: added "t2a-openai" text-to-speech node
 - FEATURE: added "t2a-supersonic" text-to-speech node
 - UPDATE: upgrade NPM dependencies
 
