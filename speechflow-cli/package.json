@@ -58,6 +58,8 @@
         "wavefile":                             "11.0.0",
         "audio-inspect":                        "0.0.4",
         "@huggingface/transformers":            "3.8.1",
+        "@huggingface/hub":                     "2.7.1",
+        "onnxruntime-node":                     "1.20.1",
         "kokoro-js":                            "1.2.1",
         "@ericedouard/vad-node-realtime":       "0.2.0",
         "osc-js":                               "2.4.1",
@@ -65,6 +67,7 @@
         "node-interval-tree":                   "2.1.2",
         "wrap-text":                            "1.0.10",
         "cli-table3":                           "0.6.5",
+        "mkdirp":                               "3.0.1",
         "@soundtouchjs/audio-worklet":          "0.2.1",
         "@rse/stx":                             "1.1.2"
     },
@@ -104,9 +107,9 @@
         "cross-env":                            "10.1.0"
     },
     "overrides": {
-        "@huggingface/transformers":            { "onnxruntime-node": "1.23.0-dev.20250703-7fc6235861" }
+        "@huggingface/transformers":            { "onnxruntime-node": "1.23.2" }
     },
-    "upd":                                      [ "!@biomejs/biome" ],
+    "upd":                                      [ "!@biomejs/biome", "!onnxruntime-node" ],
     "engines": {
         "node":                                 ">=22.0.0"
     },
