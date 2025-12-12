@@ -2,9 +2,10 @@
 ChangeLog
 =========
 
-1.7.2 (2025-12-08)
+1.7.2 (2025-12-12)
 ------------------
 
+- FEATURE: added "t2t-profanity" text-to-text profanity filtering node
 - FEATURE: added "t2a-openai" text-to-speech node
 - FEATURE: added "t2a-supersonic" text-to-speech node
 - UPDATE: upgrade NPM dependencies

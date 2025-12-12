@@ -365,6 +365,7 @@ First a short overview of the available processing nodes:
   **t2t-transformers**,
   **t2t-google**,
   **t2t-modify**,
+  **t2t-profanity**,
   **t2t-subtitle**,
   **t2t-format**,
   **t2t-sentence**.
@@ -934,6 +935,26 @@ The following nodes process text chunks only.
   | ------------ | --------- | -------- | ------------------ |
   | **match**    | 0         | ""       | *required*         |
   | **replace**  | 1         | ""       | *required*         |
+
+- Node: **t2t-profanity**<br/>
+  Purpose: **profanity filtering**<br/>
+  Example: `t2t-profanity(lang: "en", placeholder: "***")`<br/>
+
+  > This node filters profanity from the text stream by detecting bad words
+  > and replacing them with a placeholder. It supports English and German
+  > languages and can either replace with a fixed placeholder or repeat
+  > the placeholder character for each character of the detected word.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter       | Position  | Default    | Requirement              |
+  | --------------- | --------- | ---------- | ------------------------ |
+  | **lang**        | *none*    | "en"       | `/^(?:en\|de)$/`         |
+  | **placeholder** | *none*    | "\*\*\*"   | *none*                   |
+  | **mode**        | *none*    | "replace"  | `/^(?:replace\|repeat)$/`|
 
 - Node: **t2t-sentence**<br/>
   Purpose: **sentence splitting/merging**<br/>
