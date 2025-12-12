@@ -366,6 +366,7 @@ First a short overview of the available processing nodes:
   **t2t-google**,
   **t2t-modify**,
   **t2t-profanity**,
+  **t2t-summary**,
   **t2t-subtitle**,
   **t2t-format**,
   **t2t-sentence**.
@@ -955,6 +956,30 @@ The following nodes process text chunks only.
   | **lang**        | *none*    | "en"       | `/^(?:en\|de)$/`         |
   | **placeholder** | *none*    | "\*\*\*"   | *none*                   |
   | **mode**        | *none*    | "replace"  | `/^(?:replace\|repeat)$/`|
+
+- Node: **t2t-summary**<br/>
+  Purpose: **Ollama/Gemma Text-to-Text summarization**<br/>
+  Example: `t2t-summary(lang: "en", size: 4, trigger: 8)`<br/>
+  Notice: this node requires Ollama to be installed!
+
+  > This node performs text summarization using the local Ollama AI service
+  > and the Google Gemma 3 LLM. It accumulates incoming text sentences and
+  > generates a summary after a configurable number of sentences (trigger).
+  > The summary length is also configurable (size). It supports English and
+  > German languages.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default                  | Requirement              |
+  | ------------ | --------- | ------------------------ | ------------------------ |
+  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?:\d+$/` |
+  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                   |
+  | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`         |
+  | **size**     | 1         | 4                        | `1 <= n <= 20`           |
+  | **trigger**  | 2         | 8                        | `1 <= n <= 100`          |
 
 - Node: **t2t-sentence**<br/>
   Purpose: **sentence splitting/merging**<br/>
