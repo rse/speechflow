@@ -24,7 +24,7 @@
         "deepl-node":                           "1.24.0",
         "@elevenlabs/elevenlabs-js":            "2.27.0",
         "get-stream":                           "9.0.1",
-        "@dotenvx/dotenvx":                     "1.51.1",
+        "@dotenvx/dotenvx":                     "1.51.2",
         "speex-resampler":                      "3.0.1",
         "@sapphi-red/speex-preprocess-wasm":    "0.4.0",
         "@shiguredo/rnnoise-wasm":              "2025.1.5",
@@ -46,6 +46,8 @@
         "@opensumi/reconnecting-websocket":     "4.4.0",
         "ollama":                               "0.6.3",
         "openai":                               "6.10.0",
+        "@anthropic-ai/sdk":                    "0.71.2",
+        "@google/genai":                        "1.33.0",
         "@rse/ffmpeg":                          "1.4.2",
         "ffmpeg-stream":                        "1.0.1",
         "installed-packages":                   "1.0.13",
@@ -53,7 +55,7 @@
         "wav":                                  "1.0.2",
         "mqtt":                                 "5.14.1",
         "cbor2":                                "2.0.1",
-        "arktype":                              "2.1.28",
+        "arktype":                              "2.1.29",
         "pure-uuid":                            "1.8.1",
         "wavefile":                             "11.0.0",
         "audio-inspect":                        "0.0.4",
@@ -73,8 +75,8 @@
         "@rse/stx":                             "1.1.2"
     },
     "devDependencies": {
-        "eslint":                               "9.39.1",
-        "@eslint/js":                           "9.39.1",
+        "eslint":                               "9.39.2",
+        "@eslint/js":                           "9.39.2",
         "neostandard":                          "0.12.2",
         "eslint-plugin-promise":                "7.2.1",
         "eslint-plugin-import":                 "2.32.0",
@@ -110,7 +112,11 @@
     "overrides": {
         "@huggingface/transformers":            { "onnxruntime-node": "1.23.2" }
     },
-    "upd":                                      [ "!@biomejs/biome", "!onnxruntime-node" ],
+    "upd": [
+        "!@biomejs/biome",
+        "!onnxruntime-node",
+        "!@types/node"
+    ],
     "engines": {
         "node":                                 ">=22.0.0"
     },

@@ -7,15 +7,13 @@
 /*  standard dependencies  */
 import Stream                              from "node:stream"
 
-/*  external dependencies  */
-import { Ollama, type ListResponse }       from "ollama"
-
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
+import { LLM, type LLMChatMessage }        from "./speechflow-util-llm"
 
 /*  internal utility types  */
-type ConfigEntry = { systemPrompt: string, chat: Array<{ role: string, content: string }> }
+type ConfigEntry = { systemPrompt: string, chat: LLMChatMessage[] }
 type Config      = { [ key: string ]: ConfigEntry }
 
 /*  SpeechFlow node for text-to-text summarization  */
@@ -24,7 +22,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
     public static name = "t2t-summary"
 
     /*  internal state  */
-    private ollama: Ollama | null = null
+    private llm: LLM | null = null
     private accumulatedText = ""
     private sentencesSinceLastSummary = 0
 
@@ -83,16 +81,19 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            api:     { type: "string",         val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?:\d+$/ },
-            model:   { type: "string",         val: "gemma3:4b-it-q4_K_M",    match: /^.+$/ },
-            lang:    { type: "string", pos: 0, val: "en",                     match: /^(?:en|de)$/ },
-            size:    { type: "number", pos: 1, val: 4,                        match: (n: number) => n >= 1 && n <= 20 },
-            trigger: { type: "number", pos: 2, val: 8,                        match: (n: number) => n >= 1 && n <= 100 }
+            provider: { type: "string",         val: "ollama",                 match: /^(?:openai|anthropic|google|ollama)$/ },
+            api:      { type: "string",         val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?(:\d+)?$/ },
+            model:    { type: "string",         val: "gemma3:4b-it-q4_K_M",    match: /^.+$/ },
+            key:      { type: "string",         val: "",                       match: /^.*$/ },
+            lang:     { type: "string", pos: 0, val: "en",                     match: /^(?:en|de)$/ },
+            size:     { type: "number", pos: 1, val: 4,                        match: (n: number) => n >= 1 && n <= 20 },
+            trigger:  { type: "number", pos: 2, val: 8,                        match: (n: number) => n >= 1 && n <= 100 }
         })
 
         /*  tell effective mode  */
-        this.log("info", `summarizing language "${this.params.lang}", ` +
-            `triggering every new ${this.params.trigger} sentences, and ` +
+        this.log("info", `summarizing language "${this.params.lang}" ` +
+            `via ${this.params.provider} LLM (model: ${this.params.model}), ` +
+            `triggering every new ${this.params.trigger} sentences, ` +
             `summarizing into ${this.params.size} sentences`)
 
         /*  declare node input/output format  */
@@ -112,70 +113,29 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
         this.accumulatedText = ""
         this.sentencesSinceLastSummary = 0
 
-        /*  instantiate Ollama API  */
-        this.ollama = new Ollama({ host: this.params.api })
-
-        /*  ensure the model is available  */
-        let models: ListResponse
-        try {
-            models = await this.ollama.list()
-        }
-        catch (err) {
-            throw new Error(`failed to connect to Ollama API at ${this.params.api}: ${err}`, { cause: err })
-        }
-        const exists = models.models.some((m) => m.name === this.params.model)
-        if (!exists) {
-            this.log("info", `Summary: model "${this.params.model}" still not present in Ollama -- ` +
-                "automatically downloading model")
-            let artifact = ""
-            let percent  = 0
-            let lastLoggedPercent = -1
-            const interval = setInterval(() => {
-                if (percent !== lastLoggedPercent) {
-                    this.log("info", `downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
-                    lastLoggedPercent = percent
-                }
-            }, 1000)
-            try {
-                const progress = await this.ollama.pull({ model: this.params.model, stream: true })
-                for await (const event of progress) {
-                    if (event.digest)
-                        artifact = event.digest
-                    if (event.completed && event.total)
-                        percent = (event.completed / event.total) * 100
-                }
-            }
-            finally {
-                clearInterval(interval)
-            }
-        }
-        else
-            this.log("info", `Summary: model "${this.params.model}" already present in Ollama`)
+        /*  instantiate LLM  */
+        this.llm = new LLM({
+            provider:    this.params.provider,
+            api:         this.params.api,
+            model:       this.params.model,
+            key:         this.params.key,
+            temperature: 0.7,
+            topP:        0.5
+        })
+        this.llm.on("log", (level: string, message: string) => {
+            this.log(level as "info" | "warning" | "error", message)
+        })
+        await this.llm.open()
 
         /*  provide text summarization  */
-        const ollama = this.ollama!
+        const llm = this.llm!
         const summarize = async (text: string) => {
             const cfg = this.setup[this.params.lang]
-            const sizeInstruction = this.params.lang === "en"
-                ? `Summarize in exactly ${this.params.size} ${this.params.size > 1 ? "sentences" : "sentence"}:\n\n`
-                : `Fasse in genau ${this.params.size} ${this.params.size > 1 ? "Sätzen" : "Satz"} zusammen:\n\n`
-            const response = await ollama.chat({
-                model: this.params.model,
-                messages: [
-                    { role: "system", content: cfg.systemPrompt.replace(/%N%/, this.params.size) },
-                    ...cfg.chat,
-                    { role: "user", content: text }
-                ],
-                keep_alive: "10m",
-                options: {
-                    repeat_penalty: 1.1,
-                    temperature:    0.7,
-                    seed:           1,
-                    top_k:          10,
-                    top_p:          0.5
-                }
+            return llm.chat({
+                system:   cfg.systemPrompt.replace(/%N%/, this.params.size),
+                messages: cfg.chat,
+                prompt:   text
             })
-            return response.message.content
         }
 
         /*  establish a transform stream for summarization  */
@@ -258,10 +218,10 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
             this.stream = null
         }
 
-        /*  shutdown Ollama  */
-        if (this.ollama !== null) {
-            this.ollama.abort()
-            this.ollama = null
+        /*  shutdown LLM  */
+        if (this.llm !== null) {
+            await this.llm.close()
+            this.llm = null
         }
     }
 }
