@@ -70,9 +70,9 @@ export class LLM extends EventEmitter {
                 this.config.key = process.env.SPEECHFLOW_ANTHROPIC_KEY ?? ""
             else if (this.config.provider === "google")
                 this.config.key = process.env.SPEECHFLOW_GOOGLE_KEY ?? ""
+            if (this.config.provider.match(/^(?:openai|anthropic|google)$/) && this.config.key === "")
+                throw new Error(`API key is required for provider "${this.config.provider}"`)
         }
-        if (this.config.provider.match(/^(?:openai|anthropic|google)$/) && this.config.key === "")
-            throw new Error(`API key is required for provider "${this.config.provider}"`)
         if (this.config.model === "")
             throw new Error("model is required")
     }
