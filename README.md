@@ -958,28 +958,31 @@ The following nodes process text chunks only.
   | **mode**        | *none*    | "replace"  | `/^(?:replace\|repeat)$/`|
 
 - Node: **t2t-summary**<br/>
-  Purpose: **Ollama/Gemma Text-to-Text summarization**<br/>
+  Purpose: **LLM-based Text-to-Text summarization**<br/>
   Example: `t2t-summary(lang: "en", size: 4, trigger: 8)`<br/>
-  Notice: this node requires Ollama to be installed!
+  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google)!
 
-  > This node performs text summarization using the local Ollama AI service
-  > and the Google Gemma 3 LLM. It accumulates incoming text sentences and
-  > generates a summary after a configurable number of sentences (trigger).
-  > The summary length is also configurable (size). It supports English and
-  > German languages.
+  > This node performs text summarization using an LLM service.
+  > It accumulates incoming text sentences and generates a summary after
+  > a configurable number of sentences (trigger). The summary length is
+  > also configurable (size). It supports English and German languages.
+  > Multiple LLM providers are supported: local Ollama (default), or
+  > cloud-based OpenAI, Anthropic, or Google.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text        |
   | output  | text        |
 
-  | Parameter    | Position  | Default                  | Requirement              |
-  | ------------ | --------- | ------------------------ | ------------------------ |
-  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?:\d+$/` |
-  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                   |
-  | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`         |
-  | **size**     | 1         | 4                        | `1 <= n <= 20`           |
-  | **trigger**  | 2         | 8                        | `1 <= n <= 100`          |
+  | Parameter    | Position  | Default                  | Requirement                              |
+  | ------------ | --------- | ------------------------ | ---------------------------------------- |
+  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama)$/` |
+  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
+  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
+  | **key**      | *none*    | ""                       | *none*                                   |
+  | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`                         |
+  | **size**     | 1         | 4                        | `1 <= n <= 20`                           |
+  | **trigger**  | 2         | 8                        | `1 <= n <= 100`                          |
 
 - Node: **t2t-sentence**<br/>
   Purpose: **sentence splitting/merging**<br/>
