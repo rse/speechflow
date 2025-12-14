@@ -79,8 +79,8 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         const args = cmdParts.slice(1)
 
         /*  determine subprocess options  */
-        const encoding: Options["encoding"] = this.params.type === "text" ?
-            this.config.textEncoding : "buffer"
+        const encoding = (this.params.type === "text" ?
+            this.config.textEncoding : "buffer") as Options["encoding"]
 
         /*  spawn subprocess  */
         this.log("info", `executing command: ${this.params.command}`)
@@ -113,16 +113,12 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         /*  determine high water mark based on type  */
         const highWaterMark = this.params.type === "audio" ? highWaterMarkAudio : highWaterMarkText
 
-        /*  set proper encoding based on type  */
-        const isTextMode = this.params.type === "text"
-        const textEncoding = isTextMode ? this.config.textEncoding : null
-        const defaultEncoding = isTextMode ? this.config.textEncoding : "binary"
-
         /*  configure stream encoding  */
-        if (this.subprocess.stdout && textEncoding !== null)
-            this.subprocess.stdout.setEncoding(textEncoding)
+        if (this.subprocess.stdout && this.params.type === "text")
+            this.subprocess.stdout.setEncoding(this.config.textEncoding)
         if (this.subprocess.stdin)
-            this.subprocess.stdin.setDefaultEncoding(defaultEncoding)
+            this.subprocess.stdin.setDefaultEncoding(this.params.type === "text" ?
+                this.config.textEncoding : "binary")
 
         /*  dispatch according to mode  */
         if (this.params.mode === "rw") {
@@ -152,12 +148,6 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
-        }
-
         /*  terminate subprocess  */
         if (this.subprocess !== null) {
             /*  gracefully end stdin if in write or read/write mode  */
@@ -192,10 +182,16 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
                         util.timeout(2000)
                     ])
                 }
-            }).catch(() => {
+            }).catch(async () => {
                 /*  force kill with SIGKILL  */
                 this.log("warning", "subprocess did not respond to SIGTERM, forcing SIGKILL")
                 this.subprocess!.kill("SIGKILL")
+                await Promise.race([
+                    this.subprocess,
+                    util.timeout(1000)
+                ]).catch(() => {
+                    this.log("error", "subprocess did not terminate even after SIGKILL")
+                })
             })
 
             /*  remove event listeners to prevent memory leaks  */
@@ -203,6 +199,12 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
             this.subprocess.removeAllListeners("exit")
 
             this.subprocess = null
+        }
+
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
         }
     }
 }
