@@ -575,10 +575,10 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement        |
-  | ----------- | --------- | -------- | ------------------ |
-  | **src**     | 0         | "pcm"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
-  | **dst**     | 1         | "wav"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
+  | Parameter | Position  | Default  | Requirement        |
+  | --------- | --------- | -------- | ------------------ |
+  | **src**   | 0         | "pcm"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
+  | **dst**   | 1         | "wav"    | `/^(?:pcm\|wav\|mp3\|opus)$/` |
 
 - Node: **a2a-wav**<br/>
   Purpose: **WAV audio format conversion**<br/>
@@ -593,9 +593,9 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **mode**    | 0         | "encode" | `/^(?:encode\|decode)$/` |
+  | Parameter | Position  | Default  | Requirement              |
+  | --------- | --------- | -------- | ------------------------ |
+  | **mode**  | 0         | "encode" | `/^(?:encode\|decode)$/` |
 
 - Node: **a2a-mute**<br/>
   Purpose: **volume muting node**<br/>
@@ -610,8 +610,8 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
+  | Parameter | Position  | Default  | Requirement              |
+  | --------- | --------- | -------- | ------------------------ |
 
 - Node: **a2a-meter**<br/>
   Purpose: **Loudness metering node**<br/>
@@ -646,8 +646,8 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
+  | Parameter | Position  | Default  | Requirement              |
+  | --------- | --------- | -------- | ------------------------ |
   | **mode**               | *none* | "unplugged" | `/^(?:silenced\|unplugged)$/` |
   | **posSpeechThreshold** | *none* | 0.50  | *none* |
   | **negSpeechThreshold** | *none* | 0.35  | *none* |
@@ -689,9 +689,9 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **attentuate** | 0 | -18  | *none* | `-60 <= n <= 0` |
+  | Parameter      | Position  | Default  | Requirement        |
+  | -------------- | --------- | -------- | ------------------ |
+  | **attentuate** | 0         | -18      | `-60 <= n <= 0`    |
 
 - Node: **a2a-rnnoise**<br/>
   Purpose: **RNNoise Noise Suppression node**<br/>
@@ -705,8 +705,8 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
+  | Parameter | Position  | Default  | Requirement              |
+  | --------- | --------- | -------- | ------------------------ |
 
 - Node: **a2a-compressor**<br/>
   Purpose: **audio compressor node**<br/>
@@ -744,15 +744,15 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter       | Position  | Default  | Requirement              |
-  | --------------- | --------- | -------- | ------------------------ |
-  | **thresholdDb** | *none*    | -45      | `n <= 0 && n >= -100`|
-  | **floorDb**     | *none*    | -64      | `n <= 0 && n >= -100`|
-  | **ratio**       | *none*    | 4.0      | `n >= 1 && n <= 20`  |
-  | **attackMs**    | *none*    | 10       | `n >= 0 && n <= 1000`|
-  | **releaseMs**   | *none*    | 50       | `n >= 0 && n <= 1000`|
-  | **kneeDb**      | *none*    | 6.0      | `n >= 0 && n <= 40`  |
-  | **makeupDb**    | *none*    | 0        | `n >= -24 && n <= 24`|
+  | Parameter       | Position  | Default  | Requirement           |
+  | --------------- | --------- | -------- | --------------------- |
+  | **thresholdDb** | *none*    | -45      | `n <= 0 && n >= -100` |
+  | **floorDb**     | *none*    | -64      | `n <= 0 && n >= -100` |
+  | **ratio**       | *none*    | 4.0      | `n >= 1 && n <= 20`   |
+  | **attackMs**    | *none*    | 10       | `n >= 0 && n <= 1000` |
+  | **releaseMs**   | *none*    | 50       | `n >= 0 && n <= 1000` |
+  | **kneeDb**      | *none*    | 6.0      | `n >= 0 && n <= 40`   |
+  | **makeupDb**    | *none*    | 0        | `n >= -24 && n <= 24` |
 
 - Node: **a2a-gain**<br/>
   Purpose: **audio gain adjustment node**<br/>
@@ -766,9 +766,9 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **db**      | 0         | 0        | `n >= -60 && n <= 60`    |
+  | Parameter | Position  | Default  | Requirement           |
+  | --------- | --------- | -------- | --------------------- |
+  | **db**    | 0         | 0        | `n >= -60 && n <= 60` |
 
 - Node: **a2a-pitch**<br/>
   Purpose: **audio pitch shifting and time stretching**<br/>
@@ -804,9 +804,9 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter   | Position  | Default  | Requirement              |
-  | ----------- | --------- | -------- | ------------------------ |
-  | **segment** | 0         | 50       | `n >= 10 && n <= 1000`   |
+  | Parameter   | Position  | Default  | Requirement            |
+  | ----------- | --------- | -------- | ---------------------- |
+  | **segment** | 0         | 50       | `n >= 10 && n <= 1000` |
 
 ### Audio-to-Text Nodes
 
@@ -910,38 +910,39 @@ The following nodes process text chunks only.
   Example: `t2t-deepl(src: "de", dst: "en")`<br/>
   Notice: this node requires an API key!
 
-  > This node performs translation between English and German languages.
+  > This node performs translation between multiple languages.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text        |
   | output  | text        |
 
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **key**      | *none*    | env.SPEECHFLOW\_DEEPL\_KEY | *none* |
-  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
-  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+  | Parameter    | Position  | Default    | Requirement                   |
+  | ------------ | --------- | ---------- | ----------------------------- |
+  | **key**      | *none*    | env.SPEECHFLOW\_DEEPL\_KEY | *none*      |
+  | **src**      | 0         | "de"       | `/^(?:de\|en\|fr\|it)$/`      |
+  | **dst**      | 1         | "en"       | `/^(?:de\|en\|fr\|it)$/`      |
+  | **optimize** | 2         | "latency"  | `/^(?:latency\|quality)$/`    |
 
 - Node: **t2t-amazon**<br/>
   Purpose: **AWS Translate Text-to-Text translation**<br/>
   Example: `t2t-amazon(src: "de", dst: "en")`<br/>
   Notice: this node requires an API key!
 
-  > This node performs translation between English and German languages.
+  > This node performs translation between multiple languages.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | text        |
   | output  | text        |
 
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **key**      | *none*    | env.SPEECHFLOW\_AMAZON\_KEY | *none* |
+  | Parameter    | Position  | Default  | Requirement                  |
+  | ------------ | --------- | -------- | ---------------------------- |
+  | **key**      | *none*    | env.SPEECHFLOW\_AMAZON\_KEY | *none*     |
   | **secKey**   | *none*    | env.SPEECHFLOW\_AMAZON\_KEY\_SEC | *none* |
-  | **region**   | *none*    | "eu-central-1" | *none* |
-  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
-  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
+  | **region**   | *none*    | "eu-central-1" | *none*               |
+  | **src**      | 0         | "de"     | `/^(?:de\|en\|fr\|it)$/`     |
+  | **dst**      | 1         | "en"     | `/^(?:de\|en\|fr\|it)$/`     |
 
 - Node: **t2t-opus**<br/>
   Purpose: **OPUS-MT Text-to-Text translation**<br/>
@@ -1222,7 +1223,7 @@ The following nodes convert text chunks to audio chunks.
   | **key**        | *none*    | env.SPEECHFLOW\_AMAZON\_KEY | *none* |
   | **secKey**     | *none*    | env.SPEECHFLOW\_AMAZON\_KEY\_SEC | *none* |
   | **region**     | *none*    | "eu-central-1" | *none* |
-  | **voice**      | 0         | "Amy"     | `^(?:Amy|Danielle|Joanna|Matthew|Ruth|Stephen|Viki|Daniel)$/` |
+  | **voice**      | 0         | "Amy"     | `/^(?:Amy\|Danielle\|Joanna\|Matthew\|Ruth\|Stephen\|Vicki\|Daniel)$/` |
   | **language**   | 1         | "en"      | `/^(?:de\|en)$/`  |
 
 - Node: **t2a-elevenlabs**<br/>
@@ -1244,7 +1245,7 @@ The following nodes convert text chunks to audio chunks.
   | **key**        | *none*    | env.SPEECHFLOW\_ELEVENLABS\_KEY | *none* |
   | **voice**      | 0         | "Brian"   | `/^(?:Brittney\|Cassidy\|Leonie\|Mark\|Brian)$/` |
   | **language**   | 1         | "de"      | `/^(?:de\|en)$/`  |
-  | **speed**      | 2         | 1.00      | `n >= 0`7 && n <= 1.2` |
+  | **speed**      | 2         | 1.00      | `n >= 0.7 && n <= 1.2` |
   | **stability**  | 3         | 0.5       | `n >= 0.0 && n <= 1.0` |
   | **similarity** | 4         | 0.75      | `n >= 0.0 && n <= 1.0` |
   | **optimize**   | 5         | "latency" | `/^(?:latency\|quality)$/` |
