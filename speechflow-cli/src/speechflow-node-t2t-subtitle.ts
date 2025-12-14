@@ -32,7 +32,7 @@ type TextChunk = {
     text:  string
 }
 
-/*  SpeechFlow node for subtitle (text-to-text) "translations"  */
+/*  SpeechFlow node for subtitle (text-to-text) conversions  */
 export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "t2t-subtitle"
