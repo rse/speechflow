@@ -94,7 +94,8 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            mode: { type: "string", pos: 1, val: "encode", match: /^(?:encode|decode)$/ }
+            mode:     { type: "string",  pos: 0, val: "encode", match: /^(?:encode|decode)$/ },
+            seekable: { type: "boolean", pos: 1, val: false }
         })
 
         /*  declare node input/output format  */
@@ -106,7 +107,9 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
     async open () {
         /*  establish a transform stream  */
         const self = this
-        let firstChunk = true
+        let isFirstChunk = true
+        let headerChunkSent: SpeechFlowChunk | null = null
+        let totalSize = 0
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
@@ -115,7 +118,7 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
             transform (chunk: SpeechFlowChunk, encoding, callback) {
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
-                else if (firstChunk) {
+                else if (isFirstChunk) {
                     if (self.params.mode === "encode") {
                         /*  convert raw/PCM to WAV/PCM
                             (NOTICE: as this is a continuous stream, the
@@ -132,7 +135,9 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
                         const headerChunk = chunk.clone()
                         headerChunk.payload = headerBuffer
                         this.push(headerChunk)
+                        headerChunkSent = headerChunk
                         this.push(chunk)
+                        totalSize += chunk.payload.byteLength
                         callback()
                     }
                     else if (self.params.mode === "decode") {
@@ -173,21 +178,36 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
                         }
                         chunk.payload = chunk.payload.subarray(44)
                         this.push(chunk)
+                        totalSize += chunk.payload.byteLength
                         callback()
                     }
                     else {
                         callback(new Error(`invalid operation mode "${self.params.mode}"`))
                         return
                     }
-                    firstChunk = false
+                    isFirstChunk = false
                 }
                 else {
                     /*  pass-through original chunk  */
                     this.push(chunk)
+                    totalSize += chunk.payload.byteLength
                     callback()
                 }
             },
             final (callback) {
+                if (self.params.seekable && headerChunkSent !== null) {
+                    self.log("info", "sending updated WAV header")
+                    const headerBuffer = writeWavHeader(totalSize, {
+                        audioFormat: 0x0001 /* PCM */,
+                        channels:    self.config.audioChannels,
+                        sampleRate:  self.config.audioSampleRate,
+                        bitDepth:    self.config.audioBitDepth
+                    })
+                    const headerChunk = headerChunkSent?.clone()
+                    headerChunk.payload = headerBuffer
+                    headerChunk.meta.set("chunk:seek", 0)
+                    this.push(headerChunk)
+                }
                 callback()
             }
         })

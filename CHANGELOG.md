@@ -15,6 +15,7 @@ ChangeLog
 - FEATURE: added "t2t-profanity" text-to-text profanity filtering node
 - FEATURE: added "t2a-openai" text-to-speech node
 - FEATURE: added "t2a-supersonic" text-to-speech node
+- FEATURE: added "seekable" parameter to both "a2a-wav" and "xio-file" to allow correct WAV headers to be written
 - REFACTOR: refactor "t2t-openai" and "t2t-ollama" into "t2t-spellcheck" and "t2t-translate"
 - REFACTOR: rename "t2t-transformers" to "t2t-opus" and reduce its functionality to OPUS only
 - UPDATE: upgrade NPM dependencies

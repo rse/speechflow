@@ -9,13 +9,16 @@ import fs               from "node:fs"
 import Stream           from "node:stream"
 
 /*  internal dependencies  */
-import SpeechFlowNode   from "./speechflow-node"
-import * as util        from "./speechflow-util"
+import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
+import * as util                           from "./speechflow-util"
 
 /*  SpeechFlow node for file access  */
 export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "xio-file"
+
+    /*  file descriptor for seekable write mode  */
+    private fd: number | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -23,16 +26,19 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            path:       { type: "string", pos: 0, val: "" },
-            mode:       { type: "string", pos: 1, val: "r",     match: /^(?:r|w)$/ },
-            type:       { type: "string", pos: 2, val: "audio", match: /^(?:audio|text)$/ },
-            chunkAudio: { type: "number",         val: 200,     match: (n: number) => n >= 10 && n <= 1000 },
-            chunkText:  { type: "number",         val: 65536,   match: (n: number) => n >= 1024 && n <= 131072 }
+            path:       { type: "string",  pos: 0, val: "" },
+            mode:       { type: "string",  pos: 1, val: "r",     match: /^(?:r|w)$/ },
+            type:       { type: "string",  pos: 2, val: "audio", match: /^(?:audio|text)$/ },
+            seekable:   { type: "boolean",         val: false },
+            chunkAudio: { type: "number",          val: 200,     match: (n: number) => n >= 10 && n <= 1000 },
+            chunkText:  { type: "number",          val: 65536,   match: (n: number) => n >= 1024 && n <= 131072 }
         })
 
         /*  sanity check parameters  */
         if (this.params.path === "")
             throw new Error("required parameter \"path\" has to be given")
+        if (this.params.seekable && this.params.path === "-")
+            throw new Error("parameter \"seekable\" cannot be used with standard I/O")
 
         /*  declare node input/output format  */
         if (this.params.mode === "r") {
@@ -120,15 +126,63 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             }
             else {
                 /*  file I/O  */
-                let writable: Stream.Writable
-                if (this.params.type === "audio")
-                    writable = fs.createWriteStream(this.params.path,
-                        { highWaterMark: highWaterMarkAudio })
-                else
-                    writable = fs.createWriteStream(this.params.path,
-                        { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
-                const wrapper = util.createTransformStreamForWritableSide(this.params.type, 1)
-                this.stream = Stream.compose(wrapper, writable)
+                if (this.params.seekable) {
+                    /*  seekable file I/O with file descriptor  */
+                    this.fd = fs.openSync(this.params.path, "w")
+                    let writePosition = 0
+                    const self = this
+                    const writable = new Stream.Writable({
+                        objectMode:    true,
+                        decodeStrings: false,
+                        highWaterMark: 1,
+                        write (chunk: SpeechFlowChunk, encoding, callback) {
+                            const payload = Buffer.isBuffer(chunk.payload) ?
+                                chunk.payload : Buffer.from(chunk.payload)
+                            const seekPosition = chunk.meta.get("chunk:seek") as number | undefined
+                            if (seekPosition !== undefined) {
+                                /*  seek to specified position and write (overload)  */
+                                fs.write(self.fd!, payload, 0, payload.byteLength, seekPosition, callback)
+                            }
+                            else {
+                                /*  append at current position  */
+                                fs.write(self.fd!, payload, 0, payload.byteLength, writePosition, (err) => {
+                                    if (err)
+                                        callback(err)
+                                    else {
+                                        writePosition += payload.byteLength
+                                        callback()
+                                    }
+                                })
+                            }
+                        },
+                        final (callback) {
+                            callback()
+                        },
+                        destroy (err, callback) {
+                            if (self.fd !== null) {
+                                fs.close(self.fd, () => {
+                                    self.fd = null
+                                    callback(err)
+                                })
+                            }
+                            else
+                                callback(err)
+                        }
+                    })
+                    this.stream = writable
+                }
+                else {
+                    /*  non-seekable file I/O with stream  */
+                    let writable: Stream.Writable
+                    if (this.params.type === "audio")
+                        writable = fs.createWriteStream(this.params.path,
+                            { highWaterMark: highWaterMarkAudio })
+                    else
+                        writable = fs.createWriteStream(this.params.path,
+                            { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
+                    const wrapper = util.createTransformStreamForWritableSide(this.params.type, 1)
+                    this.stream = Stream.compose(wrapper, writable)
+                }
             }
         }
         else
@@ -146,12 +200,14 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                 /*  for stdio streams, just end without destroying  */
                 const stream = this.stream
                 if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex) &&
-                    (!stream.writableEnded && !stream.destroyed)                             ) {
+                    (!stream.writableEnded && !stream.destroyed)) {
                     await Promise.race([
                         new Promise<void>((resolve, reject) => {
                             stream.end((err?: Error) => {
-                                if (err) reject(err)
-                                else     resolve()
+                                if (err)
+                                    reject(err)
+                                else
+                                    resolve()
                             })
                         }),
                         util.timeout(5000)
@@ -159,6 +215,19 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                 }
             }
             this.stream = null
+        }
+
+        /*  ensure file descriptor is closed  */
+        if (this.fd !== null) {
+            await new Promise<void>((resolve, reject) => {
+                fs.close(this.fd!, (err) => {
+                    this.fd = null
+                    if (err)
+                        reject(err)
+                    else
+                        resolve()
+                })
+            })
         }
     }
 }

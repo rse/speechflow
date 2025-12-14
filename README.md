@@ -402,7 +402,10 @@ external files, devices and network services.
 
   > This node allows the reading/writing from/to files or from StdIO. It
   > is intended to be used as source and sink nodes in batch processing,
-  > and as sing nodes in real-time processing.
+  > and as sing nodes in real-time processing. When `seekable` is enabled
+  > for write mode, the node uses a file descriptor allowing random access
+  > writes to specific file positions via the `chunk:seek` metadata field.
+  > Option `seekable` cannot be used on StdIO.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -414,6 +417,7 @@ external files, devices and network services.
   | **path**       | 0         | *none*   | *none*                |
   | **mode**       | 1         | "r"      | `/^(?:r\|w)$/`        |
   | **type**       | 2         | "audio"  | `/^(?:audio\|text)$/` |
+  | **seekable**   |           | false    | *none*                |
   | **chunkAudio** |           | 200      | `10 <= n <= 1000`     |
   | **chunkText**  |           | 65536    | `1024 <= n <= 131072` |
 
@@ -587,15 +591,20 @@ The following nodes process audio chunks only.
   > This node allows converting between PCM and WAV audio formats. It is
   > primarily intended to support the reading/writing of external WAV
   > format files, although SpeechFlow internally uses PCM format only.
+  > When `seekable` is enabled in encode mode, the node writes a corrected
+  > WAV header at the end of processing with accurate file size information
+  > by seeking back to position 0, producing standard-compliant WAV files.
+  > Option `seekable` requires a seekable output stream.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter | Position  | Default  | Requirement              |
-  | --------- | --------- | -------- | ------------------------ |
-  | **mode**  | 0         | "encode" | `/^(?:encode\|decode)$/` |
+  | Parameter    | Position  | Default  | Requirement              |
+  | ------------ | --------- | -------- | ------------------------ |
+  | **mode**     | 0         | "encode" | `/^(?:encode\|decode)$/` |
+  | **seekable** | 1         | false    | *none*                   |
 
 - Node: **a2a-mute**<br/>
   Purpose: **volume muting node**<br/>
