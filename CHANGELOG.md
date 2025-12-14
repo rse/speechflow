@@ -5,8 +5,7 @@ ChangeLog
 1.8.0 (2025-12-12)
 ------------------
 
-- REFACTOR: refactor "t2t-openai" and "t2t-ollama" into "t2t-spellcheck" and "t2t-translate"
-- REFACTOR: rename "t2t-transformers" to "t2t-opus" and reduce its functionality to OPUS only
+- FEATURE: added "xio-vban" node for VBAN network audio streaming
 - FEATURE: added "a2t-google" node for Google Cloud Speech-to-Text processing
 - FEATURE: added "t2a-google" node for Google Cloud Text-to-Speech processing
 - FEATURE: added "t2t-punctuation" text-to-text punctuation node
@@ -14,6 +13,8 @@ ChangeLog
 - FEATURE: added "t2t-profanity" text-to-text profanity filtering node
 - FEATURE: added "t2a-openai" text-to-speech node
 - FEATURE: added "t2a-supersonic" text-to-speech node
+- REFACTOR: refactor "t2t-openai" and "t2t-ollama" into "t2t-spellcheck" and "t2t-translate"
+- REFACTOR: rename "t2t-transformers" to "t2t-opus" and reduce its functionality to OPUS only
 - UPDATE: upgrade NPM dependencies
 
 1.7.1 (2025-12-08)

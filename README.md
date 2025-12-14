@@ -26,7 +26,7 @@ speech-to-speech).
 **SpeechFlow** comes with built-in graph nodes for various functionalities:
 
 - file and audio device I/O for local connectivity,
-- WebSocket and MQTT network I/O for remote connectivity,
+- WebSocket, MQTT, and VBAN network I/O for remote connectivity,
 - local Voice Activity Detection (VAD),
 - local voice gender recognition,
 - local audio LUFS-S/RMS metering,
@@ -342,7 +342,8 @@ First a short overview of the available processing nodes:
   **xio-file**,
   **xio-device**,
   **xio-websocket**,
-  **xio-mqtt**.
+  **xio-mqtt**,
+  **xio-vban**.
 - Audio-to-Audio nodes:
   **a2a-ffmpeg**,
   **a2a-wav**,
@@ -477,6 +478,30 @@ external files, devices and network services.
   | **topicWrite** | 4         | *none*   | `/^.+$/` |
   | **mode**       | 5         | "w"      | `/^(?:r\|w\|rw)$/` |
   | **type**       | 6         | "text"   | `/^(?:audio\|text)$/` |
+
+- Node: **xio-vban**<br/>
+  Purpose: **VBAN network audio source/sink**<br/>
+  Example: `xio-vban(listen: 6980, stream: "Stream1", mode: "r")`
+  Notice: this node requires a peer VBAN-compatible application!
+
+  > This node allows reading/writing audio from/to VBAN (VoiceMeeter
+  > Audio Network) protocol endpoints. It is intended to be used for
+  > real-time audio streaming with applications like VoiceMeeter,
+  > VB-Audio Matrix, or other VBAN-compatible software. It supports
+  > various audio bit resolutions (8-bit, 16-bit, 24-bit, 32-bit,
+  > float32, float64) and automatic channel downmixing to mono.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter   | Position  | Default   | Requirement                  |
+  | ----------- | --------- | --------- | ---------------------------- |
+  | **listen**  | 0         | ""        | `/^(?:\|\d+\|.+?:\d+)$/`     |
+  | **connect** | 1         | ""        | `/^(?:\|.+?:\d+)$/`          |
+  | **stream**  | 2         | "Stream"  | `/^.{1,16}$/`                |
+  | **mode**    | 3         | "rw"      | `/^(?:r\|w\|rw)$/`           |
 
 ### Audio-to-Audio Nodes
 
