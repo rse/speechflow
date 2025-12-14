@@ -5,6 +5,7 @@ ChangeLog
 1.8.0 (2025-12-12)
 ------------------
 
+- REFACTOR: rename "t2t-transformers" to "t2t-opus" and reduce its functionality to OPUS only
 - FEATURE: added "t2t-summary" text-to-text summarization node
 - FEATURE: added "t2t-profanity" text-to-text profanity filtering node
 - FEATURE: added "t2a-openai" text-to-speech node

@@ -47,7 +47,7 @@ speech-to-speech).
   [OpenAI GPT](https://openai.com).
 - local text-to-text translation (or spelling correction) with
   [Ollama/Gemma](https://ollama.com) or
-  [Transformers/OPUS](https://github.com/Helsinki-NLP/Opus-MT).
+  [OPUS-MT](https://github.com/Helsinki-NLP/Opus-MT).
 - cloud-based text-to-speech conversion with
   [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech),
   [ElevenLabs](https://elevenlabs.io/) or
@@ -362,7 +362,7 @@ First a short overview of the available processing nodes:
   **t2t-amazon**,
   **t2t-openai**,
   **t2t-ollama**,
-  **t2t-transformers**,
+  **t2t-opus**,
   **t2t-google**,
   **t2t-modify**,
   **t2t-profanity**,
@@ -881,12 +881,12 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **t2t-transformers**<br/>
-  Purpose: **Transformers Text-to-Text translation**<br/>
-  Example: `t2t-transformers(src: "de", dst: "en")`<br/>
+- Node: **t2t-opus**<br/>
+  Purpose: **OPUS-MT Text-to-Text translation**<br/>
+  Example: `t2t-opus(src: "de", dst: "en")`<br/>
 
   > This node performs translation between English and German languages
-  > in the text stream. It is based on local OPUS or SmolLM3 LLMs.
+  > in the text stream. It is based on the local OPUS-MT translation model.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -895,7 +895,6 @@ The following nodes process text chunks only.
 
   | Parameter    | Position  | Default  | Requirement      |
   | ------------ | --------- | -------- | ---------------- |
-  | **model**    | *none*    | "OPUS"   | `/^(?:OPUS\|SmolLM3)$/` |
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
