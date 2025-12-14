@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-2.0.0 (2025-12-14)
+2.0.0 (2025-12-15)
 ------------------
 
 - FEATURE: added "xio-exec" node for external command execution via stdin/stdout
