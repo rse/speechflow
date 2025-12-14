@@ -188,3 +188,12 @@ export function runner<T> (
             return run(() => action(...args), oncatch, onfinally)
     }
 }
+
+/*  shield cleanup operation, ignoring errors  */
+export function shield<T extends (void | Promise<void>)> (op: () => T) {
+    return run(
+        "shielded operation",
+        () => { op() },
+        (_err) => { /* ignore error */ }
+    )
+}
