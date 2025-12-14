@@ -237,7 +237,32 @@ export class NodeGraph {
         this.cli.log("info", "**** everything established -- stream processing in SpeechFlow graph starts ****")
     }
 
-    /*  graph destruction: PASS 1: disconnect node streams  */
+    /*  graph destruction: PASS 1: end node streams  */
+    async endStreams(): Promise<void> {
+        /*  end all writable streams and wait for them to drain  */
+        const drainPromises: Promise<void>[] = []
+        for (const node of this.graphNodes) {
+            if (node.stream === null)
+                continue
+            const stream = node.stream
+            if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex) &&
+                (!stream.writableEnded && !stream.destroyed)) {
+                drainPromises.push(
+                    Promise.race([
+                        new Promise<void>((resolve) => {
+                            stream.end(() => { resolve() })
+                        }),
+                        util.timeout(5000)
+                    ]).catch(() => {
+                        /*  ignore timeout -- stream will be destroyed later  */
+                    })
+                )
+            }
+        }
+        await Promise.all(drainPromises)
+    }
+
+    /*  graph destruction: PASS 2: disconnect node streams  */
     async disconnectStreams(): Promise<void> {
         for (const node of this.graphNodes) {
             if (node.stream === null) {
@@ -265,7 +290,7 @@ export class NodeGraph {
         }
     }
 
-    /*  graph destruction: PASS 2: close nodes  */
+    /*  graph destruction: PASS 3: close nodes  */
     async closeNodes(): Promise<void> {
         for (const node of this.graphNodes) {
             this.cli.log("info", `close node <${node.id}>`)
@@ -278,7 +303,7 @@ export class NodeGraph {
         }
     }
 
-    /*  graph destruction: PASS 3: disconnect nodes  */
+    /*  graph destruction: PASS 4: disconnect nodes  */
     disconnectNodes(): void {
         for (const node of this.graphNodes) {
             this.cli.log("info", `disconnect node <${node.id}>`)
@@ -289,7 +314,7 @@ export class NodeGraph {
         }
     }
 
-    /*  graph destruction: PASS 4: destroy nodes  */
+    /*  graph destruction: PASS 5: destroy nodes  */
     destroyNodes(): void {
         for (const node of this.graphNodes) {
             this.cli.log("info", `destroy node <${node.id}>`)
@@ -345,7 +370,8 @@ export class NodeGraph {
         /*  shutdown API service  */
         await api.stop(args)
 
-        /*  disconnect, close and destroy nodes  */
+        /*  gracefully end, disconnect, close and destroy nodes  */
+        await this.endStreams()
         await this.disconnectStreams()
         await this.closeNodes()
         this.disconnectNodes()
