@@ -71,12 +71,16 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         const cmdParts = shellParser(this.params.command)
         if (cmdParts.length === 0)
             throw new Error("failed to parse command: no executable found")
+
+        /*  warn about potentially dangerous shell metacharacters  */
+        if (/[;&|`$()<>]/.test(this.params.command))
+            this.log("warning", "command contains shell metacharacters -- ensure input is trusted")
         const executable = cmdParts[0]
         const args = cmdParts.slice(1)
 
         /*  determine subprocess options  */
-        const encoding = (this.params.type === "text" ?
-            this.config.textEncoding : "buffer") as Options["encoding"]
+        const encoding: Options["encoding"] = this.params.type === "text" ?
+            this.config.textEncoding : "buffer"
 
         /*  spawn subprocess  */
         this.log("info", `executing command: ${this.params.command}`)
@@ -144,8 +148,6 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
                 this.params.type, highWaterMark)
             this.stream = Stream.compose(wrapper, this.subprocess.stdin!)
         }
-        else
-            throw new Error(`invalid execution mode "${this.params.mode}"`)
     }
 
     /*  close node  */
@@ -192,8 +194,13 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
                 }
             }).catch(() => {
                 /*  force kill with SIGKILL  */
+                this.log("warning", "subprocess did not respond to SIGTERM, forcing SIGKILL")
                 this.subprocess!.kill("SIGKILL")
             })
+
+            /*  remove event listeners to prevent memory leaks  */
+            this.subprocess.removeAllListeners("error")
+            this.subprocess.removeAllListeners("exit")
 
             this.subprocess = null
         }
