@@ -55,7 +55,7 @@ export default class SpeechFlowNodeT2TProfanity extends SpeechFlowNode {
         const censor = (text: string): string =>
             filter.filter(text)
 
-        /*  establish a duplex stream and connect it to profanity filtering  */
+        /*  establish a transform stream and connect it to profanity filtering  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
