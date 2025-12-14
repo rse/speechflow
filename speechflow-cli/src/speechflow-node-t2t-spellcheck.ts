@@ -5,31 +5,29 @@
 */
 
 /*  standard dependencies  */
-import Stream from "node:stream"
-
-/*  external dependencies  */
-import OpenAI from "openai"
+import Stream                              from "node:stream"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
+import { LLM, type LLMCompleteMessage }    from "./speechflow-util-llm"
 
 /*  internal utility types  */
-type ConfigEntry = { systemPrompt: string, chat: OpenAI.ChatCompletionMessageParam[] }
+type ConfigEntry = { systemPrompt: string, chat: LLMCompleteMessage[] }
 type Config      = { [ key: string ]: ConfigEntry }
 
-/*  SpeechFlow node for OpenAI/GPT text-to-text translation  */
-export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
+/*  SpeechFlow node for LLM-based text-to-text spellchecking  */
+export default class SpeechFlowNodeT2TSpellcheck extends SpeechFlowNode {
     /*  declare official node name  */
-    public static name = "t2t-openai"
+    public static name = "t2t-spellcheck"
 
     /*  internal state  */
-    private openai: OpenAI | null = null
+    private llm: LLM | null = null
 
     /*  internal LLM setup  */
     private setup: Config = {
-        /*  English (EN) spellchecking only  */
-        "en-en": {
+        /*  English (EN) spellchecking  */
+        "en": {
             systemPrompt:
                 "You are a proofreader and spellchecker for English.\n" +
                 "Output only the corrected text.\n" +
@@ -59,8 +57,8 @@ export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
             ]
         },
 
-        /*  German (DE) spellchecking only  */
-        "de-de": {
+        /*  German (DE) spellchecking  */
+        "de": {
             systemPrompt:
                 "Du bist ein Korrekturleser und Rechtschreibprüfer für Deutsch.\n" +
                 "Gib nur den korrigierten Text aus.\n" +
@@ -89,56 +87,6 @@ export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
                 { role: "user",      content: "Das Leben einfach großartig aber ich bin hungrig." },
                 { role: "assistant", content: "Das Leben ist einfach großartig, aber ich bin hungrig." }
             ]
-        },
-
-        /*  English (EN) to German (DE) translation  */
-        "en-de": {
-            systemPrompt:
-                "You are a translator.\n" +
-                "Output only the requested text.\n" +
-                "Do not use markdown.\n" +
-                "Do not chat.\n" +
-                "Do not show any explanations.\n" +
-                "Do not show any introduction.\n" +
-                "Do not show any preamble.\n" +
-                "Do not show any prolog.\n" +
-                "Do not show any epilog.\n" +
-                "Get to the point.\n" +
-                "Preserve the original meaning, tone, and nuance.\n" +
-                "Directly translate text from English (EN) to fluent and natural German (DE) language.\n",
-            chat: [
-                { role: "user",      content: "I love my wife." },
-                { role: "assistant", content: "Ich liebe meine Frau." },
-                { role: "user",      content: "The weather is wonderful." },
-                { role: "assistant", content: "Das Wetter ist wunderschön." },
-                { role: "user",      content: "The life is awesome." },
-                { role: "assistant", content: "Das Leben ist einfach großartig." }
-            ]
-        },
-
-        /*  German (DE) to English (EN) translation  */
-        "de-en": {
-            systemPrompt:
-                "You are a translator.\n" +
-                "Output only the requested text.\n" +
-                "Do not use markdown.\n" +
-                "Do not chat.\n" +
-                "Do not show any explanations.\n" +
-                "Do not show any introduction.\n" +
-                "Do not show any preamble.\n" +
-                "Do not show any prolog.\n" +
-                "Do not show any epilog.\n" +
-                "Get to the point.\n" +
-                "Preserve the original meaning, tone, and nuance.\n" +
-                "Directly translate text from German (DE) to fluent and natural English (EN) language.\n",
-            chat: [
-                { role: "user",      content: "Ich liebe meine Frau." },
-                { role: "assistant", content: "I love my wife." },
-                { role: "user",      content: "Das Wetter ist wunderschön." },
-                { role: "assistant", content: "The weather is wonderful." },
-                { role: "user",      content: "Das Leben ist einfach großartig." },
-                { role: "assistant", content: "The life is awesome." }
-            ]
         }
     }
 
@@ -148,19 +96,16 @@ export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            src:   { type: "string", pos: 0, val: "de",                              match: /^(?:de|en)$/ },
-            dst:   { type: "string", pos: 1, val: "en",                              match: /^(?:de|en)$/ },
-            key:   { type: "string",         val: process.env.SPEECHFLOW_OPENAI_KEY, match: /^.+$/ },
-            api:   { type: "string",         val: "https://api.openai.com/v1",       match: /^https?:\/\/.+/ },
-            model: { type: "string",         val: "gpt-5-mini",                      match: /^.+$/ }
+            lang:     { type: "string", pos: 0, val: "en",                     match: /^(?:de|en)$/ },
+            provider: { type: "string",         val: "ollama",                 match: /^(?:openai|anthropic|google|ollama)$/ },
+            api:      { type: "string",         val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?(:\d+)?$/ },
+            model:    { type: "string",         val: "gemma3:4b-it-q4_K_M",    match: /^.+$/ },
+            key:      { type: "string",         val: "",                       match: /^.*$/ }
         })
 
         /*  tell effective mode  */
-        if (this.params.src === this.params.dst)
-            this.log("info", `OpenAI: operation mode: spellchecking for language "${this.params.src}"`)
-        else
-            this.log("info", `OpenAI: operation mode: translation from language "${this.params.src}"` +
-                ` to language "${this.params.dst}"`)
+        this.log("info", `spellchecking language "${this.params.lang}" ` +
+            `via ${this.params.provider} LLM (model: ${this.params.model})`)
 
         /*  declare node input/output format  */
         this.input  = "text"
@@ -169,39 +114,32 @@ export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        /*  validate API key  */
-        if (!this.params.key)
-            throw new Error("OpenAI API key is required")
-
-        /*  instantiate OpenAI API  */
-        this.openai = new OpenAI({
-            baseURL: this.params.api,
-            apiKey:  this.params.key,
-            timeout: 30000
+        /*  instantiate LLM  */
+        this.llm = new LLM({
+            provider:    this.params.provider,
+            api:         this.params.api,
+            model:       this.params.model,
+            key:         this.params.key,
+            temperature: 0.7,
+            topP:        0.5
         })
+        this.llm.on("log", (level: string, message: string) => {
+            this.log(level as "info" | "warning" | "error", message)
+        })
+        await this.llm.open()
 
-        /*  provide text-to-text translation  */
-        const translate = async (text: string) => {
-            const key = `${this.params.src}-${this.params.dst}`
-            const cfg = this.setup[key]
-            if (!this.openai)
-                throw new Error("OpenAI client not available")
-            const completion = await this.openai.chat.completions.create({
-                model:       this.params.model,
-                temperature: this.params.model.endsWith("-mini") ? 1.0 : 0.7,
-                messages: [
-                    { role: "system", content: cfg.systemPrompt },
-                    ...cfg.chat,
-                    { role: "user", content: text }
-                ]
+        /*  provide text-to-text spellchecking  */
+        const llm = this.llm!
+        const spellcheck = async (text: string) => {
+            const cfg = this.setup[this.params.lang]
+            return llm.complete({
+                system:   cfg.systemPrompt,
+                messages: cfg.chat,
+                prompt:   text
             })
-            const content = completion?.choices?.[0]?.message?.content
-            if (!content)
-                throw new Error("OpenAI API returned empty content")
-            return content
         }
 
-        /*  establish a duplex stream and connect it to OpenAI  */
+        /*  establish a transform stream and connect it to LLM  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
@@ -215,7 +153,7 @@ export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
                     callback()
                 }
                 else {
-                    translate(chunk.payload).then((payload) => {
+                    spellcheck(chunk.payload).then((payload) => {
                         const chunkNew = chunk.clone()
                         chunkNew.payload = payload
                         this.push(chunkNew)
@@ -239,9 +177,10 @@ export default class SpeechFlowNodeT2TOpenAI extends SpeechFlowNode {
             this.stream = null
         }
 
-        /*  shutdown OpenAI  */
-        if (this.openai !== null)
-            this.openai = null
+        /*  shutdown LLM  */
+        if (this.llm !== null) {
+            await this.llm.close()
+            this.llm = null
+        }
     }
 }
-

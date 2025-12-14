@@ -43,10 +43,12 @@ speech-to-speech).
 - cloud-based text-to-text translation (or spelling correction) with
   [DeepL](https://deepl.com),
   [Amazon Translate](https://aws.amazon.com/translate/),
-  [Google Cloud Translate](https://cloud.google.com/translate), or
-  [OpenAI GPT](https://openai.com).
+  [Google Cloud Translate](https://cloud.google.com/translate),
+  [OpenAI GPT](https://openai.com),
+  [Anthropic Claude](https://anthropic.com), or
+  [Google Gemini](https://ai.google.dev).
 - local text-to-text translation (or spelling correction) with
-  [Ollama/Gemma](https://ollama.com) or
+  [Ollama](https://ollama.com) or
   [OPUS-MT](https://github.com/Helsinki-NLP/Opus-MT).
 - cloud-based text-to-speech conversion with
   [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech),
@@ -360,10 +362,10 @@ First a short overview of the available processing nodes:
 - Text-to-Text nodes:
   **t2t-deepl**,
   **t2t-amazon**,
-  **t2t-openai**,
-  **t2t-ollama**,
   **t2t-opus**,
   **t2t-google**,
+  **t2t-translate**,
+  **t2t-spellcheck**,
   **t2t-modify**,
   **t2t-profanity**,
   **t2t-summary**,
@@ -834,53 +836,6 @@ The following nodes process text chunks only.
   | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
 
-- Node: **t2t-openai**<br/>
-  Purpose: **OpenAI/GPT Text-to-Text translation and spelling correction**<br/>
-  Example: `t2t-openai(src: "de", dst: "en")`<br/>
-  Notice: this node requires an OpenAI API key!
-
-  > This node performs translation between English and German languages
-  > in the text stream or (if the source and destination language is
-  > the same) spellchecking of English or German languages in the text
-  > stream. It is based on the remote OpenAI cloud AI service and uses
-  > the GPT-4o-mini LLM.
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | text        |
-  | output  | text        |
-
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **api**      | *none*    | "https://api.openai.com" | `/^https?:\/\/.+?:\d+$/` |
-  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
-  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
-  | **key**      | *none*    | env.SPEECHFLOW\_OPENAI\_KEY | *none* |
-  | **model**    | *none*    | "gpt-5-mini" | *none* |
-
-- Node: **t2t-ollama**<br/>
-  Purpose: **Ollama/Gemma Text-to-Text translation and spelling correction**<br/>
-  Example: `t2t-ollama(src: "de", dst: "en")`<br/>
-  Notice: this node requires Ollama to be installed!
-
-  > This node performs translation between English and German languages
-  > in the text stream or (if the source and destination language is
-  > the same) spellchecking of English or German languages in the text
-  > stream. It is based on the local Ollama AI service and uses the
-  > Google Gemma 3 LLM.
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | text        |
-  | output  | text        |
-
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?:\d+$/` |
-  | **model**    | *none*    | "gemma3:4b-it-q4_K_M" | *none* |
-  | **src**      | 0         | "de"     | `/^(?:de\|en)$/` |
-  | **dst**      | 1         | "en"     | `/^(?:de\|en)$/` |
-
 - Node: **t2t-opus**<br/>
   Purpose: **OPUS-MT Text-to-Text translation**<br/>
   Example: `t2t-opus(src: "de", dst: "en")`<br/>
@@ -917,6 +872,54 @@ The following nodes process text chunks only.
   | **key**      | *none*    | env.SPEECHFLOW\_GOOGLE\_KEY | *none* |
   | **src**      | 0         | "de"     | `/^(?:de\|en\|fr\|it)$/` |
   | **dst**      | 1         | "en"     | `/^(?:de\|en\|fr\|it)$/` |
+
+- Node: **t2t-translate**<br/>
+  Purpose: **LLM-based Text-to-Text translation**<br/>
+  Example: `t2t-translate(src: "de", dst: "en")`<br/>
+  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google)!
+
+  > This node performs translation between English and German languages
+  > in the text stream using an LLM service. Multiple LLM providers are
+  > supported: local Ollama (default), or cloud-based OpenAI, Anthropic,
+  > or Google.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default                  | Requirement                              |
+  | ------------ | --------- | ------------------------ | ---------------------------------------- |
+  | **src**      | 0         | "de"                     | `/^(?:de\|en)$/`                         |
+  | **dst**      | 1         | "en"                     | `/^(?:de\|en)$/`                         |
+  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama)$/` |
+  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
+  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
+  | **key**      | *none*    | ""                       | *none*                                   |
+
+- Node: **t2t-spellcheck**<br/>
+  Purpose: **LLM-based Text-to-Text spellchecking**<br/>
+  Example: `t2t-spellcheck(lang: "en")`<br/>
+  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google)!
+
+  > This node performs spellchecking of English or German text using an
+  > LLM service. It corrects spelling mistakes, adds missing punctuation,
+  > but preserves grammar and word choice. Multiple LLM providers are
+  > supported: local Ollama (default), or cloud-based OpenAI, Anthropic,
+  > or Google.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default                  | Requirement                              |
+  | ------------ | --------- | ------------------------ | ---------------------------------------- |
+  | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`                         |
+  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama)$/` |
+  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
+  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
+  | **key**      | *none*    | ""                       | *none*                                   |
 
 - Node: **t2t-modify**<br/>
   Purpose: **regex-based text modification**<br/>
