@@ -311,7 +311,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                 final (callback) {
                     /*  process any remaining buffer content  */
                     if (buffer.trim() !== "") {
-                        try {
+                        util.shield(() => {
                             /*  parse entries  */
                             const entries = self.params.format === "srt" ? parseSRT(buffer) : parseVTT(buffer)
 
@@ -320,10 +320,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                                 const chunkNew = new SpeechFlowChunk(entry.start, entry.end, "final", "text", entry.text)
                                 this.push(chunkNew)
                             }
-                        }
-                        catch (_error: unknown) {
-                            /*  ignore parse errors on final flush  */
-                        }
+                        })
                     }
                     callback()
                 }

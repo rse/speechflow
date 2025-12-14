@@ -10,6 +10,9 @@ import path from "node:path"
 /*  external dependencies  */
 import { AudioContext, AudioWorkletNode } from "node-web-audio-api"
 
+/*  internal dependencies  */
+import { shield } from "./speechflow-util-error"
+
 /*  calculate duration of an audio buffer  */
 export function audioBufferDuration (
     buffer: Buffer,
@@ -280,16 +283,13 @@ export class WebAudio {
 
     public async destroy (): Promise<void> {
         /*  reject all pending promises  */
-        try {
+        shield(() => {
             this.pendingPromises.forEach(({ reject, timeout }) => {
                 clearTimeout(timeout)
                 reject(new Error("WebAudio destroyed"))
             })
             this.pendingPromises.clear()
-        }
-        catch (_err) {
-            /*  ignored -- cleanup during shutdown  */
-        }
+        })
 
         /*  disconnect nodes  */
         if (this.sourceNode !== null) {
