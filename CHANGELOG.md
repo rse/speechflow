@@ -7,6 +7,7 @@ ChangeLog
 
 - REFACTOR: refactor "t2t-openai" and "t2t-ollama" into "t2t-spellcheck" and "t2t-translate"
 - REFACTOR: rename "t2t-transformers" to "t2t-opus" and reduce its functionality to OPUS only
+- FEATURE: added "t2t-punctuation" text-to-text punctuation node
 - FEATURE: added "t2t-summary" text-to-text summarization node
 - FEATURE: added "t2t-profanity" text-to-text profanity filtering node
 - FEATURE: added "t2a-openai" text-to-speech node

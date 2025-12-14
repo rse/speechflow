@@ -366,6 +366,7 @@ First a short overview of the available processing nodes:
   **t2t-google**,
   **t2t-translate**,
   **t2t-spellcheck**,
+  **t2t-punctuation**,
   **t2t-modify**,
   **t2t-profanity**,
   **t2t-summary**,
@@ -876,12 +877,12 @@ The following nodes process text chunks only.
 - Node: **t2t-translate**<br/>
   Purpose: **LLM-based Text-to-Text translation**<br/>
   Example: `t2t-translate(src: "de", dst: "en")`<br/>
-  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google)!
+  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google, or local HuggingFace Transformers)!
 
   > This node performs translation between English and German languages
   > in the text stream using an LLM service. Multiple LLM providers are
-  > supported: local Ollama (default), or cloud-based OpenAI, Anthropic,
-  > or Google.
+  > supported: local Ollama (default), local HuggingFace Transformers,
+  > or cloud-based OpenAI, Anthropic, or Google.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -892,7 +893,7 @@ The following nodes process text chunks only.
   | ------------ | --------- | ------------------------ | ---------------------------------------- |
   | **src**      | 0         | "de"                     | `/^(?:de\|en)$/`                         |
   | **dst**      | 1         | "en"                     | `/^(?:de\|en)$/`                         |
-  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama)$/` |
+  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama\|transformers)$/` |
   | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
   | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
   | **key**      | *none*    | ""                       | *none*                                   |
@@ -900,13 +901,13 @@ The following nodes process text chunks only.
 - Node: **t2t-spellcheck**<br/>
   Purpose: **LLM-based Text-to-Text spellchecking**<br/>
   Example: `t2t-spellcheck(lang: "en")`<br/>
-  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google)!
+  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google, or local HuggingFace Transformers)!
 
   > This node performs spellchecking of English or German text using an
   > LLM service. It corrects spelling mistakes, adds missing punctuation,
   > but preserves grammar and word choice. Multiple LLM providers are
-  > supported: local Ollama (default), or cloud-based OpenAI, Anthropic,
-  > or Google.
+  > supported: local Ollama (default), local HuggingFace Transformers,
+  > or cloud-based OpenAI, Anthropic, or Google.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -916,7 +917,33 @@ The following nodes process text chunks only.
   | Parameter    | Position  | Default                  | Requirement                              |
   | ------------ | --------- | ------------------------ | ---------------------------------------- |
   | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`                         |
-  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama)$/` |
+  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama\|transformers)$/` |
+  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
+  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
+  | **key**      | *none*    | ""                       | *none*                                   |
+
+- Node: **t2t-punctuation**<br/>
+  Purpose: **LLM-based punctuation restoration**<br/>
+  Example: `t2t-punctuation(lang: "en")`<br/>
+  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google, or local HuggingFace Transformers)!
+
+  > This node performs punctuation restoration using an LLM service.
+  > It adds missing punctuation marks (periods, commas, question marks,
+  > exclamation marks, colons, semicolons) and capitalizes the first
+  > letters of sentences. It preserves all original words exactly as they
+  > are without spelling corrections or grammar changes. Multiple LLM
+  > providers are supported: local Ollama (default), local HuggingFace
+  > Transformers, or cloud-based OpenAI, Anthropic, or Google.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default                  | Requirement                              |
+  | ------------ | --------- | ------------------------ | ---------------------------------------- |
+  | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`                         |
+  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama\|transformers)$/` |
   | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
   | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
   | **key**      | *none*    | ""                       | *none*                                   |
@@ -962,14 +989,14 @@ The following nodes process text chunks only.
 - Node: **t2t-summary**<br/>
   Purpose: **LLM-based Text-to-Text summarization**<br/>
   Example: `t2t-summary(lang: "en", size: 4, trigger: 8)`<br/>
-  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google)!
+  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google, or local HuggingFace Transformers)!
 
   > This node performs text summarization using an LLM service.
   > It accumulates incoming text sentences and generates a summary after
   > a configurable number of sentences (trigger). The summary length is
   > also configurable (size). It supports English and German languages.
-  > Multiple LLM providers are supported: local Ollama (default), or
-  > cloud-based OpenAI, Anthropic, or Google.
+  > Multiple LLM providers are supported: local Ollama (default), local
+  > HuggingFace Transformers, or cloud-based OpenAI, Anthropic, or Google.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -978,7 +1005,7 @@ The following nodes process text chunks only.
 
   | Parameter    | Position  | Default                  | Requirement                              |
   | ------------ | --------- | ------------------------ | ---------------------------------------- |
-  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama)$/` |
+  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama\|transformers)$/` |
   | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
   | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
   | **key**      | *none*    | ""                       | *none*                                   |
