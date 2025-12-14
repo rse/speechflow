@@ -10,10 +10,10 @@ import Stream                              from "node:stream"
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
-import { LLM, type LLMChatMessage }        from "./speechflow-util-llm"
+import { LLM, type LLMCompleteMessage }    from "./speechflow-util-llm"
 
 /*  internal utility types  */
-type ConfigEntry = { systemPrompt: string, chat: LLMChatMessage[] }
+type ConfigEntry = { systemPrompt: string, chat: LLMCompleteMessage[] }
 type Config      = { [ key: string ]: ConfigEntry }
 
 /*  SpeechFlow node for text-to-text summarization  */
@@ -131,7 +131,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
         const llm = this.llm!
         const summarize = async (text: string) => {
             const cfg = this.setup[this.params.lang]
-            return llm.chat({
+            return llm.complete({
                 system:   cfg.systemPrompt.replace(/%N%/, this.params.size),
                 messages: cfg.chat,
                 prompt:   text

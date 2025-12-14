@@ -15,7 +15,7 @@ import { Ollama, type ListResponse } from "ollama"
 import * as Transformers             from "@huggingface/transformers"
 
 /*  own utility types  */
-export type LLMChatMessage = {
+export type LLMCompleteMessage = {
     role:           "system" | "user" | "assistant"
     content:        string
 }
@@ -30,9 +30,9 @@ export type LLMConfig = {
     topP?:          number
     cacheDir?:      string
 }
-export type LLMChatOptions = {
+export type LLMCompleteOptions = {
     system?:        string
-    messages?:      LLMChatMessage[]
+    messages?:      LLMCompleteMessage[]
     prompt:         string
 }
 
@@ -206,13 +206,13 @@ export class LLM extends EventEmitter {
         this.initialized = true
     }
 
-    /*  perform a chat completion  */
-    async chat (options: LLMChatOptions): Promise<string> {
+    /*  perform a completion  */
+    async complete (options: LLMCompleteOptions): Promise<string> {
         if (!this.initialized)
             throw new Error("LLM still not initialized")
 
         /*  build messages array  */
-        const messages: LLMChatMessage[] = []
+        const messages: LLMCompleteMessage[] = []
         if (options.system)
             messages.push({ role: "system", content: options.system })
         if (options.messages)
