@@ -12,6 +12,7 @@ import OpenAI                        from "openai"
 import Anthropic                     from "@anthropic-ai/sdk"
 import { GoogleGenAI }               from "@google/genai"
 import { Ollama, type ListResponse } from "ollama"
+import * as Transformers             from "@huggingface/transformers"
 
 /*  own utility types  */
 export type LLMChatMessage = {
@@ -19,7 +20,7 @@ export type LLMChatMessage = {
     content:        string
 }
 export type LLMConfig = {
-    provider?:      "openai" | "anthropic" | "google" | "ollama"
+    provider?:      "openai" | "anthropic" | "google" | "ollama" | "transformers"
     api?:           string
     model?:         string
     key?:           string
@@ -27,6 +28,7 @@ export type LLMConfig = {
     temperature?:   number
     maxTokens?:     number
     topP?:          number
+    cacheDir?:      string
 }
 export type LLMChatOptions = {
     system?:        string
@@ -38,11 +40,12 @@ export type LLMChatOptions = {
 export class LLM extends EventEmitter {
     /*  internal state  */
     private config:      Required<LLMConfig>
-    private openai:      OpenAI       | null = null
-    private anthropic:   Anthropic    | null = null
-    private google:      GoogleGenAI  | null = null
-    private ollama:      Ollama       | null = null
-    private initialized                      = false
+    private openai:      OpenAI                              | null = null
+    private anthropic:   Anthropic                           | null = null
+    private google:      GoogleGenAI                         | null = null
+    private ollama:      Ollama                              | null = null
+    private transformer: Transformers.TextGenerationPipeline | null = null
+    private initialized                                             = false
 
     /*  construct LLM instance  */
     constructor (config: LLMConfig) {
@@ -59,6 +62,7 @@ export class LLM extends EventEmitter {
             temperature:   0.7,
             maxTokens:     1024,
             topP:          0.5,
+            cacheDir:      "",
             ...config
         } as Required<LLMConfig>
 
@@ -151,6 +155,48 @@ export class LLM extends EventEmitter {
                 }
             }
         }
+        else if (this.config.provider === "transformers") {
+            /*  track download progress when instantiating Transformers pipeline  */
+            const progressState = new Map<string, number>()
+            const progressCallback: Transformers.ProgressCallback = (progress: any) => {
+                let artifact = this.config.model
+                if (typeof progress.file === "string")
+                    artifact += `:${progress.file}`
+                let percent = 0
+                if (typeof progress.loaded === "number" && typeof progress.total === "number")
+                    percent = (progress.loaded / progress.total) * 100
+                else if (typeof progress.progress === "number")
+                    percent = progress.progress
+                if (percent > 0)
+                    progressState.set(artifact, percent)
+            }
+            const interval = setInterval(() => {
+                for (const [ artifact, percent ] of progressState) {
+                    this.log("info", `LLM: downloaded ${percent.toFixed(2)}% of artifact "${artifact}"`)
+                    if (percent >= 100.0)
+                        progressState.delete(artifact)
+                }
+            }, 1000)
+
+            /*  instantiate HuggingFace Transformers text generation pipeline  */
+            try {
+                const pipelinePromise = Transformers.pipeline("text-generation", this.config.model, {
+                    ...(this.config.cacheDir !== "" ? { cache_dir: this.config.cacheDir } : {}),
+                    dtype:             "q4",
+                    device:            "auto",
+                    progress_callback: progressCallback
+                })
+                this.transformer = await pipelinePromise
+            }
+            catch (err) {
+                throw new Error(`failed to instantiate HuggingFace Transformers pipeline: ${err}`, { cause: err })
+            }
+            finally {
+                clearInterval(interval)
+            }
+            if (this.transformer === null)
+                throw new Error("failed to instantiate HuggingFace Transformers pipeline")
+        }
         else {
             const exhaustive: never = this.config.provider
             throw new Error(`unsupported LLM provider: ${exhaustive}`)
@@ -233,7 +279,7 @@ export class LLM extends EventEmitter {
             /*  perform Google chat completion  */
             const response = await this.google.models.generateContent({
                 model:    this.config.model,
-                contents: contents,
+                contents,
                 config: {
                     maxOutputTokens: this.config.maxTokens,
                     temperature:     this.config.temperature,
@@ -270,6 +316,28 @@ export class LLM extends EventEmitter {
                 throw new Error("Ollama API returned empty content")
             return content
         }
+        else if (this.config.provider === "transformers") {
+            if (!this.transformer)
+                throw new Error("HuggingFace Transformers pipeline not available")
+
+            /*  perform HuggingFace Transformers text generation  */
+            const result = await this.transformer(messages, {
+                max_new_tokens:  this.config.maxTokens,
+                temperature:     this.config.temperature,
+                top_p:           this.config.topP,
+                do_sample:       true
+            }).catch((err) => {
+                throw new Error(`failed to perform HuggingFace Transformers text generation: ${err}`, { cause: err })
+            })
+            const single = Array.isArray(result) ? result[0] : result
+            const generatedText = (single as Transformers.TextGenerationSingle).generated_text
+            const content = typeof generatedText === "string" ?
+                generatedText :
+                generatedText.at(-1)?.content
+            if (!content)
+                throw new Error("HuggingFace Transformers API returned empty content")
+            return content
+        }
         else {
             const exhaustive: never = this.config.provider
             throw new Error(`unsupported LLM provider: ${exhaustive}`)
@@ -289,6 +357,10 @@ export class LLM extends EventEmitter {
         else if (this.config.provider === "ollama") {
             this.ollama?.abort()
             this.ollama = null
+        }
+        else if (this.config.provider === "transformers") {
+            this.transformer?.dispose()
+            this.transformer = null
         }
         this.initialized = false
     }
