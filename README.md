@@ -229,8 +229,8 @@ They can also be found in the sample [speechflow.yaml](./etc/speechflow.yaml) fi
 
   ```
   xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r") |
-      a2a-wav(mode: "encode") |
-          xio-file(path: "capture.wav", mode: "w", type: "audio")
+      a2a-wav(mode: "encode", seekable: true) |
+          xio-file(path: "capture.wav", mode: "w", type: "audio", seekable: true)
   ```
 
 - **Pass-Through**: Pass-through audio from microphone device to speaker
