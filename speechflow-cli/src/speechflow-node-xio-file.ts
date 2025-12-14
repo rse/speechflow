@@ -23,11 +23,11 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            path:   { type: "string", pos: 0, val: "" },
-            mode:   { type: "string", pos: 1, val: "r",     match: /^(?:r|w|rw)$/ },
-            type:   { type: "string", pos: 2, val: "audio", match: /^(?:audio|text)$/ },
-            chunka: { type: "number",         val: 200,     match: (n: number) => n >= 10 && n <= 1000 },
-            chunkt: { type: "number",         val: 65536,   match: (n: number) => n >= 1024 && n <= 131072 }
+            path:       { type: "string", pos: 0, val: "" },
+            mode:       { type: "string", pos: 1, val: "r",     match: /^(?:r|w)$/ },
+            type:       { type: "string", pos: 2, val: "audio", match: /^(?:audio|text)$/ },
+            chunkAudio: { type: "number",         val: 200,     match: (n: number) => n >= 10 && n <= 1000 },
+            chunkText:  { type: "number",         val: 65536,   match: (n: number) => n >= 1024 && n <= 131072 }
         })
 
         /*  sanity check parameters  */
@@ -35,11 +35,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             throw new Error("required parameter \"path\" has to be given")
 
         /*  declare node input/output format  */
-        if (this.params.mode === "rw") {
-            this.input  = this.params.type
-            this.output = this.params.type
-        }
-        else if (this.params.mode === "r") {
+        if (this.params.mode === "r") {
             this.input  = "none"
             this.output = this.params.type
         }
@@ -56,8 +52,8 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
         const highWaterMarkAudio = (
             this.config.audioSampleRate *
             (this.config.audioBitDepth / 8)
-        ) / (1000 / this.params.chunka)
-        const highWaterMarkText = this.params.chunkt
+        ) / (1000 / this.params.chunkAudio)
+        const highWaterMarkText = this.params.chunkText
 
         /*  utility function: create a writable stream as chunker that
             writes to process.stdout but properly handles finish events.
@@ -81,59 +77,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             })
 
         /*  dispatch according to mode and path  */
-        if (this.params.mode === "rw") {
-            if (this.params.path === "-") {
-                /*  standard I/O  */
-                if (this.params.type === "audio") {
-                    process.stdin.setEncoding()
-                    process.stdout.setEncoding()
-                    const streamR = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
-                    process.stdin.pipe(streamR)
-                    const streamW = new Stream.PassThrough({ highWaterMark: highWaterMarkAudio })
-                    streamW.pipe(process.stdout)
-                    this.stream = Stream.Duplex.from({ readable: streamR, writable: streamW })
-                }
-                else {
-                    process.stdin.setEncoding(this.config.textEncoding)
-                    process.stdout.setEncoding(this.config.textEncoding)
-                    const streamR = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
-                    process.stdin.pipe(streamR)
-                    const streamW = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
-                    streamW.pipe(process.stdout)
-                    this.stream = Stream.Duplex.from({ readable: streamR, writable: streamW })
-                }
-            }
-            else {
-                /*  file I/O  */
-                if (this.params.type === "audio") {
-                    this.stream = Stream.Duplex.from({
-                        readable: fs.createReadStream(this.params.path,
-                            { highWaterMark: highWaterMarkAudio }),
-                        writable: fs.createWriteStream(this.params.path,
-                            { highWaterMark: highWaterMarkAudio })
-                    })
-                }
-                else {
-                    this.stream = Stream.Duplex.from({
-                        readable: fs.createReadStream(this.params.path, {
-                            highWaterMark: highWaterMarkText,
-                            encoding: this.config.textEncoding
-                        }),
-                        writable: fs.createWriteStream(this.params.path, {
-                            highWaterMark: highWaterMarkText,
-                            encoding: this.config.textEncoding
-                        })
-                    })
-                }
-            }
-
-            /*  convert regular stream into object-mode stream  */
-            const wrapper1 = util.createTransformStreamForWritableSide(this.params.type, 1)
-            const wrapper2 = util.createTransformStreamForReadableSide(
-                this.params.type, () => this.timeZero)
-            this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
-        }
-        else if (this.params.mode === "r") {
+        if (this.params.mode === "r") {
             if (this.params.path === "-") {
                 /*  standard I/O  */
                 let chunker: Stream.PassThrough
