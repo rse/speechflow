@@ -86,7 +86,8 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
                     })
                     const out = await this.client!.send(cmd)
                     return (out.TranslatedText ?? "").trim()
-                } catch (e: any) {
+                }
+                catch (e: any) {
                     lastError = e
                     attempt += 1
 

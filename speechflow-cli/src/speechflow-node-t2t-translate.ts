@@ -125,6 +125,8 @@ export default class SpeechFlowNodeT2TTranslate extends SpeechFlowNode {
         const translate = async (text: string) => {
             const key = `${this.params.src}-${this.params.dst}`
             const cfg = this.setup[key]
+            if (!cfg)
+                throw new Error(`unsupported language pair: ${key}`)
             return llm.complete({
                 system:   cfg.systemPrompt,
                 messages: cfg.chat,

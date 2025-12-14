@@ -131,6 +131,8 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
         const llm = this.llm!
         const summarize = async (text: string) => {
             const cfg = this.setup[this.params.lang]
+            if (!cfg)
+                throw new Error(`unsupported language: ${this.params.lang}`)
             return llm.complete({
                 system:   cfg.systemPrompt.replace(/%N%/, this.params.size),
                 messages: cfg.chat,

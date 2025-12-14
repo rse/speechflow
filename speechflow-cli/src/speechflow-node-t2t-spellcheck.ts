@@ -132,6 +132,8 @@ export default class SpeechFlowNodeT2TSpellcheck extends SpeechFlowNode {
         const llm = this.llm!
         const spellcheck = async (text: string) => {
             const cfg = this.setup[this.params.lang]
+            if (!cfg)
+                throw new Error(`unsupported language: ${this.params.lang}`)
             return llm.complete({
                 system:   cfg.systemPrompt,
                 messages: cfg.chat,

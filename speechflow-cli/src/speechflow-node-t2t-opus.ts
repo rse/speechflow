@@ -103,9 +103,9 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
                 }
                 else {
                     translate(chunk.payload).then((payload) => {
-                        chunk = chunk.clone()
-                        chunk.payload = payload
-                        this.push(chunk)
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = payload
+                        this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
                         callback(util.ensureError(error))
@@ -113,7 +113,6 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
                 }
             },
             final (callback) {
-                this.push(null)
                 callback()
             }
         })
