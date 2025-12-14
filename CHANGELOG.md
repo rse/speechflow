@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - FEATURE: added "xio-vban" node for VBAN network audio streaming
+- FEATURE: added "xio-webrtc" node for WebRTC audio streaming via WHIP/WHEP protocols
 - FEATURE: added "a2t-google" node for Google Cloud Speech-to-Text processing
 - FEATURE: added "t2a-google" node for Google Cloud Text-to-Speech processing
 - FEATURE: added "t2t-punctuation" text-to-text punctuation node

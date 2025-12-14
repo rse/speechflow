@@ -26,7 +26,7 @@ speech-to-speech).
 **SpeechFlow** comes with built-in graph nodes for various functionalities:
 
 - file and audio device I/O for local connectivity,
-- WebSocket, MQTT, and VBAN network I/O for remote connectivity,
+- WebSocket, MQTT, VBAN, and WebRTC network I/O for remote connectivity,
 - local Voice Activity Detection (VAD),
 - local voice gender recognition,
 - local audio LUFS-S/RMS metering,
@@ -343,7 +343,8 @@ First a short overview of the available processing nodes:
   **xio-device**,
   **xio-websocket**,
   **xio-mqtt**,
-  **xio-vban**.
+  **xio-vban**,
+  **xio-webrtc**.
 - Audio-to-Audio nodes:
   **a2a-ffmpeg**,
   **a2a-wav**,
@@ -502,6 +503,33 @@ external files, devices and network services.
   | **connect** | 1         | ""        | `/^(?:\|.+?:\d+)$/`          |
   | **stream**  | 2         | "Stream"  | `/^.{1,16}$/`                |
   | **mode**    | 3         | "rw"      | `/^(?:r\|w\|rw)$/`           |
+
+- Node: **xio-webrtc**<br/>
+  Purpose: **WebRTC audio streaming source (WHIP) or sink (WHEP)**<br/>
+  Example: `xio-webrtc(listen: 8085, path: "/webrtc", mode: "r")`
+
+  > This node allows real-time audio streaming using WebRTC technology
+  > via WebRTC-HTTP Ingestion Protocol (WHIP) or WebRTC-HTTP Egress
+  > Protocol (WHEP). It provides an HTTP server for SDP negotiation
+  > and uses Opus codec for audio encoding/decoding at 48kHz. The node
+  > can operate in WHIP mode (i.e., read mode where publishers POST
+  > SDP offers to SpeechFlow and SpeechFlow receives audio stream from
+  > them) or WHEP mode (i.e., write mode where viewers POST SDP offers
+  > to SpeechFlow and SpeechFlow sends audio stream to them). This node
+  > supports multiple simultaneous connections, configurable ICE servers
+  > for NAT traversal, and automatic connection lifecycle management.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter      | Position  | Default   | Requirement                  |
+  | -------------- | --------- | --------- | ---------------------------- |
+  | **listen**     | 0         | "8085"    | `/^(?:\d+\|.+?:\d+)$/`       |
+  | **path**       | 1         | "/webrtc" | `/^\/.+$/`                   |
+  | **mode**       | 2         | "r"       | `/^(?:r\|w)$/`               |
+  | **iceServers** | 3         | ""        | `/^.*$/`                     |
 
 ### Audio-to-Audio Nodes
 
