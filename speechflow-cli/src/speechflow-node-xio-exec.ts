@@ -186,12 +186,12 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
                 /*  force kill with SIGKILL  */
                 this.log("warning", "subprocess did not respond to SIGTERM, forcing SIGKILL")
                 this.subprocess!.kill("SIGKILL")
-                await Promise.race([
+                return Promise.race([
                     this.subprocess,
                     util.timeout(1000)
-                ]).catch(() => {
-                    this.log("error", "subprocess did not terminate even after SIGKILL")
-                })
+                ])
+            }).catch(() => {
+                this.log("error", "subprocess did not terminate even after SIGKILL")
             })
 
             /*  remove event listeners to prevent memory leaks  */
