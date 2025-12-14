@@ -38,8 +38,9 @@ speech-to-speech).
 - remote-controlable audio muting,
 - cloud-based speech-to-text conversion with
   [Amazon Transcribe](https://aws.amazon.com/transcribe/),
-  [OpenAI GPT-Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe), or
-  [Deepgram](https://deepgram.com).
+  [OpenAI GPT-Transcribe](https://platform.openai.com/docs/models/gpt-4o-mini-transcribe),
+  [Deepgram](https://deepgram.com), or
+  [Google Cloud Speech-to-Text](https://cloud.google.com/speech-to-text).
 - cloud-based text-to-text translation (or spelling correction) with
   [DeepL](https://deepl.com),
   [Amazon Translate](https://aws.amazon.com/translate/),
@@ -52,8 +53,9 @@ speech-to-speech).
   [OPUS-MT](https://github.com/Helsinki-NLP/Opus-MT).
 - cloud-based text-to-speech conversion with
   [OpenAI TTS](https://platform.openai.com/docs/guides/text-to-speech),
-  [ElevenLabs](https://elevenlabs.io/) or
-  [Amazon Polly](https://aws.amazon.com/polly/).
+  [ElevenLabs](https://elevenlabs.io/),
+  [Amazon Polly](https://aws.amazon.com/polly/), or
+  [Google Cloud Text-to-Speech](https://cloud.google.com/text-to-speech).
 - local text-to-speech conversion with
   [Kokoro](https://github.com/nazdridoy/kokoro-tts) or
   [Supertonic](https://huggingface.co/Supertone/supertonic).
@@ -358,7 +360,8 @@ First a short overview of the available processing nodes:
 - Audio-to-Text nodes:
   **a2t-openai**,
   **a2t-amazon**,
-  **a2t-deepgram**.
+  **a2t-deepgram**,
+  **a2t-google**.
 - Text-to-Text nodes:
   **t2t-deepl**,
   **t2t-amazon**,
@@ -377,6 +380,7 @@ First a short overview of the available processing nodes:
   **t2a-openai**,
   **t2a-amazon**,
   **t2a-elevenlabs**,
+  **t2a-google**,
   **t2a-kokoro**,
   **t2a-supertonic**.
 - Any-to-Any nodes:
@@ -795,6 +799,28 @@ The following nodes convert audio to text chunks.
   | **language** | 2         | "multi"  | *none* |
   | **interim**  | 3         | false    | *none* |
 
+- Node: **a2t-google**<br/>
+  Purpose: **Google Cloud Speech-to-Text conversion**<br/>
+  Example: `a2t-google(language: "en-US")`<br/>
+  Notice: this node requires a Google Cloud API key!
+
+  > This node uses Google Cloud Speech-to-Text to perform Speech-to-Text (S2T)
+  > conversion, i.e., it recognizes speech in the input audio stream and
+  > outputs a corresponding text stream. It supports various languages
+  > and models, including the `latest_long` model for long-form audio.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | text        |
+
+  | Parameter    | Position  | Default       | Requirement  |
+  | ------------ | --------- | ------------- | ------------ |
+  | **key**      | *none*    | env.SPEECHFLOW\_GOOGLE\_KEY | *none* |
+  | **model**    | 0         | "latest_long" | *none*       |
+  | **language** | 1         | "en-US"       | *none*       |
+  | **interim**  | 2         | false         | *none*       |
+
 ### Text-to-Text Nodes
 
 The following nodes process text chunks only.
@@ -1142,6 +1168,29 @@ The following nodes convert text chunks to audio chunks.
   | **stability**  | 3         | 0.5       | `n >= 0.0 && n <= 1.0` |
   | **similarity** | 4         | 0.75      | `n >= 0.0 && n <= 1.0` |
   | **optimize**   | 5         | "latency" | `/^(?:latency\|quality)$/` |
+
+- Node: **t2a-google**<br/>
+  Purpose: **Google Cloud Text-to-Speech conversion**<br/>
+  Example: `t2a-google(voice: "en-US-Neural2-J", language: "en-US")`<br/>
+  Notice: this node requires a Google Cloud API key!
+
+  > This node uses Google Cloud Text-to-Speech to perform Text-to-Speech (T2S)
+  > conversion, i.e., it converts the input text stream into an output
+  > audio stream. It supports various voices and languages with configurable
+  > speaking rate and pitch adjustment.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | audio       |
+
+  | Parameter    | Position  | Default            | Requirement          |
+  | ------------ | --------- | ------------------ | -------------------- |
+  | **key**      | *none*    | env.SPEECHFLOW\_GOOGLE\_KEY | *none*      |
+  | **voice**    | 0         | "en-US-Neural2-J"  | *none*               |
+  | **language** | 1         | "en-US"            | *none*               |
+  | **speed**    | 2         | 1.0                | `0.25 <= n <= 4.0`   |
+  | **pitch**    | 3         | 0.0                | `-20.0 <= n <= 20.0` |
 
 - Node: **t2a-kokoro**<br/>
   Purpose: **Kokoro Text-to-Speech conversion**<br/>
