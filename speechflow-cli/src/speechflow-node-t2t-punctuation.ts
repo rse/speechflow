@@ -109,7 +109,7 @@ export default class SpeechFlowNodeT2TPunctuation extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            provider: { type: "string",         val: "ollama",                 match: /^(?:openai|anthropic|google|ollama)$/ },
+            provider: { type: "string",         val: "ollama",                 match: /^(?:openai|anthropic|google|ollama|transformers)$/ },
             api:      { type: "string",         val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?(:\d+)?$/ },
             model:    { type: "string",         val: "gemma3:4b-it-q4_K_M",    match: /^.+$/ },
             key:      { type: "string",         val: "",                       match: /^.*$/ },
