@@ -27,6 +27,7 @@ speech-to-speech).
 
 - file and audio device I/O for local connectivity,
 - WebSocket, MQTT, VBAN, and WebRTC network I/O for remote connectivity,
+- external command execution I/O for process integration,
 - local Voice Activity Detection (VAD),
 - local voice gender recognition,
 - local audio LUFS-S/RMS metering,
@@ -344,7 +345,8 @@ First a short overview of the available processing nodes:
   **xio-websocket**,
   **xio-mqtt**,
   **xio-vban**,
-  **xio-webrtc**.
+  **xio-webrtc**,
+  **xio-exec**.
 - Audio-to-Audio nodes:
   **a2a-ffmpeg**,
   **a2a-wav**,
@@ -530,6 +532,31 @@ external files, devices and network services.
   | **path**       | 1         | "/webrtc" | `/^\/.+$/`                   |
   | **mode**       | 2         | "r"       | `/^(?:r\|w)$/`               |
   | **iceServers** | 3         | ""        | `/^.*$/`                     |
+
+- Node: **xio-exec**<br/>
+  Purpose: **External command execution source/sink**<br/>
+  Example: `xio-exec(command: "ffmpeg -i - -f s16le -", mode: "rw", type: "audio")`
+
+  > This node allows reading/writing from/to external commands via stdin/stdout.
+  > It executes arbitrary commands and pipes audio or text data through them,
+  > enabling integration with external processing tools. The node supports
+  > read-only mode (capturing stdout), write-only mode (sending to stdin),
+  > and bidirectional mode (both stdin and stdout). This is useful for integrating
+  > external audio/text processing tools like FFmpeg, SoX, or custom scripts into
+  > the SpeechFlow pipeline.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text, audio |
+  | output  | text, audio |
+
+  | Parameter  | Position  | Default  | Requirement           |
+  | ---------- | --------- | -------- | --------------------- |
+  | **command**| 0         | *none*   | *required*            |
+  | **mode**   | 1         | "r"      | `/^(?:r\|w\|rw)$/`    |
+  | **type**   | 2         | "audio"  | `/^(?:audio\|text)$/` |
+  | **chunka** |           | 200      | `10 <= n <= 1000`     |
+  | **chunkt** |           | 65536    | `1024 <= n <= 131072` |
 
 ### Audio-to-Audio Nodes
 

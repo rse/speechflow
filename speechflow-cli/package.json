@@ -20,6 +20,8 @@
         "flowlink":                             "1.2.3",
         "js-yaml":                              "4.1.1",
         "@gpeng/naudiodon":                     "2.4.1",
+        "execa":                                "9.6.1",
+        "shell-parser":                         "1.0.0",
         "@deepgram/sdk":                        "4.11.2",
         "deepl-node":                           "1.24.0",
         "@elevenlabs/elevenlabs-js":            "2.27.0",

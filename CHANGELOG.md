@@ -2,9 +2,10 @@
 ChangeLog
 =========
 
-1.8.0 (2025-12-12)
+2.0.0 (2025-12-14)
 ------------------
 
+- FEATURE: added "xio-exec" node for external command execution via stdin/stdout
 - FEATURE: added "xio-vban" node for VBAN network audio streaming
 - FEATURE: added "xio-webrtc" node for WebRTC audio streaming via WHIP/WHEP protocols
 - FEATURE: added "a2t-google" node for Google Cloud Speech-to-Text processing

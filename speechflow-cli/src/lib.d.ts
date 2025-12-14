@@ -35,3 +35,8 @@ declare function registerProcessor(
     processorCtor: new (...args: any[]) => AudioWorkletProcessor
 ): void
 
+/*  type definition for "shell-parser"  */
+declare module "shell-parser" {
+    export default function shellParser (command: string): string[]
+}
+
