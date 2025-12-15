@@ -23,12 +23,12 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
     public static name = "a2t-openai"
 
     /*  internal state  */
-    private openai:            OpenAI | null = null
-    private ws:                ws.WebSocket | null = null
-    private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
-    private resampler:         SpeexResampler | null = null
-    private closing            = false
-    private connectionTimeout: ReturnType<typeof setTimeout> | null = null
+    private openai:            OpenAI                                    | null = null
+    private ws:                ws.WebSocket                              | null = null
+    private queue:             util.SingleQueue<SpeechFlowChunk | null>  | null = null
+    private resampler:         SpeexResampler                            | null = null
+    private closing                                                             = false
+    private connectionTimeout: ReturnType<typeof setTimeout>             | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -150,6 +150,9 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         })
         this.ws.on("error", (err) => {
             this.log("error", `WebSocket connection error: ${err}`)
+            if (!this.closing && this.queue !== null)
+                this.queue.write(null)
+            this.emit("error", err)
         })
 
         /*  track speech timing by item_id (OpenAI provides timestamps via VAD events)  */

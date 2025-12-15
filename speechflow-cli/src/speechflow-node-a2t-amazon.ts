@@ -125,8 +125,6 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                 secretAccessKey: this.params.secKey
             }
         })
-        if (this.client === null)
-            throw new Error("failed to establish Amazon Transcribe client")
 
         /*  create an AudioStream for Amazon Transcribe  */
         const audioQueue = new AsyncQueue<Uint8Array>()
