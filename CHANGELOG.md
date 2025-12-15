@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - CLEANUP: various code cleanups
+- UPDATE: upgrade NPM dependencies
 
 2.0.0 (2025-12-15)
 ------------------
