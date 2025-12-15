@@ -60,7 +60,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
                 "Gib KEINE Erklärungen.\n" +
                 "Gib KEINE Einleitung.\n" +
                 "Gib KEINE Kommentare.\n" +
-                "Gib KEINE Prämbel.\n" +
+                "Gib KEINE Präambel.\n" +
                 "Gib KEINEN Prolog.\n" +
                 "Gib KEINEN Epilog.\n" +
                 "Komme auf den Punkt.\n" +
