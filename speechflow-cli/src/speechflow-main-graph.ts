@@ -98,10 +98,7 @@ export class NodeGraph {
                     }
                     catch (err) {
                         /*  fatal error  */
-                        if (err instanceof Error)
-                            this.cli.log("error", `creation of node <${id}> failed: ${err.message}`)
-                        else
-                            this.cli.log("error", `creation of node <${id}> failed: ${err}`)
+                        this.cli.log("error", `creation of node <${id}> failed: ${util.ensureError(err).message}`)
                         process.exit(1)
                     }
                     const params = Object.keys(node.params).map((key) => {
