@@ -5,24 +5,24 @@
 */
 
 /*  standard dependencies  */
-import path               from "node:path"
-import http               from "node:http"
+import path            from "node:path"
+import http            from "node:http"
 
 /*  external dependencies  */
-import * as HAPI          from "@hapi/hapi"
-import Inert              from "@hapi/inert"
-import WebSocket          from "ws"
-import HAPIWebSocket      from "hapi-plugin-websocket"
-import HAPIHeader         from "hapi-plugin-header"
-import OSC                from "osc-js"
-import * as arktype       from "arktype"
-import CLIio              from "cli-io"
+import * as HAPI       from "@hapi/hapi"
+import Inert           from "@hapi/inert"
+import WebSocket       from "ws"
+import HAPIWebSocket   from "hapi-plugin-websocket"
+import HAPIHeader      from "hapi-plugin-header"
+import OSC             from "osc-js"
+import * as arktype    from "arktype"
+import CLIio           from "cli-io"
 
 /*  internal dependencies  */
-import * as util          from "./speechflow-util"
-import { CLIOptions }     from "./speechflow-main-cli"
-import { NodeGraph }      from "./speechflow-main-graph"
-import pkg                from "../../package.json"
+import * as util       from "./speechflow-util"
+import { CLIOptions }  from "./speechflow-main-cli"
+import { NodeGraph }   from "./speechflow-main-graph"
+import pkg             from "../../package.json"
 
 /*  internal helper type definitions  */
 type WSPeerInfo = {
