@@ -139,6 +139,8 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                     callback(new Error("stream already destroyed"))
                 else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload === "")
+                    callback()
                 else {
                     text2speech(chunk.payload).then((buffer) => {
                         if (self.closing) {

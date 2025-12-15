@@ -126,11 +126,8 @@ export default class SpeechFlowNodeT2AGoogle extends SpeechFlowNode {
                     callback(new Error("stream already destroyed"))
                 else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
-                else if (chunk.payload === "") {
-                    /*  pass through empty chunks  */
-                    this.push(chunk)
+                else if (chunk.payload === "")
                     callback()
-                }
                 else {
                     let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
                         processTimeout = null

@@ -619,6 +619,8 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                     callback(new Error("stream already destroyed"))
                 else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (chunk.payload === "")
+                    callback()
                 else {
                     let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
                         processTimeout = null

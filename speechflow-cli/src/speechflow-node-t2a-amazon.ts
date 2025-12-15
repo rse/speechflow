@@ -129,7 +129,9 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                 }
                 if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
-                else if (chunk.payload.length > 0) {
+                else if (chunk.payload === "")
+                    callback()
+                else {
                     self.log("debug", `send data (${chunk.payload.length} bytes): "${chunk.payload}"`)
                     textToSpeech(chunk.payload as string).then((buffer) => {
                         if (self.closing) {
@@ -145,8 +147,6 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                         callback(util.ensureError(error, "failed to send to AWS Polly"))
                     })
                 }
-                else
-                    callback()
             },
             final (callback) {
                 callback()
