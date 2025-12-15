@@ -191,7 +191,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                 for (const block of blocks) {
                     const lines = block.trim().split(/\r?\n/)
                     if (lines.length < 2) {
-                        this.log("warning", "SRT block contains less than 2 lines")
+                        this.log("warning", "SRT block contains fewer than 2 lines")
                         continue
                     }
 
@@ -231,7 +231,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                 for (const block of blocks) {
                     const lines = block.trim().split(/\r?\n/)
                     if (lines.length < 1) {
-                        this.log("warning", "VTT block contains less than 1 line")
+                        this.log("warning", "VTT block contains fewer than 1 line")
                         continue
                     }
 
