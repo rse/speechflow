@@ -157,7 +157,7 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                         callback()
                     }).catch((error: unknown) => {
                         clearProcessTimeout()
-                        callback(util.ensureError(error, "failed to send to AWS Polly"))
+                        callback(util.ensureError(error, "AWS Polly processing failed"))
                     })
                 }
             },

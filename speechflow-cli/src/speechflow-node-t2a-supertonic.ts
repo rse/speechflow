@@ -662,7 +662,6 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                         callback()
                     }
                     catch (error) {
-
                         /*  handle processing errors  */
                         clearProcessTimeout()
                         callback(util.ensureError(error, "Supertonic processing failed"))

@@ -167,7 +167,7 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                         callback()
                     }).catch((error: unknown) => {
                         clearProcessTimeout()
-                        callback(util.ensureError(error))
+                        callback(util.ensureError(error, "Kokoro processing failed"))
                     })
                 }
             },
