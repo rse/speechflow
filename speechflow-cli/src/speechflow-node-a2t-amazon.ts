@@ -68,11 +68,10 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     public static name = "a2t-amazon"
 
     /*  internal state  */
-    private client:            TranscribeStreamingClient                | null = null
-    private clientStream:      AsyncIterable<TranscriptResultStream>    | null = null
-    private closing                                                            = false
-    private connectionTimeout: ReturnType<typeof setTimeout>            | null = null
-    private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
+    private client:       TranscribeStreamingClient                | null = null
+    private clientStream: AsyncIterable<TranscriptResultStream>    | null = null
+    private closing                                                       = false
+    private queue:        util.SingleQueue<SpeechFlowChunk | null> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -278,12 +277,6 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     async close () {
         /*  indicate closing first to stop all async operations  */
         this.closing = true
-
-        /*  cleanup all timers  */
-        if (this.connectionTimeout !== null) {
-            clearTimeout(this.connectionTimeout)
-            this.connectionTimeout = null
-        }
 
         /*  close queue  */
         if (this.queue !== null) {
