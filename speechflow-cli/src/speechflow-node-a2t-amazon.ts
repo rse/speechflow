@@ -233,10 +233,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     callback()
                     return
                 }
-
-                /*  await all read operations  */
                 await reads.awaitAll()
-
                 util.run("closing Amazon Transcribe connection",
                     () => self.client!.destroy(),
                     (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
