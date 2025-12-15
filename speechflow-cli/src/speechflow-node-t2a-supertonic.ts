@@ -294,7 +294,6 @@ class SupertonicTTS {
             for (let d = 0; d < latentDimExpanded; d++) {
                 const row: number[] = Array.from({ length: latentLen })
                 for (let t = 0; t < latentLen; t++) {
-
                     /*  Box-Muller transform for normal distribution  */
                     const eps = 1e-10
                     const u1 = Math.max(eps, Math.random())
