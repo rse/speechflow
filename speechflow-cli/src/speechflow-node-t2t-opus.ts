@@ -68,18 +68,19 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
         }, 1000)
 
         /*  instantiate Transformers engine and model  */
-        const pipeline = Transformers.pipeline("translation", model, {
-            cache_dir: path.join(this.config.cacheDir, "transformers"),
-            dtype:     "q4",
-            device:    "auto",
-            progress_callback: progressCallback
-        })
-        this.translator = await pipeline
-        if (this.translator === null)
-            throw new Error("failed to instantiate translator pipeline")
-
-        /*  clear progress interval again  */
-        clearInterval(interval)
+        try {
+            const pipeline = Transformers.pipeline("translation", model, {
+                cache_dir: path.join(this.config.cacheDir, "transformers"),
+                dtype:     "q4",
+                device:    "auto",
+                progress_callback: progressCallback
+            })
+            this.translator = await pipeline
+        }
+        finally {
+            /*  clear progress interval again  */
+            clearInterval(interval)
+        }
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
@@ -120,16 +121,16 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
-        }
-
         /*  shutdown Transformers  */
         if (this.translator !== null) {
             this.translator.dispose()
             this.translator = null
+        }
+
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
         }
     }
 }
