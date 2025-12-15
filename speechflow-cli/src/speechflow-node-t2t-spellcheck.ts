@@ -66,7 +66,7 @@ export default class SpeechFlowNodeT2TSpellcheck extends SpeechFlowNode {
                 "Gib KEINE Erklärungen.\n" +
                 "Gib KEINE Einleitung.\n" +
                 "Gib KEINE Kommentare.\n" +
-                "Gib KEINE Preamble.\n" +
+                "Gib KEINE Präambel.\n" +
                 "Gib KEINEN Prolog.\n" +
                 "Gib KEINEN Epilog.\n" +
                 "Ändere NICHT die Grammatik.\n" +
