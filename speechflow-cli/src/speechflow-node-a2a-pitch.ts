@@ -172,12 +172,16 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
                 }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (self.pitchShifter === null)
+                    callback(new Error("pitch shifter not initialized"))
                 else {
                     /*  shift pitch of audio chunk  */
                     const payload = util.convertBufToI16(chunk.payload, self.config.audioLittleEndian)
-                    self.pitchShifter?.process(payload).then((result) => {
-                        if (self.closing)
-                            throw new Error("stream already destroyed")
+                    self.pitchShifter.process(payload).then((result) => {
+                        if (self.closing) {
+                            callback(new Error("stream already destroyed"))
+                            return
+                        }
 
                         /*  take over pitch-shifted data  */
                         const payload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
@@ -185,16 +189,14 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(util.ensureError(error, "pitch shifting failed"))
+                        if (self.closing)
+                            callback()
+                        else
+                            callback(util.ensureError(error, "pitch shifting failed"))
                     })
                 }
             },
             final (callback) {
-                if (self.closing) {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })

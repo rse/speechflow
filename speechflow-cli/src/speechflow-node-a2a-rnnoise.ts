@@ -93,7 +93,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
                 return segment
             const id = `${seq++}`
             return new Promise<Int16Array<ArrayBuffer>>((resolve) => {
-                pending.set(id, (segment: Int16Array<ArrayBuffer>) => { resolve(segment) })
+                pending.set(id, (segment) => { resolve(segment) })
                 this.worker!.postMessage({ type: "process", id, data: segment }, [ segment.buffer ])
             })
         }

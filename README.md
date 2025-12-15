@@ -687,7 +687,7 @@ The following nodes process audio chunks only.
 
 - Node: **a2a-speex**<br/>
   Purpose: **Speex Noise Suppression node**<br/>
-  Example: `a2a-speex(attentuate: -18)`
+  Example: `a2a-speex(attenuate: -18)`
 
   > This node uses the Speex DSP pre-processor to perform noise
   > suppression, i.e., it detects and attenuates (by a certain level of
@@ -698,9 +698,9 @@ The following nodes process audio chunks only.
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter      | Position  | Default  | Requirement        |
-  | -------------- | --------- | -------- | ------------------ |
-  | **attentuate** | 0         | -18      | `-60 <= n <= 0`    |
+  | Parameter     | Position  | Default  | Requirement        |
+  | ------------- | --------- | -------- | ------------------ |
+  | **attenuate** | 0         | -18      | `-60 <= n <= 0`    |
 
 - Node: **a2a-rnnoise**<br/>
   Purpose: **RNNoise Noise Suppression node**<br/>

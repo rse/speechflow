@@ -134,7 +134,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 throw new Error("classifier destroyed during operation")
 
             /*  check volume level and return "unknown" if too low
-                in order to avoid a wrong classificaton  */
+                in order to avoid a wrong classification  */
             const audioData = {
                 sampleRate:       sampleRateTarget,
                 numberOfChannels: 1,
@@ -154,8 +154,8 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             const classified = Array.isArray(result) ?
                 result as Transformers.AudioClassificationOutput :
                 [ result ]
-            const c1 = classified.find((c) => c.label === "male")
-            const c2 = classified.find((c) => c.label === "female")
+            const c1     = classified.find((c) => c.label === "male")
+            const c2     = classified.find((c) => c.label === "female")
             const male   = c1 ? c1.score : 0.0
             const female = c2 ? c2.score : 0.0
             const threshold  = this.params.threshold

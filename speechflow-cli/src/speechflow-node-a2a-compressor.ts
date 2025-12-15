@@ -36,7 +36,7 @@ class AudioCompressor extends util.WebAudio {
     private gainNode:          GainNode | null = null
 
     /*  construct object  */
-    constructor(
+    constructor (
         sampleRate: number,
         channels:   number,
         type:       "standalone" | "sidechain" = "standalone",
@@ -106,8 +106,7 @@ class AudioCompressor extends util.WebAudio {
         /*  configure compressor worklet node  */
         const currentTime = this.audioContext.currentTime
         if (needsCompressor) {
-            const node = this.compressorNode!
-            const params = node.parameters as Map<string, AudioParam>
+            const params = this.compressorNode!.parameters as Map<string, AudioParam>
             params.get("threshold")!.setValueAtTime(this.config.thresholdDb, currentTime)
             params.get("ratio")!.setValueAtTime(this.config.ratio, currentTime)
             params.get("attack")!.setValueAtTime(this.config.attackMs / 1000, currentTime)
@@ -241,10 +240,12 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                 }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (self.compressor === null)
+                    callback(new Error("compressor not initialized"))
                 else {
                     /*  compress chunk  */
                     const payload = util.convertBufToI16(chunk.payload)
-                    self.compressor?.process(payload).then((result) => {
+                    self.compressor.process(payload).then((result) => {
                         if (self.closing) {
                             callback(new Error("stream already destroyed"))
                             return
@@ -258,17 +259,14 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        if (!self.closing)
+                        if (self.closing)
+                            callback()
+                        else
                             callback(util.ensureError(error, "compression failed"))
                     })
                 }
             },
             final (callback) {
-                if (self.closing) {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })

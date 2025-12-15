@@ -32,7 +32,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            attenuate: { type: "number", val: -18, pos: 0, match: (n: number) => n >= -60 && n <= 0 },
+            attenuate: { type: "number", val: -18, pos: 0, match: (n: number) => n >= -60 && n <= 0 }
         })
 
         /*  declare node input/output format  */
@@ -53,7 +53,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
         const wasmBinary = await fs.promises.readFile(
             path.join(__dirname, "../node_modules/@sapphi-red/speex-preprocess-wasm/dist/speex.wasm"))
         const speexModule = await loadSpeexModule({
-            wasmBinary: wasmBinary.buffer as ArrayBuffer
+            wasmBinary: wasmBinary.buffer
         })
         this.speexProcessor = new SpeexPreprocessor(
             speexModule, this.sampleSize, this.config.audioSampleRate)
@@ -85,7 +85,9 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                     util.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
                         if (self.closing)
                             throw new Error("stream already destroyed")
-                        self.speexProcessor?.processInt16(segment)
+                        if (self.speexProcessor === null)
+                            throw new Error("speex processor not initialized")
+                        self.speexProcessor.processInt16(segment)
                         return Promise.resolve(segment)
                     }).then((payload: Int16Array<ArrayBuffer>) => {
                         if (self.closing)

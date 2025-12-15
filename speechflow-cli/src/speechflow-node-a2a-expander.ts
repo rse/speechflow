@@ -33,7 +33,7 @@ class AudioExpander extends util.WebAudio {
     private expanderNode: AudioWorkletNode | null = null
 
     /*  construct object  */
-    constructor(
+    constructor (
         sampleRate: number,
         channels:   number,
         config:     AudioExpanderConfig = {}
@@ -71,8 +71,7 @@ class AudioExpander extends util.WebAudio {
 
         /*  configure expander node  */
         const currentTime = this.audioContext.currentTime
-        const node = this.expanderNode!
-        const params = node.parameters as Map<string, AudioParam>
+        const params = this.expanderNode.parameters as Map<string, AudioParam>
         params.get("threshold")!.setValueAtTime(this.config.thresholdDb, currentTime)
         params.get("floor")!.setValueAtTime(this.config.floorDb, currentTime)
         params.get("ratio")!.setValueAtTime(this.config.ratio, currentTime)
@@ -164,10 +163,12 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                 }
                 if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
+                else if (self.expander === null)
+                    callback(new Error("expander not initialized"))
                 else {
                     /*  expand chunk  */
                     const payload = util.convertBufToI16(chunk.payload)
-                    self.expander?.process(payload).then((result) => {
+                    self.expander.process(payload).then((result) => {
                         if (self.closing) {
                             callback(new Error("stream already destroyed"))
                             return
@@ -179,17 +180,14 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                         this.push(chunk)
                         callback()
                     }).catch((error: unknown) => {
-                        if (!self.closing)
+                        if (self.closing)
+                            callback()
+                        else
                             callback(util.ensureError(error, "expansion failed"))
                     })
                 }
             },
             final (callback) {
-                if (self.closing) {
-                    callback()
-                    return
-                }
-                this.push(null)
                 callback()
             }
         })
