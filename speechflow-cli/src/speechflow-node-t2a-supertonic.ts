@@ -602,9 +602,8 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                 buffer1.writeInt16LE(sample * 0x7FFF, i * 2)
             }
 
-            /*  resample audio samples from 44.1kHz to 48kHz  */
-            const buffer2 = this.resampler!.processChunk(buffer1)
-            return buffer2
+            /*  resample audio samples from Supertonic sample rate to 48kHz  */
+            return this.resampler!.processChunk(buffer1)
         }
 
         /*  create transform stream and connect it to the Supertonic TTS  */
