@@ -142,8 +142,19 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                 else if (chunk.payload === "")
                     callback()
                 else {
+                    let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+                        processTimeout = null
+                        callback(new Error("Kokoro TTS timeout"))
+                    }, 60 * 1000)
+                    const clearProcessTimeout = () => {
+                        if (processTimeout !== null) {
+                            clearTimeout(processTimeout)
+                            processTimeout = null
+                        }
+                    }
                     text2speech(chunk.payload).then((buffer) => {
                         if (self.closing) {
+                            clearProcessTimeout()
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
@@ -151,9 +162,11 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                         const chunkNew = chunk.clone()
                         chunkNew.type = "audio"
                         chunkNew.payload = buffer
+                        clearProcessTimeout()
                         this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
+                        clearProcessTimeout()
                         callback(util.ensureError(error))
                     })
                 }

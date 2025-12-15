@@ -132,18 +132,31 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                 else if (chunk.payload === "")
                     callback()
                 else {
+                    let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+                        processTimeout = null
+                        callback(new Error("AWS Polly API timeout"))
+                    }, 60 * 1000)
+                    const clearProcessTimeout = () => {
+                        if (processTimeout !== null) {
+                            clearTimeout(processTimeout)
+                            processTimeout = null
+                        }
+                    }
                     self.log("debug", `send data (${chunk.payload.length} bytes): "${chunk.payload}"`)
                     textToSpeech(chunk.payload as string).then((buffer) => {
                         if (self.closing) {
+                            clearProcessTimeout()
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
                         const chunkNew = chunk.clone()
                         chunkNew.type = "audio"
                         chunkNew.payload = buffer
+                        clearProcessTimeout()
                         this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
+                        clearProcessTimeout()
                         callback(util.ensureError(error, "failed to send to AWS Polly"))
                     })
                 }
