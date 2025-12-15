@@ -140,7 +140,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         /*  annotate the current audio segment  */
                         const element = this.queueVAD.peek()
                         if (element === undefined || element.type !== "audio-frame")
-                            throw new Error("internal error which cannot happen: no more queued element")
+                            throw new Error("internal error that cannot happen: no more queued element")
                         if (element.segmentIdx >= element.segmentData.length)
                             throw new Error("segment index out of bounds")
                         const segment = element.segmentData[element.segmentIdx++]
