@@ -289,7 +289,7 @@ export class AsyncQueue<T> {
         if (this.queue.length > 0)
             return this.queue.shift()!
         else
-            return new Promise<T>((resolve, reject) => this.resolvers.push({ resolve, reject }))
+            return new Promise<T>((resolve, reject) => { this.resolvers.push({ resolve, reject }) })
     }
     empty () {
         return this.queue.length === 0

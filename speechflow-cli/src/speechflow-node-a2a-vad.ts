@@ -369,8 +369,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
         if (this.vad !== null) {
             try {
                 const flushPromise = this.vad.flush()
-                const timeoutPromise = new Promise((resolve) =>
-                    setTimeout(resolve, 5000))
+                const timeoutPromise = new Promise((resolve) => { setTimeout(resolve, 5000) })
                 await Promise.race([ flushPromise, timeoutPromise ])
             }
             catch (error) {
