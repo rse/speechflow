@@ -24,15 +24,15 @@ import * as util             from "./speechflow-util"
 /*  the SpeechFlow node graph management  */
 export class NodeGraph {
     /*  internal state  */
-    private graphNodes    = new Set<SpeechFlowNode>()
-    private activeNodes   = new Set<SpeechFlowNode>()
-    private finishEvents  = new EventEmitter()
+    private graphNodes                    = new Set<SpeechFlowNode>()
+    private activeNodes                   = new Set<SpeechFlowNode>()
+    private finishEvents                  = new EventEmitter()
     private timeZero:     DateTime | null = null
-    private shuttingDown  = false
+    private shuttingDown                  = false
 
     /*  simple construction  */
     constructor (
-        private cli:  CLIio,
+        private cli: CLIio,
         private debug = false
     ) {}
 
