@@ -9,6 +9,7 @@ import Stream from "node:stream"
 
 /*  external dependencies  */
 import { getStreamAsBuffer } from "get-stream"
+import { Duration }          from "luxon"
 import SpeexResampler        from "speex-resampler"
 import {
     PollyClient, SynthesizeSpeechCommand,
@@ -149,9 +150,15 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
+                        /*  calculate actual audio duration from PCM buffer size  */
+                        const durationMs = util.audioBufferDuration(buffer,
+                            self.config.audioSampleRate, self.config.audioBitDepth) * 1000
+
+                        /*  create new chunk with recalculated timestamps  */
                         const chunkNew = chunk.clone()
-                        chunkNew.type = "audio"
-                        chunkNew.payload = buffer
+                        chunkNew.type         = "audio"
+                        chunkNew.payload      = buffer
+                        chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
                         clearProcessTimeout()
                         this.push(chunkNew)
                         callback()

@@ -9,6 +9,7 @@ import Stream from "node:stream"
 
 /*  external dependencies  */
 import { KokoroTTS }  from "kokoro-js"
+import { Duration }   from "luxon"
 import SpeexResampler from "speex-resampler"
 
 /*  internal dependencies  */
@@ -122,9 +123,7 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
             }
 
             /*  resample audio samples from PCM/I16/24Khz to PCM/I16/48KHz  */
-            const buffer2 = this.resampler!.processChunk(buffer1)
-
-            return buffer2
+            return this.resampler!.processChunk(buffer1)
         }
 
         /*  create transform stream and connect it to the Kokoro API  */
@@ -159,9 +158,16 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                             return
                         }
                         self.log("info", `Kokoro: received audio (buffer length: ${buffer.byteLength})`)
+
+                        /*  calculate actual audio duration from PCM buffer size  */
+                        const durationMs = util.audioBufferDuration(buffer,
+                            self.config.audioSampleRate, self.config.audioBitDepth) * 1000
+
+                        /*  create new chunk with recalculated timestamps  */
                         const chunkNew = chunk.clone()
-                        chunkNew.type = "audio"
-                        chunkNew.payload = buffer
+                        chunkNew.type         = "audio"
+                        chunkNew.payload      = buffer
+                        chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
                         clearProcessTimeout()
                         this.push(chunkNew)
                         callback()
