@@ -21,9 +21,9 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
     public static name = "t2a-kokoro"
 
     /*  internal state  */
-    private kokoro: KokoroTTS | null = null
-    private closing = false
+    private kokoro:    KokoroTTS      | null = null
     private resampler: SpeexResampler | null = null
+    private closing                          = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -141,8 +141,10 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     text2speech(chunk.payload).then((buffer) => {
-                        if (self.closing)
-                            throw new Error("stream destroyed during processing")
+                        if (self.closing) {
+                            callback(new Error("stream destroyed during processing"))
+                            return
+                        }
                         self.log("info", `Kokoro: received audio (buffer length: ${buffer.byteLength})`)
                         const chunkNew = chunk.clone()
                         chunkNew.type = "audio"

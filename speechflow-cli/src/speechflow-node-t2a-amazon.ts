@@ -25,9 +25,9 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
     public static name = "t2a-amazon"
 
     /*  internal state  */
-    private client: PollyClient | null = null
-    private closing = false
+    private client:    PollyClient    | null = null
     private resampler: SpeexResampler | null = null
+    private closing                          = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -132,8 +132,10 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
                 else if (chunk.payload.length > 0) {
                     self.log("debug", `send data (${chunk.payload.length} bytes): "${chunk.payload}"`)
                     textToSpeech(chunk.payload as string).then((buffer) => {
-                        if (self.closing)
-                            throw new Error("stream destroyed during processing")
+                        if (self.closing) {
+                            callback(new Error("stream destroyed during processing"))
+                            return
+                        }
                         const chunkNew = chunk.clone()
                         chunkNew.type = "audio"
                         chunkNew.payload = buffer

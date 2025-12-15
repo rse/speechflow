@@ -24,8 +24,8 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
 
     /*  internal state  */
     private elevenlabs: ElevenLabs.ElevenLabsClient | null = null
-    private closing = false
-    private resampler: SpeexResampler | null = null
+    private resampler:  SpeexResampler              | null = null
+    private closing                                        = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -131,8 +131,8 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
             })
         }
 
-        /*  establish resampler from ElevenLabs's maximum 24Khz
-            output to our standard audio sample rate (48KHz)  */
+        /*  establish resampler from ElevenLabs's tier-dependent
+            output sample rate to our standard audio sample rate (48KHz)  */
         this.resampler = new SpeexResampler(1, maxSampleRate, this.config.audioSampleRate, 7)
 
         /*  create transform stream and connect it to the ElevenLabs API  */

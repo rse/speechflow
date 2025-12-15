@@ -535,7 +535,7 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
             "onnx/text_encoder.onnx",
             "onnx/unicode_indexer.json",
             "onnx/vector_estimator.onnx",
-            "onnx/vocoder.onnx",
+            "onnx/vocoder.onnx"
         ]
 
         /*  create asset directories  */
