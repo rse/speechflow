@@ -139,11 +139,10 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                             const payload = Buffer.isBuffer(chunk.payload) ?
                                 chunk.payload : Buffer.from(chunk.payload)
                             const seekPosition = chunk.meta.get("chunk:seek") as number | undefined
-                            if (seekPosition !== undefined) {
+                            if (seekPosition !== undefined)
                                 /*  seek to specified position and write (overload)  */
                                 fs.write(self.fd!, payload, 0, payload.byteLength, seekPosition, callback)
-                            }
-                            else {
+                            else
                                 /*  append at current position  */
                                 fs.write(self.fd!, payload, 0, payload.byteLength, writePosition, (err) => {
                                     if (err)
@@ -153,7 +152,6 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                                         callback()
                                     }
                                 })
-                            }
                         },
                         final (callback) {
                             callback()
