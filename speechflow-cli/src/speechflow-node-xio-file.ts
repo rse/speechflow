@@ -54,7 +54,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
     /*  open node  */
     async open () {
         /*  determine how many bytes we need per chunk when
-            the chunk should be of the required duration/size */
+            the chunk should be of the required duration/size  */
         const highWaterMarkAudio = (
             this.config.audioSampleRate *
             (this.config.audioBitDepth / 8)
