@@ -85,6 +85,18 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
             }
         }
 
+        /*  helper function for tail timer handling  */
+        const startTailTimer = () => {
+            tail = true
+            clearTailTimer()
+            this.tailTimer = setTimeout(() => {
+                if (this.closing || this.tailTimer === null)
+                    return
+                tail = false
+                this.tailTimer = null
+            }, this.params.postSpeechTail)
+        }
+
         /*  establish Voice Activity Detection (VAD) facility  */
         let tail = false
         try {
@@ -111,31 +123,15 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         return
                     const duration = util.audioArrayDuration(audio, vadSampleRateTarget)
                     this.log("info", `VAD: speech end (duration: ${duration.toFixed(2)}s)`)
-                    if (this.params.mode === "unplugged") {
-                        tail = true
-                        clearTailTimer()
-                        this.tailTimer = setTimeout(() => {
-                            if (this.closing || this.tailTimer === null)
-                                return
-                            tail = false
-                            this.tailTimer = null
-                        }, this.params.postSpeechTail)
-                    }
+                    if (this.params.mode === "unplugged")
+                        startTailTimer()
                 },
                 onVADMisfire: () => {
                     if (this.closing)
                         return
                     this.log("info", "VAD: speech end (segment too short)")
-                    if (this.params.mode === "unplugged") {
-                        tail = true
-                        clearTailTimer()
-                        this.tailTimer = setTimeout(() => {
-                            if (this.closing || this.tailTimer === null)
-                                return
-                            tail = false
-                            this.tailTimer = null
-                        }, this.params.postSpeechTail)
-                    }
+                    if (this.params.mode === "unplugged")
+                        startTailTimer()
                 },
                 onFrameProcessed: (audio) => {
                     if (this.closing)
