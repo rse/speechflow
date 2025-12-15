@@ -162,6 +162,9 @@ export function updateEnvelopeForChannel (
         else
             currentEnv = alphaR * currentEnv + (1 - alphaR) * det
     }
+
+    /*  store updated envelope value back  */
+    env[chan] = currentEnv
     return Math.sqrt(Math.max(currentEnv, 1e-12))
 }
 
