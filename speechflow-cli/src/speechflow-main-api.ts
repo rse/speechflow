@@ -34,8 +34,8 @@ type WSPeerInfo = {
 /*  Application Programming Interface (API) server management class  */
 export class APIServer {
     /*  internal state  */
-    private wsPeers  = new Map<string, WSPeerInfo>()
-    private hapi:    HAPI.Server | null = null
+    private wsPeers                                                 = new Map<string, WSPeerInfo>()
+    private hapi:    HAPI.Server                             | null = null
     private sendOSC: ((url: string, ...args: any[]) => void) | null = null
 
     /*  creation  */
