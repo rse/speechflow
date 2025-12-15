@@ -15,7 +15,7 @@ import ReconnWebSocket, { ErrorEvent } from "@opensumi/reconnecting-websocket"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
-/*  SpeechFlow node for Websocket networking  */
+/*  SpeechFlow node for WebSocket networking  */
 export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
     /*  declare official node name  */
     public static name = "xio-websocket"
@@ -38,9 +38,9 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
 
         /*  sanity check parameters  */
         if (this.params.listen !== "" && this.params.connect !== "")
-            throw new Error("Websocket node cannot listen and connect at the same time")
+            throw new Error("WebSocket node cannot listen and connect at the same time")
         else if (this.params.listen === "" && this.params.connect === "")
-            throw new Error("Websocket node requires either listen or connect mode")
+            throw new Error("WebSocket node requires either listen or connect mode")
 
         /*  declare node input/output format  */
         if (this.params.mode === "rw") {
@@ -121,7 +121,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     else if (chunk.type !== self.params.type)
                         callback(new Error(`written chunk is not of ${self.params.type} type`))
                     else if (websockets.size === 0)
-                        callback(new Error("still no Websocket connections available"))
+                        callback(new Error("still no WebSocket connections available"))
                     else {
                         const data = util.streamChunkEncode(chunk)
                         const results: Promise<void>[] = []
@@ -168,10 +168,10 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 connectionTimeout:           4000,
                 minUptime:                   5000
             })
-            this.client.addEventListener("open", (ev) => {
+            this.client.addEventListener("open", (_ev) => {
                 this.log("info", `connection opened to URL ${this.params.connect}`)
             })
-            this.client.addEventListener("close", (ev) => {
+            this.client.addEventListener("close", (_ev) => {
                 this.log("info", `connection closed to URL ${this.params.connect}`)
             })
             this.client.addEventListener("error", (ev: ErrorEvent) => {
@@ -208,7 +208,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     else if (chunk.type !== self.params.type)
                         callback(new Error(`written chunk is not of ${self.params.type} type`))
                     else if (!self.client!.OPEN)
-                        callback(new Error("still no Websocket connection available"))
+                        callback(new Error("still no WebSocket connection available"))
                     else {
                         const data = util.streamChunkEncode(chunk)
                         self.client!.send(data)
@@ -234,7 +234,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close Websocket server  */
+        /*  close WebSocket server  */
         if (this.server !== null) {
             await new Promise<void>((resolve, reject) => {
                 this.server!.close((error) => {
@@ -245,7 +245,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             this.server = null
         }
 
-        /*  close Websocket client  */
+        /*  close WebSocket client  */
         if (this.client !== null) {
             this.client.close()
             this.client = null

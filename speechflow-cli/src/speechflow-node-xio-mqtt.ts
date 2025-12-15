@@ -21,8 +21,8 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
     public static name = "xio-mqtt"
 
     /*  internal state  */
-    private broker: MQTT.MqttClient | null = null
-    private clientId: string = (new UUID(1)).format()
+    private broker:     MQTT.MqttClient | null                   = null
+    private clientId:   string                                   = (new UUID(1)).format()
     private chunkQueue: util.SingleQueue<SpeechFlowChunk> | null = null
 
     /*  construct node  */

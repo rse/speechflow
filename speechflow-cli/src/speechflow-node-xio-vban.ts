@@ -29,11 +29,11 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
     public static name = "xio-vban"
 
     /*  internal state  */
-    private server:     VBANServer                        | null = null
-    private chunkQueue: util.SingleQueue<SpeechFlowChunk> | null = null
-    private frameCounter                                         = 0
-    private targetAddress                                        = ""
-    private targetPort                                           = 0
+    private server:        VBANServer                        | null = null
+    private chunkQueue:    util.SingleQueue<SpeechFlowChunk> | null = null
+    private frameCounter                                            = 0
+    private targetAddress                                           = ""
+    private targetPort                                              = 0
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {

@@ -6,10 +6,10 @@
 
 /*  standard dependencies  */
 import { EventEmitter }       from "node:events"
-import { type, type Type }    from "arktype"
 
 /*  external dependencies  */
-import { Duration } from "luxon"
+import { type, type Type }    from "arktype"
+import { Duration }           from "luxon"
 import * as IntervalTree      from "node-interval-tree"
 
 /*  internal dependencies  */
