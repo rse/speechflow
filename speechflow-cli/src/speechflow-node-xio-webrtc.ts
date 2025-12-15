@@ -154,6 +154,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
             this.pcmBuffer = this.pcmBuffer.subarray(this.pcmBuffer.length - maxBufferSize)
         }
 
+        /*  process full Opus frames from buffer  */
         while (this.pcmBuffer.length >= this.OPUS_FRAME_BYTES) {
             const frame = this.pcmBuffer.subarray(0, this.OPUS_FRAME_BYTES)
             this.pcmBuffer = this.pcmBuffer.subarray(this.OPUS_FRAME_BYTES)
@@ -418,6 +419,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
                 const isPublisher  = hasSendonly || hasSendrecv
                 const isViewer     = hasRecvonly
 
+                /*  handle protocol based on mode  */
                 if (self.params.mode === "r" && isPublisher)
                     /*  in read mode, accept WHIP publishers  */
                     await self.handleWHIP(res, body)

@@ -16,6 +16,7 @@ import SpeechFlowNode    from "./speechflow-node"
 export class NodeRegistry {
     public nodes: { [ id: string ]: typeof SpeechFlowNode } = {}
 
+    /*  simple constructor  */
     constructor (
         private cli: CLIio
     ) {}

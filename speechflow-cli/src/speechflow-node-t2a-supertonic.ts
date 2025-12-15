@@ -131,6 +131,7 @@ function chunkText (text: string, maxLen = 300): string[] {
 class SupertonicTextProcessor {
     private indexer: Record<number, number>
 
+    /*  construct text processor  */
     constructor (unicodeIndexerJsonPath: string) {
         /*  load and parse unicode indexer JSON  */
         try {
@@ -141,6 +142,7 @@ class SupertonicTextProcessor {
         }
     }
 
+    /*  preprocess text  */
     private preprocessText (text: string): string {
         /*  normalize text  */
         text = text.normalize("NFKD")
@@ -211,11 +213,13 @@ class SupertonicTextProcessor {
         return text
     }
 
+    /*  convert text to Unicode values  */
     private textToUnicodeValues (text: string): number[] {
         /*  convert text characters to unicode code points  */
         return Array.from(text).map((char) => char.charCodeAt(0))
     }
 
+    /*  process text list  */
     call (textList: string[]): { textIds: number[][], textMask: number[][][] } {
         /*  handle empty input  */
         if (textList.length === 0)
@@ -246,6 +250,7 @@ class SupertonicTextProcessor {
 class SupertonicTTS {
     public  sampleRate:          number
 
+    /*  internal TTS state  */
     private cfgs:                SupertonicConfig
     private textProcessor:       SupertonicTextProcessor
     private dpOrt:               ORT.InferenceSession
@@ -256,6 +261,7 @@ class SupertonicTTS {
     private chunkCompressFactor: number
     private latentDim:           number
 
+    /*  construct TTS engine  */
     constructor (
         cfgs:          SupertonicConfig,
         textProcessor: SupertonicTextProcessor,
@@ -279,6 +285,7 @@ class SupertonicTTS {
         this.latentDim           = cfgs.ttl.latent_dim
     }
 
+    /*  sample noisy latent vectors  */
     private sampleNoisyLatent (duration: number[]): { noisyLatent: number[][][], latentMask: number[][][] } {
         /*  calculate dimensions for latent space  */
         const wavLenMax  = Math.max(...duration) * this.sampleRate
@@ -316,6 +323,7 @@ class SupertonicTTS {
         return { noisyLatent, latentMask }
     }
 
+    /*  perform inference  */
     private async infer (textList: string[], style: SupertonicStyle, totalStep: number, speed: number): Promise<{ wav: number[], duration: number[] }> {
         /*  validate batch size matches style vectors  */
         if (textList.length !== style.ttl.dims[0])
@@ -391,6 +399,7 @@ class SupertonicTTS {
         return { wav, duration: predictedDurations }
     }
 
+    /*  synthesize speech from text  */
     async synthesize (text: string, style: SupertonicStyle, totalStep: number, speed: number, silenceDuration = 0.3): Promise<{ wav: number[], duration: number }> {
         /*  validate single speaker mode  */
         if (style.ttl.dims[0] !== 1)
@@ -419,6 +428,7 @@ class SupertonicTTS {
         return { wav: wavParts.flat(), duration: totalDuration }
     }
 
+    /*  release TTS engine resources  */
     async release (): Promise<void> {
         /*  release all ONNX inference sessions  */
         await Promise.all([

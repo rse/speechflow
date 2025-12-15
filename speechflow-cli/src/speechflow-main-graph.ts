@@ -59,6 +59,7 @@ export class NodeGraph {
             err instanceof Error && err.name === "FlowLinkError"
                 ? err.toString() : (err instanceof Error ? err.message : "internal error")
 
+        /*  instantiate FlowLink parser  */
         const flowlink = new FlowLink<SpeechFlowNode>({
             trace: (msg: string) => {
                 this.cli.log("debug", msg)

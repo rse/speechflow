@@ -223,6 +223,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                             }
                         }
 
+                        /*  signal completion  */
                         callback()
                     }
                     catch (error) {
@@ -318,6 +319,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         }
                     }
 
+                    /*  peek at send queue element  */
                     const element = self.queueSend.peek()
                     if (element !== undefined && element.type === "audio-eof")
                         this.push(null)

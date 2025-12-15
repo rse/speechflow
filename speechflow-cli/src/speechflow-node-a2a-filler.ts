@@ -13,6 +13,7 @@ import { Duration }     from "luxon"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
+/*  audio gap filler class  */
 class AudioFiller extends EventEmitter {
     private emittedEndSamples = 0           /* stream position in samples already emitted */
     private maxInputEndSamples = 0
@@ -21,6 +22,7 @@ class AudioFiller extends EventEmitter {
     private readonly bytesPerFrame: number
     private readonly sampleTolerance = 0.5  /* tolerance for floating-point sample comparisons */
 
+    /*  construct object  */
     constructor (private sampleRate = 48000, private channels = 1) {
         super()
         this.bytesPerFrame = this.channels * this.bytesPerSample

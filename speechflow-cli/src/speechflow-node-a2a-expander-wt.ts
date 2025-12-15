@@ -4,6 +4,7 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/*  internal dependencies  */
 import * as util from "./speechflow-util"
 
 /*  downward expander with soft knee  */

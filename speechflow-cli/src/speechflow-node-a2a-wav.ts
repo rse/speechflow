@@ -21,15 +21,18 @@ const writeWavHeader = (
     const sampleRate   = options?.sampleRate  ?? 44100 /* 44KHz */
     const bitDepth     = options?.bitDepth    ?? 16    /* 16-Bit */
 
+    /*  determine header dimensions  */
     const headerLength = 44
     const maxDataSize  = Math.pow(2, 32) - 100 /* safe maximum for 32-bit WAV files */
     const dataLength   = length ?? maxDataSize
     const fileSize     = dataLength + headerLength
     const header       = Buffer.alloc(headerLength)
 
+    /*  calculate byte rate and block alignment  */
     const byteRate     = (sampleRate * channels * bitDepth) / 8
     const blockAlign   = (channels * bitDepth) / 8
 
+    /*  write header fields  */
     let offset = 0
     header.write("RIFF", offset);               offset += 4
     header.writeUInt32LE(fileSize - 8, offset); offset += 4
@@ -45,6 +48,7 @@ const writeWavHeader = (
     header.write("data", offset);               offset += 4
     header.writeUInt32LE(dataLength, offset);   offset += 4
 
+    /*  return completed header  */
     return header
 }
 
@@ -53,6 +57,7 @@ const readWavHeader = (buffer: Buffer) => {
     if (buffer.length < 44)
         throw new Error("WAV header too short, expected at least 44 bytes")
 
+    /*  read header fields  */
     let offset = 0
     const riffHead     = buffer.subarray(offset, offset + 4).toString(); offset += 4
     const fileSize     = buffer.readUInt32LE(offset);                    offset += 4
@@ -68,6 +73,7 @@ const readWavHeader = (buffer: Buffer) => {
     const data         = buffer.subarray(offset, offset + 4).toString(); offset += 4
     const dataLength   = buffer.readUInt32LE(offset);                    offset += 4
 
+    /*  validate RIFF header  */
     if (riffHead !== "RIFF")
         throw new Error(`Invalid WAV file: expected RIFF header, got "${riffHead}"`)
     if (waveHead !== "WAVE")
@@ -77,6 +83,7 @@ const readWavHeader = (buffer: Buffer) => {
     if (data !== "data")
         throw new Error(`Invalid WAV file: expected "data" header, got "${data}"`)
 
+    /*  return parsed header data  */
     return {
         riffHead, fileSize, waveHead, fmtHead, formatLength, audioFormat,
         channels, sampleRate, byteRate, blockAlign, bitDepth, data, dataLength

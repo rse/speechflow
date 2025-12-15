@@ -394,15 +394,18 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     h.response({}).code(204)
             })
 
+            /*  start HAPI server  */
             await this.hapi.start()
             this.log("info", `HAPI: started REST/WebSocket network service: http://${this.params.addr}:${this.params.port}`)
 
+            /*  helper to emit chunks to WebSocket peers  */
             const emit = (chunk: SpeechFlowChunk) => {
                 const data = JSON.stringify(chunk)
                 for (const info of wsPeers.values())
                     info.ws.send(data)
             }
 
+            /*  establish writable stream  */
             this.stream = new Stream.Writable({
                 objectMode:     true,
                 decodeStrings:  false,

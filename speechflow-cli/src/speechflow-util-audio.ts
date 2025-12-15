@@ -173,6 +173,7 @@ export function dB2lin (db: number): number {
     return Math.pow(10, db / 20)
 }
 
+/*  Web Audio API wrapper class  */
 export class WebAudio {
     /*  internal state  */
     public audioContext: AudioContext
@@ -281,6 +282,7 @@ export class WebAudio {
         })
     }
 
+    /*  destroy object  */
     public async destroy (): Promise<void> {
         /*  reject all pending promises  */
         shield(() => {

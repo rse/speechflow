@@ -198,6 +198,7 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
             this.subprocess.removeAllListeners("error")
             this.subprocess.removeAllListeners("exit")
 
+            /*  clear subprocess reference  */
             this.subprocess = null
         }
 

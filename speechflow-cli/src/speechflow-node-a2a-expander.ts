@@ -85,6 +85,7 @@ class AudioExpander extends util.WebAudio {
         this.expanderNode.connect(this.captureNode!)
     }
 
+    /*  destroy object  */
     public async destroy (): Promise<void> {
         /*  destroy expander node  */
         if (this.expanderNode !== null) {

@@ -167,6 +167,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             }, new Map<string, any>())
         }
 
+        /*  track transcription text  */
         let text = ""
         this.ws.on("message", (data) => {
             let ev: any

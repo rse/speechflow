@@ -48,6 +48,7 @@ parentPort!.on("message", (msg) => {
         for (let i = 0; i < data.length; i++)
             i16[i] = Math.round(f32a[i])
 
+        /*  send processed frame back to parent  */
         parentPort!.postMessage({ type: "process-done", id, data: i16 }, [ i16.buffer ])
     }
     else if (msg.type === "close") {

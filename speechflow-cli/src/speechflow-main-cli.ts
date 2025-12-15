@@ -36,6 +36,7 @@ export interface CLIOptions {
     _: (string | number)[]
 }
 
+/*  CLI context class  */
 export class CLIContext {
     public cli:    CLIio      | null = null
     public args:   CLIOptions | null = null
