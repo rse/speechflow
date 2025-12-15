@@ -120,6 +120,8 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
                     val1 = chunk.timestampStart.toMillis()
                 else if (self.params.var === "time:end")
                     val1 = chunk.timestampEnd.toMillis()
+                else
+                    val1 = undefined
                 if (comparison(val1, self.params.op, val2)) {
                     self.log("info", `[${self.params.name}]: passing through ${chunk.type} chunk`)
                     this.push(chunk)
