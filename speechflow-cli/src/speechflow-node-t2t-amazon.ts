@@ -5,7 +5,7 @@
 */
 
 /*  standard dependencies  */
-import Stream from "node:stream"
+import Stream                                    from "node:stream"
 
 /*  external dependencies  */
 import { TranslateClient, TranslateTextCommand } from "@aws-sdk/client-translate"
@@ -65,8 +65,6 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
                 secretAccessKey: this.params.secKey
             }
         })
-        if (this.client === null)
-            throw new Error("failed to establish Amazon Translate client")
 
         /*  provide text-to-text translation  */
         const maxRetries = 10
