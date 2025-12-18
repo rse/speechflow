@@ -117,7 +117,7 @@
         "cross-env":                            "10.1.0"
     },
     "overrides": {
-        "@huggingface/transformers":            { "onnxruntime-node": "1.23.2" }
+        "@huggingface/transformers":            { "onnxruntime-node": "1.22.0" }
     },
     "upd": [
         "!@biomejs/biome",

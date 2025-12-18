@@ -2,6 +2,12 @@
 ChangeLog
 =========
 
+2.0.2 (2025-12-18)
+------------------
+
+- REFACTOR: change "supertonic" node from plain ONNXRuntime-Node use to HugginFace Transformers.js
+- UPDATE: upgrade NPM dependencies
+
 2.0.1 (2025-12-15)
 ------------------
 
