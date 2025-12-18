@@ -27,7 +27,6 @@ export type LLMConfig = {
     timeout?:       number
     temperature?:   number
     maxTokens?:     number
-    topP?:          number
     cacheDir?:      string
 }
 export type LLMCompleteOptions = {
@@ -61,7 +60,6 @@ export class LLM extends EventEmitter {
             timeout:       30 * 1000,
             temperature:   0.7,
             maxTokens:     1024,
-            topP:          0.5,
             cacheDir:      "",
             ...config
         } as Required<LLMConfig>
@@ -229,7 +227,6 @@ export class LLM extends EventEmitter {
                 model:       this.config.model,
                 max_tokens:  this.config.maxTokens,
                 temperature: this.config.temperature,
-                top_p:       this.config.topP,
                 messages:    messages as OpenAI.ChatCompletionMessageParam[]
             }).catch((err) => {
                 throw new Error(`failed to perform OpenAI chat completion: ${err}`, { cause: err })
@@ -252,7 +249,6 @@ export class LLM extends EventEmitter {
                 model:       this.config.model,
                 max_tokens:  this.config.maxTokens,
                 temperature: this.config.temperature,
-                top_p:       this.config.topP,
                 system:      systemMessage?.content,
                 messages:    chatMessages as Anthropic.MessageParam[]
             }).catch((err) => {
@@ -283,7 +279,6 @@ export class LLM extends EventEmitter {
                 config: {
                     maxOutputTokens: this.config.maxTokens,
                     temperature:     this.config.temperature,
-                    topP:            this.config.topP,
                     ...(systemInstruction ? { systemInstruction } : {})
                 }
             }).catch((err) => {
@@ -305,8 +300,7 @@ export class LLM extends EventEmitter {
                 keep_alive: "10m",
                 options: {
                     num_predict: this.config.maxTokens,
-                    temperature: this.config.temperature,
-                    top_p:       this.config.topP
+                    temperature: this.config.temperature
                 }
             }).catch((err) => {
                 throw new Error(`failed to perform Ollama chat completion: ${err}`, { cause: err })
@@ -324,7 +318,6 @@ export class LLM extends EventEmitter {
             const result = await this.transformer(messages, {
                 max_new_tokens:  this.config.maxTokens,
                 temperature:     this.config.temperature,
-                top_p:           this.config.topP,
                 do_sample:       true
             }).catch((err) => {
                 throw new Error(`failed to perform HuggingFace Transformers text generation: ${err}`, { cause: err })
