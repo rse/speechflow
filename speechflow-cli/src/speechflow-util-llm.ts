@@ -100,7 +100,9 @@ export class LLM extends EventEmitter {
             /*  instantiate Anthropic API  */
             this.anthropic = new Anthropic({
                 ...(this.config.api !== "" ? { baseURL: this.config.api } : {}),
-                apiKey:  this.config.key,
+                ...(this.config.key.match(/^sk-ant-oat/) ?
+                    { authToken: this.config.key } :
+                    { apiKey:    this.config.key }  ),
                 timeout: this.config.timeout
             })
         }
