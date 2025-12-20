@@ -16,7 +16,7 @@ import * as IntervalTree      from "node-interval-tree"
 import * as util              from "./speechflow-util"
 
 /*  import an object with parsing and strict error handling  */
-export function importObject<T>(name: string, arg: object | string, validator: Type<T, {}>): T {
+export function importObject<T> (name: string, arg: object | string, validator: Type<T, {}>): T {
     const obj: object = typeof arg === "string" ?
         util.run(`${name}: parsing JSON`, () => JSON.parse(arg)) :
         arg
