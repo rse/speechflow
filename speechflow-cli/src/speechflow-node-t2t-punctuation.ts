@@ -133,8 +133,7 @@ export default class SpeechFlowNodeT2TPunctuation extends SpeechFlowNode {
             api:         this.params.api,
             model:       this.params.model,
             key:         this.params.key,
-            temperature: 0.7,
-            topP:        0.5
+            temperature: 0.7
         })
         this.llm.on("log", (level: string, message: string) => {
             this.log(level as "info" | "warning" | "error", message)
