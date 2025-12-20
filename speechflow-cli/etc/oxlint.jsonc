@@ -127,7 +127,9 @@
         "prefer-top-level-await":             "off",
         "no-process-env":                     "off",
         "no-warning-comments":                "off",
-        "no-array-callback-reference":        "off"
+        "no-array-callback-reference":        "off",
+        "capitalized-comments":               "off",
+        "no-inline-comments":                 "off"
     }
 }
 
