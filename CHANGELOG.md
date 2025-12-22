@@ -2,6 +2,12 @@
 ChangeLog
 =========
 
+2.0.3 (2025-12-22)
+------------------
+
+- CLEANUP: cleanup code comments
+- UPDATE: upgrade NPM dependencies
+
 2.0.2 (2025-12-20)
 ------------------
 
