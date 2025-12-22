@@ -89,7 +89,7 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
             return (single as Transformers.TranslationSingle).translation_text
         }
 
-        /*  establish a duplex stream and connect it to Transformers  */
+        /*  establish a transform stream and connect it to Transformers  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,

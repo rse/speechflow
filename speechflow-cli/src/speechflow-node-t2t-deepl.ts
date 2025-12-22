@@ -75,7 +75,7 @@ export default class SpeechFlowNodeT2TDeepL extends SpeechFlowNode {
             return (result?.text ?? text)
         }
 
-        /*  establish a duplex stream and connect it to DeepL translation  */
+        /*  establish a transform stream and connect it to DeepL translation  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,

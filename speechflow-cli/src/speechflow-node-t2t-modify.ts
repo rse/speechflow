@@ -45,7 +45,7 @@ export default class SpeechFlowNodeT2TModify extends SpeechFlowNode {
         const modify = (text: string): string =>
             text.replace(regex, this.params.replace)
 
-        /*  establish a duplex stream and connect it to text modification  */
+        /*  establish a transform stream and connect it to text modification  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,

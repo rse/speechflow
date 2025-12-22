@@ -85,7 +85,7 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
             return response.translations?.[0]?.translatedText ?? text
         })
 
-        /*  establish a duplex stream and connect it to Google Translate  */
+        /*  establish a transform stream and connect it to Google Translate  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,

@@ -103,7 +103,7 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
             throw util.ensureError(lastError)
         }
 
-        /*  establish a duplex stream and connect it to AWS Translate  */
+        /*  establish a transform stream and connect it to AWS Translate  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,

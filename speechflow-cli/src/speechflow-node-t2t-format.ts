@@ -42,7 +42,7 @@ export default class SpeechFlowNodeT2TFormat extends SpeechFlowNode {
             return text
         }
 
-        /*  establish a duplex stream and connect it to text formatting  */
+        /*  establish a transform stream and connect it to text formatting  */
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,

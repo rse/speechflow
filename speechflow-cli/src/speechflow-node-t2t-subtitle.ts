@@ -124,7 +124,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                 return output
             }
 
-            /*  establish a duplex stream  */
+            /*  establish a transform stream  */
             const self = this
             let headerEmitted = false
             this.stream = new Stream.Transform({
@@ -264,7 +264,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
             /*  buffer for accumulating input  */
             let buffer = ""
 
-            /*  establish a duplex stream  */
+            /*  establish a transform stream  */
             const self = this
             this.stream = new Stream.Transform({
                 readableObjectMode: true,
