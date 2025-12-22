@@ -189,6 +189,7 @@ export class WebAudio {
         reject: (error: Error) => void
         timeout: ReturnType<typeof setTimeout>
     }>()
+    private captureListener: ((event: MessageEvent) => void) | null = null
 
     /*  construct object  */
     constructor (
@@ -224,7 +225,7 @@ export class WebAudio {
             numberOfInputs:  1,
             numberOfOutputs: 0
         })
-        this.captureNode.port.addEventListener("message", (event) => {
+        this.captureListener = (event) => {
             const { type, chunkId, data } = event.data ?? {}
             if (type === "capture-complete") {
                 const promise = this.pendingPromises.get(chunkId)
@@ -237,7 +238,8 @@ export class WebAudio {
                     promise.resolve(int16Data)
                 }
             }
-        })
+        }
+        this.captureNode.port.addEventListener("message", this.captureListener)
 
         /*  start ports  */
         this.sourceNode.port.start()
@@ -304,6 +306,10 @@ export class WebAudio {
             this.sourceNode = null
         }
         if (this.captureNode !== null) {
+            if (this.captureListener !== null) {
+                this.captureNode.port.removeEventListener("message", this.captureListener)
+                this.captureListener = null
+            }
             this.captureNode.disconnect()
             this.captureNode = null
         }
