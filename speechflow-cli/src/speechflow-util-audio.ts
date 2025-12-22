@@ -168,10 +168,12 @@ export function updateEnvelopeForChannel (
     return Math.sqrt(Math.max(currentEnv, 1e-12))
 }
 
-/*  helper functions for linear/decibel conversions  */
+/*  helper function for linear to decibel conversion  */
 export function lin2dB (x: number): number {
     return 20 * Math.log10(Math.max(x, 1e-12))
 }
+
+/*  helper function for decibel to linear conversion  */
 export function dB2lin (db: number): number {
     return Math.pow(10, db / 20)
 }
