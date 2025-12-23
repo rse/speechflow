@@ -5,6 +5,7 @@ ChangeLog
 2.0.3 (2025-12-22)
 ------------------
 
+- IMPROVEMENT: add OxLint also to UI sub-projects
 - CLEANUP: cleanup code comments
 - UPDATE: upgrade NPM dependencies
 
