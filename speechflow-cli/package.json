@@ -93,8 +93,6 @@
         "@typescript-eslint/parser":            "8.50.1",
         "oxlint":                               "1.35.0",
         "eslint-plugin-oxlint":                 "1.35.0",
-        "@biomejs/biome":                       "2.0.6",
-        "eslint-config-biome":                  "2.1.3",
 
         "@types/node":                          "24.10.1",
         "@types/yargs":                         "17.0.35",
@@ -120,7 +118,6 @@
         "@huggingface/transformers":            { "onnxruntime-node": "1.22.0" }
     },
     "upd": [
-        "!@biomejs/biome",
         "!onnxruntime-node",
         "!@types/node"
     ],

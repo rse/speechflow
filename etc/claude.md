@@ -27,7 +27,7 @@ SpeechFlow uses a modular node-based architecture with three main components:
 
 ```bash
 # Top-level commands (from root directory)
-npm start lint          # Lint all components (TypeScript, ESLint, Biome, Oxlint)
+npm start lint          # Lint all components (TypeScript, ESLint, Oxlint)
 npm start build         # Build all components (full production build)
 npm start clean         # Remove generated files
 npm start upd           # Update all NPM dependencies

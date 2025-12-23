@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: add OxLint also to UI sub-projects
+- CLEANUP: remove Biome from CLI sub-project as it makes trouble
 - CLEANUP: cleanup code comments
 - UPDATE: upgrade NPM dependencies
 
