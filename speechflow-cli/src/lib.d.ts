@@ -4,6 +4,8 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
+/* eslint-disable no-unused-vars */
+
 /*  type definitions for Stream.compose  */
 declare module "node:stream" {
     import { Stream, Duplex } from "node:stream"
@@ -39,4 +41,6 @@ declare function registerProcessor (
 declare module "shell-parser" {
     export default function shellParser (command: string): string[]
 }
+
+/* eslint-enable no-unused-vars */
 
