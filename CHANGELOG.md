@@ -8,6 +8,7 @@ ChangeLog
 - IMPROVEMENT: add OxLint also to UI sub-projects
 - CLEANUP: remove Biome from CLI sub-project as it makes trouble
 - CLEANUP: cleanup code comments
+- CLEANUP: make ESLint happy again
 - UPDATE: upgrade NPM dependencies
 
 2.0.2 (2025-12-20)
