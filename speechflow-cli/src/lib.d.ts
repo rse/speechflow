@@ -30,7 +30,7 @@ declare interface AudioParamDescriptor {
     maxValue?:       number
     automationRate?: "a-rate" | "k-rate"
 }
-declare function registerProcessor(
+declare function registerProcessor (
     name: string,
     processorCtor: new (...args: any[]) => AudioWorkletProcessor
 ): void
