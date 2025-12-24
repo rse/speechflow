@@ -24,7 +24,7 @@ export class NodeStatusManager {
     ) {}
 
     /*  gather and show status of all nodes  */
-    async showNodeStatus(
+    async showNodeStatus (
         nodes:     { [ id: string ]: typeof SpeechFlowNode },
         cfg:       NodeConfig,
         accessBus: (name: string) => EventEmitter

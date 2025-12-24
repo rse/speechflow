@@ -15,7 +15,7 @@ class CompressorProcessor extends AudioWorkletProcessor {
     public reduction = 0
 
     /*  eslint no-undef: off */
-    static get parameterDescriptors(): AudioParamDescriptor[] {
+    static get parameterDescriptors (): AudioParamDescriptor[] {
         return [
             { name: "threshold",  defaultValue: -23,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS
             { name: "ratio",      defaultValue: 4.0,   minValue: 1.0,    maxValue: 20,  automationRate: "k-rate" }, // compression ratio
@@ -63,7 +63,7 @@ class CompressorProcessor extends AudioWorkletProcessor {
     }
 
     /*  process a single sample frame  */
-    process(
+    process (
         inputs:     Float32Array[][],
         outputs:    Float32Array[][],
         parameters: Record<string, Float32Array>

@@ -9,8 +9,10 @@ import Stream from "node:stream"
 
 /*  external dependencies  */
 import { DateTime }                        from "luxon"
-import { VBANServer, VBANAudioPacket,
-         EBitsResolutions, ECodecs }       from "vban"
+import {
+    VBANServer, VBANAudioPacket,
+    EBitsResolutions, ECodecs
+} from "vban"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"

@@ -29,20 +29,20 @@ class AudioFiller extends EventEmitter {
     }
 
     /*  optional helper to allow subscribing with strong typing  */
-    public on(event: "chunk", listener: (chunk: SpeechFlowChunk, type: string) => void): this
-    public on(event: string, listener: (...args: any[]) => void): this {
+    public on (event: "chunk", listener: (chunk: SpeechFlowChunk, type: string) => void): this
+    public on (event: string, listener: (...args: any[]) => void): this {
         return super.on(event, listener)
     }
 
     /*  convert fractional samples from duration  */
-    private samplesFromDuration(duration: Duration): number {
+    private samplesFromDuration (duration: Duration): number {
         const seconds = duration.as("seconds")
         const samples = seconds * this.sampleRate
         return samples
     }
 
     /*  convert duration to fractional samples  */
-    private durationFromSamples(samples: number): Duration {
+    private durationFromSamples (samples: number): Duration {
         const seconds = samples / this.sampleRate
         return Duration.fromObject({ seconds })
     }

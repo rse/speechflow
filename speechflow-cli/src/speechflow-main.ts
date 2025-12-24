@@ -84,7 +84,7 @@ export default class Main {
             process.exit(0)
         }
 
-        /*  global library initialization  */
+        /*  initialize global libraries  */
         await SpeexResampler.initPromise
 
         /*  initialize graph processor  */

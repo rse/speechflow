@@ -44,7 +44,7 @@ export class APIServer {
     ) {}
 
     /*  start API server service  */
-    async start(args: CLIOptions, graph: NodeGraph): Promise<void> {
+    async start (args: CLIOptions, graph: NodeGraph): Promise<void> {
         /*  define external request/response structure  */
         const requestValidator = arktype.type({
             request: "string",
@@ -67,7 +67,7 @@ export class APIServer {
                 throw new Error(`external request failed: no such node <${name}>`)
             }
             else {
-                await Promise.race<void>([
+                await Promise.race([
                     foundNode.receiveRequest(argList),
                     util.timeout(10 * 1000)
                 ]).catch((err: Error) => {
@@ -253,7 +253,7 @@ export class APIServer {
                         peerInfo.ws.send(data)
                 }
                 for (const n of graph.getGraphNodes()) {
-                    Promise.race<void>([
+                    Promise.race([
                         n.receiveDashboard(info.type, info.id, info.kind, info.value),
                         util.timeout(10 * 1000)
                     ]).catch((err: Error) => {
@@ -267,7 +267,7 @@ export class APIServer {
     }
 
     /*  stop API server service  */
-    async stop(args: CLIOptions): Promise<void> {
+    async stop (args: CLIOptions): Promise<void> {
         /*  shutdown HAPI service  */
         if (this.hapi) {
             this.cli.log("info", `HAPI: stopping REST/WebSocket network service: http://${args.a}:${args.p}`)

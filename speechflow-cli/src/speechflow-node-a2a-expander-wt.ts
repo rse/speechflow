@@ -14,7 +14,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
     private sampleRate: number
 
     /*  eslint no-undef: off */
-    static get parameterDescriptors(): AudioParamDescriptor[] {
+    static get parameterDescriptors (): AudioParamDescriptor[] {
         return [
             { name: "threshold",  defaultValue: -45,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS
             { name: "floor",      defaultValue: -64,   minValue: -100,   maxValue: 0,   automationRate: "k-rate" }, // dBFS minimum output level
@@ -63,7 +63,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
     }
 
     /*  process a single sample frame  */
-    process(
+    process (
         inputs:     Float32Array[][],
         outputs:    Float32Array[][],
         parameters: Record<string, Float32Array>

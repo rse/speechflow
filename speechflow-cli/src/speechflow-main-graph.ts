@@ -56,8 +56,8 @@ export class NodeGraph {
     ): Promise<void> {
         /*  internal helper for extracting error messages  */
         const flowlinkErrorMsg = (err: unknown): string =>
-            err instanceof Error && err.name === "FlowLinkError"
-                ? err.toString() : (err instanceof Error ? err.message : "internal error")
+            err instanceof Error && err.name === "FlowLinkError" ?
+                err.toString() : (err instanceof Error ? err.message : "internal error")
 
         /*  instantiate FlowLink parser  */
         const flowlink = new FlowLink<SpeechFlowNode>({
@@ -157,7 +157,7 @@ export class NodeGraph {
     }
 
     /*  graph establishment: PASS 3: open nodes  */
-    async openNodes(): Promise<void> {
+    async openNodes (): Promise<void> {
         this.timeZero = DateTime.now()
         for (const node of this.graphNodes) {
             /*  connect node events  */
@@ -171,7 +171,7 @@ export class NodeGraph {
             /*  open node  */
             this.cli.log("info", `open node <${node.id}>`)
             node.setTimeZero(this.timeZero)
-            await Promise.race<void>([
+            await Promise.race([
                 node.open(),
                 util.timeout(30 * 1000)
             ]).catch((err: Error) => {
@@ -182,7 +182,7 @@ export class NodeGraph {
     }
 
     /*  graph establishment: PASS 4: connect node streams  */
-    async connectStreams() {
+    async connectStreams () {
         for (const node of this.graphNodes) {
             if (node.stream === null)
                 throw new Error(`stream of node <${node.id}> still not initialized`)
@@ -202,7 +202,7 @@ export class NodeGraph {
     }
 
     /*  graph establishment: PASS 5: track stream finishing  */
-    trackFinishing(args: CLIOptions, api: APIServer): void {
+    trackFinishing (args: CLIOptions, api: APIServer): void {
         this.finishEvents.removeAllListeners()
         this.finishEvents.setMaxListeners(this.graphNodes.size + 10)
         for (const node of this.graphNodes) {
@@ -236,15 +236,15 @@ export class NodeGraph {
     }
 
     /*  graph destruction: PASS 1: end node streams  */
-    async endStreams(): Promise<void> {
+    async endStreams (): Promise<void> {
         /*  end all writable streams and wait for them to drain  */
         const drainPromises: Promise<void>[] = []
         for (const node of this.graphNodes) {
             if (node.stream === null)
                 continue
             const stream = node.stream
-            if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex) &&
-                (!stream.writableEnded && !stream.destroyed)) {
+            if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex)
+                && (!stream.writableEnded && !stream.destroyed)) {
                 drainPromises.push(
                     Promise.race([
                         new Promise<void>((resolve) => {
@@ -261,7 +261,7 @@ export class NodeGraph {
     }
 
     /*  graph destruction: PASS 2: disconnect node streams  */
-    async disconnectStreams(): Promise<void> {
+    async disconnectStreams (): Promise<void> {
         for (const node of this.graphNodes) {
             if (node.stream === null) {
                 this.cli.log("warning", `stream of node <${node.id}> no longer initialized`)
@@ -289,10 +289,10 @@ export class NodeGraph {
     }
 
     /*  graph destruction: PASS 3: close nodes  */
-    async closeNodes(): Promise<void> {
+    async closeNodes (): Promise<void> {
         for (const node of this.graphNodes) {
             this.cli.log("info", `close node <${node.id}>`)
-            await Promise.race<void>([
+            await Promise.race([
                 node.close(),
                 util.timeout(10 * 1000)
             ]).catch((err: Error) => {
@@ -302,7 +302,7 @@ export class NodeGraph {
     }
 
     /*  graph destruction: PASS 4: disconnect nodes  */
-    disconnectNodes(): void {
+    disconnectNodes (): void {
         for (const node of this.graphNodes) {
             this.cli.log("info", `disconnect node <${node.id}>`)
             const connectionsIn  = Array.from(node.connectionsIn)
@@ -313,7 +313,7 @@ export class NodeGraph {
     }
 
     /*  graph destruction: PASS 5: destroy nodes  */
-    destroyNodes(): void {
+    destroyNodes (): void {
         for (const node of this.graphNodes) {
             this.cli.log("info", `destroy node <${node.id}>`)
             this.graphNodes.delete(node)
@@ -321,7 +321,7 @@ export class NodeGraph {
     }
 
     /*  setup signal handling for shutdown  */
-    setupSignalHandlers(args: CLIOptions, api: APIServer): void {
+    setupSignalHandlers (args: CLIOptions, api: APIServer): void {
         /*  internal helper functions  */
         const shutdownHandler = (signal: string) =>
             this.shutdown(signal, args, api)
@@ -356,7 +356,7 @@ export class NodeGraph {
     }
 
     /*  shutdown procedure  */
-    async shutdown(signal: string, args: CLIOptions, api: APIServer): Promise<void> {
+    async shutdown (signal: string, args: CLIOptions, api: APIServer): Promise<void> {
         if (this.shuttingDown)
             return
         this.shuttingDown = true

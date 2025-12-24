@@ -151,8 +151,8 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         /*  terminate subprocess  */
         if (this.subprocess !== null) {
             /*  gracefully end stdin if in write or read/write mode  */
-            if ((this.params.mode === "w" || this.params.mode === "rw") && this.subprocess.stdin &&
-                !this.subprocess.stdin.destroyed && !this.subprocess.stdin.writableEnded) {
+            if ((this.params.mode === "w" || this.params.mode === "rw") && this.subprocess.stdin
+                && !this.subprocess.stdin.destroyed && !this.subprocess.stdin.writableEnded) {
                 await Promise.race([
                     new Promise<void>((resolve, reject) => {
                         this.subprocess!.stdin!.end((err?: Error) => {

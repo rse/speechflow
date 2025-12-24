@@ -103,9 +103,9 @@ export default class SpeechFlowNodeT2AGoogle extends SpeechFlowNode {
                 throw new Error("no audio content returned from Google TTS")
 
             /*  convert response to buffer  */
-            const buffer = Buffer.isBuffer(response.audioContent)
-                ? response.audioContent
-                : Buffer.from(response.audioContent)
+            const buffer = Buffer.isBuffer(response.audioContent) ?
+                response.audioContent :
+                Buffer.from(response.audioContent)
             this.log("info", `Google TTS: received audio (buffer length: ${buffer.byteLength})`)
 
             /*  resample from Google's sample rate to our standard rate  */

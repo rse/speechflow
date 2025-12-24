@@ -83,10 +83,10 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
                 const num2 = coerceNum(val2)
                 return (
                     op === "<"  ? (num1 <  num2) :
-                    op === "<=" ? (num1 <= num2) :
-                    op === ">=" ? (num1 >= num2) :
-                    op === ">"  ? (num1 >  num2) :
-                    false
+                        op === "<=" ? (num1 <= num2) :
+                            op === ">=" ? (num1 >= num2) :
+                                op === ">"  ? (num1 >  num2) :
+                                    false
                 )
             }
         }

@@ -306,7 +306,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
             pc.ontrack = (event: { track: MediaStreamTrack }) => {
                 const track = event.track
                 if (track.kind === "audio") {
-                    this.log("info", `WebRTC audio track received from publisher`)
+                    this.log("info", "WebRTC audio track received from publisher")
 
                     /*  subscribe to incoming RTP packets  */
                     track.onReceiveRtp.subscribe((rtpPacket: RtpPacket) => {

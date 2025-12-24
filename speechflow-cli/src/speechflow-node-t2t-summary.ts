@@ -168,7 +168,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
                     /*  check if we should generate a summary  */
                     if (self.sentencesSinceLastSummary >= self.params.trigger) {
                         self.sentencesSinceLastSummary = 0
-                        self.log("info", `generating summary of accumulated text`)
+                        self.log("info", "generating summary of accumulated text")
                         const textToSummarize = self.accumulatedText
                         self.accumulatedText = ""
                         summarize(textToSummarize).then((summary) => {
@@ -188,7 +188,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
                 /*  generate final summary if there is accumulated text  */
                 if (self.accumulatedText.length > 0 && self.sentencesSinceLastSummary > 0) {
                     self.sentencesSinceLastSummary = 0
-                    self.log("info", `generating final summary of accumulated text`)
+                    self.log("info", "generating final summary of accumulated text")
                     const textToSummarize = self.accumulatedText
                     self.accumulatedText = ""
                     summarize(textToSummarize).then((summary) => {

@@ -91,9 +91,9 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
 
                     /*  simple backoff for transient errors  */
                     const retriable =
-                        e?.name === "ThrottlingException" ||
-                        e?.name === "ServiceUnavailableException" ||
-                        e?.$retryable === true
+                        e?.name === "ThrottlingException"
+                        || e?.name === "ServiceUnavailableException"
+                        || e?.$retryable === true
                     if (!retriable || attempt >= maxRetries)
                         break
                     const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000)

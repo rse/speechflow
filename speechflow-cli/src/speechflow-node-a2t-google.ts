@@ -125,18 +125,18 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
                 const words: { word: string, start: Duration, end: Duration }[] = []
                 if (alternative.words && alternative.words.length > 0) {
                     for (const wordInfo of alternative.words) {
-                        const wordStart = wordInfo.startTime
-                            ? Duration.fromMillis(
+                        const wordStart = wordInfo.startTime ?
+                            Duration.fromMillis(
                                 (Number(wordInfo.startTime.seconds ?? 0) * 1000) +
                                 (Number(wordInfo.startTime.nanos ?? 0) / 1000000)
-                            ).plus(this.timeZeroOffset)
-                            : Duration.fromMillis(0)
-                        const wordEnd = wordInfo.endTime
-                            ? Duration.fromMillis(
+                            ).plus(this.timeZeroOffset) :
+                            Duration.fromMillis(0)
+                        const wordEnd = wordInfo.endTime ?
+                            Duration.fromMillis(
                                 (Number(wordInfo.endTime.seconds ?? 0) * 1000) +
                                 (Number(wordInfo.endTime.nanos ?? 0) / 1000000)
-                            ).plus(this.timeZeroOffset)
-                            : Duration.fromMillis(0)
+                            ).plus(this.timeZeroOffset) :
+                            Duration.fromMillis(0)
                         words.push({
                             word:  wordInfo.word ?? "",
                             start: wordStart,

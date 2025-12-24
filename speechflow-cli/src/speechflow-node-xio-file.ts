@@ -197,8 +197,8 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
             else {
                 /*  for stdio streams, just end without destroying  */
                 const stream = this.stream
-                if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex) &&
-                    (!stream.writableEnded && !stream.destroyed)) {
+                if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex)
+                    && (!stream.writableEnded && !stream.destroyed)) {
                     await Promise.race([
                         new Promise<void>((resolve, reject) => {
                             stream.end((err?: Error) => {

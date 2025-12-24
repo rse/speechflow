@@ -69,10 +69,10 @@ class AudioCompressor extends util.WebAudio {
         await this.audioContext.audioWorklet.addModule(url)
 
         /*  determine operation modes  */
-        const needsCompressor = (this.type === "standalone" && this.mode === "compress") ||
-                                (this.type === "sidechain"  && this.mode === "measure")
-        const needsGain       = (this.type === "standalone" && this.mode === "compress") ||
-                                (this.type === "sidechain"  && this.mode === "adjust")
+        const needsCompressor = (this.type === "standalone" && this.mode === "compress")
+                             || (this.type === "sidechain"  && this.mode === "measure")
+        const needsGain       = (this.type === "standalone" && this.mode === "compress")
+                             || (this.type === "sidechain"  && this.mode === "adjust")
 
         /*  create compressor worklet node  */
         if (needsCompressor) {
@@ -250,8 +250,8 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                             callback(new Error("stream already destroyed"))
                             return
                         }
-                        if ((self.params.type === "standalone" && self.params.mode === "compress") ||
-                            (self.params.type === "sidechain"  && self.params.mode === "adjust")     ) {
+                        if ((self.params.type === "standalone" && self.params.mode === "compress")
+                            || (self.params.type === "sidechain"  && self.params.mode === "adjust")) {
                             /*  take over compressed data  */
                             const payload = util.convertI16ToBuf(result)
                             chunk.payload = payload

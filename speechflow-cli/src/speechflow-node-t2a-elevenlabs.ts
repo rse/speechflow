@@ -56,9 +56,9 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
         try {
             const elevenlabs = new ElevenLabs.ElevenLabsClient({ apiKey: this.params.key })
             const subscription = await elevenlabs.user.subscription.get()
-            const percent = subscription.characterLimit > 0
-                ? subscription.characterCount / subscription.characterLimit
-                : 0
+            const percent = subscription.characterLimit > 0 ?
+                subscription.characterCount / subscription.characterLimit :
+                0
             return { usage: `${percent.toFixed(2)}%` }
         }
         catch (_error) {
@@ -103,15 +103,15 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                 throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
         }
         const labels = voice.labels ?? {}
-        const info = Object.keys(labels).length > 0
-            ? ", " + Object.entries(labels).map(([ key, val ]) => `${key}: "${val}"`).join(", ")
-            : ""
+        const info = Object.keys(labels).length > 0 ?
+            ", " + Object.entries(labels).map(([ key, val ]) => `${key}: "${val}"`).join(", ") :
+            ""
         this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
         /*  perform text-to-speech operation with Elevenlabs API  */
-        const model = this.params.optimize === "quality"
-            ? "eleven_turbo_v2_5"
-            : "eleven_flash_v2_5"
+        const model = this.params.optimize === "quality" ?
+            "eleven_turbo_v2_5" :
+            "eleven_flash_v2_5"
         const speechStream = (text: string) => {
             this.log("info", `ElevenLabs: send text "${text}"`)
             return this.elevenlabs!.textToSpeech.convert(voice.voiceId, {

@@ -43,7 +43,7 @@ class AsyncQueue<T> {
         }
         this.queue.length = 0
     }
-    async *[Symbol.asyncIterator](): AsyncIterator<T> {
+    async * [Symbol.asyncIterator] (): AsyncIterator<T> {
         while (true) {
             if (this.queue.length > 0) {
                 const v = this.queue.shift()
@@ -128,7 +128,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
 
         /*  create an AudioStream for Amazon Transcribe  */
         const audioQueue = new AsyncQueue<Uint8Array>()
-        const audioStream = (async function *(q: AsyncQueue<Uint8Array>): AsyncIterable<AudioStream> {
+        const audioStream = (async function * (q: AsyncQueue<Uint8Array>): AsyncIterable<AudioStream> {
             for await (const chunk of q) {
                 yield { AudioEvent: { AudioChunk: chunk } }
             }

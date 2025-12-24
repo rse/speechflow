@@ -63,7 +63,7 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
                 else if (typeof msg === "object" && msg !== null && msg.type === "failed")
                     reject(new Error(msg.message ?? "RNNoise worker thread initialization failed"))
                 else
-                    reject(new Error(`RNNoise worker thread sent unexpected message on startup`))
+                    reject(new Error("RNNoise worker thread sent unexpected message on startup"))
             })
             this.worker!.once("error", (err) => {
                 clearTimeout(timeout)

@@ -14,7 +14,7 @@ import { type DenoiseState, Rnnoise } from "@shiguredo/rnnoise-wasm"
 let rnnoise: Rnnoise
 let denoiseState: DenoiseState
 
-/*  global initialization  */
+/*  initialize globals  */
 ;(async () => {
     try {
         rnnoise = await Rnnoise.load()
