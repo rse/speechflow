@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-2.0.3 (2025-12-22)
+2.0.3 (2025-12-24)
 ------------------
 
 - IMPROVEMENT: add OxLint also to UI sub-projects
