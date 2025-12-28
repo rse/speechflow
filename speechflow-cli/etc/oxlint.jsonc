@@ -13,6 +13,9 @@
         "node",
         "oxc"
     ],
+    "jsPlugins": [
+        "oxlint-plugin-complexity"
+    ],
     "categories": {
         "correctness": "error",
         "suspicious":  "warn",
@@ -130,7 +133,10 @@
         "no-array-callback-reference":        "off",
         "capitalized-comments":               "off",
         "no-inline-comments":                 "off",
-        "max-statements":                     "off"
+        "max-statements":                     "off",
+
+        "complexity/max-cyclomatic":          [ "error", { "max": 30 } ],
+        "complexity/max-cognitive":           [ "error", { "max": 50 } ]
     }
 }
 
