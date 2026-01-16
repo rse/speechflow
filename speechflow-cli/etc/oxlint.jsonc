@@ -135,6 +135,7 @@
         "no-inline-comments":                 "off",
         "max-statements":                     "off",
 
+        "complexity":                         [ "error", { "max": 35 } ],
         "complexity/max-cyclomatic":          [ "error", { "max": 30 } ],
         "complexity/max-cognitive":           [ "error", { "max": 50 } ]
     }
