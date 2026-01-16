@@ -170,9 +170,9 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         /*  track transcription text  */
         let text = ""
         this.ws.on("message", (data) => {
-            let ev: any
+            let ev: Record<string, unknown>
             try {
-                ev = JSON.parse(data.toString())
+                ev = JSON.parse(data.toString()) as Record<string, unknown>
             }
             catch (err) {
                 this.log("warning", `failed to parse WebSocket message: ${err}`)
