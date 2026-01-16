@@ -239,7 +239,8 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     break
                 }
                 case "error": {
-                    this.log("error", `error: ${ev.error?.message}`)
+                    const error = ev.error as { message?: string } | undefined
+                    this.log("error", `error: ${error?.message ?? "unknown error"}`)
                     break
                 }
                 default:
