@@ -98,7 +98,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
         const voices = await this.elevenlabs.voices.getAll()
         let voice = voices.voices.find((v) => v.name === this.params.voice)
         if (voice === undefined) {
-            voice = voices.voices.find((v) => (v.name ?? "").startsWith(this.params.voice))
+            voice = voices.voices.find((v) => v.name?.startsWith(this.params.voice))
             if (voice === undefined)
                 throw new Error(`invalid ElevenLabs voice "${this.params.voice}"`)
         }
