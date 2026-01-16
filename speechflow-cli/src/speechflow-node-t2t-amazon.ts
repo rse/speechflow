@@ -85,15 +85,16 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
                     const out = await this.client!.send(cmd)
                     return (out.TranslatedText ?? "").trim()
                 }
-                catch (e: any) {
+                catch (e: unknown) {
                     lastError = e
                     attempt += 1
 
                     /*  simple backoff for transient errors  */
+                    const err = e as { name?: string, $retryable?: boolean }
                     const retriable =
-                        e?.name === "ThrottlingException"
-                        || e?.name === "ServiceUnavailableException"
-                        || e?.$retryable === true
+                        err?.name === "ThrottlingException"
+                        || err?.name === "ServiceUnavailableException"
+                        || err?.$retryable === true
                     if (!retriable || attempt >= maxRetries)
                         break
                     const delayMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000)
