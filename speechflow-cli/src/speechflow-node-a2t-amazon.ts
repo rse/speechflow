@@ -29,7 +29,7 @@ class AsyncQueue<T> {
         const resolve = this.resolvers.shift()
         if (resolve) {
             if (v !== null)
-                resolve({ value: v })
+                resolve({ value: v, done: false })
             else
                 resolve({ value: null, done: true })
         }
