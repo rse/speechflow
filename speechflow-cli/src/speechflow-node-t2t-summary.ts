@@ -127,7 +127,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
         await this.llm.open()
 
         /*  provide text summarization  */
-        const llm = this.llm!
+        const llm = this.llm
         const summarize = async (text: string) => {
             const cfg = this.setup[this.params.lang]
             if (!cfg)

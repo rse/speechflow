@@ -128,7 +128,7 @@ export default class SpeechFlowNodeT2TSpellcheck extends SpeechFlowNode {
         await this.llm.open()
 
         /*  provide text-to-text spellchecking  */
-        const llm = this.llm!
+        const llm = this.llm
         const spellcheck = async (text: string) => {
             const cfg = this.setup[this.params.lang]
             if (!cfg)

@@ -141,7 +141,7 @@ export default class SpeechFlowNodeT2TPunctuation extends SpeechFlowNode {
         await this.llm.open()
 
         /*  provide text-to-text punctuation restoration  */
-        const llm = this.llm!
+        const llm = this.llm
         const punctuate = async (text: string) => {
             const cfg = this.setup[this.params.lang]
             if (!cfg)

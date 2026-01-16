@@ -142,7 +142,7 @@ export default class SpeechFlowNodeT2TTranslate extends SpeechFlowNode {
         await this.llm.open()
 
         /*  provide text-to-text translation  */
-        const llm = this.llm!
+        const llm = this.llm
         const translate = async (text: string) => {
             const key = `${this.params.src}-${this.params.dst}`
             const cfg = this.setup[key]
