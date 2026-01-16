@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: add TranslateGemma support to "t2t-translate" node
 - CLEANUP: improve typing in various nodes
+- CLEANUP: update documentation to reflect code
 - UPDATE: upgrade NPM dependencies
 
 2.0.3 (2025-12-24)
