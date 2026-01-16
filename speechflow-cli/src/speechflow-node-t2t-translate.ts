@@ -13,7 +13,7 @@ import * as util                           from "./speechflow-util"
 import { LLM, type LLMCompleteMessage }    from "./speechflow-util-llm"
 
 /*  internal utility types  */
-type ConfigEntry = { systemPrompt: string, chat: LLMCompleteMessage[] }
+type ConfigEntry = { systemPrompt: { [ type: string ]: string }, chat: LLMCompleteMessage[] }
 type Config      = { [ key: string ]: ConfigEntry }
 
 /*  SpeechFlow node for LLM-based text-to-text translation  */
@@ -28,19 +28,30 @@ export default class SpeechFlowNodeT2TTranslate extends SpeechFlowNode {
     private setup: Config = {
         /*  English (EN) to German (DE) translation  */
         "en-de": {
-            systemPrompt:
-                "You are a translator.\n" +
-                "Output only the requested text.\n" +
-                "Do not use markdown.\n" +
-                "Do not chat.\n" +
-                "Do not show any explanations.\n" +
-                "Do not show any introduction.\n" +
-                "Do not show any preamble.\n" +
-                "Do not show any prolog.\n" +
-                "Do not show any epilog.\n" +
-                "Get to the point.\n" +
-                "Preserve the original meaning, tone, and nuance.\n" +
-                "Directly translate text from English (EN) to fluent and natural German (DE) language.\n",
+            systemPrompt: {
+                "any":
+                    "You are a translator.\n" +
+                    "Output only the requested text.\n" +
+                    "Do not use markdown.\n" +
+                    "Do not chat.\n" +
+                    "Do not show any explanations.\n" +
+                    "Do not show any introduction.\n" +
+                    "Do not show any preamble.\n" +
+                    "Do not show any prolog.\n" +
+                    "Do not show any epilog.\n" +
+                    "Get to the point.\n" +
+                    "Preserve the original meaning, tone, and nuance.\n" +
+                    "Directly translate text from English (EN) to fluent and natural German (DE) language.\n",
+                "translategemma":
+                    /*  ATTENTION: do not change this prompt, as TranslateGemma requires this fixed format!  */
+                    "You are a professional English (en) to German (de) translator. " +
+                    "Your goal is to accurately convey the meaning and nuances of the original " +
+                    "English text while adhering to German grammar, vocabulary, and cultural sensitivities. " +
+                    "Produce only the German translation, without any additional explanations or commentary. " +
+                    "Please translate the following English text into German:\n" +
+                    "\n" +
+                    "\n"
+            },
             chat: [
                 { role: "user",      content: "I love my wife." },
                 { role: "assistant", content: "Ich liebe meine Frau." },
@@ -53,19 +64,30 @@ export default class SpeechFlowNodeT2TTranslate extends SpeechFlowNode {
 
         /*  German (DE) to English (EN) translation  */
         "de-en": {
-            systemPrompt:
-                "You are a translator.\n" +
-                "Output only the requested text.\n" +
-                "Do not use markdown.\n" +
-                "Do not chat.\n" +
-                "Do not show any explanations.\n" +
-                "Do not show any introduction.\n" +
-                "Do not show any preamble.\n" +
-                "Do not show any prolog.\n" +
-                "Do not show any epilog.\n" +
-                "Get to the point.\n" +
-                "Preserve the original meaning, tone, and nuance.\n" +
-                "Directly translate text from German (DE) to fluent and natural English (EN) language.\n",
+            systemPrompt: {
+                "any":
+                    "You are a translator.\n" +
+                    "Output only the requested text.\n" +
+                    "Do not use markdown.\n" +
+                    "Do not chat.\n" +
+                    "Do not show any explanations.\n" +
+                    "Do not show any introduction.\n" +
+                    "Do not show any preamble.\n" +
+                    "Do not show any prolog.\n" +
+                    "Do not show any epilog.\n" +
+                    "Get to the point.\n" +
+                    "Preserve the original meaning, tone, and nuance.\n" +
+                    "Directly translate text from German (DE) to fluent and natural English (EN) language.\n",
+                "translategemma":
+                    /*  ATTENTION: do not change this prompt, as TranslateGemma requires this fixed format!  */
+                    "You are a professional German (de) to English (en) translator. " +
+                    "Your goal is to accurately convey the meaning and nuances of the original " +
+                    "German text while adhering to English grammar, vocabulary, and cultural sensitivities. " +
+                    "Produce only the English translation, without any additional explanations or commentary. " +
+                    "Please translate the following German text into English:\n" +
+                    "\n" +
+                    "\n"
+            },
             chat: [
                 { role: "user",      content: "Ich liebe meine Frau." },
                 { role: "assistant", content: "I love my wife." },
@@ -126,8 +148,11 @@ export default class SpeechFlowNodeT2TTranslate extends SpeechFlowNode {
             const cfg = this.setup[key]
             if (!cfg)
                 throw new Error(`unsupported language pair: ${key}`)
+            let systemPrompt = cfg.systemPrompt["any"]
+            if (this.params.model.match(/^translategemma/))
+                systemPrompt = cfg.systemPrompt["translategemma"]
             return llm.complete({
-                system:   cfg.systemPrompt,
+                system:   systemPrompt,
                 messages: cfg.chat,
                 prompt:   text
             })

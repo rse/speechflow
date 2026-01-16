@@ -2,6 +2,12 @@
 ChangeLog
 =========
 
+2.0.4 (2026-01-16)
+------------------
+
+- IMPROVEMENT: add TranslateGemma support to "t2t-translate" node
+- UPDATE: upgrade NPM dependencies
+
 2.0.3 (2025-12-24)
 ------------------
 
