@@ -53,7 +53,7 @@ export default class SpeechFlowNodeT2TDeepL extends SpeechFlowNode {
         const usage = await deepl.getUsage()
         const limit = usage?.character?.limit ?? 1
         const percent = limit > 0 ? ((usage?.character?.count ?? 0) / limit * 100) : 0
-        return { usage: `${percent.toFixed(8)}%` }
+        return { usage: `${percent.toFixed(2)}%` }
     }
 
     /*  open node  */
@@ -95,7 +95,7 @@ export default class SpeechFlowNodeT2TDeepL extends SpeechFlowNode {
                         this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
-                        callback(util.ensureError(error))
+                        callback(util.ensureError(error, "DeepL translation failed"))
                     })
                 }
             },
