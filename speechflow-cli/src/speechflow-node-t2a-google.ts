@@ -36,8 +36,8 @@ export default class SpeechFlowNodeT2AGoogle extends SpeechFlowNode {
             key:      { type: "string",         val: process.env.SPEECHFLOW_GOOGLE_KEY ?? "" },
             voice:    { type: "string", pos: 0, val: "en-US-Neural2-J" },
             language: { type: "string", pos: 1, val: "en-US" },
-            speed:    { type: "number", pos: 2, val: 1.0, match: (n: number) => n >=  0.25 && n <=  4.0 },
-            pitch:    { type: "number", pos: 3, val: 0.0, match: (n: number) => n >= -20.0 && n <= 20.0 }
+            speed:    { type: "number", pos: 2, val: 1.0, match: (n: number) => n >=   0.25 && n <=  4.0 },
+            pitch:    { type: "number", pos: 3, val: 0.0, match: (n: number) => n >= -20.0  && n <= 20.0 }
         })
 
         /*  validate API key  */
