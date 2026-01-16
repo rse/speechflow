@@ -108,7 +108,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
             ""
         this.log("info", `selected voice: name: "${voice.name}"${info}`)
 
-        /*  perform text-to-speech operation with Elevenlabs API  */
+        /*  perform text-to-speech operation with ElevenLabs API  */
         const model = this.params.optimize === "quality" ?
             "eleven_turbo_v2_5" :
             "eleven_flash_v2_5"
@@ -131,7 +131,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
             })
         }
 
-        /*  establish resampler from ElevenLabs's tier-dependent
+        /*  establish resampler from ElevenLabs tier-dependent
             output sample rate to our standard audio sample rate (48KHz)  */
         this.resampler = new SpeexResampler(1, maxSampleRate, this.config.audioSampleRate, 7)
 
