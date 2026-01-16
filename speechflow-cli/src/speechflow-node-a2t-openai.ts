@@ -194,8 +194,8 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     if (this.params.interim && !this.closing && this.queue !== null) {
                         const itemId = ev.item_id as string
                         const timing = speechTiming.get(itemId)
-                        const start  = timing ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
-                        const end    = timing ? Duration.fromMillis(timing.endMs)   : start
+                        const start  = timing !== undefined ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
+                        const end    = timing !== undefined ? Duration.fromMillis(timing.endMs)   : start
                         const chunk  = new SpeechFlowChunk(start, end, "intermediate", "text", text)
                         chunk.meta = aggregateMeta(start, end)
                         this.queue.write(chunk)
@@ -207,8 +207,8 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                         text = ev.transcript as string
                         const itemId = ev.item_id as string
                         const timing = speechTiming.get(itemId)
-                        const start  = timing ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
-                        const end    = timing ? Duration.fromMillis(timing.endMs)   : start
+                        const start  = timing !== undefined ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
+                        const end    = timing !== undefined ? Duration.fromMillis(timing.endMs)   : start
                         const chunk  = new SpeechFlowChunk(start, end, "final", "text", text)
                         chunk.meta = aggregateMeta(start, end)
                         metastore.prune(start)
@@ -230,7 +230,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     const itemId = ev.item_id as string
                     const audioEndMs = ev.audio_end_ms as number
                     const timing = speechTiming.get(itemId)
-                    if (timing)
+                    if (timing !== undefined)
                         timing.endMs = audioEndMs
                     break
                 }
