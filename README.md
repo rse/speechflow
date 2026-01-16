@@ -556,11 +556,11 @@ external files, devices and network services.
 
   | Parameter      | Position  | Default  | Requirement           |
   | -------------- | --------- | -------- | --------------------- |
-  | **command**    | 0         | *none*   | *required*            |
+  | **command**    | 0         | ""       | *required*            |
   | **mode**       | 1         | "r"      | `/^(?:r\|w\|rw)$/`    |
   | **type**       | 2         | "audio"  | `/^(?:audio\|text)$/` |
-  | **chunkAudio** |           | 200      | `10 <= n <= 1000`     |
-  | **chunkText**  |           | 65536    | `1024 <= n <= 131072` |
+  | **chunkAudio** | *none*    | 200      | `10 <= n <= 1000`     |
+  | **chunkText**  | *none*    | 65536    | `1024 <= n <= 131072` |
 
 ### Audio-to-Audio Nodes
 
@@ -657,7 +657,7 @@ The following nodes process audio chunks only.
 
   | Parameter | Position  | Default  | Requirement              |
   | --------- | --------- | -------- | ------------------------ |
-  | **mode**               | *none* | "unplugged" | `/^(?:silenced\|unplugged)$/` |
+  | **mode**               | *none* | "silenced" | `/^(?:silenced\|unplugged)$/` |
   | **posSpeechThreshold** | *none* | 0.50  | *none* |
   | **negSpeechThreshold** | *none* | 0.35  | *none* |
   | **minSpeechFrames**    | *none* | 2     | *none* |
@@ -838,9 +838,9 @@ The following nodes convert audio to text chunks.
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **key**      | *none*    | env.SPEECHFLOW\_OPENAI\_KEY | *none* |
-  | **api**      | *none*    | "https://api.openai.com" | `/^https?:\/\/.+?:\d+$/` |
+  | **api**      | *none*    | "https://api.openai.com/v1" | `/^https?:\/\/.+/` |
   | **model**    | *none*    | "gpt-4o-mini-transcribe" | *none* |
-  | **language** | *none*    | "en"     | `/^(?:de\|en)$/` |
+  | **language** | *none*    | "de"     | `/^(?:de\|en)$/` |
   | **interim**  | *none*    | false    | *none* |
 
 - Node: **a2t-amazon**<br/>
@@ -1079,8 +1079,8 @@ The following nodes process text chunks only.
 
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
-  | **match**    | 0         | ""       | *required*         |
-  | **replace**  | 1         | ""       | *required*         |
+  | **match**    | *none*    | ""       | *required*         |
+  | **replace**  | *none*    | ""       | *none*             |
 
 - Node: **t2t-profanity**<br/>
   Purpose: **profanity filtering**<br/>
@@ -1181,7 +1181,7 @@ The following nodes process text chunks only.
 
   | Parameter    | Position  | Default  | Requirement           |
   | ------------ | --------- | -------- | --------------------- |
-  | **width**    | 0         | 80       | *none*                |
+  | **width**    | *none*    | 80       | *none*                |
 
 ### Text-to-Audio Nodes
 
