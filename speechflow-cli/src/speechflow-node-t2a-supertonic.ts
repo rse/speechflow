@@ -139,7 +139,7 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
             const samples = result.audio
             const outputSampleRate = result.sampling_rate
             if (outputSampleRate !== this.sampleRate)
-                this.log("warn", `unexpected sample rate ${outputSampleRate}Hz (expected ${this.sampleRate}Hz)`)
+                this.log("warning", `unexpected sample rate ${outputSampleRate}Hz (expected ${this.sampleRate}Hz)`)
 
             /*  calculate duration  */
             const duration = samples.length / outputSampleRate
