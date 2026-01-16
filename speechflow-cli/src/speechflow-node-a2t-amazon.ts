@@ -173,11 +173,11 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                             return prev
                         }, new Map<string, any>())
                         if (this.params.interim) {
-                            const words = []
+                            const words: { word: string, start: Duration, end: Duration }[] = []
                             for (const item of alt.Items ?? []) {
                                 if (item.Type === "pronunciation") {
                                     words.push({
-                                        word:  item.Content,
+                                        word:  item.Content ?? "",
                                         start: Duration.fromMillis((item.StartTime ?? 0) * 1000).plus(this.timeZeroOffset),
                                         end:   Duration.fromMillis((item.EndTime   ?? 0) * 1000).plus(this.timeZeroOffset)
                                     })
