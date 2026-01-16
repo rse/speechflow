@@ -70,6 +70,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     /*  internal state  */
     private client:       TranscribeStreamingClient                | null = null
     private clientStream: AsyncIterable<TranscriptResultStream>    | null = null
+    private audioQueue:   AsyncQueue<Uint8Array>                   | null = null
     private closing                                                       = false
     private queue:        util.SingleQueue<SpeechFlowChunk | null> | null = null
 
@@ -127,7 +128,8 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         })
 
         /*  create an AudioStream for Amazon Transcribe  */
-        const audioQueue = new AsyncQueue<Uint8Array>()
+        this.audioQueue = new AsyncQueue<Uint8Array>()
+        const audioQueue = this.audioQueue
         const audioStream = (async function * (q: AsyncQueue<Uint8Array>): AsyncIterable<AudioStream> {
             for await (const chunk of q) {
                 yield { AudioEvent: { AudioChunk: chunk } }
@@ -273,10 +275,10 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         /*  indicate closing first to stop all async operations  */
         this.closing = true
 
-        /*  close queue  */
-        if (this.queue !== null) {
-            this.queue.write(null)
-            this.queue = null
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
         }
 
         /*  close Amazon Transcribe connection  */
@@ -285,10 +287,17 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
             this.client = null
         }
 
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
+        /*  close audio queue  */
+        if (this.audioQueue !== null) {
+            this.audioQueue.push(null)
+            this.audioQueue.destroy()
+            this.audioQueue = null
+        }
+
+        /*  signal EOF to any pending read operations  */
+        if (this.queue !== null) {
+            this.queue.write(null)
+            this.queue = null
         }
     }
 }
