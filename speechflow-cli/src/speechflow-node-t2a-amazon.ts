@@ -124,11 +124,9 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             transform (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.closing) {
+                if (self.closing)
                     callback(new Error("stream already destroyed"))
-                    return
-                }
-                if (Buffer.isBuffer(chunk.payload))
+                else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("invalid chunk payload type"))
                 else if (chunk.payload === "")
                     callback()
