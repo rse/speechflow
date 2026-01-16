@@ -121,16 +121,16 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  shutdown Transformers  */
-        if (this.translator !== null) {
-            this.translator.dispose()
-            this.translator = null
-        }
-
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
             this.stream = null
+        }
+
+        /*  shutdown Transformers  */
+        if (this.translator !== null) {
+            this.translator.dispose()
+            this.translator = null
         }
     }
 }

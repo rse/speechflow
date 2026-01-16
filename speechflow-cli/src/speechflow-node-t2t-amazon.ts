@@ -135,16 +135,16 @@ export default class SpeechFlowNodeT2TAmazon extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  close Amazon Translate connection  */
-        if (this.client !== null) {
-            this.client.destroy()
-            this.client = null
-        }
-
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
             this.stream = null
+        }
+
+        /*  close Amazon Translate connection  */
+        if (this.client !== null) {
+            this.client.destroy()
+            this.client = null
         }
     }
 }
