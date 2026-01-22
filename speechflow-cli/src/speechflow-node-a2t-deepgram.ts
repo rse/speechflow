@@ -106,10 +106,10 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             multichannel:     false,
             endpointing:      false,
             interim_results:  this.params.interim,
-            smart_format:     true,
+            smart_format:     false,
             punctuate:        true,
             filler_words:     true,
-            numerals:         true,
+            numerals:         false,
             diarize:          false,
             profanity_filter: false,
             redact:           false
