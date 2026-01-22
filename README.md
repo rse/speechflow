@@ -867,12 +867,14 @@ The following nodes convert audio to text chunks.
 
 - Node: **a2t-deepgram**<br/>
   Purpose: **Deepgram Speech-to-Text conversion**<br/>
-  Example: `a2t-deepgram(language: "de")`<br/>
+  Example: `a2t-deepgram(language: "de", keywords: "SpeechFlow, TypeScript")`<br/>
   Notice: this node requires an API key!
 
   > This node performs Speech-to-Text (S2T) conversion, i.e., it
   > recognizes speech in the input audio stream and outputs a
-  > corresponding text stream.
+  > corresponding text stream. The optional `keywords` parameter
+  > accepts a comma or space-separated list of words to boost
+  > during recognition, improving accuracy for domain-specific terminology.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -887,6 +889,7 @@ The following nodes convert audio to text chunks.
   | **version**  | 1         | "latest" | *none* |
   | **language** | 2         | "multi"  | *none* |
   | **interim**  | 3         | false    | *none* |
+  | **keywords** | 4         | ""       | *none* |
 
 - Node: **a2t-google**<br/>
   Purpose: **Google Cloud Speech-to-Text conversion**<br/>

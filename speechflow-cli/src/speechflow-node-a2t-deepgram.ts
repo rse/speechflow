@@ -37,7 +37,8 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             model:    { type: "string",  val: "nova-2", pos: 0 },
             version:  { type: "string",  val: "latest", pos: 1 },
             language: { type: "string",  val: "multi",  pos: 2 },
-            interim:  { type: "boolean", val: false,    pos: 3 }
+            interim:  { type: "boolean", val: false,    pos: 3 },
+            keywords: { type: "string",  val: "",       pos: 4 }
         })
 
         /*  sanity check parameters  */
@@ -95,6 +96,9 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             else if (this.params.model.match(/^nova-3/))
                 language = "multi"
         }
+        const keywords = this.params.keywords
+            .split(/(?:\s+|\s*,\s*)/)
+            .map((kw) => `${kw}:2`)
         this.dg = deepgram.listen.live({
             mip_opt_out:      true,
             model:            this.params.model,
@@ -112,7 +116,8 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             numerals:         false,
             diarize:          false,
             profanity_filter: false,
-            redact:           false
+            redact:           false,
+            keywords
         })
 
         /*  hook onto Deepgram API events  */

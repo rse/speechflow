@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+2.1.0 (2026-01-22)
+------------------
+
+- IMPROVEMENT: add "keywords" parameter to node "a2t-deepgram"
+
 2.0.4 (2026-01-16)
 ------------------
 
