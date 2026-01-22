@@ -17,7 +17,7 @@
                     v-bind:ref="`chunk-${chunk.id}`">
                     {{ chunk.text }}
                     <span class="cursor" v-if="idx === (text.length - 1) && chunk.kind === 'intermediate'">
-                        <spinner-grid class="spinner-grid" size="50"/>
+                        <spinner-grid class="spinner-grid" size="30"/>
                     </span>
                 </span>
             </div>
