@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: add "keywords" parameter to node "a2t-deepgram"
 - IMPROVEMENT: improve readability of subtitle rendering
+- IMPROVEMENT: improve profanity filtering node
 - UPDATE: upgrade NPM dependencies
 
 2.0.4 (2026-01-16)
