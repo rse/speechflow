@@ -74,7 +74,6 @@
         "wrap-text":                            "1.0.10",
         "bad-words-next":                       "3.2.0",
         "@2toad/profanity":                     "3.2.0",
-        "leo-profanity":                        "1.9.0",
         "cli-table3":                           "0.6.5",
         "mkdirp":                               "3.0.1",
         "@soundtouchjs/audio-worklet":          "0.2.1",
