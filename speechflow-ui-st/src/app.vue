@@ -64,17 +64,18 @@
             /*  content chunk  */
             .chunk
                 color: #eeeeee
-                background-color: #000000b0
-                text-shadow: 0 0 0.20vw #000000
-                -webkit-text-stroke: 0.05vw #000000
+                background-color: #000000e0
                 font-size: 2.0vw
                 font-weight: 600
-                line-height: 1.4
+                line-height: 1.5
                 padding-left:  0.20vw
                 padding-right: 0.20vw
                 .cursor
+                    position: relative
                     display: inline-block
                     margin-left: 10px
+                    margin-right: 10px
+                    top: -5px
                 &.intermediate:last-child
                     color: #ffffff
                 &.removed
