@@ -125,7 +125,7 @@ export default defineComponent({
         /*  optically remove outdated text chunks  */
         this.cleanupIntervalId = setInterval(() => {
             for (const chunk of this.text) {
-                if (chunk.timestamp < DateTime.now().minus({ seconds: 20 }) && !chunk.removing && !chunk.removed) {
+                if (chunk.timestamp < DateTime.now().minus({ seconds: 10 }) && !chunk.removing && !chunk.removed) {
                     const el = this.$refs[`chunk-${chunk.id}`] as HTMLSpanElement
                     if (!el)
                         continue
