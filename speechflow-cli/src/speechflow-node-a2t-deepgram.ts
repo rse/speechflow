@@ -96,7 +96,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             else if (this.params.model.match(/^nova-3/))
                 language = "multi"
         }
-        const keywords = this.params.keywords
+        const keywords = (this.params.keywords as string)
             .split(/(?:\s+|\s*,\s*)/)
             .map((kw) => `${kw}:2`)
         this.dg = deepgram.listen.live({
