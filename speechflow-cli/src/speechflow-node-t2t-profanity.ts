@@ -5,12 +5,14 @@
 */
 
 /*  standard dependencies  */
-import Stream       from "node:stream"
+import Stream        from "node:stream"
 
 /*  external dependencies  */
-import BadWordsNext from "bad-words-next"
-import en           from "bad-words-next/lib/en"
-import de           from "bad-words-next/lib/de"
+import BadWordsNext  from "bad-words-next"
+import en            from "bad-words-next/lib/en"
+import de            from "bad-words-next/lib/de"
+import { Profanity,
+    CensorType }     from "@2toad/profanity"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -31,8 +33,7 @@ export default class SpeechFlowNodeT2TProfanity extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             lang:        { type: "string", val: "en", match: /^(?:en|de)$/ },
-            placeholder: { type: "string", val: "***" },
-            mode:        { type: "string", val: "replace", match: /^(?:replace|repeat)$/ }
+            placeholder: { type: "string", val: "***" }
         })
 
         /*  declare node input/output format  */
@@ -42,18 +43,28 @@ export default class SpeechFlowNodeT2TProfanity extends SpeechFlowNode {
 
     /*  open node  */
     async open () {
-        /*  create profanity filter instance  */
-        const filter = util.run("creating profanity filter", () =>
+        /*  create profanity filter instances  */
+        const filter1 = util.run("creating profanity filter 1", () =>
             new BadWordsNext({
                 data:            langData[this.params.lang],
                 placeholder:     this.params.placeholder,
-                placeholderMode: this.params.mode as "replace" | "repeat"
+                placeholderMode: "repeat" as "replace" | "repeat"
+            })
+        )
+        const filter2 = util.run("creating profanity filter 2", () =>
+            new Profanity({
+                languages: [ this.params.lang ],
+                grawlix:   this.params.placeholder,
+                wholeWord: true
             })
         )
 
         /*  apply profanity filtering  */
-        const censor = (text: string): string =>
-            filter.filter(text)
+        const censor = (text: string): string => {
+            text = filter1.filter(text)
+            text = filter2.censor(text, CensorType.Word)
+            return text
+        }
 
         /*  establish a transform stream and connect it to profanity filtering  */
         this.stream = new Stream.Transform({
