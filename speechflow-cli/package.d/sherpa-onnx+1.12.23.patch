@@ -1,0 +1,12 @@
+diff --git a/node_modules/sherpa-onnx/sherpa-onnx-speech-enhancement.js b/node_modules/sherpa-onnx/sherpa-onnx-speech-enhancement.js
+index 3ee5a77..2aab4a2 100644
+--- a/node_modules/sherpa-onnx/sherpa-onnx-speech-enhancement.js
++++ b/node_modules/sherpa-onnx/sherpa-onnx-speech-enhancement.js
+@@ -101,7 +101,6 @@ function initSherpaOnnxOfflineSpeechDenoiserConfig(config, Module) {
+ 
+ class OfflineSpeechDenoiser {
+   constructor(configObj, Module) {
+-    console.log(configObj)
+     const config = initSherpaOnnxOfflineSpeechDenoiserConfig(configObj, Module)
+     // Module._MyPrint(config.ptr);
+     const handle = Module._SherpaOnnxCreateOfflineSpeechDenoiser(config.ptr);

@@ -30,6 +30,8 @@
         "speex-resampler":                      "3.0.1",
         "@sapphi-red/speex-preprocess-wasm":    "0.4.0",
         "@shiguredo/rnnoise-wasm":              "2025.1.5",
+        "sherpa-onnx":                          "1.12.23",
+        "axios":                                "1.13.2",
         "@aws-sdk/client-transcribe-streaming": "3.975.0",
         "@aws-sdk/client-translate":            "3.975.0",
         "@aws-sdk/client-polly":                "3.975.0",

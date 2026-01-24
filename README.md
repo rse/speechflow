@@ -31,7 +31,7 @@ speech-to-speech).
 - local Voice Activity Detection (VAD),
 - local voice gender recognition,
 - local audio LUFS-S/RMS metering,
-- local audio Speex and RNNoise noise suppression,
+- local audio Speex, RNNoise, and GTCRN noise suppression,
 - local audio compressor and expander dynamics processing,
 - local audio gain adjustment,
 - local audio pitch shifting and time stretching,
@@ -356,6 +356,7 @@ First a short overview of the available processing nodes:
   **a2a-gender**,
   **a2a-speex**,
   **a2a-rnnoise**,
+  **a2a-gtcrn**,
   **a2a-compressor**,
   **a2a-expander**,
   **a2a-gain**,
@@ -708,6 +709,27 @@ The following nodes process audio chunks only.
 
   > This node uses RNNoise to perform noise suppression, i.e., it
   > detects and attenuates the noise in the audio stream.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | audio       |
+  | output  | audio       |
+
+  | Parameter | Position  | Default  | Requirement              |
+  | --------- | --------- | -------- | ------------------------ |
+
+- Node: **a2a-gtcrn**<br/>
+  Purpose: **GTCRN Deep Learning Noise Suppression node**<br/>
+  Example: `a2a-gtcrn()`
+
+  > This node uses GTCRN (Gated Temporal Convolutional Recurrent Network)
+  > to perform deep learning based noise suppression and speech denoising.
+  > It detects and removes noise from the audio stream while preserving
+  > speech quality. The GTCRN ONNX model is automatically downloaded from
+  > the sherpa-onnx project on first use. NOTICE: This node internally
+  > operates at 16KHz sample rate only. Audio is automatically resampled
+  > from SpeechFlow's internal 48KHz to 16KHz for processing, and then
+  > resampled back to 48KHz for output.
 
   | Port    | Payload     |
   | ------- | ----------- |

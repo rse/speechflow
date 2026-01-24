@@ -42,5 +42,31 @@ declare module "shell-parser" {
     export default function shellParser (command: string): string[]
 }
 
+/*  type definition for "sherpa-onnx"  */
+declare module "sherpa-onnx" {
+    export interface SherpaOnnxDenoiserConfig {
+        model: {
+            gtcrn: {
+                model: string
+            }
+        },
+        numThreads?: number,
+        provider?:   string,
+        debug?:      number
+    }
+    export interface SherpaOnnxAudioOutput {
+        samples: Float32Array
+        sampleRate: number
+    }
+    export interface SherpaOnnxOfflineSpeechDenoiser {
+        run(samples: Float32Array, sampleRate: number): SherpaOnnxAudioOutput
+    }
+    export interface SherpaOnnxModule {
+        createOfflineSpeechDenoiser(config: SherpaOnnxDenoiserConfig): SherpaOnnxOfflineSpeechDenoiser
+    }
+    const SherpaOnnx: SherpaOnnxModule
+    export default SherpaOnnx
+}
+
 /* eslint-enable no-unused-vars */
 
