@@ -13,7 +13,7 @@ declare module "node:stream" {
 }
 
 /*  type definitions for AudioWorkletProcessor  */
-declare interface AudioWorkletProcessor {
+declare interface AudioWorkletProcessorType {
     readonly port: MessagePort
     process(
         inputs:  Float32Array[][],
@@ -22,8 +22,8 @@ declare interface AudioWorkletProcessor {
     ): boolean
 }
 declare const AudioWorkletProcessor: {
-    prototype: AudioWorkletProcessor
-    new(): AudioWorkletProcessor
+    prototype: AudioWorkletProcessorType
+    new(): AudioWorkletProcessorType
 }
 declare interface AudioParamDescriptor {
     name:            string
@@ -34,7 +34,7 @@ declare interface AudioParamDescriptor {
 }
 declare function registerProcessor (
     name: string,
-    processorCtor: new (...args: any[]) => AudioWorkletProcessor
+    processorCtor: new (...args: any[]) => AudioWorkletProcessorType
 ): void
 
 /*  type definition for "shell-parser"  */
