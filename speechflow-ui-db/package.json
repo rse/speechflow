@@ -14,7 +14,7 @@
         "url":                              "http://engelschall.com"
     },
     "dependencies": {
-        "vue":                              "3.5.26",
+        "vue":                              "3.5.27",
         "luxon":                            "3.7.2",
         "@opensumi/reconnecting-websocket": "4.4.0",
         "axios":                            "1.13.2",
@@ -25,9 +25,9 @@
     },
     "devDependencies": {
         "vite":                             "7.3.1",
-        "typescript-eslint":                "8.53.0",
-        "@typescript-eslint/eslint-plugin": "8.53.0",
-        "@typescript-eslint/parser":        "8.53.0",
+        "typescript-eslint":                "8.53.1",
+        "@typescript-eslint/eslint-plugin": "8.53.1",
+        "@typescript-eslint/parser":        "8.53.1",
         "@vitejs/plugin-vue":               "6.0.3",
         "@rollup/plugin-yaml":              "4.1.2",
         "vite-plugin-node-polyfills":       "0.25.0",
@@ -43,8 +43,8 @@
         "eslint-plugin-import":             "2.32.0",
         "eslint-plugin-vue":                "10.7.0",
 
-        "oxlint":                           "1.39.0",
-        "eslint-plugin-oxlint":             "1.39.0",
+        "oxlint":                           "1.41.0",
+        "eslint-plugin-oxlint":             "1.41.0",
 
         "htmllint":                         "0.8.0",
         "htmllint-cli":                     "0.0.7",
@@ -52,16 +52,16 @@
         "check-dependencies":               "2.0.0",
         "nodemon":                          "3.1.11",
         "shx":                              "0.4.0",
-        "stylelint":                        "16.26.1",
+        "stylelint":                        "17.0.0",
         "stylelint-config-html":            "1.1.0",
         "stylelint-config-recommended-vue": "1.6.1",
-        "stylelint-config-standard":        "39.0.1",
+        "stylelint-config-standard":        "40.0.0",
         "stylelint-config-standard-vue":    "1.0.0",
         "stylelint-stylus":                 "1.0.0",
         "postcss-html":                     "1.8.1",
         "stylus":                           "0.64.0",
         "typescript":                       "5.9.3",
-        "vue-tsc":                          "3.2.2",
+        "vue-tsc":                          "3.2.3",
         "delay-cli":                        "3.0.0",
         "cross-env":                        "10.1.0",
         "serve":                            "14.2.5",
@@ -69,7 +69,8 @@
         "@types/luxon":                     "3.7.1"
     },
     "overrides": {
-        "@liuli-util/vite-plugin-node":     { "vite": ">=6.0.0" }
+        "@liuli-util/vite-plugin-node":     { "vite": ">=6.0.0" },
+        "stylelint-stylus":                 { "stylelint": "^17.0.0" }
     },
     "engines" : {
         "npm":                              ">=10.0.0",
