@@ -5,14 +5,13 @@
 */
 
 /*  standard dependencies  */
-import Stream        from "node:stream"
+import Stream                              from "node:stream"
 
 /*  external dependencies  */
-import BadWordsNext  from "bad-words-next"
-import en            from "bad-words-next/lib/en"
-import de            from "bad-words-next/lib/de"
-import { Profanity,
-    CensorType }     from "@2toad/profanity"
+import BadWordsNext                        from "bad-words-next"
+import en                                  from "bad-words-next/lib/en"
+import de                                  from "bad-words-next/lib/de"
+import { Profanity, CensorType }           from "@2toad/profanity"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
