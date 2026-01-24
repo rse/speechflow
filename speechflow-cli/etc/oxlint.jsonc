@@ -134,6 +134,7 @@
         "capitalized-comments":               "off",
         "no-inline-comments":                 "off",
         "max-statements":                     "off",
+        "no-duplicate-imports":               "off",
 
         "complexity":                         [ "error", { "max": 35 } ],
         "complexity/max-cyclomatic":          [ "error", { "max": 30 } ],
