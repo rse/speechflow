@@ -14,13 +14,14 @@ import { Duration }       from "luxon"
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
 
-/*  text stream queue element */
+/*  text stream queue element  */
 type TextQueueElement = {
-    type:         "text-frame",
-    chunk:        SpeechFlowChunk,
-    complete?:    boolean
+    type:      "text-frame",
+    chunk:     SpeechFlowChunk,
+    preview?:  "pending" | "sent",
+    complete?: boolean
 } | {
-    type:         "text-eof"
+    type:      "text-eof"
 }
 
 /*  SpeechFlow node for sentence splitting  */
@@ -78,6 +79,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     this.queueSplit.walk(+1)
                     break
                 }
+
+                /*  perform sentence splitting on input chunk  */
                 const chunk = element.chunk
                 const payload = chunk.payload as string
                 const m = payload.match(/^((?:.|\r?\n)+?[.;?!])\s*((?:.|\r?\n)*)$/)
@@ -115,20 +118,33 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         if (element2 === undefined)
                             break
                         if (element2.type === "text-eof") {
+                            /*  no more chunks: output as final
+                                (perhaps incomplete sentence at end of stream)  */
                             element.complete = true
                             this.queueSplit.touch()
                             this.queueSplit.walk(+1)
                             break
                         }
+
+                        /*  merge into following chunk  */
                         element2.chunk.timestampStart = element.chunk.timestampStart
                         element2.chunk.payload =
                             (element.chunk.payload  as string) + " " +
                             (element2.chunk.payload as string)
+
+                        /*  reset preview state (merged content needs new preview)  */
+                        element2.preview = undefined
                         this.queueSplit.delete()
                         this.queueSplit.touch()
                     }
-                    else
+                    else {
+                        /*  no following chunk yet: mark for intermediate preview output  */
+                        if (element.preview !== "sent") {
+                            element.preview = "pending"
+                            this.queueSplit.touch()
+                        }
                         break
+                    }
                 }
             }
 
@@ -157,8 +173,16 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     callback(new Error("expected text input as string chunks"))
                 else if (chunk.payload.length === 0)
                     callback()
+                else if (chunk.kind === "intermediate") {
+                    /*  intermediate chunks: pass through immediately (bypass queue)  */
+                    self.log("info", `received text (${chunk.kind}): ${JSON.stringify(chunk.payload)}`)
+                    self.log("info", `send text (intermediate pass-through): ${JSON.stringify(chunk.payload)}`)
+                    this.push(chunk)
+                    callback()
+                }
                 else {
-                    self.log("info", `received text: ${JSON.stringify(chunk.payload)}`)
+                    /*  final chunks: queue for sentence splitting  */
+                    self.log("info", `received text (${chunk.kind}): ${JSON.stringify(chunk.payload)}`)
                     self.queueRecv.append({ type: "text-frame", chunk })
                     callback()
                 }
@@ -192,6 +216,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     else if (element !== undefined
                         && element.type === "text-frame"
                         && element.complete === true) {
+                        /*  send all consecutive complete chunks  */
                         while (true) {
                             const nextElement = self.queueSend.peek()
                             if (nextElement === undefined)
@@ -204,11 +229,26 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             else if (nextElement.type === "text-frame"
                                 && nextElement.complete !== true)
                                 break
-                            self.log("info", `send text: ${JSON.stringify(nextElement.chunk.payload)}`)
+                            self.log("info", `send text (${nextElement.chunk.kind}): ${JSON.stringify(nextElement.chunk.payload)}`)
                             this.push(nextElement.chunk)
                             self.queueSend.walk(+1)
                             self.queue.trim()
                         }
+                    }
+                    else if (element !== undefined
+                        && element.type === "text-frame"
+                        && element.preview === "pending") {
+                        /*  send intermediate preview (without advancing pointer)  */
+                        const previewChunk = element.chunk.clone()
+                        previewChunk.kind = "intermediate"
+                        self.log("info", `send text (intermediate preview): ${JSON.stringify(previewChunk.payload)}`)
+                        this.push(previewChunk)
+                        element.preview = "sent"
+                        self.queueSend.touch()
+
+                        /*  wait for more data  */
+                        if (!self.closing)
+                            self.queue.once("write", flushPendingChunks)
                     }
                     else if (!self.closing)
                         self.queue.once("write", flushPendingChunks)
