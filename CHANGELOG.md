@@ -7,6 +7,7 @@ ChangeLog
 
 - BUGFIX: correctly support English ("en") as the source language in t2t-deepl node
 - BUGFIX: improve rendering of LUFS-M audio meter in Dashboard
+- BUGFIX: fix a2a-meter node by correcting the internal chunk buffer handling
 - IMPROVEMENT: add "keywords" parameter to node "a2t-deepgram"
 - IMPROVEMENT: improve readability of subtitle rendering
 - IMPROVEMENT: improve profanity filtering node
