@@ -91,28 +91,30 @@ studio-translation: |
     xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r", chunk: 200) | {
         a2a-meter(interval: 50, dashboard: "audio-de", mode: "sink"),
         a2t-deepgram(language: "de", model: "nova-2", interim: true, keywords: env.SPEECHFLOW_KEYWORDS) | {
-            x2x-trace(type: "text", dashboard: "text-de-interim", mode: "sink"),
-            t2t-subtitle(mode: "render", addr: env.SPEECHFLOW_IPADDR, port: 8585),
-            t2t-sentence() | {
-                x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") | {
-                    t2t-format(width: 80) |
-                        xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-de.txt`, mode: "w", type: "text"),
-                    t2t-subtitle(mode: "export", format: "srt") |
-                        xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-de.srt`, mode: "w", type: "text"),
-                    x2x-trace(type: "text", dashboard: "text-de-final", mode: "sink") /* DE-Final */
-                },
-                t2t-deepl(src: "de", dst: "en") | {
-                    x2x-trace(type: "text", dashboard: "text-en-interim", mode: "sink"),
-                    t2t-subtitle(mode: "render", addr: env.SPEECHFLOW_IPADDR, port: 8686),
+            t2t-profanity(lang: "de") | {
+                x2x-trace(type: "text", dashboard: "text-de-interim", mode: "sink"),
+                t2t-subtitle(mode: "render", addr: env.SPEECHFLOW_IPADDR, port: 8585),
+                t2t-sentence() | {
                     x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") | {
                         t2t-format(width: 80) |
-                            xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-en.txt`, mode: "w", type: "text"),
+                            xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-de.txt`, mode: "w", type: "text"),
                         t2t-subtitle(mode: "export", format: "srt") |
-                            xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-en.srt`, mode: "w", type: "text"),
-                        x2x-trace(type: "text", dashboard: "text-en-final", mode: "sink"),
-                        t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") | {
-                            a2a-meter(interval: 50, dashboard: "audio-en", mode: "sink"),
-                            xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
+                            xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-de.srt`, mode: "w", type: "text"),
+                        x2x-trace(type: "text", dashboard: "text-de-final", mode: "sink") /* DE-Final */
+                    },
+                    t2t-deepl(src: "de", dst: "en") | {
+                        x2x-trace(type: "text", dashboard: "text-en-interim", mode: "sink"),
+                        t2t-subtitle(mode: "render", addr: env.SPEECHFLOW_IPADDR, port: 8686),
+                        x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") | {
+                            t2t-format(width: 80) |
+                                xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-en.txt`, mode: "w", type: "text"),
+                            t2t-subtitle(mode: "export", format: "srt") |
+                                xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-en.srt`, mode: "w", type: "text"),
+                            x2x-trace(type: "text", dashboard: "text-en-final", mode: "sink"),
+                            t2a-elevenlabs(voice: "Mark", optimize: "latency", speed: 1.05, language: "en") | {
+                                a2a-meter(interval: 50, dashboard: "audio-en", mode: "sink"),
+                                xio-device(device: env.SPEECHFLOW_DEVICE_SPK, mode: "w")
+                            }
                         }
                     }
                 }
