@@ -90,7 +90,7 @@ studio-transcription: |
 studio-translation: |
     xio-device(device: env.SPEECHFLOW_DEVICE_MIC, mode: "r", chunk: 200) | {
         a2a-meter(interval: 50, dashboard: "audio-de", mode: "sink"),
-        a2t-deepgram(language: "de", model: "nova-2", interim: true) | {
+        a2t-deepgram(language: "de", model: "nova-2", interim: true, keywords: env.SPEECHFLOW_KEYWORDS) | {
             x2x-trace(type: "text", dashboard: "text-de-interim", mode: "sink"),
             t2t-subtitle(mode: "render", addr: env.SPEECHFLOW_IPADDR, port: 8585),
             t2t-sentence() | {
