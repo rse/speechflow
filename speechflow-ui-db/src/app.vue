@@ -72,6 +72,7 @@
                 flex-grow: 1
                 flex-shrink: 1
                 flex-basis: 0
+                min-width: 0
             .block-name
                 width: 100%
                 height: 2.5vw
