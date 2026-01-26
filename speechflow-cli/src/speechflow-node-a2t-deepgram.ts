@@ -87,8 +87,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         /*  create a store for the meta information  */
         const metastore = new util.TimeStore<Map<string, any>>()
 
-        /*  connect to Deepgram API  */
-        const deepgram = Deepgram.createClient(this.params.key)
+        /*  determine language  */
         let language = "en"
         if (this.params.language !== "en") {
             if (this.params.model.match(/^nova-2/))
@@ -96,9 +95,21 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             else if (this.params.model.match(/^nova-3/))
                 language = "multi"
         }
+
+        /*  determine positive/negative boosted keywords  */
         const keywords = (this.params.keywords as string)
             .split(/(?:\s+|\s*,\s*)/)
-            .map((kw) => `${kw}:2`)
+            .map((kw) => {
+                let boost = 2
+                if (kw.startsWith("-")) {
+                    kw = kw.slice(1)
+                    boost = -4
+                }
+                return `${kw}:${boost}`
+            })
+
+        /*  connect to Deepgram API  */
+        const deepgram = Deepgram.createClient(this.params.key)
         this.dg = deepgram.listen.live({
             mip_opt_out:      true,
             model:            this.params.model,
