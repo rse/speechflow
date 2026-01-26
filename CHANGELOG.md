@@ -5,6 +5,7 @@ ChangeLog
 2.1.0 (2026-01-22)
 ------------------
 
+- BUGFIX: correctly support English ("en") as the source language in t2t-deepl node
 - IMPROVEMENT: add "keywords" parameter to node "a2t-deepgram"
 - IMPROVEMENT: improve readability of subtitle rendering
 - IMPROVEMENT: improve profanity filtering node

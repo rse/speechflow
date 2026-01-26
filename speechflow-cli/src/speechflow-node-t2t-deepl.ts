@@ -63,7 +63,7 @@ export default class SpeechFlowNodeT2TDeepL extends SpeechFlowNode {
 
         /*  provide text-to-text translation  */
         const translate = async (text: string) => {
-            const src = this.params.src === "en" ? "en-US" : this.params.src
+            const src = this.params.src
             const dst = this.params.dst === "en" ? "en-US" : this.params.dst
             const result = await this.deepl!.translateText(text, src, dst, {
                 splitSentences: "off",
