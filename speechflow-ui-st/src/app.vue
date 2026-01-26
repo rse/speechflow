@@ -63,7 +63,7 @@
 
             /*  content chunk  */
             .chunk
-                color: #eeeeee
+                color: #ffffff
                 background-color: #000000e0
                 font-size: 2.0vw
                 font-weight: 600
@@ -77,7 +77,7 @@
                     margin-right: 10px
                     top: -5px
                 &.intermediate:last-child
-                    color: #ffffff
+                    color: #ffe0c0
                 &.removed
                     opacity: 0
 </style>
