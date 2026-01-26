@@ -14,6 +14,7 @@ ChangeLog
 - IMPROVEMENT: add a2a-gtcrn node for GTCRN-based local noise suppression
 - IMPROVEMENT: support intermediate/final text chunk tagging in t2t-sentence node
 - IMPROVEMENT: support timeout handling for incomplete text chunks in t2t-sentence node
+- IMPROVEMENT: support keywords also for Nova-3 mode in a2t-deepgram node
 - UPDATE: upgrade NPM dependencies
 
 2.0.4 (2026-01-16)

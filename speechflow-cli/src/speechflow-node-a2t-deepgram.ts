@@ -87,34 +87,11 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         /*  create a store for the meta information  */
         const metastore = new util.TimeStore<Map<string, any>>()
 
-        /*  determine language  */
-        let language = "en"
-        if (this.params.language !== "en") {
-            if (this.params.model.match(/^nova-2/))
-                language = this.params.language
-            else if (this.params.model.match(/^nova-3/))
-                language = "multi"
-        }
-
-        /*  determine positive/negative boosted keywords  */
-        const keywords = (this.params.keywords as string)
-            .split(/(?:\s+|\s*,\s*)/)
-            .map((kw) => {
-                let boost = 2
-                if (kw.startsWith("-")) {
-                    kw = kw.slice(1)
-                    boost = -4
-                }
-                return `${kw}:${boost}`
-            })
-
-        /*  connect to Deepgram API  */
-        const deepgram = Deepgram.createClient(this.params.key)
-        this.dg = deepgram.listen.live({
+        /*  configure Deepgram connection options  */
+        const options: Deepgram.LiveSchema = {
             mip_opt_out:      true,
             model:            this.params.model,
             version:          this.params.version,
-            language,
             channels:         this.config.audioChannels,
             sample_rate:      this.config.audioSampleRate,
             encoding:         "linear16",
@@ -127,9 +104,34 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             numerals:         false,
             diarize:          false,
             profanity_filter: false,
-            redact:           false,
-            keywords
-        })
+            redact:           false
+        }
+        const model    = this.params.model    as string
+        const language = this.params.language as string
+        const keywords = this.params.keywords as string
+        if (model.match(/^nova-2/) && language !== "en")
+            options.language = this.params.language
+        else if (model.match(/^nova-3/) && language !== "en")
+            options.language = "multi"
+        else
+            options.language = "en"
+        if (keywords !== "") {
+            if (model.match(/^nova-2/))
+                options.keywords = keywords.split(/(?:\s+|\s*,\s*)/).map((kw) => {
+                    let boost = 2
+                    if (kw.startsWith("-")) {
+                        kw = kw.slice(1)
+                        boost = -4
+                    }
+                    return `${kw}:${boost}`
+                })
+            else if (model.match(/^nova-3/))
+                options.keyterm = keywords.split(/(?:\s+|\s*,\s*)/).join(" ")
+        }
+
+        /*  connect to Deepgram API  */
+        const deepgram = Deepgram.createClient(this.params.key)
+        this.dg = deepgram.listen.live(options)
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
