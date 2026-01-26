@@ -50,13 +50,22 @@ export default class SpeechFlowNodeT2TProfanity extends SpeechFlowNode {
                 placeholderMode: "repeat" as "replace" | "repeat"
             })
         )
-        const filter2 = util.run("creating profanity filter 2", () =>
-            new Profanity({
+        const filter2 = util.run("creating profanity filter 2", () => {
+            const profanity = new Profanity({
                 languages: [ this.params.lang ],
                 grawlix:   this.params.placeholder,
                 wholeWord: true
             })
-        )
+            if (this.params.lang === "de") {
+                /*  improve word-list for german language  */
+                profanity.addWords([ "sex" ])
+                profanity.removeWords([
+                    "verdammt", "glocke", "wahnsinn", "knochen", "fehler", "mist", "phantasievoll",
+                    "huhn", "ziegen", "geil", "lustig", "verzögert", "schrauben", "geschlecht"
+                ])
+            }
+            return profanity
+        })
 
         /*  apply profanity filtering  */
         const censor = (text: string): string => {
