@@ -1156,12 +1156,15 @@ The following nodes process text chunks only.
 
 - Node: **t2t-sentence**<br/>
   Purpose: **sentence splitting/merging**<br/>
-  Example: `t2t-sentence()`<br/>
+  Example: `t2t-sentence(timeout: 3000)`<br/>
 
   > This node allows you to ensure that a text stream is split or merged
   > into complete sentences. It is primarily intended to be used after
   > the "a2t-deepgram" node and before "t2t-deepl" or "t2a-elevenlabs" nodes in
-  > order to improve overall quality.
+  > order to improve overall quality. Intermediate text chunks are passed
+  > through immediately, while final chunks are queued for sentence splitting.
+  > If an incomplete sentence remains in the queue longer than the timeout,
+  > it is promoted to a final chunk and emitted.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -1170,6 +1173,7 @@ The following nodes process text chunks only.
 
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
+  | **timeout**  | 0         | 3000     | *none*             |
 
 - Node: **t2t-subtitle**<br/>
   Purpose: **SRT/VTT Subtitle Generation**<br/>
