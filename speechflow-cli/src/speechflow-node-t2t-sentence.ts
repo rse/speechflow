@@ -36,13 +36,16 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     private queueSend  = this.queue.pointerUse("send")
     private closing  = false
     private workingOffTimer: ReturnType<typeof setTimeout> | null = null
+    private previewTimer:    ReturnType<typeof setTimeout> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
         super(id, cfg, opts, args)
 
         /*  declare node configuration parameters  */
-        this.configure({})
+        this.configure({
+            timeout: { type: "number", pos: 0, val: 3 * 1000 }
+        })
 
         /*  declare node input/output format  */
         this.input  = "text"
@@ -183,6 +186,13 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                 else {
                     /*  final chunks: queue for sentence splitting  */
                     self.log("info", `received text (${chunk.kind}): ${JSON.stringify(chunk.payload)}`)
+
+                    /*  cancel any pending preview timeout  */
+                    if (self.previewTimer !== null) {
+                        clearTimeout(self.previewTimer)
+                        self.previewTimer = null
+                    }
+
                     self.queueRecv.append({ type: "text-frame", chunk })
                     callback()
                 }
@@ -246,6 +256,28 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         element.preview = "sent"
                         self.queueSend.touch()
 
+                        /*  start preview timeout (if configured)  */
+                        const timeout = self.params.timeout as number
+                        if (timeout > 0 && self.previewTimer === null) {
+                            self.previewTimer = setTimeout(() => {
+                                self.previewTimer = null
+                                if (self.closing)
+                                    return
+
+                                /*  promote preview to final chunk  */
+                                const el = self.queueSend.peek()
+                                if (el !== undefined
+                                    && el.type === "text-frame"
+                                    && el.preview === "sent"
+                                    && el.complete !== true) {
+                                    self.log("info", `timeout: promoting intermediate to final: ${JSON.stringify(el.chunk.payload)}`)
+                                    el.complete = true
+                                    self.queueSend.touch()
+                                    self.queue.emit("write")
+                                }
+                            }, timeout)
+                        }
+
                         /*  wait for more data  */
                         if (!self.closing)
                             self.queue.once("write", flushPendingChunks)
@@ -263,10 +295,14 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         /*  indicate closing  */
         this.closing = true
 
-        /*  clean up timer  */
+        /*  clean up timers  */
         if (this.workingOffTimer !== null) {
             clearTimeout(this.workingOffTimer)
             this.workingOffTimer = null
+        }
+        if (this.previewTimer !== null) {
+            clearTimeout(this.previewTimer)
+            this.previewTimer = null
         }
 
         /*  remove any pending event listeners  */

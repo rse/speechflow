@@ -13,6 +13,7 @@ ChangeLog
 - IMPROVEMENT: improve profanity filtering node
 - IMPROVEMENT: add a2a-gtcrn node for GTCRN-based local noise suppression
 - IMPROVEMENT: support intermediate/final text chunk tagging in t2t-sentence node
+- IMPROVEMENT: support timeout handling for incomplete text chunks in t2t-sentence node
 - UPDATE: upgrade NPM dependencies
 
 2.0.4 (2026-01-16)
