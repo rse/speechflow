@@ -142,24 +142,38 @@ import axios                 from "axios"
 </script>
 
 <script lang="ts">
-type Info = {
-    type:     string,
-    id:       string,
-    name:     string,
-    value:    number | string[],
-    lastKind: string
+/*  LUFS value with timestamp for temporal averaging  */
+interface LufsEntry {
+    value: number,
+    time:  number
 }
 
+/*  duration for LUFS-M display averaging window (ms)  */
+const lufsWindowMs = 400
+
+/*  type of a single text or audio block  */
+type Info = {
+    type:        string,
+    id:          string,
+    name:        string,
+    value:       number | string[],
+    lastKind:    string,
+    lufsBuffer?: LufsEntry[]
+}
+
+/*  type of a websocket event message  */
 interface WebSocketEvent {
     response: string,
     args: [ string, string, string, number | string ]
 }
 
+/*  the Vue component  */
 export default defineComponent({
     name: "app",
     data: () => ({
-        info: [] as Info[],
-        ws:   null as ReconnectingWebSocket | null
+        info:      [] as Info[],
+        ws:        null as ReconnectingWebSocket | null,
+        lufsTimer: null as ReturnType<typeof setInterval> | null
     }),
     async mounted () {
         /*  determine API URLs  */
@@ -171,15 +185,15 @@ export default defineComponent({
         const response = await axios.get(`${urlHTTP.toString()}/dashboard`)
         for (const block of response.data) {
             if (block.type === "audio")
-                this.info.push({ type: block.type, id: block.id, name: block.name, value: 0, lastKind: "" })
+                this.info.push({ type: block.type, id: block.id, name: block.name, value: -60, lastKind: "", lufsBuffer: [] })
             else if (block.type === "text")
                 this.info.push({ type: block.type, id: block.id, name: block.name, value: [], lastKind: "" })
         }
 
-        /*  initialize meters  */
-        for (const block of this.info)
-            if (block.type === "audio")
-                block.value = -60
+        /*  start timer to update LUFS display values from buffered entries  */
+        this.lufsTimer = setInterval(() => {
+            this.updateLufsDisplayValues()
+        }, 50)
 
         /*  connect to WebSocket API for receiving dashboard information  */
         this.ws = new ReconnectingWebSocket(urlWS.toString(), [], {
@@ -200,10 +214,13 @@ export default defineComponent({
         this.ws.addEventListener("close", (ev) => {
             this.log("INFO", "WebSocket connection destroyed")
 
-            /*  reset meters  */
-            for (const block of this.info)
-                if (block.type === "audio")
+            /*  reset meters and clear LUFS buffers  */
+            for (const block of this.info) {
+                if (block.type === "audio" && block.lufsBuffer !== undefined) {
                     block.value = -60
+                    block.lufsBuffer.length = 0
+                }
+            }
         })
 
         /*  receive messages  */
@@ -223,9 +240,10 @@ export default defineComponent({
             const [ type, id, kind, value ] = event.args
             for (const block of this.info) {
                 if (block.type === type && block.id === id) {
-                    if (block.type === "audio") {
+                    if (block.type === "audio" && block.lufsBuffer !== undefined) {
+                        /*  buffer LUFS values for temporal averaging  */
                         if (kind === "final" && typeof value === "number")
-                            block.value = value
+                            block.lufsBuffer.push({ value, time: Date.now() })
                     }
                     else {
                         if (typeof value === "string") {
@@ -248,6 +266,10 @@ export default defineComponent({
         })
     },
     beforeUnmount () {
+        if (this.lufsTimer) {
+            clearInterval(this.lufsTimer)
+            this.lufsTimer = null
+        }
         if (this.ws) {
             this.ws.close()
             this.ws = null
@@ -263,6 +285,28 @@ export default defineComponent({
                     .join(", ")
                 })`
             console.log(output)
+        },
+
+        /*  update LUFS display values from buffered entries  */
+        updateLufsDisplayValues () {
+            const now = Date.now()
+            for (const block of this.info) {
+                if (block.type !== "audio" || block.lufsBuffer === undefined)
+                    continue
+
+                /*  remove entries older than the window duration  */
+                const buffer = block.lufsBuffer
+                while (buffer.length > 0 && (now - buffer[0].time) > lufsWindowMs)
+                    buffer.shift()
+
+                /*  calculate average of remaining entries or fall back to silence  */
+                if (buffer.length > 0) {
+                    const sum = buffer.reduce((acc, entry) => acc + entry.value, 0)
+                    block.value = sum / buffer.length
+                }
+                else
+                    block.value = -60
+            }
         }
     }
 })
