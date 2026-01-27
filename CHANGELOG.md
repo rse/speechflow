@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-2.1.0 (2026-01-22)
+2.1.0 (2026-01-27)
 ------------------
 
 - BUGFIX: correctly support English ("en") as the source language in t2t-deepl node
