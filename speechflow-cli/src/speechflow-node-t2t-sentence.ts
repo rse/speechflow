@@ -227,6 +227,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         && element.type === "text-frame"
                         && element.complete === true) {
                         /*  send all consecutive complete chunks  */
+                        let eofSeen = false
                         while (true) {
                             const nextElement = self.queueSend.peek()
                             if (nextElement === undefined)
@@ -234,6 +235,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             else if (nextElement.type === "text-eof") {
                                 this.push(null)
                                 self.queueSend.walk(+1)
+                                eofSeen = true
                                 break
                             }
                             else if (nextElement.type === "text-frame"
@@ -244,6 +246,10 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             self.queueSend.walk(+1)
                             self.queue.trim()
                         }
+
+                        /*  wait for more data (unless end-of-stream was reached)  */
+                        if (!eofSeen && !self.closing)
+                            self.queue.once("write", flushPendingChunks)
                     }
                     else if (element !== undefined
                         && element.type === "text-frame"
