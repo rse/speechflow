@@ -83,6 +83,12 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     break
                 }
 
+                /*  skip elements already completed (e.g. by preview timeout)  */
+                if (element.type === "text-frame" && element.complete === true) {
+                    this.queueSplit.walk(+1)
+                    continue
+                }
+
                 /*  perform sentence splitting on input chunk  */
                 const chunk = element.chunk
                 const payload = chunk.payload as string
