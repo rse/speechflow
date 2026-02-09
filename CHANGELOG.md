@@ -7,6 +7,8 @@ ChangeLog
 
 - IMPROVEMENT: add "endpointing" parameter to "a2t-deepgram" node
 - IMPROVEMENT: allow queue handling to be silenced
+- CLEANUP: remove "preview" feature on "t2t-sentence"
+- BUGFIX: fix "t2t-sentence" processing for intermediate/final kinds and merging functionality
 
 2.1.0 (2026-01-27)
 ------------------

@@ -18,8 +18,7 @@ import * as util                           from "./speechflow-util"
 type TextQueueElement = {
     type:      "text-frame",
     chunk:     SpeechFlowChunk,
-    preview?:  "pending" | "sent", /* pending: has to be sent for preview, sent: was sent for preview */
-    complete?: boolean             /* complete sentence (ends with punctuation character) or at EoF */
+    complete:  boolean
 } | {
     type:      "text-eof"
 }
@@ -31,12 +30,11 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
     /*  internal state  */
     private queue      = new util.Queue<TextQueueElement>()
-    private queueRecv  = this.queue.pointerUse("recv")
-    private queueSplit = this.queue.pointerUse("split")
     private queueSend  = this.queue.pointerUse("send")
-    private closing  = false
+    private queueSplit = this.queue.pointerUse("split")
+    private queueRecv  = this.queue.pointerUse("recv")
+    private closing    = false
     private workingOffTimer: ReturnType<typeof setTimeout> | null = null
-    private previewTimer:    ReturnType<typeof setTimeout> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -51,6 +49,14 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         /*  declare node input/output format  */
         this.input  = "text"
         this.output = "text"
+    }
+
+    /*  concatenate two payloads with proper whitespacing  */
+    private concatPayload (s1: string, s2: string) {
+        if (!(s1.match(/\s+$/) || s2.match(/^\s+/)))
+            return `${s1} ${s2}`
+        else
+            return `${s1}${s2}`
     }
 
     /*  open node  */
@@ -84,90 +90,101 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     break
                 }
 
-                /*  skip elements already completed (e.g. by preview timeout)  */
-                if (element.type === "text-frame" && element.complete === true) {
+                /*  skip elements already completed  */
+                if (element.type === "text-frame" && element.chunk.kind === "final" && element.complete === true) {
                     this.queueSplit.walk(+1)
                     continue
                 }
 
                 /*  perform sentence splitting on input chunk  */
-                const chunk = element.chunk
-                const payload = chunk.payload as string
-                const m = payload.match(/^((?:.|\r?\n)+?[.;?!])(?:\s+((?:.|\r?\n)*))?$/)
-                if (m !== null) {
-                    /*  contains a sentence  */
-                    const [ , sentence, rest ] = m
-                    if (rest !== "") {
-                        /*  contains more than a sentence  */
-                        const chunk2 = chunk.clone()
-                        const duration = Duration.fromMillis(
-                            chunk.timestampEnd.minus(chunk.timestampStart).toMillis() *
-                            (sentence.length / payload.length))
-                        chunk2.timestampStart = chunk.timestampStart.plus(duration)
-                        chunk.timestampEnd    = chunk2.timestampStart
-                        chunk.payload  = sentence
-                        chunk2.payload = rest
-                        element.complete = true
-                        this.queueSplit.touch()
-                        this.queueSplit.walk(+1)
-                        this.queueSplit.insert({ type: "text-frame", chunk: chunk2 })
-                    }
-                    else {
-                        /*  contains just the sentence  */
-                        element.complete = true
-                        this.queueSplit.touch()
-                        this.queueSplit.walk(+1)
-                    }
-                }
-                else {
-                    /*  contains less than a sentence  */
-                    const position = this.queueSplit.position()
-                    if (position < this.queueSplit.maxPosition() - 1) {
-                        /*  merge into following chunk  */
-                        const element2 = this.queueSplit.peek(position + 1)
-                        if (element2 === undefined)
-                            break
-                        if (element2.type === "text-eof") {
-                            /*  no more chunks: output as final
-                                (perhaps incomplete sentence at end of stream)  */
+                if (element.chunk.kind === "final") {
+                    const chunk = element.chunk
+                    const payload = chunk.payload as string
+                    const m = payload.match(/^((?:.|\r?\n)+?[.;?!])(?:\s+((?:.|\r?\n)+)|\s*)$/)
+                    if (m !== null) {
+                        /*  contains a sentence  */
+                        const [ , sentence, rest ] = m
+                        if (rest !== undefined && rest !== "") {
+                            /*  contains more than a sentence  */
+                            const chunk2 = chunk.clone()
+                            const duration = Duration.fromMillis(
+                                chunk.timestampEnd.minus(chunk.timestampStart).toMillis() *
+                                (sentence.length / payload.length))
+                            chunk2.timestampStart = chunk.timestampStart.plus(duration)
+                            chunk.timestampEnd    = chunk2.timestampStart
+                            chunk.payload  = sentence
+                            chunk2.payload = rest
                             element.complete = true
+                            this.queue.silent(true)
                             this.queueSplit.touch()
+                            this.queue.silent(false)
                             this.queueSplit.walk(+1)
-                            break
+                            this.queueSplit.insert({ type: "text-frame", chunk: chunk2, complete: false })
                         }
-
-                        /*  merge into following chunk  */
-                        element2.chunk.timestampStart = element.chunk.timestampStart
-                        element2.chunk.payload =
-                            (element.chunk.payload  as string) + " " +
-                            (element2.chunk.payload as string)
-
-                        /*  reset preview state (merged content needs new preview)  */
-                        element2.preview = undefined
-                        this.queueSplit.delete()
-                        this.queueSplit.touch()
+                        else {
+                            /*  contains just the sentence  */
+                            element.complete = true
+                            this.queue.silent(true)
+                            this.queueSplit.silent(true)
+                            const position = this.queueSplit.position()
+                            this.queueSplit.walk(+1)
+                            this.queue.silent(false)
+                            this.queueSplit.silent(false)
+                            this.queueSplit.touch(position)
+                        }
                     }
                     else {
-                        /*  no following chunk yet: mark for intermediate preview output  */
-                        if (element.preview !== "sent") {
-                            element.preview = "pending"
-                            this.queueSplit.touch()
+                        /*  contains less than a sentence  */
+                        const position = this.queueSplit.position()
+                        if (position < this.queueSplit.maxPosition() - 1) {
+                            /*  merge into following chunk  */
+                            const element2 = this.queueSplit.peek(position + 1)
+                            if (element2 === undefined)
+                                break
+                            if (element2.type === "text-eof") {
+                                /*  no more chunks: output as final
+                                    (perhaps incomplete sentence at end of stream)  */
+                                element.complete = true
+                                this.queueSplit.walk(+1)
+                                this.queueSplit.touch(this.queueSplit.position() - 1)
+                                break
+                            }
+                            if (element2.chunk.kind === "final") {
+                                /*  merge into following chunk  */
+                                element2.chunk.timestampStart = element.chunk.timestampStart
+                                element2.chunk.payload = this.concatPayload(element.chunk.payload as string,
+                                    element2.chunk.payload as string)
+
+                                /*  remove current element and touch now current element  */
+                                this.queue.silent(true)
+                                this.queueSplit.delete()
+                                this.queue.silent(false)
+                                this.queueSplit.touch()
+                            }
+                            else
+                                break
                         }
-                        break
+                        else {
+                            /*  no following chunk yet  */
+                            break
+                        }
                     }
                 }
+                else
+                    break
             }
 
             /*  re-initiate working off round (if still not destroyed)  */
-            workingOff = false
             if (!this.closing) {
                 this.workingOffTimer = setTimeout(workOffQueue, 100)
                 this.queue.once("write", workOffQueue)
             }
+            workingOff = false
         }
         this.queue.once("write", workOffQueue)
 
         /*  provide Duplex stream and internally attach to classifier  */
+        let previewed = false
         const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
@@ -176,37 +193,38 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             highWaterMark:      1,
 
             /*  receive text chunk (writable side of stream)  */
-            write (chunk: SpeechFlowChunk, encoding, callback) {
+            write (chunk: SpeechFlowChunk, encoding: BufferEncoding, callback: (error?: Error | null) => void) {
                 if (self.closing)
                     callback(new Error("stream already destroyed"))
                 else if (Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected text input as string chunks"))
                 else if (chunk.payload.length === 0)
                     callback()
-                else if (chunk.kind === "intermediate") {
-                    /*  intermediate chunks: pass through immediately (bypass queue)  */
-                    self.log("info", `received text (${chunk.kind}): ${JSON.stringify(chunk.payload)}`)
-                    self.log("info", `send text (intermediate pass-through): ${JSON.stringify(chunk.payload)}`)
-                    this.push(chunk)
-                    callback()
-                }
                 else {
                     /*  final chunks: queue for sentence splitting  */
                     self.log("info", `received text (${chunk.kind}): ${JSON.stringify(chunk.payload)}`)
-
-                    /*  cancel any pending preview timeout  */
-                    if (self.previewTimer !== null) {
-                        clearTimeout(self.previewTimer)
-                        self.previewTimer = null
+                    const recvPos = self.queueRecv.position()
+                    if (recvPos > 0) {
+                        const element = self.queueRecv.peek(recvPos - 1)
+                        if (element) {
+                            if (element.type === "text-eof") {
+                                callback(new Error("received text input after end-of-stream"))
+                                return
+                            }
+                            if (element.chunk.kind === "intermediate") {
+                                self.queueRecv.walk(-1)
+                                self.queueRecv.delete()
+                            }
+                        }
                     }
-
-                    self.queueRecv.append({ type: "text-frame", chunk })
+                    previewed = false
+                    self.queueRecv.append({ type: "text-frame", chunk, complete: false })
                     callback()
                 }
             },
 
             /*  receive no more text chunks (writable side of stream)  */
-            final (callback) {
+            final (callback: (error?: Error | null) => void) {
                 if (self.closing) {
                     callback()
                     return
@@ -248,7 +266,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             else if (nextElement.type === "text-frame"
                                 && nextElement.complete !== true)
                                 break
-                            self.log("info", `send text (${nextElement.chunk.kind}): ${JSON.stringify(nextElement.chunk.payload)}`)
+                            self.log("info", `send text 1 (${nextElement.chunk.kind}): ${JSON.stringify(nextElement.chunk.payload)} pos=${self.queueSend.position()}`)
                             this.push(nextElement.chunk)
                             self.queueSend.walk(+1)
                             self.queue.trim()
@@ -260,37 +278,25 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     }
                     else if (element !== undefined
                         && element.type === "text-frame"
-                        && element.preview === "pending"
+                        && element.complete === false
+                        && !previewed
                         && self.params.interim === true) {
-                        /*  send intermediate preview (without advancing pointer)  */
+                        /*  merge together all still queued elements and
+                            send this out as an intermediate chunk as preview  */
                         const previewChunk = element.chunk.clone()
                         previewChunk.kind = "intermediate"
-                        self.log("info", `send text (intermediate preview): ${JSON.stringify(previewChunk.payload)}`)
-                        this.push(previewChunk)
-                        element.preview = "sent"
-                        self.queueSend.touch()
-
-                        /*  start preview timeout (if configured)  */
-                        const timeout = self.params.timeout as number
-                        if (timeout > 0 && self.previewTimer === null) {
-                            self.previewTimer = setTimeout(() => {
-                                self.previewTimer = null
-                                if (self.closing)
-                                    return
-
-                                /*  promote preview to final chunk  */
-                                const el = self.queueSend.peek()
-                                if (el !== undefined
-                                    && el.type === "text-frame"
-                                    && el.preview === "sent"
-                                    && el.complete !== true) {
-                                    self.log("info", `timeout: promoting intermediate to final: ${JSON.stringify(el.chunk.payload)}`)
-                                    el.complete = true
-                                    self.queueSend.touch()
-                                    self.queue.emit("write")
-                                }
-                            }, timeout)
+                        for (let pos = self.queueSend.position() + 1; pos < self.queueSend.maxPosition(); pos++) {
+                            const element2 = self.queueSend.peek(pos)
+                            if (!element2)
+                                continue
+                            if (element2.type === "text-eof")
+                                break
+                            previewChunk.payload = self.concatPayload(
+                                previewChunk.payload as string, element2.chunk.payload as string)
                         }
+                        this.push(previewChunk)
+                        self.log("info", `send text 2 (intermediate): ${JSON.stringify(previewChunk.payload)}`)
+                        previewed = true
 
                         /*  wait for more data  */
                         if (!self.closing)
@@ -313,10 +319,6 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         if (this.workingOffTimer !== null) {
             clearTimeout(this.workingOffTimer)
             this.workingOffTimer = null
-        }
-        if (this.previewTimer !== null) {
-            clearTimeout(this.previewTimer)
-            this.previewTimer = null
         }
 
         /*  remove any pending event listeners  */
