@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: add "endpointing" parameter to "a2t-deepgram" node
+- IMPROVEMENT: allow queue handling to be silenced
 
 2.1.0 (2026-01-27)
 ------------------

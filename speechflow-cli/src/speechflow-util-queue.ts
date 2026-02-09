@@ -97,6 +97,7 @@ export type QueueElement = { type: string }
 export class QueuePointer<T extends QueueElement> extends EventEmitter {
     /*  internal state  */
     private index = 0
+    private silence = false
 
     /*  construction  */
     constructor (
@@ -107,6 +108,17 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         this.setMaxListeners(100)
     }
 
+    /*  control silence operation  */
+    silent (silence: boolean) {
+        this.silence = silence
+    }
+
+    /*  notify about operation  */
+    notify (event: string, info: any) {
+        if (!this.silence)
+            this.emit(event, info)
+    }
+
     /*  positioning operations  */
     maxPosition () {
         return this.queue.elements.length
@@ -114,7 +126,7 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
     position (index?: number): number {
         if (index !== undefined) {
             this.index = Math.max(0, Math.min(index, this.queue.elements.length))
-            this.emit("position", this.index)
+            this.notify("position", this.index)
         }
         return this.index
     }
@@ -125,19 +137,19 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         else if (num < 0)
             this.index = Math.max(this.index + num, 0)
         if (this.index !== indexOld)
-            this.emit("position", { start: this.index })
+            this.notify("position", { start: this.index })
     }
     walkForwardUntil (type: T["type"]) {
         while (this.index < this.queue.elements.length
             && this.queue.elements[this.index].type !== type)
             this.index++
-        this.emit("position", { start: this.index })
+        this.notify("position", { start: this.index })
     }
     walkBackwardUntil (type: T["type"]) {
         while (this.index > 0
             && this.queue.elements[this.index].type !== type)
             this.index--
-        this.emit("position", { start: this.index })
+        this.notify("position", { start: this.index })
     }
 
     /*  search operations  */
@@ -146,7 +158,7 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         while (position < this.queue.elements.length
             && this.queue.elements[position].type !== type)
             position++
-        this.emit("search", { start: this.index, end: position })
+        this.notify("search", { start: this.index, end: position })
         return position
     }
     searchBackward (type: T["type"]) {
@@ -154,24 +166,24 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         while (position > 0
             && this.queue.elements[position].type !== type)
             position--
-        this.emit("search", { start: position, end: this.index })
+        this.notify("search", { start: position, end: this.index })
         return position
     }
 
     /*  reading operations  */
-    peek (position?: number) {
+    peek (position?: number): T | undefined {
         if (position === undefined)
             position = this.index
         position = Math.max(0, Math.min(position, this.queue.elements.length))
         const element = this.queue.elements[position]
-        this.queue.emit("read", { start: position, end: position })
+        this.queue.notify("read", { start: position, end: position })
         return element
     }
-    read () {
+    read (): T | undefined {
         const element = this.queue.elements[this.index]
         if (this.index < this.queue.elements.length)
             this.index++
-        this.queue.emit("read", { start: this.index - 1, end: this.index - 1 })
+        this.queue.notify("read", { start: this.index - 1, end: this.index - 1 })
         return element
     }
     slice (size?: number) {
@@ -186,30 +198,32 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
             slice = this.queue.elements.slice(this.index)
             this.index = this.queue.elements.length
         }
-        this.queue.emit("read", { start, end: this.index })
+        this.queue.notify("read", { start, end: this.index })
         return slice
     }
 
     /*  writing operations  */
-    touch () {
-        if (this.index >= this.queue.elements.length)
-            throw new Error("cannot touch after last element")
-        this.queue.emit("write", { start: this.index, end: this.index + 1 })
+    touch (position?: number) {
+        if (position === undefined)
+            position = this.index
+        if (position >= this.queue.elements.length)
+            throw new Error(`cannot touch after last element ${position} ${this.queue.elements.length}`)
+        this.queue.notify("write", { start: position, end: position, op: "touch" })
     }
     append (element: T) {
         this.queue.elements.push(element)
         this.index = this.queue.elements.length
-        this.queue.emit("write", { start: this.index - 1, end: this.index - 1 })
+        this.queue.notify("write", { start: this.index - 1, end: this.index - 1, op: "append" })
     }
     insert (element: T) {
         this.queue.elements.splice(this.index, 0, element)
-        this.queue.emit("write", { start: this.index - 1, end: this.index })
+        this.queue.notify("write", { start: this.index, end: this.index, op: "insert" })
     }
     delete () {
         if (this.index >= this.queue.elements.length)
             throw new Error("cannot delete after last element")
         this.queue.elements.splice(this.index, 1)
-        this.queue.emit("write", { start: this.index, end: this.index })
+        this.queue.notify("write", { start: this.index, end: this.index, op: "delete" })
     }
 }
 
@@ -217,9 +231,17 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
 export class Queue<T extends QueueElement> extends EventEmitter {
     public elements: T[] = []
     private pointers = new Map<string, QueuePointer<T>>()
+    private silence = false
     constructor () {
         super()
         this.setMaxListeners(100)
+    }
+    silent (silence: boolean) {
+        this.silence = silence
+    }
+    notify (event: string, info: any) {
+        if (!this.silence)
+            this.emit(event, info)
     }
     pointerUse (name: string): QueuePointer<T> {
         if (!this.pointers.has(name))
@@ -234,9 +256,10 @@ export class Queue<T extends QueueElement> extends EventEmitter {
     trim (): void {
         /*  determine minimum pointer position  */
         let min = this.elements.length
-        for (const pointer of this.pointers.values())
+        for (const pointer of this.pointers.values()) {
             if (min > pointer.position())
                 min = pointer.position()
+        }
 
         /*  trim the maximum amount of first elements  */
         if (min > 0) {
@@ -245,6 +268,8 @@ export class Queue<T extends QueueElement> extends EventEmitter {
             /*  shift all pointers  */
             for (const pointer of this.pointers.values())
                 pointer.position(pointer.position() - min)
+
+            this.notify("write", { start: 0, end: min, op: "trim" })
         }
     }
 }
