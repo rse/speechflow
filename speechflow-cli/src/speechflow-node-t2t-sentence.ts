@@ -44,7 +44,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            timeout: { type: "number", pos: 0, val: 3 * 1000 }
+            timeout: { type: "number",  pos: 0, val: 3 * 1000 },
+            interim: { type: "boolean", pos: 1, val: false    }
         })
 
         /*  declare node input/output format  */
@@ -259,7 +260,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     }
                     else if (element !== undefined
                         && element.type === "text-frame"
-                        && element.preview === "pending") {
+                        && element.preview === "pending"
+                        && self.params.interim === true) {
                         /*  send intermediate preview (without advancing pointer)  */
                         const previewChunk = element.chunk.clone()
                         previewChunk.kind = "intermediate"
