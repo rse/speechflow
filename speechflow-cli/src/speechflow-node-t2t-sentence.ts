@@ -93,7 +93,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                 /*  perform sentence splitting on input chunk  */
                 const chunk = element.chunk
                 const payload = chunk.payload as string
-                const m = payload.match(/^((?:.|\r?\n)+?[.;?!])\s*((?:.|\r?\n)*)$/)
+                const m = payload.match(/^((?:.|\r?\n)+?[.;?!])(?:\s+((?:.|\r?\n)*))?$/)
                 if (m !== null) {
                     /*  contains a sentence  */
                     const [ , sentence, rest ] = m
