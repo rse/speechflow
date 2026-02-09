@@ -1174,6 +1174,7 @@ The following nodes process text chunks only.
   | Parameter    | Position  | Default  | Requirement        |
   | ------------ | --------- | -------- | ------------------ |
   | **timeout**  | 0         | 3000     | *none*             |
+  | **interim**  | 1         | false    | *none*             |
 
 - Node: **t2t-subtitle**<br/>
   Purpose: **SRT/VTT Subtitle Generation**<br/>
