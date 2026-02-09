@@ -115,7 +115,7 @@
                     width: 100%
                     height: 100%
                     overflow-x: hidden
-                    overflow-y: scroll
+                    overflow-y: hidden
                     display: flex
                     flex-direction: column
                     align-items: flex-end
@@ -125,7 +125,7 @@
                         background-color: var(--color-acc-bg-3)
                         color: var(--color-acc-fg-5)
                         border-radius: 0.5vw
-                        font-size: 1.5vw
+                        font-size: 1.25vw
                         padding: 0.5vw 1.0vw
                         margin-top: 0.5vw
                         overflow-wrap: break-word
