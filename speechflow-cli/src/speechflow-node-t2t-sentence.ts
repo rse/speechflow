@@ -18,8 +18,8 @@ import * as util                           from "./speechflow-util"
 type TextQueueElement = {
     type:      "text-frame",
     chunk:     SpeechFlowChunk,
-    preview?:  "pending" | "sent",
-    complete?: boolean
+    preview?:  "pending" | "sent", /* pending: has to be sent for preview, sent: was sent for preview */
+    complete?: boolean             /* complete sentence (ends with punctuation character) or at EoF */
 } | {
     type:      "text-eof"
 }
