@@ -903,15 +903,16 @@ The following nodes convert audio to text chunks.
   | input   | audio       |
   | output  | text        |
 
-  | Parameter    | Position  | Default  | Requirement        |
-  | ------------ | --------- | -------- | ------------------ |
-  | **key**      | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY | *none* |
-  | **keyAdm**   | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY\_ADM | *none* |
-  | **model**    | 0         | "nova-2" | *none* |
-  | **version**  | 1         | "latest" | *none* |
-  | **language** | 2         | "multi"  | *none* |
-  | **interim**  | 3         | false    | *none* |
-  | **keywords** | 4         | ""       | *none* |
+  | Parameter        | Position  | Default  | Requirement        |
+  | ---------------- | --------- | -------- | ------------------ |
+  | **key**          | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY | *none* |
+  | **keyAdm**       | *none*    | env.SPEECHFLOW\_DEEPGRAM\_KEY\_ADM | *none* |
+  | **model**        | 0         | "nova-2" | *none* |
+  | **version**      | 1         | "latest" | *none* |
+  | **language**     | 2         | "multi"  | *none* |
+  | **interim**      | 3         | false    | *none* |
+  | **endpointing**  | 4         | 0        | *none* |
+  | **keywords**     | 5         | ""       | *none* |
 
 - Node: **a2t-google**<br/>
   Purpose: **Google Cloud Speech-to-Text conversion**<br/>

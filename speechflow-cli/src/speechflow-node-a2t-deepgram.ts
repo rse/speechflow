@@ -32,13 +32,14 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            key:      { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY },
-            keyAdm:   { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY_ADM },
-            model:    { type: "string",  val: "nova-2", pos: 0 },
-            version:  { type: "string",  val: "latest", pos: 1 },
-            language: { type: "string",  val: "multi",  pos: 2 },
-            interim:  { type: "boolean", val: false,    pos: 3 },
-            keywords: { type: "string",  val: "",       pos: 4 }
+            key:         { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY },
+            keyAdm:      { type: "string",  val: process.env.SPEECHFLOW_DEEPGRAM_KEY_ADM },
+            model:       { type: "string",  val: "nova-2", pos: 0 },
+            version:     { type: "string",  val: "latest", pos: 1 },
+            language:    { type: "string",  val: "multi",  pos: 2 },
+            interim:     { type: "boolean", val: false,    pos: 3 },
+            endpointing: { type: "number",  val: 0,        pos: 4 },
+            keywords:    { type: "string",  val: "",       pos: 5 }
         })
 
         /*  sanity check parameters  */
@@ -88,6 +89,8 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         const metastore = new util.TimeStore<Map<string, any>>()
 
         /*  configure Deepgram connection options  */
+        const interim     = this.params.interim as boolean
+        const endpointing = this.params.endpointing as number
         const options: Deepgram.LiveSchema = {
             mip_opt_out:      true,
             model:            this.params.model,
@@ -96,8 +99,8 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             sample_rate:      this.config.audioSampleRate,
             encoding:         "linear16",
             multichannel:     false,
-            endpointing:      false,
-            interim_results:  this.params.interim,
+            endpointing:      endpointing > 0 ? endpointing : false,
+            interim_results:  interim,
             smart_format:     false,
             punctuate:        true,
             filler_words:     true,
@@ -140,13 +143,14 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             const text  = (data.channel?.alternatives[0]?.transcript ?? "") as string
             const words = (data.channel?.alternatives[0]?.words ?? []) as
                 { word: string, punctuated_word?: string, start: number, end: number }[]
-            const isFinal = (data.is_final ?? false) as boolean
+            const isFinal     = (data.is_final     as boolean) ?? false
+            const speechFinal = (data.speech_final as boolean) ?? false
+            const kind = ((interim && isFinal) || (endpointing > 0 && speechFinal)) ? "final" : "intermediate"
             if (text === "")
                 this.log("info", `empty/dummy text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s)`)
             else {
                 this.log("info", `text received (start: ${data.start}s, ` +
-                    `duration: ${data.duration.toFixed(2)}s, ` +
-                    `kind: ${isFinal ? "final" : "intermediate"}): ` +
+                    `duration: ${data.duration.toFixed(2)}s, kind: ${kind}): ` +
                     `"${text}"`)
                 const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
                 const end   = start.plus({ seconds: data.duration })
@@ -161,8 +165,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     const end   = Duration.fromMillis(word.end * 1000).plus(this.timeZeroOffset)
                     return { word: word.punctuated_word ?? word.word, start, end }
                 }))
-                const chunk = new SpeechFlowChunk(start, end,
-                    isFinal ? "final" : "intermediate", "text", text, meta)
+                const chunk = new SpeechFlowChunk(start, end, kind, "text", text, meta)
                 this.queue.write(chunk)
             }
         })

@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+2.1.1 (2026-02-10)
+------------------
+
+- IMPROVEMENT: add "endpointing" parameter to "a2t-deepgram" node
+
 2.1.0 (2026-01-27)
 ------------------
 
