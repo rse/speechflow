@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-2.1.1 (2026-02-10)
+2.1.1 (2026-02-18)
 ------------------
 
 - IMPROVEMENT: add "endpointing" parameter to "a2t-deepgram" node
@@ -10,6 +10,7 @@ ChangeLog
 - IMPROVEMENT: improve optical appearance of dashboard
 - CLEANUP: remove "preview" feature on "t2t-sentence"
 - BUGFIX: fix "t2t-sentence" processing for intermediate/final kinds and merging functionality
+- UPDATE: upgrade NPM dependencies
 
 2.1.0 (2026-01-27)
 ------------------
