@@ -94,6 +94,10 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
             const chunks: Buffer[] = []
             const maxBodySize = 1024 * 1024  /*  1 MB limit for SDP  */
             let totalSize = 0
+            const onError = (err: Error) =>
+                reject(err)
+            const onEnd = () =>
+                resolve(Buffer.concat(chunks).toString("utf8"))
             const onData = (chunk: Buffer) => {
                 totalSize += chunk.length
                 if (totalSize > maxBodySize) {
@@ -106,10 +110,6 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
                 }
                 chunks.push(chunk)
             }
-            const onEnd = () =>
-                resolve(Buffer.concat(chunks).toString("utf8"))
-            const onError = (err: Error) =>
-                reject(err)
             req.on("data", onData)
             req.on("end", onEnd)
             req.on("error", onError)

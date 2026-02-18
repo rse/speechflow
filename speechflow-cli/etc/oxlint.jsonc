@@ -135,10 +135,12 @@
         "no-inline-comments":                 "off",
         "max-statements":                     "off",
         "no-duplicate-imports":               "off",
+        "no-nodejs-modules":                  "off",
+        "parameter-properties":               "off",
+        "no-shadow":                          "off",
+        "no-relative-parent-imports":         "off",
 
-        "complexity":                         [ "error", { "max": 35 } ],
-        "complexity/max-cyclomatic":          [ "error", { "max": 30 } ],
-        "complexity/max-cognitive":           [ "error", { "max": 50 } ]
+        "complexity":                         [ "error", { "max": 35 } ]
     }
 }
 

@@ -86,6 +86,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
         }
 
         /*  helper function for tail timer handling  */
+        let tail = false
         const startTailTimer = () => {
             tail = true
             clearTailTimer()
@@ -98,7 +99,6 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
         }
 
         /*  establish Voice Activity Detection (VAD) facility  */
-        let tail = false
         try {
             this.vad = await RealTimeVAD.new({
                 model:                   "v5",

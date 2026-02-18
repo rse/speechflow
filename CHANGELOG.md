@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+2.1.2 (2026-02-18)
+------------------
+
+- BUGFIX: fix build problems related to ESLint 10
+
 2.1.1 (2026-02-18)
 ------------------
 

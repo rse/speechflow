@@ -38,6 +38,21 @@ export function createTransformStreamForWritableSide (
     })
 }
 
+/*  ensure a chunk is of a certain type and format  */
+export function ensureStreamChunk (type: "audio" | "text", chunk: SpeechFlowChunk | Buffer | string) {
+    if (chunk instanceof SpeechFlowChunk) {
+        if (chunk.type !== type)
+            throw new Error(`invalid payload chunk (expected ${type} type, received ${chunk.type} type)`)
+    }
+    else {
+        if (type === "text" && Buffer.isBuffer(chunk))
+            chunk = chunk.toString("utf8")
+        else if (type === "audio" && !Buffer.isBuffer(chunk))
+            chunk = Buffer.from(chunk)
+    }
+    return chunk
+}
+
 /*  create a Duplex/Transform stream which has
     buffer/string-mode on Writable side and
     object-mode        on Readable side  */
@@ -69,21 +84,6 @@ export function createTransformStreamForReadableSide (
             callback()
         }
     })
-}
-
-/*  ensure a chunk is of a certain type and format  */
-export function ensureStreamChunk (type: "audio" | "text", chunk: SpeechFlowChunk | Buffer | string) {
-    if (chunk instanceof SpeechFlowChunk) {
-        if (chunk.type !== type)
-            throw new Error(`invalid payload chunk (expected ${type} type, received ${chunk.type} type)`)
-    }
-    else {
-        if (type === "text" && Buffer.isBuffer(chunk))
-            chunk = chunk.toString("utf8")
-        else if (type === "audio" && !Buffer.isBuffer(chunk))
-            chunk = Buffer.from(chunk)
-    }
-    return chunk
 }
 
 /*  type of a serialized SpeechFlow chunk  */

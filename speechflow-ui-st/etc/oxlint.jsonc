@@ -131,7 +131,8 @@
         "no-inline-comments":                 "off",
         "max-statements":                     "off",
         "no-console":                         "off",
-        "no-unassigned-import":               "off"
+        "no-unassigned-import":               "off",
+        "no-shadow":                          "off"
     }
 }
 
