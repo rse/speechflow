@@ -14,37 +14,37 @@
         "url":                              "http://engelschall.com"
     },
     "dependencies": {
-        "vue":                              "3.5.27",
+        "vue":                              "3.5.28",
         "luxon":                            "3.7.2",
         "@opensumi/reconnecting-websocket": "4.4.0",
-        "axios":                            "1.13.3",
+        "axios":                            "1.13.5",
         "typopro-web":                      "4.2.8",
-        "@fortawesome/fontawesome-free":    "7.1.0",
+        "@fortawesome/fontawesome-free":    "7.2.0",
         "patch-package":                    "8.0.1",
         "@rse/stx":                         "1.1.4"
     },
     "devDependencies": {
         "vite":                             "7.3.1",
-        "typescript-eslint":                "8.54.0",
-        "@typescript-eslint/eslint-plugin": "8.54.0",
-        "@typescript-eslint/parser":        "8.54.0",
-        "@vitejs/plugin-vue":               "6.0.3",
+        "typescript-eslint":                "8.56.0",
+        "@typescript-eslint/eslint-plugin": "8.56.0",
+        "@typescript-eslint/parser":        "8.56.0",
+        "@vitejs/plugin-vue":               "6.0.4",
         "@rollup/plugin-yaml":              "4.1.2",
         "vite-plugin-node-polyfills":       "0.25.0",
         "vite-svg-loader":                  "5.1.0",
         "@liuli-util/vite-plugin-node":     "0.10.0",
         "mkdirp":                           "3.0.1",
 
-        "@vue/eslint-config-typescript":    "14.6.0",
-        "vue-eslint-parser":                "10.2.0",
-        "eslint":                           "9.39.2",
-        "@eslint/js":                       "9.39.2",
+        "@vue/eslint-config-typescript":    "14.7.0",
+        "vue-eslint-parser":                "10.4.0",
+        "eslint":                           "10.0.0",
+        "@eslint/js":                       "10.0.1",
         "neostandard":                      "0.12.2",
         "eslint-plugin-import":             "2.32.0",
-        "eslint-plugin-vue":                "10.7.0",
+        "eslint-plugin-vue":                "10.8.0",
 
-        "oxlint":                           "1.42.0",
-        "eslint-plugin-oxlint":             "1.42.0",
+        "oxlint":                           "1.48.0",
+        "eslint-plugin-oxlint":             "1.48.0",
 
         "htmllint":                         "0.8.0",
         "htmllint-cli":                     "0.0.7",
@@ -52,7 +52,7 @@
         "check-dependencies":               "2.0.0",
         "nodemon":                          "3.1.11",
         "shx":                              "0.4.0",
-        "stylelint":                        "17.0.0",
+        "stylelint":                        "17.3.0",
         "stylelint-config-html":            "1.1.0",
         "stylelint-config-recommended-vue": "1.6.1",
         "stylelint-config-standard":        "40.0.0",
@@ -70,7 +70,9 @@
     },
     "overrides": {
         "@liuli-util/vite-plugin-node":     { "vite": ">=6.0.0" },
-        "stylelint-stylus":                 { "stylelint": "^17.0.0" }
+        "stylelint-stylus":                 { "stylelint": "^17.0.0" },
+        "eslint-plugin-import":             { "eslint": ">=9.0.0" },
+        "neostandard":                      { "eslint": ">=9.0.0" }
     },
     "engines" : {
         "npm":                              ">=10.0.0",
