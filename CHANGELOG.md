@@ -2,6 +2,14 @@
 ChangeLog
 =========
 
+2.2.1 (2026-02-23)
+------------------
+
+- BUGFIX: fix type of "text" field
+- BUGFIX: fix indexing for Vue loops
+- BUGFIX: fix CSS values in Dashboard UI
+- CLEANUP: remove unnecessary comma operator and index, and downgrade to ESLint 9
+
 2.2.0 (2026-02-23)
 ------------------
 
