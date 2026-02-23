@@ -217,7 +217,7 @@ export default defineComponent({
                 /*  override previous intermediate text chunk
                     with either another intermediate one or a final one  */
                 const lastChunk = this.text[this.text.length - 1]
-                lastChunk.text      = chunk.payload.split(/\s+/),
+                lastChunk.text      = chunk.payload.split(/\s+/)
                 lastChunk.kind      = chunk.kind
                 lastChunk.timestamp = DateTime.now()
             }
