@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+2.2.0 (2026-02-23)
+------------------
+
+- IMPROVEMENT: add support for popup messages in Dashboard
+- IMPROVEMENT: pass-through node errors to Dashboard
+- UPDATE: upgrade NPM dependencies
+
 2.1.2 (2026-02-18)
 ------------------
 
