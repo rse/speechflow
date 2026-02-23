@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: add support for popup messages in Dashboard
 - IMPROVEMENT: pass-through node errors to Dashboard
+- CLEANUP: distinguish between unhandled promise rejection and uncaught exceptions
 - UPDATE: upgrade NPM dependencies
 
 2.1.2 (2026-02-18)

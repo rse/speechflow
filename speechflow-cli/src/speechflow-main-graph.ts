@@ -332,9 +332,9 @@ export class NodeGraph {
             this.shutdown(signal, args, api)
         const logError = (error: Error) => {
             if (this.debug)
-                this.cli.log("error", `uncaught exception: ${error.message}\n${error.stack}`)
+                this.cli.log("error", `${error.message}\n${error.stack}`)
             else
-                this.cli.log("error", `uncaught exception: ${error.message}`)
+                this.cli.log("error", error.message)
         }
 
         /*  hook into process signals  */
@@ -356,7 +356,7 @@ export class NodeGraph {
         process.on("unhandledRejection", (reason) => {
             const error = util.ensureError(reason, "unhandled promise rejection")
             logError(error)
-            shutdownHandler("exception")
+            shutdownHandler("rejection")
         })
     }
 
@@ -367,6 +367,8 @@ export class NodeGraph {
         this.shuttingDown = true
         if (signal === "exception")
             this.cli.log("warning", "**** exception occurred -- shutting down service ****")
+        else if (signal === "rejection")
+            this.cli.log("warning", "**** unhandled promise rejection occurred -- shutting down service ****")
         else if (signal !== "finished")
             this.cli.log("warning", `**** received signal ${signal} -- shutting down service ****`)
 
