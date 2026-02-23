@@ -127,7 +127,7 @@ type TextChunk = {
     id:             string,
     timestamp:      DateTime,
     kind:           "intermediate" | "final",
-    text:           string,
+    text:           string[],
     removing:       boolean,
     removed:        boolean
 }
