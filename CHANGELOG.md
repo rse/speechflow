@@ -7,6 +7,7 @@ ChangeLog
 
 - IMPROVEMENT: add support for popup messages in Dashboard
 - IMPROVEMENT: pass-through node errors to Dashboard
+- IMPROVEMENT: improve optical appearance of subtitle rendering
 - CLEANUP: distinguish between unhandled promise rejection and uncaught exceptions
 - UPDATE: upgrade NPM dependencies
 

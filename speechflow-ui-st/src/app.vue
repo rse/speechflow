@@ -10,12 +10,23 @@
     <div class="app">
         <div class="area">
             <div class="block" ref="block">
-                <span v-bind:key="chunk.id"
+                <span class="chunk"
                     v-for="(chunk, idx) of text"
-                    class="chunk"
-                    v-bind:class="{ intermediate: chunk.kind === 'intermediate', removed: chunk.removed }"
+                    v-bind:key="`chunk-${chunk.id}`"
                     v-bind:ref="`chunk-${chunk.id}`">
-                    {{ chunk.text }}
+                    <span class="chunk-frag"
+                        v-for="(frag, idx) of chunk.text">
+                        <span v-bind:key="`bg-${chunk.id}-${idx}`"
+                            class="chunk-bg"
+                            v-bind:class="{ intermediate: chunk.kind === 'intermediate', removed: chunk.removed }">
+                            {{ frag }}
+                        </span>
+                        <span v-bind:key="`fg-${chunk.id}-${idx}`"
+                            class="chunk-fg"
+                            v-bind:class="{ intermediate: chunk.kind === 'intermediate', removed: chunk.removed }">
+                            {{ frag }}
+                        </span>
+                    </span>
                     <span class="cursor" v-if="idx === (text.length - 1) && chunk.kind === 'intermediate'">
                         <spinner-grid class="spinner-grid" size="30"/>
                     </span>
@@ -63,23 +74,43 @@
 
             /*  content chunk  */
             .chunk
-                color: #ffffff
-                background-color: #000000e0
-                font-size: 2.0vw
-                font-weight: 600
-                line-height: 1.5
-                padding-left:  0.20vw
-                padding-right: 0.20vw
+                .chunk-frag
+                    display: inline-block
+                    position: relative
+                    .chunk-fg
+                        z-index: 20
+                        color: #ffffff
+                        -webkit-text-stroke: 4px #00000000
+                        font-size: 2.0vw
+                        font-weight: 600
+                        line-height: 1.3
+                        padding-left:  0.20vw
+                        padding-right: 0.20vw
+                        &.intermediate:last-child
+                            color: #ffe0c0
+                        &.removed
+                            opacity: 0
+                    .chunk-bg
+                        z-index: -10
+                        position: absolute
+                        color: #000000
+                        -webkit-text-stroke: 5px #000000e0
+                        font-size: 2.0vw
+                        font-weight: 600
+                        line-height: 1.3
+                        padding-left:  0.20vw
+                        padding-right: 0.20vw
+                        &.intermediate:last-child
+                            color: #ffe0c0
+                        &.removed
+                            opacity: 0
                 .cursor
                     position: relative
                     display: inline-block
                     margin-left: 10px
                     margin-right: 10px
-                    top: -5px
-                &.intermediate:last-child
+                    top: -7px
                     color: #ffe0c0
-                &.removed
-                    opacity: 0
 </style>
 
 <script setup lang="ts">
@@ -185,7 +216,7 @@ export default defineComponent({
                 /*  override previous intermediate text chunk
                     with either another intermediate one or a final one  */
                 const lastChunk = this.text[this.text.length - 1]
-                lastChunk.text      = chunk.payload
+                lastChunk.text      = chunk.payload.split(/\s+/),
                 lastChunk.kind      = chunk.kind
                 lastChunk.timestamp = DateTime.now()
             }
@@ -199,7 +230,7 @@ export default defineComponent({
                 /*  add new text chunk  */
                 this.text.push({
                     id:        `chunk-${this.chunkIdCounter++}`,
-                    text:      chunk.payload,
+                    text:      chunk.payload.split(/\s+/),
                     kind:      chunk.kind,
                     timestamp: DateTime.now(),
                     removing:  false,
