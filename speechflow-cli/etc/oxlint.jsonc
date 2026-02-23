@@ -139,6 +139,8 @@
         "parameter-properties":               "off",
         "no-shadow":                          "off",
         "no-relative-parent-imports":         "off",
+        "prefer-module":                      "off",
+        "prefer-ternary":                     "off",
 
         "complexity":                         [ "error", { "max": 35 } ]
     }
