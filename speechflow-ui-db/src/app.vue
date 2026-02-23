@@ -157,11 +157,11 @@
         display: flex
         flex-direction: row
         justify-content: center
-        align-items: flex-begin
+        align-items: flex-start
         .popup-cols
             display: flex
             flex-direction: column
-            justify-content: flex-begin
+            justify-content: flex-start
             align-items: center
             width: 30vw
             .popup
