@@ -11,23 +11,24 @@
         <div class="area">
             <div class="block" ref="block">
                 <span class="chunk"
-                    v-for="(chunk, idx) of text"
+                    v-for="(chunk, cidx) of text"
                     v-bind:key="`chunk-${chunk.id}`"
                     v-bind:ref="`chunk-${chunk.id}`">
                     <span class="chunk-frag"
-                        v-for="(frag, idx) of chunk.text">
-                        <span v-bind:key="`bg-${chunk.id}-${idx}`"
+                        v-for="(frag, fidx) of chunk.text"
+                        v-bind:key="`chunk-${chunk.id}-frag-${fidx}`">
+                        <span
                             class="chunk-bg"
                             v-bind:class="{ intermediate: chunk.kind === 'intermediate', removed: chunk.removed }">
                             {{ frag }}
                         </span>
-                        <span v-bind:key="`fg-${chunk.id}-${idx}`"
+                        <span
                             class="chunk-fg"
                             v-bind:class="{ intermediate: chunk.kind === 'intermediate', removed: chunk.removed }">
                             {{ frag }}
                         </span>
                     </span>
-                    <span class="cursor" v-if="idx === (text.length - 1) && chunk.kind === 'intermediate'">
+                    <span class="cursor" v-if="cidx === (text.length - 1) && chunk.kind === 'intermediate'">
                         <spinner-grid class="spinner-grid" size="30"/>
                     </span>
                 </span>
