@@ -223,6 +223,11 @@ export class NodeGraph {
                     this.shutdown("finished", args, api)
                 }
             }
+            node.stream.on("error", (err: unknown) => {
+                const error = util.ensureError(err)
+                this.cli.log("warning", `stream of node <${node.id}> raised "error" event: ${error.message}`)
+                api.sendErrorToDashboard(Date.now(), node.id, "warning", error.message)
+            })
             node.stream.on("finish", () => {
                 deactivateNode(node, `writable stream side (input) of node <${node.id}> raised "finish" event`)
             })

@@ -26,7 +26,7 @@
                         class="text-col"
                         v-bind:class="{ intermediate: block.lastKind === 'intermediate' }">
                         <div v-bind:key="value"
-                            v-for="value of block.value"
+                            v-for="value in block.value"
                             class="text-value">
                             {{ value }}
                         </div>
@@ -34,6 +34,20 @@
                 </div>
                 <div class="block-name">
                     {{ block.name }}
+                </div>
+            </div>
+        </div>
+        <div class="popups">
+            <div class="popup-cols">
+                <div class="popup"
+                    v-for="(entry, idx) in popup"
+                    v-bind:class="{ warning: entry.level === 'warning', error: entry.level === 'error' }"
+                    v-bind:ref="`popup-${entry.id}`"
+                    v-bind:key="entry.id">
+                    <span class="time">[{{  DateTime.fromMillis(entry.time).toFormat("yyyy-MM-dd HH:mm:ss") }}]&nbsp;</span>
+                    <span class="level">{{  entry.level.toUpperCase()  }}:&nbsp;</span>
+                    <span class="node" v-show="entry.node !== ''">{{  entry.node  }}:&nbsp;</span>
+                    <span class="message">{{  entry.message  }}</span>
                 </div>
             </div>
         </div>
@@ -133,6 +147,37 @@
                     .text-value:last-child
                         background-color: var(--color-sig-bg-3)
                         color: var(--color-sig-fg-5)
+    .popups
+        position: absolute
+        top: 0
+        left: 0
+        z-index: 100
+        width: 100%
+        height: 100%
+        display: flex
+        flex-direction: row
+        justify-content: center
+        align-items: flex-begin
+        .popup-cols
+            display: flex
+            flex-direction: column
+            justify-content: flex-begin
+            align-items: center
+            width: 30vw
+            .popup
+                width: 30vw
+                color: var(--color-std-fg-5)
+                background-color: var(--color-acc-bg-3)
+                margin-top: 0.3vw
+                padding: 0.5vw
+                border-radius: 0.5vw
+                font-size: 1.0vw
+                .level
+                    font-weight: bold
+                &.warning
+                    background-color: var(--color-sig-bg-3)
+                &.error
+                    background-color: var(--color-sig-bg-3)
 </style>
 
 <script setup lang="ts">
@@ -140,6 +185,7 @@ import { defineComponent }   from "vue"
 import { DateTime }          from "luxon"
 import ReconnectingWebSocket from "@opensumi/reconnecting-websocket"
 import axios                 from "axios"
+import * as anime            from "animejs"
 </script>
 
 <script lang="ts">
@@ -162,19 +208,36 @@ type Info = {
     lufsBuffer?: LufsEntry[]
 }
 
+/*  type of a popup entry  */
+type Popup = {
+    id:          number,
+    time:        number,
+    node:        string,
+    level:       string,
+    message:     string,
+    removing:    boolean
+}
+
 /*  type of a websocket event message  */
-interface WebSocketEvent {
-    response: string,
-    args: [ string, string, string, number | string ]
+type WebSocketEvent = {
+    response: "DASHBOARD",
+    node:     string,
+    args:     [ string, string, string, number | string ]
+} | {
+    response: "HINT",
+    node:     string,
+    args:     [ number, string, string ]
 }
 
 /*  the Vue component  */
 export default defineComponent({
     name: "app",
     data: () => ({
-        info:      [] as Info[],
-        ws:        null as ReconnectingWebSocket | null,
-        lufsTimer: null as ReturnType<typeof setInterval> | null
+        info:       [] as Info[],
+        ws:         null as ReconnectingWebSocket | null,
+        lufsTimer:  null as ReturnType<typeof setInterval> | null,
+        popup:      [] as Popup[],
+        popupTimer: null as ReturnType<typeof setInterval> | null
     }),
     async mounted () {
         /*  determine API URLs  */
@@ -196,6 +259,11 @@ export default defineComponent({
             this.updateLufsDisplayValues()
         }, 50)
 
+        /*  start timer to remove expired popups  */
+        this.popupTimer = setInterval(() => {
+            this.removeExpiredPopups()
+        }, 50)
+
         /*  connect to WebSocket API for receiving dashboard information  */
         this.ws = new ReconnectingWebSocket(urlWS.toString(), [], {
             reconnectionDelayGrowFactor: 1.3,
@@ -209,12 +277,34 @@ export default defineComponent({
         })
 
         /*  track connection open/close  */
+        let initially = true
+        let popupId = 0
         this.ws.addEventListener("open", (ev) => {
-            this.log("INFO", "WebSocket connection established")
+            if (initially) {
+                initially = false
+                this.log("INFO", "WebSocket server connection: opened")
+                this.popup.unshift({
+                    id:       popupId++,
+                    time:     Date.now(),
+                    node:     "",
+                    level:    "info",
+                    message:  "server connection: opened",
+                    removing: false
+                })
+            }
+            else {
+                this.log("INFO", "WebSocket server connection: re-opened")
+                this.popup.unshift({
+                    id:       popupId++,
+                    time:     Date.now(),
+                    node:     "",
+                    level:    "info",
+                    message:  "server connection: re-opened",
+                    removing: false
+                })
+            }
         })
         this.ws.addEventListener("close", (ev) => {
-            this.log("INFO", "WebSocket connection destroyed")
-
             /*  reset meters and clear LUFS buffers  */
             for (const block of this.info) {
                 if (block.type === "audio" && block.lufsBuffer !== undefined) {
@@ -222,6 +312,17 @@ export default defineComponent({
                     block.lufsBuffer.length = 0
                 }
             }
+
+            /*  drop notice  */
+            this.log("INFO", "WebSocket server connection: closed")
+            this.popup.unshift({
+                id:       popupId++,
+                time:     Date.now(),
+                node:     "",
+                level:    "warning",
+                message:  "server connection: closed",
+                removing: false
+            })
         })
 
         /*  receive messages  */
@@ -234,35 +335,39 @@ export default defineComponent({
                 this.log("ERROR", "Failed to parse WebSocket message", { error, data: ev.data })
                 return
             }
-            if (event.response !== "DASHBOARD")
-                return
-
-            /*  extract dashboard update parameters: [ type, id, kind, value ]  */
-            const [ type, id, kind, value ] = event.args
-            for (const block of this.info) {
-                if (block.type === type && block.id === id) {
-                    if (block.type === "audio" && block.lufsBuffer !== undefined) {
-                        /*  buffer LUFS values for temporal averaging  */
-                        if (kind === "final" && typeof value === "number")
-                            block.lufsBuffer.push({ value, time: Date.now() })
-                    }
-                    else {
-                        if (typeof value === "string") {
-                            const arr = block.value as string[]
-                            if (block.lastKind === "intermediate")
-                                arr[arr.length - 1] = value
-                            else {
-                                arr.push(value)
-                                block.value = arr.slice(-20)
-                            }
+            if (event.response === "DASHBOARD") {
+                /*  extract dashboard update parameters: [ type, id, kind, value ]  */
+                const [ type, id, kind, value ] = event.args
+                for (const block of this.info) {
+                    if (block.type === type && block.id === id) {
+                        if (block.type === "audio" && block.lufsBuffer !== undefined) {
+                            /*  buffer LUFS values for temporal averaging  */
+                            if (kind === "final" && typeof value === "number")
+                                block.lufsBuffer.push({ value, time: Date.now() })
                         }
-                        block.lastKind = kind
-                        this.$nextTick(() => {
-                            for (const textCol of this.$refs.textCol as HTMLDivElement[])
-                                textCol.scrollTop = textCol.scrollHeight
-                        })
+                        else {
+                            if (typeof value === "string") {
+                                const arr = block.value as string[]
+                                if (block.lastKind === "intermediate")
+                                    arr[arr.length - 1] = value
+                                else {
+                                    arr.push(value)
+                                    block.value = arr.slice(-20)
+                                }
+                            }
+                            block.lastKind = kind
+                            this.$nextTick(() => {
+                                for (const textCol of this.$refs.textCol as HTMLDivElement[])
+                                    textCol.scrollTop = textCol.scrollHeight
+                            })
+                        }
                     }
                 }
+            }
+            else if (event.response === "HINT") {
+                const node = event.node
+                const [ time, level, message ] = event.args
+                this.popup.unshift({ id: popupId++, time, node, level, message, removing: false })
             }
         })
     },
@@ -270,6 +375,10 @@ export default defineComponent({
         if (this.lufsTimer) {
             clearInterval(this.lufsTimer)
             this.lufsTimer = null
+        }
+        if (this.popupTimer) {
+            clearInterval(this.popupTimer)
+            this.popupTimer = null
         }
         if (this.ws) {
             this.ws.close()
@@ -308,6 +417,25 @@ export default defineComponent({
                 else
                     block.value = -60
             }
+        },
+
+        /*  remove expired popups  */
+        removeExpiredPopups () {
+            this.popup.forEach((entry) => {
+                if (entry.time < Date.now() - 8000 && !entry.removing) {
+                    const el = (this.$refs[`popup-${entry.id}`] as HTMLDivElement[])[0]
+                    entry.removing = true
+                    anime.animate(el, {
+                        opacity:  [ 1, 0 ],
+                        duration: 2000,
+                        easing:   "easeOutQuad",
+                        onComplete: () => {
+                            const idx = this.popup.findIndex((e) => e.id === entry.id)
+                            this.popup.splice(idx, 1)
+                        }
+                    })
+                }
+            })
         }
     }
 })

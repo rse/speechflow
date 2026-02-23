@@ -21,7 +21,8 @@
         "typopro-web":                      "4.2.8",
         "@fortawesome/fontawesome-free":    "7.2.0",
         "patch-package":                    "8.0.1",
-        "@rse/stx":                         "1.1.4"
+        "@rse/stx":                         "1.1.4",
+        "animejs":                          "4.3.6"
     },
     "devDependencies": {
         "vite":                             "7.3.1",

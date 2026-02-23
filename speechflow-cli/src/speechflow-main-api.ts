@@ -303,4 +303,18 @@ export class APIServer {
             this.wsPeers.clear()
         }
     }
+
+    /*  send information to dashboard on error  */
+    async sendErrorToDashboard (time: number, node: string, level: string, message: string): Promise<void> {
+        const data = JSON.stringify({
+            response: "HINT",
+            node,
+            args:     [ time, level, message ]
+        })
+        for (const [ peer, peerInfo ] of this.wsPeers.entries()) {
+            this.cli.log("debug", `HAPI: dashboard peer ${peer}: send ${data}`)
+            if (peerInfo.ws.readyState === WebSocket.OPEN)
+                peerInfo.ws.send(data)
+        }
+    }
 }
