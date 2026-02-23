@@ -40,7 +40,7 @@
         <div class="popups">
             <div class="popup-cols">
                 <div class="popup"
-                    v-for="(entry, idx) in popup"
+                    v-for="(entry) in popup"
                     v-bind:class="{ warning: entry.level === 'warning', error: entry.level === 'error' }"
                     v-bind:ref="`popup-${entry.id}`"
                     v-bind:key="entry.id">
