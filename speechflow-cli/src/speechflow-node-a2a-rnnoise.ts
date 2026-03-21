@@ -71,14 +71,27 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
             })
         })
 
+        /*  track pending promises  */
+        const pending = new Map<string, {
+            resolve: (arr: Int16Array<ArrayBuffer>) => void,
+            reject:  (err: Error)                   => void
+        }>()
+
+        /*  reject all pending promises on worker exit  */
+        this.worker.on("exit", () => {
+            const err = new Error("worker terminated")
+            for (const cb of pending.values())
+                cb.reject(err)
+            pending.clear()
+        })
+
         /*  receive message from worker  */
-        const pending = new Map<string, (arr: Int16Array<ArrayBuffer>) => void>()
         this.worker.on("message", (msg: any) => {
             if (typeof msg === "object" && msg !== null && msg.type === "process-done") {
                 const cb = pending.get(msg.id)
                 pending.delete(msg.id)
                 if (cb)
-                    cb(msg.data)
+                    cb.resolve(msg.data)
                 else
                     this.log("warning", `RNNoise worker thread sent back unexpected id: ${msg.id}`)
             }
@@ -92,8 +105,8 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
             if (this.closing)
                 return segment
             const id = `${seq++}`
-            return new Promise<Int16Array<ArrayBuffer>>((resolve) => {
-                pending.set(id, (segment) => { resolve(segment) })
+            return new Promise<Int16Array<ArrayBuffer>>((resolve, reject) => {
+                pending.set(id, { resolve, reject })
                 this.worker!.postMessage({ type: "process", id, data: segment }, [ segment.buffer ])
             })
         }

@@ -114,17 +114,27 @@ export default class SpeechFlowNodeA2AGTCRN extends SpeechFlowNode {
             })
         })
 
-        /*  receive message from worker  */
-        const pending = new Map<string, (arr: Float32Array<ArrayBuffer>) => void>()
+        /*  track pending promises  */
+        const pending = new Map<string, {
+            resolve: (arr: Float32Array<ArrayBuffer>) => void,
+            reject:  (err: Error)                     => void
+        }>()
+
+        /*  reject all pending promises on worker exit  */
         this.worker.on("exit", () => {
+            const err = new Error("worker terminated")
+            for (const cb of pending.values())
+                cb.reject(err)
             pending.clear()
         })
+
+        /*  receive message from worker  */
         this.worker.on("message", (msg: any) => {
             if (typeof msg === "object" && msg !== null && msg.type === "process-done") {
                 const cb = pending.get(msg.id)
                 pending.delete(msg.id)
                 if (cb)
-                    cb(msg.data)
+                    cb.resolve(msg.data)
                 else
                     this.log("warning", `GTCRN worker thread sent back unexpected id: ${msg.id}`)
             }
@@ -140,8 +150,8 @@ export default class SpeechFlowNodeA2AGTCRN extends SpeechFlowNode {
             if (this.closing)
                 return samples
             const id = `${seq++}`
-            return new Promise<Float32Array<ArrayBuffer>>((resolve) => {
-                pending.set(id, (result) => { resolve(result) })
+            return new Promise<Float32Array<ArrayBuffer>>((resolve, reject) => {
+                pending.set(id, { resolve, reject })
                 this.worker!.postMessage({ type: "process", id, samples }, [ samples.buffer ])
             })
         }
