@@ -20,7 +20,7 @@
         "@rse/stx":     "1.1.4"
     },
     "devDependencies": {
-        "nodemon":      "3.1.11",
+        "nodemon":      "3.1.14",
         "watch":        "1.0.2",
         "concurrently": "9.2.1",
         "wait-on":      "9.0.4",
