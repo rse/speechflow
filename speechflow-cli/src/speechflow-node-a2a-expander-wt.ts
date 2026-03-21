@@ -56,7 +56,7 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         }
 
         /*  determine target level  */
-        const targetOut = thresholdDB + (levelDB - thresholdDB) / ratio
+        const targetOut = thresholdDB + (levelDB - thresholdDB) * ratio
 
         /*  return gain difference  */
         return targetOut - levelDB
