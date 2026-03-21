@@ -150,9 +150,13 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                 else if (chunk.payload === "")
                     callback()
                 else {
+                    let callbackCalled = false
                     let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
                         processTimeout = null
-                        callback(new Error("ElevenLabs API timeout"))
+                        if (!callbackCalled) {
+                            callbackCalled = true
+                            callback(new Error("ElevenLabs API timeout"))
+                        }
                     }, 60 * 1000)
                     const clearProcessTimeout = () => {
                         if (processTimeout !== null) {
@@ -163,13 +167,17 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                     try {
                         if (self.closing) {
                             clearProcessTimeout()
+                            callbackCalled = true
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
                         const stream = await speechStream(chunk.payload as string)
                         const buffer = await getStreamAsBuffer(stream)
+                        clearProcessTimeout()
+                        if (callbackCalled)
+                            return
+                        callbackCalled = true
                         if (self.closing) {
-                            clearProcessTimeout()
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
@@ -187,12 +195,14 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
                         chunkNew.type         = "audio"
                         chunkNew.payload      = bufferResampled
                         chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
-                        clearProcessTimeout()
                         this.push(chunkNew)
                         callback()
                     }
                     catch (error) {
                         clearProcessTimeout()
+                        if (callbackCalled)
+                            return
+                        callbackCalled = true
                         callback(util.ensureError(error, "ElevenLabs processing failed"))
                     }
                 }

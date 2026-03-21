@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - FEATURE: add a new "t2a-kitten" node which uses Kitten-TTS for text-to-speech
+- BUGFIX: avoid calling the transform callback twice in "t2a" nodes
 - CLEANUP: fix version number
 - UPDATE: upgrade NPM dependencies
 

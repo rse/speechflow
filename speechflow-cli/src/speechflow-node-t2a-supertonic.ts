@@ -169,9 +169,13 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                 else if (chunk.payload === "")
                     callback()
                 else {
+                    let callbackCalled = false
                     let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
                         processTimeout = null
-                        callback(new Error("Supertonic TTS timeout"))
+                        if (!callbackCalled) {
+                            callbackCalled = true
+                            callback(new Error("Supertonic TTS timeout"))
+                        }
                     }, 120 * 1000)
                     const clearProcessTimeout = () => {
                         if (processTimeout !== null) {
@@ -180,8 +184,11 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                         }
                     }
                     text2speech(chunk.payload as string).then((buffer) => {
+                        clearProcessTimeout()
+                        if (callbackCalled)
+                            return
+                        callbackCalled = true
                         if (self.closing) {
-                            clearProcessTimeout()
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
@@ -196,11 +203,13 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                         chunkNew.type         = "audio"
                         chunkNew.payload      = buffer
                         chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
-                        clearProcessTimeout()
                         this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
                         clearProcessTimeout()
+                        if (callbackCalled)
+                            return
+                        callbackCalled = true
                         callback(util.ensureError(error, "Supertonic processing failed"))
                     })
                 }

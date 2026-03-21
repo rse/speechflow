@@ -129,9 +129,13 @@ export default class SpeechFlowNodeT2AGoogle extends SpeechFlowNode {
                 else if (chunk.payload === "")
                     callback()
                 else {
+                    let callbackCalled = false
                     let processTimeout: ReturnType<typeof setTimeout> | null = setTimeout(() => {
                         processTimeout = null
-                        callback(new Error("Google TTS API timeout"))
+                        if (!callbackCalled) {
+                            callbackCalled = true
+                            callback(new Error("Google TTS API timeout"))
+                        }
                     }, 60 * 1000)
                     const clearProcessTimeout = () => {
                         if (processTimeout !== null) {
@@ -142,12 +146,16 @@ export default class SpeechFlowNodeT2AGoogle extends SpeechFlowNode {
                     try {
                         if (self.closing) {
                             clearProcessTimeout()
+                            callbackCalled = true
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
                         const buffer = await textToSpeech(chunk.payload as string)
+                        clearProcessTimeout()
+                        if (callbackCalled)
+                            return
+                        callbackCalled = true
                         if (self.closing) {
-                            clearProcessTimeout()
                             callback(new Error("stream destroyed during processing"))
                             return
                         }
@@ -161,12 +169,14 @@ export default class SpeechFlowNodeT2AGoogle extends SpeechFlowNode {
                         chunkNew.type         = "audio"
                         chunkNew.payload      = buffer
                         chunkNew.timestampEnd = Duration.fromMillis(chunkNew.timestampStart.toMillis() + durationMs)
-                        clearProcessTimeout()
                         this.push(chunkNew)
                         callback()
                     }
                     catch (error) {
                         clearProcessTimeout()
+                        if (callbackCalled)
+                            return
+                        callbackCalled = true
                         callback(util.ensureError(error, "Google TTS processing failed"))
                     }
                 }
