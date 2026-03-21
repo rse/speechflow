@@ -68,5 +68,23 @@ declare module "sherpa-onnx" {
     export default SherpaOnnx
 }
 
+/*  type definition for "kitten-tts-js"  */
+declare module "kitten-tts-js" {
+    export interface RawAudio {
+        data:          Float32Array
+        sampling_rate: number
+        duration:      number
+        toWav():       ArrayBuffer
+        save(filePath: string): Promise<void>
+    }
+    export class KittenTTS {
+        static from_pretrained (modelId: string): Promise<KittenTTS>
+        generate (text: string, opts?: { voice?: string, speed?: number, clean?: boolean }): Promise<RawAudio>
+        stream (text: string, opts?: { voice?: string, speed?: number, clean?: boolean }): AsyncGenerator<RawAudio>
+        list_voices (): string[]
+        release (): void
+    }
+}
+
 /* eslint-enable no-unused-vars */
 
