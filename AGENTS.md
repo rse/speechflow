@@ -1,10 +1,15 @@
-# CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+AGENTS
+======
+
+This file provides guidance to AI agents, when working with code in this repository.
 
 ## Project Overview
 
-SpeechFlow is a command-line interface tool for establishing directed data flow graphs of audio and text processing nodes. It enables flexible speech processing tasks including capturing audio, text-to-speech, speech-to-text, and speech-to-speech translation.
+SpeechFlow is a command-line interface tool for establishing directed
+data flow graphs of audio and text processing nodes. It enables flexible
+speech processing tasks including capturing audio, text-to-speech,
+speech-to-text, and speech-to-speech translation.
 
 ## Architecture
 
