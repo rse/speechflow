@@ -21,8 +21,7 @@ class CompressorProcessor extends AudioWorkletProcessor {
             { name: "ratio",      defaultValue: 4.0,   minValue: 1.0,    maxValue: 20,  automationRate: "k-rate" }, // compression ratio
             { name: "attack",     defaultValue: 0.010, minValue: 0.0,    maxValue: 1,   automationRate: "k-rate" }, // seconds
             { name: "release",    defaultValue: 0.050, minValue: 0.0,    maxValue: 1,   automationRate: "k-rate" }, // seconds
-            { name: "knee",       defaultValue: 6.0,   minValue: 0.0,    maxValue: 40,  automationRate: "k-rate" }, // dB
-            { name: "makeup",     defaultValue: 0.0,   minValue: -24,    maxValue: 24,  automationRate: "k-rate" }  // dB
+            { name: "knee",       defaultValue: 6.0,   minValue: 0.0,    maxValue: 40,  automationRate: "k-rate" }  // dB
         ]
     }
 
@@ -94,21 +93,17 @@ class CompressorProcessor extends AudioWorkletProcessor {
         const kneeDB      = parameters["knee"][0]
         const attackS     = Math.max(parameters["attack"][0],  1 / this.sampleRate)
         const releaseS    = Math.max(parameters["release"][0], 1 / this.sampleRate)
-        const makeupDB    = parameters["makeup"][0]
 
         /*  update envelope per channel  */
         for (let ch = 0; ch < nCh; ch++)
             this.env[ch] = util.updateEnvelopeForChannel(this.env, this.sampleRate, ch, input[ch], attackS, releaseS)
-
-        /*  determine linear value from decibel makeup value */
-        const makeUpLin = util.dB2lin(makeupDB)
 
         /*  iterate over all channels  */
         this.reduction = 0
         for (let ch = 0; ch < nCh; ch++) {
             const levelDB = util.lin2dB(this.env[ch])
             const gainDB  = this.gainDBFor(levelDB, thresholdDB, ratio, kneeDB)
-            const gainLin = util.dB2lin(gainDB) * makeUpLin
+            const gainLin = util.dB2lin(gainDB)
 
             /*  on first channel, calculate reduction  */
             if (ch === 0)

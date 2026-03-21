@@ -112,7 +112,6 @@ class AudioCompressor extends util.WebAudio {
             params.get("attack")!.setValueAtTime(this.config.attackMs / 1000, currentTime)
             params.get("release")!.setValueAtTime(this.config.releaseMs / 1000, currentTime)
             params.get("knee")!.setValueAtTime(this.config.kneeDb, currentTime)
-            params.get("makeup")!.setValueAtTime(this.config.makeupDb, currentTime)
         }
 
         /*  configure gain node  */
