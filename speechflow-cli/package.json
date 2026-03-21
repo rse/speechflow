@@ -69,6 +69,7 @@
         "@huggingface/transformers":            "3.8.1",
         "@huggingface/hub":                     "2.10.3",
         "kokoro-js":                            "1.2.1",
+        "kitten-tts-js":                        "0.1.2",
         "@ericedouard/vad-node-realtime":       "0.2.0",
         "osc-js":                               "2.4.1",
         "luxon":                                "3.7.2",

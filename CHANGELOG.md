@@ -5,6 +5,7 @@ ChangeLog
 2.2.2 (2026-02-23)
 ------------------
 
+- FEATURE: add a new "t2a-kitten" node which uses Kitten-TTS for text-to-speech
 - CLEANUP: fix version number
 
 2.2.1 (2026-02-23)

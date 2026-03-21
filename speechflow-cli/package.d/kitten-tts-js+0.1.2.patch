@@ -1,0 +1,24 @@
+diff --git a/node_modules/kitten-tts-js/src/kitten-tts.js b/node_modules/kitten-tts-js/src/kitten-tts.js
+index 63e4d2a..9c6544a 100644
+--- a/node_modules/kitten-tts-js/src/kitten-tts.js
++++ b/node_modules/kitten-tts-js/src/kitten-tts.js
+@@ -59,8 +59,10 @@ export class KittenTTS {
+ 
+     // Load ONNX runtime (Node vs browser via conditional exports)
+     let ort;
++    let isNode = false;
+     try {
+       ort = await import('onnxruntime-node');
++      isNode = true;
+     } catch {
+       ort = await import('onnxruntime-web');
+       // Tell onnxruntime-web where its .wasm files live.
+@@ -81,7 +83,7 @@ export class KittenTTS {
+       ort.env.wasm.simd = true;
+     }
+ 
+-    const sessionOptions = ort.env.wasm ? { executionProviders: ['wasm'] } : {};
++    const sessionOptions = isNode ? {} : { executionProviders: ['wasm'] };
+     const session = await ort.InferenceSession.create(modelBuffer, sessionOptions);
+     const voices = await loadNpz(voicesBuffer);
+ 
