@@ -1449,6 +1449,6 @@ time used in production in the msg Filmstudio.
 Copyright & License
 -------------------
 
-Copyright &copy; 2024-2025 [Dr. Ralf S. Engelschall](mailto:rse@engelschall.com)<br/>
+Copyright &copy; 2024-2026 [Dr. Ralf S. Engelschall](mailto:rse@engelschall.com)<br/>
 Licensed under [GPL 3.0](https://spdx.org/licenses/GPL-3.0-only)
 
