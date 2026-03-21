@@ -58,8 +58,9 @@ speech-to-speech).
   [Amazon Polly](https://aws.amazon.com/polly/), or
   [Google Cloud Text-to-Speech](https://cloud.google.com/text-to-speech).
 - local text-to-speech conversion with
-  [Kokoro](https://github.com/nazdridoy/kokoro-tts) or
-  [Supertonic](https://huggingface.co/Supertone/supertonic).
+  [Kokoro](https://github.com/nazdridoy/kokoro-tts),
+  [Supertonic](https://huggingface.co/Supertone/supertonic), or
+  [Kitten-TTS](https://huggingface.co/KittenML/kitten-tts-nano-0.8).
 - local [FFmpeg](https://ffmpeg.org/)-based speech-to-speech conversion,
 - local WAV speech-to-speech decoding/encoding,
 - local text-to-text formatting, regex-based modification,
@@ -387,7 +388,8 @@ First a short overview of the available processing nodes:
   **t2a-elevenlabs**,
   **t2a-google**,
   **t2a-kokoro**,
-  **t2a-supertonic**.
+  **t2a-supertonic**,
+  **t2a-kitten**.
 - Any-to-Any nodes:
   **x2x-filter**,
   **x2x-trace**.
@@ -1352,6 +1354,28 @@ The following nodes convert text chunks to audio chunks.
   | **voice**    | 0         | "M1"     | `/^(?:M1\|M2\|F1\|F2)$/` |
   | **speed**    | 1         | 1.40     | `0.5 <= n <= 2.0` |
   | **steps**    | 2         | 20       | `1 <= n <= 20` |
+
+- Node: **t2a-kitten**<br/>
+  Purpose: **Kitten-TTS Text-to-Speech conversion**<br/>
+  Example: `t2a-kitten(voice: "Bruno", speed: 1.25)`<br/>
+
+  > This node uses Kitten-TTS to perform Text-to-Speech (T2S) conversion,
+  > i.e., it converts the input text stream into an output audio stream.
+  > It is intended to generate speech. The ONNX models are automatically
+  > downloaded from HuggingFace on first use. The node internally operates
+  > at 24KHz sample rate and automatically resamples to SpeechFlow's
+  > internal 48KHz for output. It supports English language only.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | audio       |
+
+  | Parameter    | Position  | Default                       | Requirement            |
+  | ------------ | --------- | ----------------------------- | ---------------------- |
+  | **model**    | 0         | "KittenML/kitten-tts-nano-0.8"| *none*                 |
+  | **voice**    | 1         | "Bruno"                       | `/^(?:Bella\|Jasper\|Luna\|Bruno\|Rosie\|Hugo\|Kiki\|Leo)$/` |
+  | **speed**    | 2         | 1.25                          | `0.5 <= n <= 2.0`      |
 
 ### Any-to-Any Nodes
 
