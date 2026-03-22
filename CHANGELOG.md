@@ -32,6 +32,7 @@ ChangeLog
 - BUGFIX: fix "a2a-gtcrn" node by short-circuiting procedures in case of shutdown
 - BUGFIX: fix "a2a-expander" node by guarding against IEEE 754 edge case
 - BUGFIX: fix "a2t-amazon" race condition in ensureAudioStreamActive
+- BUGFIX: fix "t2t-summary" node for accumulated results without sentence-ending punctuation
 - BUGFIX: do not throw an exception from Stream::read() operations
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
