@@ -258,6 +258,9 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                         return
                     }
 
+                    /*  await forthcoming audio chunks (forward declaration)  */
+                    let awaitForthcomingChunks: () => void = () => {}
+
                     /*  flush pending audio chunks  */
                     const flushPendingChunks = () => {
                         let pushed = 0
@@ -304,7 +307,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                     }
 
                     /*  await forthcoming audio chunks  */
-                    const awaitForthcomingChunks = () => {
+                    awaitForthcomingChunks = () => {
                         self.activeEventListeners.delete(awaitForthcomingChunks)
                         if (self.closing)
                             return
