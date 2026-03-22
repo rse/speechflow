@@ -193,7 +193,7 @@ export function runner<T> (
 export function shield<T extends (void | Promise<void>)> (op: () => T) {
     return run(
         "shielded operation",
-        () => { op() },
-        (_err) => { /* ignore error */ }
+        ()     => op(),
+        (_err) => undefined as T
     )
 }
