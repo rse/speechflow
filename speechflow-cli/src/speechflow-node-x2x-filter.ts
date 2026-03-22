@@ -74,8 +74,8 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
                 /*  non-equal comparison  */
                 const coerceNum = (val: any) =>
                     typeof val === "number" ? val : (
-                        typeof val === "string" && val.match(/^[\d+-]+$/) ? Number.parseInt(val, 10) : (
-                            typeof val === "string" && val.match(/^[\d.+-]+$/) ?
+                        typeof val === "string" && val.match(/^[+-]?\d+$/) ? Number.parseInt(val, 10) : (
+                            typeof val === "string" && val.match(/^[+-]?(\d+\.?\d*|\d*\.?\d+)$/) ?
                                 Number.parseFloat(val) :
                                 Number(val)
                         )
