@@ -95,7 +95,7 @@ class CompressorProcessor extends AudioWorkletProcessor {
         const releaseS    = Math.max(parameters["release"][0], 1 / this.sampleRate)
 
         /*  update envelope per channel and collect RMS values  */
-        const rms = new Array<number>(nCh)
+        const rms = Array.from<number>({ length: nCh })
         for (let ch = 0; ch < nCh; ch++)
             rms[ch] = util.updateEnvelopeForChannel(this.env, this.sampleRate, ch, input[ch], attackS, releaseS)
 

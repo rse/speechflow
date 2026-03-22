@@ -298,7 +298,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     sendMessage({ type: "input_audio_buffer.commit" })
                     self.ws.close()
                     await new Promise<void>((resolve) => {
-                        const timeout = setTimeout(resolve, 5000)
+                        const timeout = setTimeout(() => { resolve() }, 5000)
                         self.ws?.once("close", () => {
                             clearTimeout(timeout)
                             resolve()

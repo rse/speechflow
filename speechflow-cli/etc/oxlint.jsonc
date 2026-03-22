@@ -141,6 +141,7 @@
         "no-relative-parent-imports":         "off",
         "prefer-module":                      "off",
         "prefer-ternary":                     "off",
+        "no-multiple-resolved":               "off",
 
         "complexity":                         [ "error", { "max": 35 } ]
     }
