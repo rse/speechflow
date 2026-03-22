@@ -279,7 +279,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                     nbChannel:     self.config.audioChannels - 1,
                     bitResolution: EBitsResolutions.VBAN_DATATYPE_INT16,
                     codec:         ECodecs.VBAN_CODEC_PCM,
-                    frameCounter:  self.frameCounter++
+                    frameCounter:  self.frameCounter++ & 0xFFFFFFFF
                 }, audioBuffer)
 
                 /*  send packet  */
