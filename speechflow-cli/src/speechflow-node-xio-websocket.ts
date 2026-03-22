@@ -236,6 +236,11 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
     async close () {
         /*  close WebSocket server  */
         if (this.server !== null) {
+            /*  forcibly terminate all active client connections  */
+            for (const client of this.server.clients)
+                client.terminate()
+
+            /*  close connection  */
             await new Promise<void>((resolve, reject) => {
                 this.server!.close((error) => {
                     if (error) reject(error)
