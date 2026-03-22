@@ -241,7 +241,11 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         try {
-                            self.dg.send(chunk.payload.buffer) /* intentionally discard all time information */
+                            /*  send buffer (and intentionally discard all time information)  */
+                            self.dg.send(chunk.payload.buffer.slice(
+                                chunk.payload.byteOffset,
+                                chunk.payload.byteOffset + chunk.payload.byteLength
+                            ))
                         }
                         catch (error) {
                             callback(util.ensureError(error, "failed to send to Deepgram"))

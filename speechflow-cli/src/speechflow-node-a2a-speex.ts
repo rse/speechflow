@@ -53,7 +53,9 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
         const wasmBinary = await fs.promises.readFile(
             path.join(__dirname, "../node_modules/@sapphi-red/speex-preprocess-wasm/dist/speex.wasm"))
         const speexModule = await loadSpeexModule({
-            wasmBinary: wasmBinary.buffer
+            wasmBinary: wasmBinary.buffer.slice(
+                wasmBinary.byteOffset,
+                wasmBinary.byteOffset + wasmBinary.byteLength)
         })
         this.speexProcessor = new SpeexPreprocessor(
             speexModule, this.sampleSize, this.config.audioSampleRate)
