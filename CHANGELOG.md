@@ -49,6 +49,7 @@ hangeLog
 - BUGFIX: do not throw an exception from Stream::read() operations
 - BUGFIX: signal handlers in main graph code discarded returned Promise and this way caused unhandled rejections
 - BUGFIX: in node graph code avoid mutating a Set during iteration
+- BUGFIX: avoid dangling timers on shutdown by unreferencing sleep/timeout() timers
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS
