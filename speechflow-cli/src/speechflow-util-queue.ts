@@ -62,7 +62,7 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
     position (index?: number): number {
         if (index !== undefined) {
             this.index = Math.max(0, Math.min(index, this.queue.elements.length))
-            this.notify("position", this.index)
+            this.notify("position", { start: this.index })
         }
         return this.index
     }
