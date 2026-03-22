@@ -41,6 +41,7 @@ hangeLog
 - BUGFIX: fix "a2a-filler" node by not terminating stream if a single chunk is invalid
 - BUGFIX: fix "xio-vban" node by awaiting all VBANServer operations
 - BUGFIX: fix "xio-file" node avoid double fs.close() on file descriptor in seekable write mode
+- BUGFIX: fix "a2a-vad" node by avoiding the busy-polling event loop in unplugged mode for consecutive non-speech chunks  
 - BUGFIX: avoid unbounded active captures memory growth in Audio Worklet
 - BUGFIX: do not throw an exception from Stream::read() operations
 - UPDATE: upgrade NPM dependencies and patches

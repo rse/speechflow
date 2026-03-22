@@ -289,17 +289,17 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                                 this.push(chunk)
                                 pushed++
                             }
-                            else if (self.params.mode === "unplugged" && pushed === 0) {
-                                /*  we have to await chunks now, as in unplugged
-                                    mode we else would be never called again until
-                                    we at least once push a new chunk as the result  */
-                                setTimeout(() => {
-                                    if (self.closing || self.queue === null)
-                                        return
-                                    tryToRead()
-                                }, 0)
-                                return
-                            }
+                        }
+
+                        /*  in unplugged mode, if no chunk was pushed (all were
+                            non-speech), we need to wait event-driven for new
+                            data, as the stream won't call read() again until
+                            we push something  */
+                        if (pushed === 0
+                            && !self.closing
+                            && !self.activeEventListeners.has(awaitForthcomingChunks)) {
+                            self.queue.once("write", awaitForthcomingChunks)
+                            self.activeEventListeners.add(awaitForthcomingChunks)
                         }
                     }
 
