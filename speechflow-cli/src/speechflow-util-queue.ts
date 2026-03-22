@@ -209,6 +209,7 @@ export class Queue<T extends QueueElement> extends EventEmitter {
             for (const pointer of this.pointers.values())
                 pointer.position(pointer.position() - min)
 
+            /*  notify (start/end refer to pre-splice indices)  */
             this.notify("write", { start: 0, end: min, op: "trim" })
         }
     }
