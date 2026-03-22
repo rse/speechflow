@@ -210,7 +210,9 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                             })
                         }),
                         util.timeout(5000)
-                    ])
+                    ]).catch(() => {
+                        /*  ignore timeout -- stdio stream cannot be destroyed  */
+                    })
                 }
             }
             this.stream = null
