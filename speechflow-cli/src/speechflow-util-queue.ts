@@ -306,8 +306,12 @@ export class PromiseSet<T> {
             this.promises.delete(promise)
         }).catch(() => {})
     }
-    async awaitAll () {
-        while (this.promises.size > 0)
+    async awaitAll (timeout = 0) {
+        const deadline = timeout > 0 ? Date.now() + timeout : 0
+        while (this.promises.size > 0) {
             await Promise.all(this.promises)
+            if (deadline > 0 && Date.now() >= deadline)
+                break
+        }
     }
 }
