@@ -138,8 +138,11 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
                 throw new Error("unexpected Supertonic result: sampling_rate is not a number")
             const samples = result.audio
             const outputSampleRate = result.sampling_rate
-            if (outputSampleRate !== this.sampleRate)
-                this.log("warning", `unexpected sample rate ${outputSampleRate}Hz (expected ${this.sampleRate}Hz)`)
+            if (outputSampleRate !== this.sampleRate) {
+                this.log("warning", `unexpected sample rate change ${this.sampleRate}Hz -> ${outputSampleRate}Hz (recreating resampler)`)
+                this.sampleRate = outputSampleRate
+                this.resampler = new SpeexResampler(1, this.sampleRate, this.config.audioSampleRate, 7)
+            }
 
             /*  calculate duration  */
             const duration = samples.length / outputSampleRate
