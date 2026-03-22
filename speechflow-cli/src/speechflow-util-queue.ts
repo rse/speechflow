@@ -49,43 +49,11 @@ export class SingleQueue<T> extends EventEmitter {
         this.queue = new Array<T>()
         return items
     }
-}
-
-/*  helper class for double-item queue  */
-export class DoubleQueue<T0, T1> extends EventEmitter {
-    private queue0 = new Array<T0>()
-    private queue1 = new Array<T1>()
-    private notify () {
-        if (this.queue0.length > 0 && this.queue1.length > 0)
-            this.emit("dequeue")
-    }
-    write0 (item: T0) {
-        this.queue0.unshift(item)
-        this.notify()
-    }
-    write1 (item: T1) {
-        this.queue1.unshift(item)
-        this.notify()
-    }
-    read () {
-        return new Promise<[ T0, T1 ]>((resolve) => {
-            const consume = (): [ T0, T1 ] | undefined => {
-                if (this.queue0.length > 0 && this.queue1.length > 0) {
-                    const item0 = this.queue0.pop() as T0
-                    const item1 = this.queue1.pop() as T1
-                    return [ item0, item1 ]
-                }
-                return undefined
-            }
-            const tryToConsume = () => {
-                const items = consume()
-                if (items !== undefined)
-                    resolve(items)
-                else
-                    this.once("dequeue", tryToConsume)
-            }
-            tryToConsume()
-        })
+    destroy () {
+        for (const resolver of this.resolvers)
+            resolver.reject(new Error("SingleQueue destroyed"))
+        this.resolvers = []
+        this.queue = []
     }
 }
 
