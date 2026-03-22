@@ -211,8 +211,9 @@ export class NodeGraph {
             this.cli.log("info", `observe stream of node <${node.id}> for finish event`)
             this.activeNodes.add(node)
             const deactivateNode = (node: SpeechFlowNode, msg: string) => {
-                if (this.activeNodes.has(node))
-                    this.activeNodes.delete(node)
+                if (!this.activeNodes.has(node))
+                    return
+                this.activeNodes.delete(node)
                 this.cli.log("info", `${msg} (${this.activeNodes.size} active nodes remaining)`)
                 if (this.activeNodes.size === 0) {
                     const timeFinished = DateTime.now()
@@ -220,7 +221,9 @@ export class NodeGraph {
                     this.cli.log("info", "**** everything finished -- stream processing in SpeechFlow graph stops " +
                         `(total duration: ${duration?.toFormat("hh:mm:ss.SSS") ?? "unknown"}) ****`)
                     this.finishEvents.emit("finished")
-                    this.shutdown("finished", args, api)
+                    this.shutdown("finished", args, api).catch((err: Error) => {
+                        this.cli.log("error", `failed to shutdown: ${err.message}`)
+                    })
                 }
             }
             node.stream.on("error", (err: unknown) => {

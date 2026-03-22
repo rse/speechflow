@@ -13,6 +13,7 @@ ChangeLog
 - BUGFIX: fix race condition between chunkQueue nulling and stream destruction in MQTT and VBAN nodes
 - BUGFIX: fix start timestamp calculation in "a2t-google" node
 - BUGFIX: fix error message in case a positional parameter does not match
+- BUGFIX: fix shutdown procedure by avoiding double node deactivation
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages
