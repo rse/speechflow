@@ -163,8 +163,8 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             }, new Map<string, any>())
         }
 
-        /*  track transcription text  */
-        let text = ""
+        /*  track transcription text per item  */
+        const textByItem = new Map<string, string>()
         this.ws.on("message", (data) => {
             let ev: Record<string, unknown>
             try {
@@ -182,13 +182,16 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                 case "transcription_session.created":
                     break
                 case "conversation.item.created": {
-                    text = ""
+                    const itemId = (ev.item as Record<string, unknown>)?.id as string
+                    if (itemId)
+                        textByItem.set(itemId, "")
                     break
                 }
                 case "conversation.item.input_audio_transcription.delta": {
-                    text += ev.delta as string
+                    const itemId = ev.item_id as string
+                    const text   = (textByItem.get(itemId) ?? "") + (ev.delta as string)
+                    textByItem.set(itemId, text)
                     if (this.params.interim && !this.closing && this.queue !== null) {
-                        const itemId = ev.item_id as string
                         const timing = speechTiming.get(itemId)
                         const start  = timing !== undefined ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
                         const end    = timing !== undefined ? Duration.fromMillis(timing.endMs)   : start
@@ -200,7 +203,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                 }
                 case "conversation.item.input_audio_transcription.completed": {
                     if (!this.closing && this.queue !== null) {
-                        text = ev.transcript as string
+                        const text   = ev.transcript as string
                         const itemId = ev.item_id as string
                         const timing = speechTiming.get(itemId)
                         const start  = timing !== undefined ? Duration.fromMillis(timing.startMs) : DateTime.now().diff(this.timeOpen!)
@@ -209,8 +212,8 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                         chunk.meta = aggregateMeta(start, end)
                         metastore.prune(start)
                         speechTiming.delete(itemId)
+                        textByItem.delete(itemId)
                         this.queue.write(chunk)
-                        text = ""
                     }
                     break
                 }
