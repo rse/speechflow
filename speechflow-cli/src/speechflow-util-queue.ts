@@ -243,6 +243,7 @@ export class TimeStore<T> extends EventEmitter {
 export class AsyncQueue<T> {
     private queue = new Array<T>()
     private resolvers: { resolve: (v: T) => void, reject: (err: Error) => void }[] = []
+    public destroyed = false
     write (v: T) {
         const resolver = this.resolvers.shift()
         if (resolver)
@@ -265,6 +266,7 @@ export class AsyncQueue<T> {
         return items
     }
     destroy () {
+        this.destroyed = true
         for (const resolver of this.resolvers)
             resolver.reject(new Error("AsyncQueue destroyed"))
         this.resolvers = []

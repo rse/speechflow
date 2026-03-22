@@ -299,10 +299,13 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                 }
                 if (self.chunkQueue === null)
                     return
-                reads.add(self.chunkQueue.read().then((chunk) => {
+                const queue = self.chunkQueue
+                reads.add(queue.read().then((chunk) => {
                     this.push(chunk, "binary")
                 }).catch((err: Error) => {
                     self.log("warning", `read on chunk queue operation failed: ${err}`)
+                    if (queue.destroyed)
+                        this.push(null)
                 }))
             }
         })
