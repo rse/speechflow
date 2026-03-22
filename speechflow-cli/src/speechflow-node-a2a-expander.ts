@@ -177,8 +177,9 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
 
                         /*  take over expanded data  */
                         const payload = util.convertI16ToBuf(result)
-                        chunk.payload = payload
-                        this.push(chunk)
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = payload
+                        this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
                         if (self.closing)

@@ -52,6 +52,7 @@ hangeLog
 - BUGFIX: avoid dangling timers on shutdown by unreferencing sleep/timeout() timers
 - BUGFIX: for SingleQueue.read() avoid conflating "queue empty" with "queue contains undefined"
 - BUGFIX: correctly deep-clone the meta Map of nodes
+- BUGFIX: in many audio transform nodes, clone chunks before mutating the payload to support chunk fan-out to multiple nodes
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS

@@ -96,11 +96,10 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                         /*  convert Int16Array back into Buffer  */
                         const buf = util.convertI16ToBuf(payload)
 
-                        /*  update chunk  */
-                        chunk.payload = buf
-
-                        /*  forward updated chunk  */
-                        this.push(chunk)
+                        /*  forward cloned chunk with updated payload  */
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = buf
+                        this.push(chunkNew)
                         callback()
                     }).catch((err: unknown) => {
                         const error = util.ensureError(err)

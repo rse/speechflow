@@ -190,11 +190,10 @@ export default class SpeechFlowNodeA2AGTCRN extends SpeechFlowNode {
                         /*  resample Buffer from 16KHz (GTCRN) back to 48KHz (SpeechFlow)  */
                         const resampledUp = self.resamplerUp!.processChunk(buf)
 
-                        /*  update chunk  */
-                        chunk.payload = resampledUp
-
-                        /*  forward updated chunk  */
-                        this.push(chunk)
+                        /*  forward cloned chunk with updated payload  */
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = resampledUp
+                        this.push(chunkNew)
                         callback()
                     }).catch((err: unknown) => {
                         const error = util.ensureError(err)

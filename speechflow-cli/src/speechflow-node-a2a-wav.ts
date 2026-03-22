@@ -183,9 +183,10 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
                             callback(new Error(`WAV not based on ${self.config.audioChannels} channel(s)`))
                             return
                         }
-                        chunk.payload = chunk.payload.subarray(44)
-                        this.push(chunk)
-                        totalSize += chunk.payload.byteLength
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = chunk.payload.subarray(44)
+                        this.push(chunkNew)
+                        totalSize += chunkNew.payload.byteLength
                         callback()
                     }
                     else {

@@ -185,8 +185,9 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
 
                         /*  take over pitch-shifted data  */
                         const payload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
-                        chunk.payload = payload
-                        this.push(chunk)
+                        const chunkNew = chunk.clone()
+                        chunkNew.payload = payload
+                        this.push(chunkNew)
                         callback()
                     }).catch((error: unknown) => {
                         if (self.closing)
