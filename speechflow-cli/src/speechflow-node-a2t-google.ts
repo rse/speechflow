@@ -24,7 +24,7 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
     /*  internal state  */
     private client:          GoogleSpeech.SpeechClient                                   | null = null
     private recognizeStream: ReturnType<GoogleSpeech.SpeechClient["streamingRecognize"]> | null = null
-    private queue:           util.SingleQueue<SpeechFlowChunk | null>                    | null = null
+    private queue:           util.AsyncQueue<SpeechFlowChunk | null>                     | null = null
     private closing                                                                             = false
 
     /*  construct node  */
@@ -63,7 +63,7 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
         this.closing = false
 
         /*  create queue for results  */
-        this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
+        this.queue = new util.AsyncQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
         const metastore = new util.TimeStore<Map<string, any>>()

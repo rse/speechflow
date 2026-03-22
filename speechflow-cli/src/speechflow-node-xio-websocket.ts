@@ -23,7 +23,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
     /*  internal state  */
     private server:     ws.WebSocketServer                    | null = null
     private client:     ReconnWebSocket                       | null = null
-    private chunkQueue: util.SingleQueue<SpeechFlowChunk>     | null = null
+    private chunkQueue: util.AsyncQueue<SpeechFlowChunk>      | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -64,7 +64,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             /*  listen locally on a Websocket port  */
             const url = new URL(this.params.listen)
             const websockets = new Set<ws.WebSocket>()
-            this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
+            this.chunkQueue = new util.AsyncQueue<SpeechFlowChunk>()
             this.server = new ws.WebSocketServer({
                 host: url.hostname,
                 port: Number.parseInt(url.port, 10),
@@ -184,7 +184,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 const error = util.ensureError(ev.error)
                 this.log("error", `error of connection on URL ${this.params.connect}: ${error.message}`)
             })
-            this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
+            this.chunkQueue = new util.AsyncQueue<SpeechFlowChunk>()
             this.client.addEventListener("message", (ev: MessageEvent) => {
                 if (this.params.mode === "w") {
                     this.log("warning", `connection to URL ${this.params.connect}: ` +
@@ -247,7 +247,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
     async close () {
         /*  drain and clear chunk queue reference  */
         if (this.chunkQueue !== null) {
-            this.chunkQueue.drain()
+            this.chunkQueue.destroy()
             this.chunkQueue = null
         }
 

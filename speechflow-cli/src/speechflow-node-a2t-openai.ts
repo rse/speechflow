@@ -25,7 +25,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
     /*  internal state  */
     private openai:            OpenAI                                    | null = null
     private ws:                ws.WebSocket                              | null = null
-    private queue:             util.SingleQueue<SpeechFlowChunk | null>  | null = null
+    private queue:             util.AsyncQueue<SpeechFlowChunk | null>   | null = null
     private resampler:         SpeexResampler                            | null = null
     private closing                                                             = false
     private connectionTimeout: ReturnType<typeof setTimeout>             | null = null
@@ -67,7 +67,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         this.closing = false
 
         /*  create queue for results  */
-        this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
+        this.queue = new util.AsyncQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
         const metastore = new util.TimeStore<Map<string, any>>()

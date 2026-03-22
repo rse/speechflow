@@ -26,37 +26,6 @@ export function importObject<T> (name: string, arg: object | string, validator: 
     return result as T
 }
 
-/*  helper class for single item queue  */
-export class SingleQueue<T> extends EventEmitter {
-    private queue = new Array<T>()
-    write (item: T) {
-        this.queue.unshift(item)
-        this.emit("dequeue")
-    }
-    read () {
-        return new Promise<T>((resolve) => {
-            const tryToConsume = () => {
-                if (this.queue.length > 0)
-                    resolve(this.queue.pop()!)
-                else
-                    this.once("dequeue", tryToConsume)
-            }
-            tryToConsume()
-        })
-    }
-    drain () {
-        const items = this.queue
-        this.queue = new Array<T>()
-        return items
-    }
-    destroy () {
-        for (const resolver of this.resolvers)
-            resolver.reject(new Error("SingleQueue destroyed"))
-        this.resolvers = []
-        this.queue = []
-    }
-}
-
 /*  queue element  */
 export type QueueElement = { type: string }
 
@@ -268,7 +237,7 @@ export class TimeStore<T> extends EventEmitter {
 
 /*  asynchronous queue  */
 export class AsyncQueue<T> {
-    private queue: Array<T> = []
+    private queue = new Array<T>()
     private resolvers: { resolve: (v: T) => void, reject: (err: Error) => void }[] = []
     write (v: T) {
         const resolver = this.resolvers.shift()
@@ -285,6 +254,11 @@ export class AsyncQueue<T> {
     }
     empty () {
         return this.queue.length === 0
+    }
+    drain () {
+        const items = this.queue
+        this.queue = new Array<T>()
+        return items
     }
     destroy () {
         for (const resolver of this.resolvers)

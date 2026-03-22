@@ -71,7 +71,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     private client:       TranscribeStreamingClient                | null = null
     private clientStream: AsyncIterable<TranscriptResultStream>    | null = null
     private audioQueue:   AsyncQueue<Uint8Array>                   | null = null
-    private queue:        util.SingleQueue<SpeechFlowChunk | null> | null = null
+    private queue:        util.AsyncQueue<SpeechFlowChunk | null>  | null = null
     private clientStreamStarting                                          = false
     private closing                                                       = false
 
@@ -115,7 +115,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         this.clientStreamStarting = false
 
         /*  create queue for results  */
-        this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
+        this.queue = new util.AsyncQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
         const metastore = new util.TimeStore<Map<string, any>>()

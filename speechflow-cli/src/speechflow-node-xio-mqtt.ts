@@ -23,7 +23,7 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
     /*  internal state  */
     private broker:     MQTT.MqttClient | null                   = null
     private clientId:   string                                   = (new UUID(1)).format()
-    private chunkQueue: util.SingleQueue<SpeechFlowChunk> | null = null
+    private chunkQueue: util.AsyncQueue<SpeechFlowChunk> | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -100,7 +100,7 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             const reasonCode = packet.reasonCode ?? 0
             this.log("info", `connection closed to MQTT ${this.params.url} (reason code: ${reasonCode})`)
         })
-        this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
+        this.chunkQueue = new util.AsyncQueue<SpeechFlowChunk>()
         this.broker.on("message", (topic: string, payload: Buffer, packet: MQTT.IPublishPacket) => {
             if (topic !== this.params.topicRead || this.params.mode === "w")
                 return
@@ -176,7 +176,7 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
 
         /*  drain and clear chunk queue reference  */
         if (this.chunkQueue !== null) {
-            this.chunkQueue.drain()
+            this.chunkQueue.destroy()
             this.chunkQueue = null
         }
     }

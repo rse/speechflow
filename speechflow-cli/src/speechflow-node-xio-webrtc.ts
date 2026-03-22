@@ -39,7 +39,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
     /*  internal state  */
     private peerConnections                                       = new Map<string, WebRTCConnection>()
     private httpServer:  http.Server                       | null = null
-    private chunkQueue:  util.SingleQueue<SpeechFlowChunk> | null = null
+    private chunkQueue:  util.AsyncQueue<SpeechFlowChunk> | null = null
     private opusEncoder: OpusEncoder                       | null = null
     private opusDecoder: OpusEncoder                       | null = null
     private pcmBuffer                                             = Buffer.alloc(0)
@@ -367,7 +367,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
         this.rtpSSRC      = Math.floor(Math.random() * 0x100000000) >>> 0
 
         /*  setup chunk queue for incoming audio  */
-        this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
+        this.chunkQueue = new util.AsyncQueue<SpeechFlowChunk>()
 
         /*  parse listen address  */
         const listen = this.parseAddress(this.params.listen, 8085)
@@ -531,7 +531,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
 
         /*  drain and clear chunk queue  */
         if (this.chunkQueue !== null) {
-            this.chunkQueue.drain()
+            this.chunkQueue.destroy()
             this.chunkQueue = null
         }
 

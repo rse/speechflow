@@ -32,7 +32,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
 
     /*  internal state  */
     private server:        VBANServer                        | null = null
-    private chunkQueue:    util.SingleQueue<SpeechFlowChunk> | null = null
+    private chunkQueue:    util.AsyncQueue<SpeechFlowChunk> | null = null
     private frameCounter                                            = 0
     private targetAddress                                           = ""
     private targetPort                                              = 0
@@ -99,7 +99,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
         })
 
         /*  setup chunk queue for incoming audio  */
-        this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
+        this.chunkQueue = new util.AsyncQueue<SpeechFlowChunk>()
 
         /*  determine target for sending  */
         if (this.params.connect !== "") {
@@ -325,7 +325,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
 
         /*  drain and clear chunk queue reference  */
         if (this.chunkQueue !== null) {
-            this.chunkQueue.drain()
+            this.chunkQueue.destroy()
             this.chunkQueue = null
         }
     }

@@ -24,7 +24,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     private dg:                Deepgram.LiveClient                      | null = null
     private closing                                                            = false
     private connectionTimeout: ReturnType<typeof setTimeout>            | null = null
-    private queue:             util.SingleQueue<SpeechFlowChunk | null> | null = null
+    private queue:             util.AsyncQueue<SpeechFlowChunk | null>  | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -83,7 +83,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         this.closing = false
 
         /*  create queue for results  */
-        this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
+        this.queue = new util.AsyncQueue<SpeechFlowChunk | null>()
 
         /*  create a store for the meta information  */
         const metastore = new util.TimeStore<Map<string, any>>()

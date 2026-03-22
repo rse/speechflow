@@ -6,6 +6,7 @@ hangeLog
 ------------------
 
 - FEATURE: add a new "t2a-kitten" node which uses Kitten-TTS for text-to-speech
+- REFACTOR: merge SingleQueue into AsyncQueue and use AsyncQueue in all nodes
 - BUGFIX: avoid calling the transform callback twice in "t2a" nodes
 - BUGFIX: avoid applying makeup gain twice in "a2a-compressor" node
 - BUGFIX: fix hard-knee arithmetic in "a2a-expander" node
