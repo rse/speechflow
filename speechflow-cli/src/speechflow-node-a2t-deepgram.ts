@@ -145,7 +145,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 { word: string, punctuated_word?: string, start: number, end: number }[]
             const isFinal     = (data.is_final     as boolean) ?? false
             const speechFinal = (data.speech_final as boolean) ?? false
-            const kind = ((interim && isFinal) || (endpointing > 0 && speechFinal)) ? "final" : "intermediate"
+            const kind = (isFinal || (endpointing > 0 && speechFinal)) ? "final" : "intermediate"
             if (text === "")
                 this.log("info", `empty/dummy text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s)`)
             else {
