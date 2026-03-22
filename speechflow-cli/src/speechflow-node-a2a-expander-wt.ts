@@ -97,16 +97,17 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         const releaseS    = Math.max(parameters["release"][0], 1 / this.sampleRate)
         const makeupDB    = parameters["makeup"][0]
 
-        /*  update envelope per channel  */
+        /*  update envelope per channel and collect RMS values  */
+        const rms = new Array<number>(nCh)
         for (let ch = 0; ch < nCh; ch++)
-            this.env[ch] = util.updateEnvelopeForChannel(this.env, this.sampleRate, ch, input[ch], attackS, releaseS)
+            rms[ch] = util.updateEnvelopeForChannel(this.env, this.sampleRate, ch, input[ch], attackS, releaseS)
 
         /*  determine linear value from decibel makeup value */
         const makeUpLin = util.dB2lin(makeupDB)
 
         /*  iterate over all channels  */
         for (let ch = 0; ch < nCh; ch++) {
-            const levelDB = util.lin2dB(this.env[ch])
+            const levelDB = util.lin2dB(rms[ch])
             const gainDB  = this.gainDBFor(levelDB, thresholdDB, ratio, kneeDB)
             let gainLin = util.dB2lin(gainDB) * makeUpLin
 

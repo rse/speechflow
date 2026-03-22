@@ -94,14 +94,15 @@ class CompressorProcessor extends AudioWorkletProcessor {
         const attackS     = Math.max(parameters["attack"][0],  1 / this.sampleRate)
         const releaseS    = Math.max(parameters["release"][0], 1 / this.sampleRate)
 
-        /*  update envelope per channel  */
+        /*  update envelope per channel and collect RMS values  */
+        const rms = new Array<number>(nCh)
         for (let ch = 0; ch < nCh; ch++)
-            this.env[ch] = util.updateEnvelopeForChannel(this.env, this.sampleRate, ch, input[ch], attackS, releaseS)
+            rms[ch] = util.updateEnvelopeForChannel(this.env, this.sampleRate, ch, input[ch], attackS, releaseS)
 
         /*  iterate over all channels  */
         this.reduction = 0
         for (let ch = 0; ch < nCh; ch++) {
-            const levelDB = util.lin2dB(this.env[ch])
+            const levelDB = util.lin2dB(rms[ch])
             const gainDB  = this.gainDBFor(levelDB, thresholdDB, ratio, kneeDB)
             const gainLin = util.dB2lin(gainDB)
 
