@@ -206,6 +206,13 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 }
                 resolve(true)
             })
+            this.dg!.once(Deepgram.LiveTranscriptionEvents.Error, (err: Error) => {
+                if (this.connectionTimeout !== null) {
+                    clearTimeout(this.connectionTimeout)
+                    this.connectionTimeout = null
+                }
+                reject(err)
+            })
         })
 
         /*  remember opening time to receive time zero offset  */
