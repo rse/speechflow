@@ -161,6 +161,12 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  drain and clear chunk queue reference  */
+        if (this.chunkQueue !== null) {
+            this.chunkQueue.destroy()
+            this.chunkQueue = null
+        }
+
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
@@ -172,12 +178,6 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             if (this.broker.connected)
                 this.broker.end()
             this.broker = null
-        }
-
-        /*  drain and clear chunk queue reference  */
-        if (this.chunkQueue !== null) {
-            this.chunkQueue.destroy()
-            this.chunkQueue = null
         }
     }
 }
