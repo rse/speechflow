@@ -152,7 +152,8 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
                     /*  fallback: use result timing  */
                     const resultEnd = result.resultEndTime
                     if (resultEnd) {
-                        tsEnd = Duration.fromMillis(
+                        tsStart = Duration.fromMillis(0).plus(this.timeZeroOffset)
+                        tsEnd   = Duration.fromMillis(
                             (Number(resultEnd.seconds ?? 0) * 1000) +
                             (Number(resultEnd.nanos ?? 0) / 1000000)
                         ).plus(this.timeZeroOffset)
