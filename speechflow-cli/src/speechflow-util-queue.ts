@@ -36,9 +36,8 @@ export class SingleQueue<T> extends EventEmitter {
     read () {
         return new Promise<T>((resolve) => {
             const tryToConsume = () => {
-                const item = this.queue.pop()
-                if (item !== undefined)
-                    resolve(item)
+                if (this.queue.length > 0)
+                    resolve(this.queue.pop()!)
                 else
                     this.once("dequeue", tryToConsume)
             }
