@@ -48,23 +48,33 @@ export const deepClone = (value: any): any => {
 /*  sleep: wait a duration of time and then resolve  */
 export function sleep (durationMs: number, signal?: AbortSignal) {
     return new Promise<void>((resolve) => {
+        const ac = new AbortController()
         const timer = setTimeout(() => {
+            ac.abort()
             resolve()
         }, durationMs)
         timer.unref()
         if (signal !== undefined)
-            signal.addEventListener("abort", () => { clearTimeout(timer) }, { once: true })
+            signal.addEventListener("abort", () => {
+                clearTimeout(timer)
+                resolve()
+            }, { once: true, signal: ac.signal })
     })
 }
 
 /*  timeout: wait a duration of time and then reject  */
 export function timeout (durationMs: number, info = "timeout", signal?: AbortSignal) {
-    return new Promise<never>((_resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
+        const ac = new AbortController()
         const timer = setTimeout(() => {
+            ac.abort()
             reject(new Error(info))
         }, durationMs)
         timer.unref()
         if (signal !== undefined)
-            signal.addEventListener("abort", () => { clearTimeout(timer) }, { once: true })
+            signal.addEventListener("abort", () => {
+                clearTimeout(timer)
+                resolve()
+            }, { once: true, signal: ac.signal })
     })
 }
