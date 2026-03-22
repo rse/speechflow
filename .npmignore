@@ -1,3 +1,5 @@
 node_modules
 .env
 etc/claude.dump.md
+program-*.srt
+program-*.txt
