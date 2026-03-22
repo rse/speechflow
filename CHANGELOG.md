@@ -21,6 +21,7 @@ ChangeLog
 - BUGFIX: fix "t2a-kokoro" node for a timer leak on model load failure
 - BUGFIX: fix "t2a-supertonic" node for automatically adapting to changing sampling rates
 - BUGFIX: fix "t2t-subtitle" buffer handling for "import" mode
+- BUGFIX: fix "x2x-filter" node by not stumbling over undefined values
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages

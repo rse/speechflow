@@ -47,6 +47,7 @@ export default class SpeechFlowNodeX2XFilter extends SpeechFlowNode {
 
         /*  helper function for comparing two values  */
         const comparison = (val1: any, op: string, val2: any) => {
+            val1 ??= ""
             if (op === "==" || op === "!=") {
                 /*  equal comparison  */
                 const str1 = (typeof val1 === "string" ? val1 : val1.toString())
