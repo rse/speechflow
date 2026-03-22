@@ -10,6 +10,7 @@ ChangeLog
 - BUGFIX: avoid applying makeup gain twice in "a2a-compressor" node
 - BUGFIX: fix hard-knee arithmetic in "a2a-expander" node
 - BUGFIX: fix resource handling by tracking pending promises in "a2a" nodes
+- BUGFIX: fix race condition between chunkQueue nulling and stream destruction in MQTT and VBAN nodes
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages
