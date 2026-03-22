@@ -185,9 +185,30 @@ export class StreamWrapper extends Stream.Transform {
             return
         }
         try {
-            if (typeof this.foreignStream.end === "function")
+            if (typeof this.foreignStream.end === "function") {
                 this.foreignStream.end()
-            callback()
+
+                /*  wait for the foreign stream to finish flushing
+                    before signaling completion of this Transform stream  */
+                Promise.race([
+                    new Promise<void>((resolve, reject) => {
+                        if (typeof this.foreignStream.once === "function") {
+                            this.foreignStream.once("finish", () => { resolve() })
+                            this.foreignStream.once("error",  (err: Error) => { reject(err) })
+                        }
+                        else
+                            resolve()
+                    }),
+                    util.timeout(5000, "foreign stream flush timeout")
+                ]).then(() => {
+                    callback()
+                }).catch(() => {
+                    /*  ignore timeout -- stream will be destroyed anyway  */
+                    callback()
+                })
+            }
+            else
+                callback()
         }
         catch (err: unknown) {
             callback(util.ensureError(err))
