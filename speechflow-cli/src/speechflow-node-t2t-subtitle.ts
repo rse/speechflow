@@ -288,25 +288,42 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                     /*  accumulate input  */
                     buffer += chunk.payload
 
-                    /*  parse accumulated input  */
+                    /*  find the last double-newline boundary to separate
+                        complete blocks from a potentially incomplete trailing block  */
+                    const boundary = /\r?\n\r?\n/g
+                    let lastBoundaryEnd = -1
+                    let match: RegExpExecArray | null
+                    while ((match = boundary.exec(buffer)) !== null)
+                        lastBoundaryEnd = match.index + match[0].length
+
+                    /*  if no complete block boundary found, wait for more data  */
+                    if (lastBoundaryEnd < 0) {
+                        callback()
+                        return
+                    }
+
+                    /*  split buffer into complete portion and remainder  */
+                    const complete  = buffer.substring(0, lastBoundaryEnd)
+                    const remainder = buffer.substring(lastBoundaryEnd)
+
+                    /*  parse only the complete portion  */
                     try {
                         /*  parse entries  */
-                        const entries = (self.params.format === "srt" ? parseSRT(buffer) : parseVTT(buffer))
+                        const entries = (self.params.format === "srt" ? parseSRT(complete) : parseVTT(complete))
 
                         /*  emit parsed entries as individual chunks  */
                         for (const entry of entries) {
                             const chunkNew = new SpeechFlowChunk(entry.start, entry.end, "final", "text", entry.text)
                             this.push(chunkNew)
                         }
-
-                        /*  clear buffer after successful parse  */
-                        buffer = ""
-                        callback()
                     }
                     catch (error: unknown) {
-                        buffer = ""
-                        callback(util.ensureError(error))
+                        self.log("warning", `subtitle parse error: ${util.ensureError(error).message}`)
                     }
+
+                    /*  keep only the unparsed remainder in the buffer  */
+                    buffer = remainder
+                    callback()
                 },
                 final (callback) {
                     /*  process any remaining buffer content  */
