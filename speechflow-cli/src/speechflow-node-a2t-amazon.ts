@@ -71,8 +71,9 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     private client:       TranscribeStreamingClient                | null = null
     private clientStream: AsyncIterable<TranscriptResultStream>    | null = null
     private audioQueue:   AsyncQueue<Uint8Array>                   | null = null
-    private closing                                                       = false
     private queue:        util.SingleQueue<SpeechFlowChunk | null> | null = null
+    private clientStreamStarting                                          = false
+    private closing                                                       = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -110,7 +111,8 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
             throw new Error("Amazon Transcribe node currently supports PCM-S16LE audio only")
 
         /*  clear destruction flag  */
-        this.closing = false
+        this.closing             = false
+        this.clientStreamStarting = false
 
         /*  create queue for results  */
         this.queue = new util.SingleQueue<SpeechFlowChunk | null>()
@@ -138,24 +140,31 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
 
         /*  start streaming  */
         const ensureAudioStreamActive = async () => {
-            if (this.clientStream !== null || this.closing)
+            if (this.clientStream !== null || this.clientStreamStarting || this.closing)
                 return
-            const language: LanguageCode = this.params.language === "de" ? "de-DE" : "en-US"
-            const command = new StartStreamTranscriptionCommand({
-                LanguageCode: language,
-                EnablePartialResultsStabilization: this.params.interim,
-                ...(this.params.interim ? { PartialResultsStability: "low" } : {}),
-                MediaEncoding: "pcm",
-                MediaSampleRateHertz: this.config.audioSampleRate,
-                AudioStream: audioStream,
-            })
-            const response = await this.client!.send(command)
-            const stream = response.TranscriptResultStream
-            if (!stream)
-                throw new Error("no TranscriptResultStream returned")
-            this.clientStream = stream
+            this.clientStreamStarting = true
+            try {
+                const language: LanguageCode = this.params.language === "de" ? "de-DE" : "en-US"
+                const command = new StartStreamTranscriptionCommand({
+                    LanguageCode: language,
+                    EnablePartialResultsStabilization: this.params.interim,
+                    ...(this.params.interim ? { PartialResultsStability: "low" } : {}),
+                    MediaEncoding: "pcm",
+                    MediaSampleRateHertz: this.config.audioSampleRate,
+                    AudioStream: audioStream,
+                })
+                const response = await this.client!.send(command)
+                const stream = response.TranscriptResultStream
+                if (!stream)
+                    throw new Error("no TranscriptResultStream returned")
+                this.clientStream = stream
+            }
+            catch (err) {
+                this.clientStreamStarting = false
+                throw err
+            }
             ;(async () => {
-                for await (const event of stream) {
+                for await (const event of this.clientStream!) {
                     const te = event.TranscriptEvent
                     if (!te?.Transcript?.Results)
                         continue
@@ -273,7 +282,8 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
     /*  close node  */
     async close () {
         /*  indicate closing first to stop all async operations  */
-        this.closing = true
+        this.closing              = true
+        this.clientStreamStarting = false
 
         /*  shutdown stream  */
         if (this.stream !== null) {
