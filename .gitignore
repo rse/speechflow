@@ -2,3 +2,5 @@ node_modules
 .env
 package-lock.json
 etc/claude.dump.md
+program-*.srt
+program-*.txt
