@@ -67,10 +67,13 @@ export class APIServer {
                 throw new Error(`external request failed: no such node <${name}>`)
             }
             else {
+                const ac = new AbortController()
                 await Promise.race([
                     foundNode.receiveRequest(argList),
-                    util.timeout(10 * 1000)
-                ]).catch((err: Error) => {
+                    util.timeout(10 * 1000, "timeout", ac.signal)
+                ]).finally(() => {
+                    ac.abort()
+                }).catch((err: Error) => {
                     this.cli.log("warning", `external request to node <${name}> failed: ${err.message}`)
                     throw err
                 })
@@ -297,10 +300,13 @@ export class APIServer {
                     }
                 }))
             }
+            const ac = new AbortController()
             await Promise.race([
                 Promise.all(closePromises),
-                util.timeout(5 * 1000)
-            ]).catch((error: unknown) => {
+                util.timeout(5 * 1000, "timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }).catch((error: unknown) => {
                 this.cli.log("warning", `HAPI: WebSockets failed to close: ${util.ensureError(error).message}`)
             })
             this.wsPeers.clear()

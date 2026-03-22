@@ -105,10 +105,13 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 device:    "auto",
                 progress_callback: progressCallback
             })
+            const ac = new AbortController()
             this.classifier = await Promise.race([
                 pipelinePromise,
-                util.timeout(30 * 1000, "model initialization timeout")
-            ]) as Transformers.AudioClassificationPipeline
+                util.timeout(30 * 1000, "model initialization timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }) as Transformers.AudioClassificationPipeline
         }
         catch (error) {
             if (this.progressInterval) {
@@ -147,10 +150,13 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 return genderLast
 
             /*  classify audio  */
+            const ac = new AbortController()
             const result = await Promise.race([
                 this.classifier(data),
-                util.timeout(30 * 1000, "classification timeout")
-            ]) as Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
+                util.timeout(30 * 1000, "classification timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }) as Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
             const classified = Array.isArray(result) ?
                 result as Transformers.AudioClassificationOutput :
                 [ result ]

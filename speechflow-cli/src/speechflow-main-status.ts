@@ -47,10 +47,13 @@ export class NodeStatusManager {
             this.cli.log("info", `gathering status of node <${name}>`)
             const node = new nodes[name](name, cfg, {}, [])
             node._accessBus = accessBus
+            const ac = new AbortController()
             const status = await Promise.race<{ [ key: string ]: string | number }>([
                 node.status(),
-                util.timeout(10 * 1000)
-            ]).catch((err: Error) => {
+                util.timeout(10 * 1000, "timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }).catch((err: Error) => {
                 this.cli.log("warning", `[${node.id}]: failed to gather status of node <${node.id}>: ${err.message}`)
                 return {} as { [ key: string ]: string | number }
             })

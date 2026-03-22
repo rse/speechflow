@@ -207,22 +207,28 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
                 if (!error.message.match(/AudioIO Quit expects 1 argument/))
                     throw error
             }
+            const ac1 = new AbortController()
             await Promise.race([
-                util.timeout(2 * 1000, "PortAudio abort timeout"),
+                util.timeout(2 * 1000, "PortAudio abort timeout", ac1.signal),
                 new Promise<void>((resolve) => {
                     this.io!.abort(() => {
                         resolve()
                     })
                 }).catch(catchHandler)
-            ])
+            ]).finally(() => {
+                ac1.abort()
+            })
+            const ac2 = new AbortController()
             await Promise.race([
-                util.timeout(2 * 1000, "PortAudio quit timeout"),
+                util.timeout(2 * 1000, "PortAudio quit timeout", ac2.signal),
                 new Promise<void>((resolve) => {
                     this.io!.quit(() => {
                         resolve()
                     })
                 }).catch(catchHandler)
-            ])
+            ]).finally(() => {
+                ac2.abort()
+            })
             this.io = null
         }
 

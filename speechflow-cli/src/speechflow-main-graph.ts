@@ -270,13 +270,16 @@ export class NodeGraph {
             const stream = node.stream
             if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex)
                 && (!stream.writableEnded && !stream.destroyed)) {
+                const ac = new AbortController()
                 drainPromises.push(
                     Promise.race([
                         new Promise<void>((resolve) => {
                             stream.end(() => { resolve() })
                         }),
-                        util.timeout(5000)
-                    ]).catch(() => {
+                        util.timeout(5000, "timeout", ac.signal)
+                    ]).finally(() => {
+                        ac.abort()
+                    }).catch(() => {
                         /*  ignore timeout -- stream will be destroyed later  */
                     })
                 )

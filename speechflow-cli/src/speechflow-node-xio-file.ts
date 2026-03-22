@@ -200,6 +200,7 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                 const stream = this.stream
                 if ((stream instanceof Stream.Writable || stream instanceof Stream.Duplex)
                     && (!stream.writableEnded && !stream.destroyed)) {
+                    const ac = new AbortController()
                     await Promise.race([
                         new Promise<void>((resolve, reject) => {
                             stream.end((err?: Error) => {
@@ -209,8 +210,10 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                                     resolve()
                             })
                         }),
-                        util.timeout(5000)
-                    ]).catch(() => {
+                        util.timeout(5000, "timeout", ac.signal)
+                    ]).finally(() => {
+                        ac.abort()
+                    }).catch(() => {
                         /*  ignore timeout -- stdio stream cannot be destroyed  */
                     })
                 }

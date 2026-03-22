@@ -190,6 +190,7 @@ export class StreamWrapper extends Stream.Transform {
 
                 /*  wait for the foreign stream to finish flushing
                     before signaling completion of this Transform stream  */
+                const ac = new AbortController()
                 Promise.race([
                     new Promise<void>((resolve, reject) => {
                         if (typeof this.foreignStream.once === "function") {
@@ -199,8 +200,10 @@ export class StreamWrapper extends Stream.Transform {
                         else
                             resolve()
                     }),
-                    util.timeout(5000, "foreign stream flush timeout")
-                ]).then(() => {
+                    util.timeout(5000, "foreign stream flush timeout", ac.signal)
+                ]).finally(() => {
+                    ac.abort()
+                }).then(() => {
                     callback()
                 }).catch(() => {
                     /*  ignore timeout -- stream will be destroyed anyway  */
@@ -232,15 +235,19 @@ export async function destroyStream (
     if ((  stream instanceof Stream.Duplex
         || stream instanceof Stream.Transform
         || stream instanceof Stream.Writable )
-        && (!stream.writableEnded && !stream.destroyed))
+        && (!stream.writableEnded && !stream.destroyed)) {
+        const ac = new AbortController()
         await Promise.race([
             new Promise<void>((resolve) => {
                 stream.end(() => { resolve() })
             }),
-            util.timeout(5000, "stream end timeout")
-        ]).catch(() => {
+            util.timeout(5000, "stream end timeout", ac.signal)
+        ]).finally(() => {
+            ac.abort()
+        }).catch(() => {
             /*  ignore timeout -- stream will be destroyed anyway  */
         })
+    }
 
     /*  destroy the stream  */
     stream.destroy()

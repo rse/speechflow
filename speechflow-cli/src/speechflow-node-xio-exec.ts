@@ -153,6 +153,7 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
             /*  gracefully end stdin if in write or read/write mode  */
             if ((this.params.mode === "w" || this.params.mode === "rw") && this.subprocess.stdin
                 && !this.subprocess.stdin.destroyed && !this.subprocess.stdin.writableEnded) {
+                const ac1 = new AbortController()
                 await Promise.race([
                     new Promise<void>((resolve, reject) => {
                         this.subprocess!.stdin!.end((err?: Error) => {
@@ -160,36 +161,47 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
                             else     resolve()
                         })
                     }),
-                    util.timeout(2000)
-                ]).catch((err: unknown) => {
+                    util.timeout(2000, "timeout", ac1.signal)
+                ]).finally(() => {
+                    ac1.abort()
+                }).catch((err: unknown) => {
                     const error = util.ensureError(err)
                     this.log("warning", `failed to gracefully close stdin: ${error.message}`)
                 })
             }
 
             /*  wait for subprocess to exit gracefully  */
+            const ac2 = new AbortController()
             await Promise.race([
                 this.subprocess,
-                util.timeout(5000, "subprocess exit timeout")
-            ]).catch(async (err: unknown) => {
+                util.timeout(5000, "subprocess exit timeout", ac2.signal)
+            ]).finally(() => {
+                ac2.abort()
+            }).catch(async (err: unknown) => {
                 /*  force kill with SIGTERM  */
                 const error = util.ensureError(err)
                 if (error.message.includes("timeout")) {
                     this.log("warning", "subprocess did not exit gracefully, forcing termination")
                     this.subprocess!.kill("SIGTERM")
+                    const ac3 = new AbortController()
                     return Promise.race([
                         this.subprocess,
-                        util.timeout(2000)
-                    ])
+                        util.timeout(2000, "timeout", ac3.signal)
+                    ]).finally(() => {
+                        ac3.abort()
+                    })
                 }
             }).catch(async () => {
                 /*  force kill with SIGKILL  */
                 this.log("warning", "subprocess did not respond to SIGTERM, forcing SIGKILL")
                 this.subprocess!.kill("SIGKILL")
+                const ac4 = new AbortController()
                 return Promise.race([
                     this.subprocess,
-                    util.timeout(1000)
-                ])
+                    util.timeout(1000, "timeout", ac4.signal)
+                ]).finally(() => {
+                    ac4.abort()
+                })
             }).catch(() => {
                 this.log("error", "subprocess did not terminate even after SIGKILL")
             })
