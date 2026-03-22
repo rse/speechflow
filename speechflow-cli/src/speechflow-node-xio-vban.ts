@@ -294,7 +294,9 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
             read (size: number) {
                 if (self.params.mode === "w")
                     throw new Error("read operation on write-only node")
-                reads.add(self.chunkQueue!.read().then((chunk) => {
+                if (self.chunkQueue === null)
+                    return
+                reads.add(self.chunkQueue.read().then((chunk) => {
                     this.push(chunk, "binary")
                 }).catch((err: Error) => {
                     self.log("warning", `read on chunk queue operation failed: ${err}`)
@@ -306,10 +308,10 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  drain and clear chunk queue reference  */
-        if (this.chunkQueue !== null) {
-            this.chunkQueue.drain()
-            this.chunkQueue = null
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
         }
 
         /*  close VBAN server  */
@@ -318,10 +320,10 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
             this.server = null
         }
 
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
+        /*  drain and clear chunk queue reference  */
+        if (this.chunkQueue !== null) {
+            this.chunkQueue.drain()
+            this.chunkQueue = null
         }
     }
 }

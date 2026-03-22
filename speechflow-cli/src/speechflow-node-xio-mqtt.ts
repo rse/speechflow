@@ -104,9 +104,11 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
         this.broker.on("message", (topic: string, payload: Buffer, packet: MQTT.IPublishPacket) => {
             if (topic !== this.params.topicRead || this.params.mode === "w")
                 return
+            if (this.chunkQueue === null)
+                return
             try {
                 const chunk = util.streamChunkDecode(payload)
-                this.chunkQueue!.write(chunk)
+                this.chunkQueue.write(chunk)
             }
             catch (_err: unknown) {
                 this.log("warning", `received invalid CBOR chunk from MQTT ${this.params.url}`)
@@ -143,7 +145,9 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             read (size: number) {
                 if (self.params.mode === "w")
                     throw new Error("read operation on write-only node")
-                reads.add(self.chunkQueue!.read().then((chunk) => {
+                if (self.chunkQueue === null)
+                    return
+                reads.add(self.chunkQueue.read().then((chunk) => {
                     this.push(chunk, "binary")
                 }).catch((err: Error) => {
                     self.log("warning", `read on chunk queue operation failed: ${err}`)
@@ -154,8 +158,11 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  clear chunk queue reference  */
-        this.chunkQueue = null
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
+        }
 
         /*  close MQTT broker  */
         if (this.broker !== null) {
@@ -164,10 +171,10 @@ export default class SpeechFlowNodeXIOMQTT extends SpeechFlowNode {
             this.broker = null
         }
 
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
+        /*  drain and clear chunk queue reference  */
+        if (this.chunkQueue !== null) {
+            this.chunkQueue.drain()
+            this.chunkQueue = null
         }
     }
 }
