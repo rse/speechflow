@@ -360,12 +360,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
             this.stream = null
         }
 
-        /*  cleanup queue pointers before closing VAD to prevent callback access  */
-        this.queue.pointerDelete("recv")
-        this.queue.pointerDelete("vad")
-        this.queue.pointerDelete("send")
-
-        /*  close VAD  */
+        /*  close VAD (before deleting queue pointers, as flush can trigger callbacks)  */
         if (this.vad !== null) {
             try {
                 const flushPromise = this.vad.flush()
@@ -378,5 +373,10 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
             this.vad.destroy()
             this.vad = null
         }
+
+        /*  cleanup queue pointers  */
+        this.queue.pointerDelete("recv")
+        this.queue.pointerDelete("vad")
+        this.queue.pointerDelete("send")
     }
 }
