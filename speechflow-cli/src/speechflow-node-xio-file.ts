@@ -158,8 +158,9 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                         },
                         destroy (err, callback) {
                             if (self.fd !== null) {
-                                fs.close(self.fd, () => {
-                                    self.fd = null
+                                const fd = self.fd
+                                self.fd = null
+                                fs.close(fd, () => {
                                     callback(err)
                                 })
                             }
