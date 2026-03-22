@@ -199,8 +199,10 @@ export default class SpeechFlowNodeT2AGoogle extends SpeechFlowNode {
         }
 
         /*  destroy resampler  */
-        if (this.resampler !== null)
+        if (this.resampler !== null) {
+            this.resampler.destroy()
             this.resampler = null
+        }
 
         /*  destroy Google TTS client  */
         if (this.client !== null) {

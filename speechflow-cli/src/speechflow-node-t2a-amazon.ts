@@ -193,8 +193,10 @@ export default class SpeechFlowNodeT2AAmazon extends SpeechFlowNode {
         }
 
         /*  destroy resampler  */
-        if (this.resampler !== null)
+        if (this.resampler !== null) {
+            this.resampler.destroy()
             this.resampler = null
+        }
 
         /*  destroy AWS Polly API  */
         if (this.client !== null) {

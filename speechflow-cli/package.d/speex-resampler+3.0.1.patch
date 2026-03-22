@@ -1,0 +1,56 @@
+diff --git a/node_modules/speex-resampler/app/index.d.ts b/node_modules/speex-resampler/app/index.d.ts
+index ef85876..fdf42d0 100644
+--- a/node_modules/speex-resampler/app/index.d.ts
++++ b/node_modules/speex-resampler/app/index.d.ts
+@@ -26,6 +26,10 @@ declare class SpeexResampler {
+       * @param chunk interleaved PCM data in signed 16bits int
+       */
+     processChunk(chunk: Buffer): Buffer;
++    /**
++      * Destroy the resampler and free all WASM memory.
++      */
++    destroy(): void;
+ }
+ export declare class SpeexResamplerTransform extends Transform {
+     channels: any;
+diff --git a/node_modules/speex-resampler/app/index.js b/node_modules/speex-resampler/app/index.js
+index 509ec36..434b152 100644
+--- a/node_modules/speex-resampler/app/index.js
++++ b/node_modules/speex-resampler/app/index.js
+@@ -82,6 +82,36 @@ class SpeexResampler {
+         // we are copying the info in a new buffer here, we could just pass a buffer pointing to the same memory space if needed
+         return Buffer.from(speexModule.HEAPU8.slice(this._outBufferPtr, this._outBufferPtr + outSamplesPerChannelsWritten * this.channels * Uint16Array.BYTES_PER_ELEMENT).buffer);
+     }
++    /**
++      * Destroy the resampler and free all WASM memory.
++      */
++    destroy() {
++        if (!speexModule) {
++            return;
++        }
++        if (this._resamplerPtr) {
++            speexModule._speex_resampler_destroy(this._resamplerPtr);
++            this._resamplerPtr = 0;
++        }
++        if (this._inBufferPtr !== -1) {
++            speexModule._free(this._inBufferPtr);
++            this._inBufferPtr = -1;
++            this._inBufferSize = -1;
++        }
++        if (this._outBufferPtr !== -1) {
++            speexModule._free(this._outBufferPtr);
++            this._outBufferPtr = -1;
++            this._outBufferSize = -1;
++        }
++        if (this._inLengthPtr !== -1) {
++            speexModule._free(this._inLengthPtr);
++            this._inLengthPtr = -1;
++        }
++        if (this._outLengthPtr !== -1) {
++            speexModule._free(this._outLengthPtr);
++            this._outLengthPtr = -1;
++        }
++    }
+ }
+ SpeexResampler.initPromise = globalModulePromise;
+ const EMPTY_BUFFER = Buffer.alloc(0);

@@ -234,9 +234,13 @@ export default class SpeechFlowNodeA2AGTCRN extends SpeechFlowNode {
         }
 
         /*  destroy resamplers  */
-        if (this.resamplerDown !== null)
+        if (this.resamplerDown !== null) {
+            this.resamplerDown.destroy()
             this.resamplerDown = null
-        if (this.resamplerUp !== null)
+        }
+        if (this.resamplerUp !== null) {
+            this.resamplerUp.destroy()
             this.resamplerUp = null
+        }
     }
 }

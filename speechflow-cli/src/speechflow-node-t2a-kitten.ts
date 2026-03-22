@@ -163,8 +163,10 @@ export default class SpeechFlowNodeT2AKitten extends SpeechFlowNode {
         }
 
         /*  destroy resampler  */
-        if (this.resampler !== null)
+        if (this.resampler !== null) {
+            this.resampler.destroy()
             this.resampler = null
+        }
 
         /*  destroy Kitten TTS API  */
         if (this.kitten !== null) {

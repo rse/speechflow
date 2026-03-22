@@ -235,8 +235,10 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
         }
 
         /*  destroy resampler  */
-        if (this.resampler !== null)
+        if (this.resampler !== null) {
+            this.resampler.destroy()
             this.resampler = null
+        }
 
         /*  destroy TTS pipeline  */
         if (this.tts !== null) {
