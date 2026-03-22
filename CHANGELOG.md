@@ -57,6 +57,7 @@ hangeLog
 - BUGFIX: in many audio transform nodes, clone chunks before mutating the payload to support chunk fan-out to multiple nodes
 - BUGFIX: PromiseSet.awaitAll() can miss concurrently-added promises
 - BUGFIX: In "a2a-speex" and "a2t-deepgram" ensure that Buffer extractions use correct slicing
+- BUGFIX: fix Queue's walkBackwardUntil and searchBackward methods by correctly handling the element at position 0
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS
