@@ -82,7 +82,8 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         this.notify("position", { start: this.index })
     }
     walkBackwardUntil (type: T["type"]) {
-        while (this.queue.elements[this.index].type !== type) {
+        while (this.index < this.queue.elements.length
+            && this.queue.elements[this.index].type !== type) {
             if (this.index === 0)
                 break
             this.index--
@@ -101,7 +102,8 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
     }
     searchBackward (type: T["type"]) {
         let position = this.index
-        while (this.queue.elements[position].type !== type) {
+        while (position < this.queue.elements.length
+            && this.queue.elements[position].type !== type) {
             if (position === 0)
                 break
             position--
