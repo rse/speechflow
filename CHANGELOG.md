@@ -48,6 +48,7 @@ hangeLog
 - BUGFIX: avoid unbounded active captures memory growth in Audio Worklet
 - BUGFIX: do not throw an exception from Stream::read() operations
 - BUGFIX: signal handlers in main graph code discarded returned Promise and this way caused unhandled rejections
+- BUGFIX: in node graph code avoid mutating a Set during iteration
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS

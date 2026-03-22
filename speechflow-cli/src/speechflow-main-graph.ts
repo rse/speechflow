@@ -322,10 +322,9 @@ export class NodeGraph {
 
     /*  graph destruction: PASS 5: destroy nodes  */
     destroyNodes (): void {
-        for (const node of this.graphNodes) {
+        for (const node of this.graphNodes)
             this.cli.log("info", `destroy node <${node.id}>`)
-            this.graphNodes.delete(node)
-        }
+        this.graphNodes.clear()
     }
 
     /*  setup signal handling for shutdown  */
