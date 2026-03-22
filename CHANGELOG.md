@@ -51,6 +51,7 @@ hangeLog
 - BUGFIX: in node graph code avoid mutating a Set during iteration
 - BUGFIX: avoid dangling timers on shutdown by unreferencing sleep/timeout() timers
 - BUGFIX: for SingleQueue.read() avoid conflating "queue empty" with "queue contains undefined"
+- BUGFIX: correctly deep-clone the meta Map of nodes
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS

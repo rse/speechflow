@@ -9,7 +9,10 @@ import Events, { EventEmitter } from "node:events"
 import Stream from "node:stream"
 
 /*  external dependencies  */
-import { DateTime, Duration } from "luxon"
+import { DateTime, Duration }   from "luxon"
+
+/*  internal dependencies  */
+import { deepClone }            from "./speechflow-util-misc"
 
 /*  the definition of a single payload chunk passed through the SpeechFlow nodes  */
 export class SpeechFlowChunk {
@@ -33,7 +36,7 @@ export class SpeechFlowChunk {
             this.kind,
             this.type,
             payload,
-            new Map(this.meta)
+            deepClone(this.meta)
         )
     }
 }
