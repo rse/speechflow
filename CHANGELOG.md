@@ -26,6 +26,7 @@ hangeLog
 - BUGFIX: fix "t2t-subtitle" node by checking the WebSocket ready state before sending
 - BUGFIX: fix "x2x-filter" node by not stumbling over undefined values
 - BUGFIX: fix "xio-websocket" node by closing all client connections on destruction
+- BUGFIX: fix "xio-websocket" node by correctly shutting down internal queue
 - BUGFIX: fix "xio-webrtc" node by catching errors on listening
 - BUGFIX: fix "xio-webrtc" node by catching errors on processing
 - BUGFIX: fix "xio-device" node by shutdown the stream on destruction

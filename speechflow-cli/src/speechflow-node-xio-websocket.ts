@@ -21,8 +21,9 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
     public static name = "xio-websocket"
 
     /*  internal state  */
-    private server: ws.WebSocketServer | null = null
-    private client: ReconnWebSocket    | null = null
+    private server:     ws.WebSocketServer                    | null = null
+    private client:     ReconnWebSocket                       | null = null
+    private chunkQueue: util.SingleQueue<SpeechFlowChunk>     | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -63,7 +64,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
             /*  listen locally on a Websocket port  */
             const url = new URL(this.params.listen)
             const websockets = new Set<ws.WebSocket>()
-            const chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
+            this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
             this.server = new ws.WebSocketServer({
                 host: url.hostname,
                 port: Number.parseInt(url.port, 10),
@@ -102,7 +103,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     else
                         buffer = Buffer.concat(data)
                     const chunk = util.streamChunkDecode(buffer)
-                    chunkQueue.write(chunk)
+                    this.chunkQueue?.write(chunk)
                 })
             })
             this.server.on("error", (error) => {
@@ -152,7 +153,9 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                         this.push(null)
                         return
                     }
-                    reads.add(chunkQueue.read().then((chunk) => {
+                    if (self.chunkQueue === null)
+                        return
+                    reads.add(self.chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
                     }).catch((err: Error) => {
                         self.log("warning", `read on chunk queue operation failed: ${err}`)
@@ -181,7 +184,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 const error = util.ensureError(ev.error)
                 this.log("error", `error of connection on URL ${this.params.connect}: ${error.message}`)
             })
-            const chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
+            this.chunkQueue = new util.SingleQueue<SpeechFlowChunk>()
             this.client.addEventListener("message", (ev: MessageEvent) => {
                 if (this.params.mode === "w") {
                     this.log("warning", `connection to URL ${this.params.connect}: ` +
@@ -195,7 +198,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                 }
                 const buffer = Buffer.from(ev.data)
                 const chunk = util.streamChunkDecode(buffer)
-                chunkQueue.write(chunk)
+                this.chunkQueue?.write(chunk)
             })
             this.client.binaryType = "arraybuffer"
             const self = this
@@ -228,7 +231,9 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                         this.push(null)
                         return
                     }
-                    reads.add(chunkQueue.read().then((chunk) => {
+                    if (self.chunkQueue === null)
+                        return
+                    reads.add(self.chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
                     }).catch((err: Error) => {
                         self.log("warning", `read on chunk queue operation failed: ${err}`)
@@ -240,6 +245,12 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  drain and clear chunk queue reference  */
+        if (this.chunkQueue !== null) {
+            this.chunkQueue.drain()
+            this.chunkQueue = null
+        }
+
         /*  close WebSocket server  */
         if (this.server !== null) {
             /*  forcibly terminate all active client connections  */
