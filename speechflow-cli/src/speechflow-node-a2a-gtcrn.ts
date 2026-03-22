@@ -178,6 +178,12 @@ export default class SpeechFlowNodeA2AGTCRN extends SpeechFlowNode {
 
                     /*  process with GTCRN  */
                     workerProcess(payload).then((result: Float32Array<ArrayBuffer>) => {
+                        /*  short-circuit if already closing  */
+                        if (self.closing) {
+                            callback()
+                            return
+                        }
+
                         /*  convert Float32Array into Buffer  */
                         const buf = util.convertF32ToBuf(result)
 
