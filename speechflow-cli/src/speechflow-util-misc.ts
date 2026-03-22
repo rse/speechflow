@@ -64,7 +64,7 @@ export function sleep (durationMs: number, signal?: AbortSignal) {
 
 /*  timeout: wait a duration of time and then reject  */
 export function timeout (durationMs: number, info = "timeout", signal?: AbortSignal) {
-    return new Promise<void>((resolve, reject) => {
+    return new Promise<never>((resolve, reject) => {
         const ac = new AbortController()
         const timer = setTimeout(() => {
             ac.abort()
@@ -74,7 +74,7 @@ export function timeout (durationMs: number, info = "timeout", signal?: AbortSig
         if (signal !== undefined)
             signal.addEventListener("abort", () => {
                 clearTimeout(timer)
-                resolve()
+                resolve(undefined as never)
             }, { once: true, signal: ac.signal })
     })
 }
