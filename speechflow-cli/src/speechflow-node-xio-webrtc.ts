@@ -444,8 +444,11 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
         })
 
         /*  start HTTP server  */
-        await new Promise<void>((resolve) => {
+        await new Promise<void>((resolve, reject) => {
+            const onError = (err: Error) => { reject(err) }
+            this.httpServer!.once("error", onError)
             this.httpServer!.listen(listen.port, listen.host, () => {
+                this.httpServer!.removeListener("error", onError)
                 const mode = this.params.mode === "r" ? "WHIP" : "WHEP"
                 this.log("info", `WebRTC ${mode} server listening on http://${listen.host}:${listen.port}${this.params.path}`)
                 resolve()
