@@ -419,7 +419,8 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
             const emit = (chunk: SpeechFlowChunk) => {
                 const data = JSON.stringify(chunk)
                 for (const info of wsPeers.values())
-                    info.ws.send(data)
+                    if (info.ws.readyState === WebSocket.OPEN)
+                        info.ws.send(data)
             }
 
             /*  establish writable stream  */

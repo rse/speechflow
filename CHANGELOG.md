@@ -23,6 +23,7 @@ hangeLog
 - BUGFIX: fix "t2a-kokoro" node for a timer leak on model load failure
 - BUGFIX: fix "t2a-supertonic" node for automatically adapting to changing sampling rates
 - BUGFIX: fix "t2t-subtitle" buffer handling for "import" mode
+- BUGFIX: fix "t2t-subtitle" node by checking the WebSocket ready state before sending
 - BUGFIX: fix "x2x-filter" node by not stumbling over undefined values
 - BUGFIX: fix "xio-websocket" node by closing all client connections on destruction
 - BUGFIX: fix "xio-webrtc" node by catching errors on listening
