@@ -248,6 +248,8 @@ export class WebAudio {
 
     /*  process single audio chunk  */
     public async process (int16Array: Int16Array): Promise<Int16Array> {
+        if (this.sourceNode === null || this.captureNode === null)
+            throw new Error("WebAudio not ready (not yet setup or already destroyed)")
         const chunkId = `chunk_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
         return new Promise<Int16Array>((resolve, reject) => {
             const timeout = setTimeout(() => {
