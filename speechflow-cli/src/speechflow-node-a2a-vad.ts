@@ -348,12 +348,6 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
             this.tailTimer = null
         }
 
-        /*  remove all event listeners  */
-        this.activeEventListeners.forEach((listener) => {
-            this.queue.removeListener("write", listener)
-        })
-        this.activeEventListeners.clear()
-
         /*  flush VAD (before closing, as flush triggers callbacks which need active state)  */
         if (this.vad !== null) {
             try {
@@ -365,6 +359,12 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
                 this.log("warning", `VAD flush error during close: ${error}`)
             }
         }
+
+        /*  remove all event listeners  */
+        this.activeEventListeners.forEach((listener) => {
+            this.queue.removeListener("write", listener)
+        })
+        this.activeEventListeners.clear()
 
         /*  indicate closing  */
         this.closing = true
