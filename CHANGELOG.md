@@ -23,6 +23,7 @@ hangeLog
 - BUGFIX: fix "t2a-kokoro" node for a timer leak on model load failure
 - BUGFIX: fix "t2a-supertonic" node for automatically adapting to changing sampling rates
 - BUGFIX: fix "t2t-subtitle" buffer handling for "import" mode
+- BUGFIX: fix "t2t-subtitle" node by parsing VTT lines more correctly
 - BUGFIX: fix "t2t-subtitle" node by checking the WebSocket ready state before sending
 - BUGFIX: fix "x2x-filter" node by not stumbling over undefined values
 - BUGFIX: fix "x2x-filter" node by matching integer and float numbers more precisely
