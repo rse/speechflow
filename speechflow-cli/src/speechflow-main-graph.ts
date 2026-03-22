@@ -171,10 +171,13 @@ export class NodeGraph {
             /*  open node  */
             this.cli.log("info", `open node <${node.id}>`)
             node.setTimeZero(this.timeZero)
+            const ac = new AbortController()
             await Promise.race([
                 node.open(),
-                util.timeout(30 * 1000)
-            ]).catch((err: Error) => {
+                util.timeout(30 * 1000, "timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }).catch((err: Error) => {
                 this.cli.log("error", `<${node.id}>: failed to open node <${node.id}>: ${err.message}`)
                 throw new Error(`failed to open node <${node.id}>: ${err.message}`)
             })
@@ -314,10 +317,13 @@ export class NodeGraph {
     async closeNodes (): Promise<void> {
         for (const node of this.graphNodes) {
             this.cli.log("info", `close node <${node.id}>`)
+            const ac = new AbortController()
             await Promise.race([
                 node.close(),
-                util.timeout(10 * 1000)
-            ]).catch((err: Error) => {
+                util.timeout(10 * 1000, "timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }).catch((err: Error) => {
                 this.cli.log("warning", `node <${node.id}> failed to close: ${err.message}`)
             })
         }
