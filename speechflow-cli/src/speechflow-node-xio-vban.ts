@@ -139,7 +139,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                 /*  8-bit unsigned to 16-bit signed  */
                 audioBuffer = Buffer.alloc(data.length * 2)
                 for (let i = 0; i < data.length; i++) {
-                    const sample = ((data[i] - 128) / 128) * 32767
+                    const sample = ((data[i] - 128) / 128) * 32768
                     audioBuffer.writeInt16LE(Math.round(sample), i * 2)
                 }
             }
@@ -153,7 +153,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                     const b2 = data[i * 3 + 2]
                     const value = ((b2 << 16) | (b1 << 8) | b0) & 0xFFFFFF
                     const signed = value > 0x7FFFFF ? value - 0x1000000 : value
-                    const sample = (signed / 0x800000) * 32767
+                    const sample = (signed / 0x800000) * 32768
                     audioBuffer.writeInt16LE(Math.round(sample), i * 2)
                 }
             }
@@ -163,7 +163,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                 audioBuffer = Buffer.alloc(samples * 2)
                 for (let i = 0; i < samples; i++) {
                     const value = data.readInt32LE(i * 4)
-                    const sample = (value / 0x80000000) * 32767
+                    const sample = (value / 0x80000000) * 32768
                     audioBuffer.writeInt16LE(Math.round(sample), i * 2)
                 }
             }
@@ -173,7 +173,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                 audioBuffer = Buffer.alloc(samples * 2)
                 for (let i = 0; i < samples; i++) {
                     const value = data.readFloatLE(i * 4)
-                    const sample = Math.max(-32768, Math.min(32767, Math.round(value * 32767)))
+                    const sample = Math.max(-32768, Math.min(32767, Math.round(value * 32768)))
                     audioBuffer.writeInt16LE(sample, i * 2)
                 }
             }
@@ -183,7 +183,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                 audioBuffer = Buffer.alloc(samples * 2)
                 for (let i = 0; i < samples; i++) {
                     const value = data.readDoubleLE(i * 8)
-                    const sample = Math.max(-32768, Math.min(32767, Math.round(value * 32767)))
+                    const sample = Math.max(-32768, Math.min(32767, Math.round(value * 32768)))
                     audioBuffer.writeInt16LE(sample, i * 2)
                 }
             }

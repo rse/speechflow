@@ -14,6 +14,7 @@ ChangeLog
 - BUGFIX: fix start timestamp calculation in "a2t-google" node
 - BUGFIX: fix error message in case a positional parameter does not match
 - BUGFIX: fix shutdown procedure by avoiding double node deactivation
+- BUGFIX: fix I16/F32 conversions in WebAudio and VBAN code
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages

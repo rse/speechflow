@@ -234,7 +234,7 @@ export class WebAudio {
                     this.pendingPromises.delete(chunkId)
                     const int16Data = new Int16Array(data.length)
                     for (let i = 0; i < data.length; i++)
-                        int16Data[i] = Math.max(-32768, Math.min(32767, Math.round(data[i] * 32767)))
+                        int16Data[i] = Math.max(-32768, Math.min(32767, Math.round(data[i] * 32768)))
                     promise.resolve(int16Data)
                 }
             }
