@@ -38,6 +38,7 @@ hangeLog
 - BUGFIX: fix "t2t-summary" node for accumulated results without sentence-ending punctuation
 - BUGFIX: fix "t2t-summary" node for more correct counting of sentences
 - BUGFIX: fix "t2t-google" node by awaiting the close method on shutdown
+- BUGFIX: fix "a2a-filler" node by not terminating stream if a single chunk is invalid
 - BUGFIX: fix "xio-vban" node by awaiting all VBANServer operations
 - BUGFIX: avoid unbounded active captures memory growth in Audio Worklet
 - BUGFIX: do not throw an exception from Stream::read() operations
