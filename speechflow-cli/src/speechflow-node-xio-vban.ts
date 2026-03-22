@@ -227,11 +227,11 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
         /*  bind to listen port  */
         if (this.params.listen !== "") {
             const listen = this.parseAddress(this.params.listen, 6980)
-            this.server.bind(listen.port, listen.host)
+            await this.server.bind(listen.port, listen.host)
         }
         else
             /*  still need to bind for sending  */
-            this.server.bind(0)
+            await this.server.bind(0)
 
         /*  create duplex stream  */
         const self = this
@@ -319,7 +319,7 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
 
         /*  close VBAN server  */
         if (this.server !== null) {
-            this.server.close()
+            await this.server.close()
             this.server = null
         }
 
