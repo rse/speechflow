@@ -297,16 +297,22 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                 try {
                     sendMessage({ type: "input_audio_buffer.commit" })
                     self.ws.close()
-                    await util.sleep(50)
+                    await new Promise<void>((resolve) => {
+                        const timeout = setTimeout(resolve, 5000)
+                        self.ws?.once("close", () => {
+                            clearTimeout(timeout)
+                            resolve()
+                        })
+                    })
                 }
                 catch (error) {
                     self.log("warning", `error closing OpenAI connection: ${error}`)
                 }
+
+                /*  await all read operations  */
                 await reads.awaitAll()
-                const chunks: Array<SpeechFlowChunk | null> = self.queue?.drain() ?? []
-                for (const chunk of chunks)
-                    this.push(chunk)
-                this.push(null)
+
+                /*  NOTICE: do not push null here -- let the WebSocket close event handle it  */
                 callback()
             },
             read (size) {

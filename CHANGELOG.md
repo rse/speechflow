@@ -16,6 +16,7 @@ ChangeLog
 - BUGFIX: fix shutdown procedure by avoiding double node deactivation
 - BUGFIX: fix I16/F32 conversions in WebAudio and VBAN code
 - BUGFIX: fix envelope double-writes in Compressor/Expander worklets
+- BUGFIX: fix "a2t-openai" node handler by replacing a 50ms sleep with a close-event wait
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages
