@@ -359,6 +359,7 @@ export class PromiseSet<T> {
         }).catch(() => {})
     }
     async awaitAll () {
-        await Promise.all(this.promises)
+        while (this.promises.size > 0)
+            await Promise.all(this.promises)
     }
 }
