@@ -81,11 +81,12 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
         this.kokoro = await KokoroTTS.from_pretrained(model, {
             dtype: "q4f16",
             progress_callback: progressCallback
+        }).finally(() => {
+            if (interval !== null) {
+                clearInterval(interval)
+                interval = null
+            }
         })
-        if (interval !== null) {
-            clearInterval(interval)
-            interval = null
-        }
         if (this.kokoro === null)
             throw new Error("failed to instantiate Kokoro")
 

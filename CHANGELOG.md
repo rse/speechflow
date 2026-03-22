@@ -18,6 +18,7 @@ ChangeLog
 - BUGFIX: fix envelope double-writes in Compressor/Expander worklets
 - BUGFIX: fix "a2t-openai" node handler by replacing a 50ms sleep with a close-event wait
 - BUGFIX: fix "a2t-deepgram" where "open" promise had no error rejection handler
+- BUGFIX: fix "t2a-kokoro" node for a timer leak on model load failure
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages
