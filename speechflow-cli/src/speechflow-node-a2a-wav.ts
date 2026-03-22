@@ -211,7 +211,7 @@ export default class SpeechFlowNodeA2AWAV extends SpeechFlowNode {
                         sampleRate:  self.config.audioSampleRate,
                         bitDepth:    self.config.audioBitDepth
                     })
-                    const headerChunk = headerChunkSent?.clone()
+                    const headerChunk = headerChunkSent.clone()
                     headerChunk.payload = headerBuffer
                     headerChunk.meta.set("chunk:seek", 0)
                     this.push(headerChunk)
