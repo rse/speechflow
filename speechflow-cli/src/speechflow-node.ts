@@ -141,15 +141,11 @@ export default class SpeechFlowNode extends Events.EventEmitter {
                     throw new Error(`invalid type of positional parameter "${name}" ` +
                         `(has to be ${spec[name].type})`)
                 if ("match" in spec[name]
-                    && this.args[spec[name].pos].match(spec[name].match) === null)
-                    throw new Error(`invalid value of positional parameter "${name}" ` +
-                        `(has to match ${spec[name].match})`)
-                if ("match" in spec[name]
                     && (   (   spec[name].match instanceof RegExp
                             && this.args[spec[name].pos].match(spec[name].match) === null)
                         || (   typeof spec[name].match === "function"
                             && !spec[name].match(this.args[spec[name].pos])    )          ))
-                    throw new Error(`invalid value "${this.opts[name]}" of positional parameter "${name}"`)
+                    throw new Error(`invalid value "${this.args[spec[name].pos!]}" of positional parameter "${name}"`)
                 this.params[name] = this.args[spec[name].pos]
             }
             else if ("val" in spec[name] && spec[name].val !== undefined)
