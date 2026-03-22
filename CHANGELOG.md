@@ -24,6 +24,7 @@ ChangeLog
 - BUGFIX: fix "x2x-filter" node by not stumbling over undefined values
 - BUGFIX: fix "xio-websocket" node by closing all client connections on destruction
 - BUGFIX: fix "xio-webrtc" node by catching errors on listening
+- BUGFIX: fix "xio-device" node by shutdown the stream on destruction
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages

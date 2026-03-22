@@ -225,6 +225,12 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
             ])
             this.io = null
         }
+
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
+        }
     }
 }
 
