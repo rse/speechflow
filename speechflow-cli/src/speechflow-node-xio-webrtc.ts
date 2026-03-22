@@ -375,71 +375,80 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
         /*  setup HTTP server for WHIP/WHEP signaling  */
         const self = this
         this.httpServer = http.createServer(async (req, res) => {
-            /*  determine URL  */
-            if (req.url === undefined) {
-                res.writeHead(400, { "Content-Type": "text/plain" })
-                res.end("Bad Request")
-                return
-            }
-            const host = req.headers.host?.replace(/[^a-zA-Z0-9:.\-_]/g, "") ?? "localhost"
-            const url = new URL(req.url, `http://${host}`)
-            const pathMatch = url.pathname === self.params.path
-            const resourceMatch = url.pathname.startsWith(self.params.path + "/")
+            try {
+                /*  determine URL  */
+                if (req.url === undefined) {
+                    res.writeHead(400, { "Content-Type": "text/plain" })
+                    res.end("Bad Request")
+                    return
+                }
+                const host = req.headers.host?.replace(/[^a-zA-Z0-9:.\-_]/g, "") ?? "localhost"
+                const url = new URL(req.url, `http://${host}`)
+                const pathMatch = url.pathname === self.params.path
+                const resourceMatch = url.pathname.startsWith(self.params.path + "/")
 
-            /*  CORS headers for browser clients  */
-            res.setHeader("Access-Control-Allow-Origin",   "*")
-            res.setHeader("Access-Control-Allow-Methods",  "POST, DELETE, OPTIONS")
-            res.setHeader("Access-Control-Allow-Headers",  "Content-Type")
-            res.setHeader("Access-Control-Expose-Headers", "Location")
+                /*  CORS headers for browser clients  */
+                res.setHeader("Access-Control-Allow-Origin",   "*")
+                res.setHeader("Access-Control-Allow-Methods",  "POST, DELETE, OPTIONS")
+                res.setHeader("Access-Control-Allow-Headers",  "Content-Type")
+                res.setHeader("Access-Control-Expose-Headers", "Location")
 
-            /*  handle CORS preflight  */
-            if (req.method === "OPTIONS") {
-                res.writeHead(204)
-                res.end()
-                return
-            }
-
-            /*  handle requests...  */
-            if (req.method === "POST" && pathMatch) {
-                /*  handle WHIP/WHEP POST  */
-                const body = await self.readRequestBody(req)
-
-                /*  sanity check content type  */
-                const contentType = req.headers["content-type"]
-                if (contentType !== "application/sdp") {
-                    res.writeHead(415, { "Content-Type": "text/plain" })
-                    res.end("Unsupported Media Type")
+                /*  handle CORS preflight  */
+                if (req.method === "OPTIONS") {
+                    res.writeHead(204)
+                    res.end()
                     return
                 }
 
-                /*  determine if WHIP (receiving) or WHEP (sending) based on SDP content  */
-                const hasSendonly  = /\ba=sendonly\b/m.test(body)
-                const hasSendrecv  = /\ba=sendrecv\b/m.test(body)
-                const hasRecvonly  = /\ba=recvonly\b/m.test(body)
-                const isPublisher  = hasSendonly || hasSendrecv
-                const isViewer     = hasRecvonly
+                /*  handle requests...  */
+                if (req.method === "POST" && pathMatch) {
+                    /*  handle WHIP/WHEP POST  */
+                    const body = await self.readRequestBody(req)
 
-                /*  handle protocol based on mode  */
-                if (self.params.mode === "r" && isPublisher)
-                    /*  in read mode, accept WHIP publishers  */
-                    await self.handleWHIP(res, body)
-                else if (self.params.mode === "w" && isViewer)
-                    /*  in write mode, accept WHEP viewers  */
-                    await self.handleWHEP(res, body)
+                    /*  sanity check content type  */
+                    const contentType = req.headers["content-type"]
+                    if (contentType !== "application/sdp") {
+                        res.writeHead(415, { "Content-Type": "text/plain" })
+                        res.end("Unsupported Media Type")
+                        return
+                    }
+
+                    /*  determine if WHIP (receiving) or WHEP (sending) based on SDP content  */
+                    const hasSendonly  = /\ba=sendonly\b/m.test(body)
+                    const hasSendrecv  = /\ba=sendrecv\b/m.test(body)
+                    const hasRecvonly  = /\ba=recvonly\b/m.test(body)
+                    const isPublisher  = hasSendonly || hasSendrecv
+                    const isViewer     = hasRecvonly
+
+                    /*  handle protocol based on mode  */
+                    if (self.params.mode === "r" && isPublisher)
+                        /*  in read mode, accept WHIP publishers  */
+                        await self.handleWHIP(res, body)
+                    else if (self.params.mode === "w" && isViewer)
+                        /*  in write mode, accept WHEP viewers  */
+                        await self.handleWHEP(res, body)
+                    else {
+                        res.writeHead(403, { "Content-Type": "text/plain" })
+                        res.end("Forbidden")
+                    }
+                }
+                else if (req.method === "DELETE" && resourceMatch) {
+                    /*  handle DELETE for connection teardown  */
+                    const resourceId = url.pathname.substring(self.params.path.length + 1)
+                    self.handleDELETE(res, resourceId)
+                }
                 else {
-                    res.writeHead(403, { "Content-Type": "text/plain" })
-                    res.end("Forbidden")
+                    /*  handle unknown requests  */
+                    res.writeHead(404, { "Content-Type": "text/plain" })
+                    res.end("Not Found")
                 }
             }
-            else if (req.method === "DELETE" && resourceMatch) {
-                /*  handle DELETE for connection teardown  */
-                const resourceId = url.pathname.substring(self.params.path.length + 1)
-                self.handleDELETE(res, resourceId)
-            }
-            else {
-                /*  handle unknown requests  */
-                res.writeHead(404, { "Content-Type": "text/plain" })
-                res.end("Not Found")
+            catch (err: unknown) {
+                self.log("error", `HTTP request handler failed: ${util.ensureError(err).message}`)
+                if (!res.headersSent) {
+                    res.writeHead(500, { "Content-Type": "text/plain" })
+                    res.end("Internal Server Error")
+                }
             }
         })
 

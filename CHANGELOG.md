@@ -24,6 +24,7 @@ ChangeLog
 - BUGFIX: fix "x2x-filter" node by not stumbling over undefined values
 - BUGFIX: fix "xio-websocket" node by closing all client connections on destruction
 - BUGFIX: fix "xio-webrtc" node by catching errors on listening
+- BUGFIX: fix "xio-webrtc" node by catching errors on processing
 - BUGFIX: fix "xio-device" node by shutdown the stream on destruction
 - BUGFIX: fix "a2t-deepgram" chunk kind classification logic
 - BUGFIX: fix StreamWrapper utility class to correctly flush data
