@@ -231,12 +231,26 @@ export class NodeGraph {
                 this.cli.log("warning", `stream of node <${node.id}> raised "error" event: ${error.message}`)
                 api.sendErrorToDashboard(Date.now(), node.id, "warning", error.message)
             })
-            node.stream.on("finish", () => {
-                deactivateNode(node, `writable stream side (input) of node <${node.id}> raised "finish" event`)
-            })
-            node.stream.on("end", () => {
-                deactivateNode(node, `readable stream side (output) of node <${node.id}> raised "end" event`)
-            })
+
+            /*  listen for the semantically correct completion event per stream type:
+                - for Duplex/Transform listen only for "end"
+                  (readable-side, fires last, guarantees all output is drained),
+                - for pure Readable listen only for "end"
+                - for pure Writable listen only for "finish"  */
+            if (node.stream instanceof Stream.Duplex)
+                node.stream.on("end", () => {
+                    deactivateNode(node, `readable stream side (output) of node <${node.id}> raised "end" event`)
+                })
+            else if (node.stream instanceof Stream.Readable)
+                node.stream.on("end", () => {
+                    deactivateNode(node, `readable stream side (output) of node <${node.id}> raised "end" event`)
+                })
+            else if (node.stream instanceof Stream.Writable)
+                node.stream.on("finish", () => {
+                    deactivateNode(node, `writable stream side (input) of node <${node.id}> raised "finish" event`)
+                })
+            else
+                throw new Error(`stream of node <${node.id}> is neither of Duplex, Writable, nor Readable type`)
         }
 
         /*  start of internal stream processing  */

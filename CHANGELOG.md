@@ -49,6 +49,7 @@ hangeLog
 - BUGFIX: do not throw an exception from Stream::read() operations
 - BUGFIX: signal handlers in main graph code discarded returned Promise and this way caused unhandled rejections
 - BUGFIX: in node graph code avoid mutating a Set during iteration
+- BUGFIX: in node graph code correctly deactivate nodes on shutdown
 - BUGFIX: avoid dangling timers on shutdown by unreferencing sleep/timeout() timers
 - BUGFIX: for SingleQueue.read() avoid conflating "queue empty" with "queue contains undefined"
 - BUGFIX: correctly deep-clone the meta Map of nodes
