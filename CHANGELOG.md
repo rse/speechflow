@@ -29,6 +29,7 @@ ChangeLog
 - BUGFIX: fix StreamWrapper utility class to correctly flush data
 - BUGFIX: fix "a2a-gtcrn" node by short-circuiting procedures in case of shutdown
 - BUGFIX: fix "a2a-expander" node by guarding against IEEE 754 edge case
+- BUGFIX: do not throw an exception from Stream::read() operations
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages

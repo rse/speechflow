@@ -292,8 +292,11 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
                 callback()
             },
             read (size: number) {
-                if (self.params.mode === "w")
-                    throw new Error("read operation on write-only node")
+                if (self.params.mode === "w") {
+                    self.log("error", "read operation on write-only node")
+                    this.push(null)
+                    return
+                }
                 if (self.chunkQueue === null)
                     return
                 reads.add(self.chunkQueue.read().then((chunk) => {

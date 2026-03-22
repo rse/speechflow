@@ -147,8 +147,11 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     callback()
                 },
                 read (size: number) {
-                    if (self.params.mode === "w")
-                        throw new Error("read operation on write-only node")
+                    if (self.params.mode === "w") {
+                        self.log("error", "read operation on write-only node")
+                        this.push(null)
+                        return
+                    }
                     reads.add(chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
                     }).catch((err: Error) => {
@@ -220,8 +223,11 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     callback()
                 },
                 read (size: number) {
-                    if (self.params.mode === "w")
-                        throw new Error("read operation on write-only node")
+                    if (self.params.mode === "w") {
+                        self.log("error", "read operation on write-only node")
+                        this.push(null)
+                        return
+                    }
                     reads.add(chunkQueue.read().then((chunk) => {
                         this.push(chunk, "binary")
                     }).catch((err: Error) => {
