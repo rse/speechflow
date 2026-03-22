@@ -15,7 +15,14 @@ interface StartCaptureMessage {
     chunkId: string
     expectedSamples: number
 }
-type WorkletMessage = InputChunkMessage | StartCaptureMessage
+interface CancelCaptureMessage {
+    type: "cancel-capture"
+    chunkId: string
+}
+interface CancelAllCapturesMessage {
+    type: "cancel-all-captures"
+}
+type WorkletMessage = InputChunkMessage | StartCaptureMessage | CancelCaptureMessage | CancelAllCapturesMessage
 interface ChunkData {
     data: Float32Array
     chunkId: string
@@ -43,9 +50,12 @@ class AudioSourceProcessor extends AudioWorkletProcessor {
 
         /*  receive input chunks  */
         this.port.addEventListener("message", (event: MessageEvent<WorkletMessage>) => {
-            const { type, chunkId } = event.data
+            const { type } = event.data
             if (type === "input-chunk")
-                this.pendingData.push({ data: event.data.data.pcmData, chunkId })
+                this.pendingData.push({
+                    data:    event.data.data.pcmData,
+                    chunkId: event.data.chunkId
+                })
         })
     }
 
@@ -114,7 +124,8 @@ class AudioSourceProcessor extends AudioWorkletProcessor {
 /*  audio capture node  */
 class AudioCaptureProcessor extends AudioWorkletProcessor {
     /*  internal state  */
-    private activeCaptures = new Map<string, { data: number[], expectedSamples: number }>()
+    private static readonly CAPTURE_TTL = 30 * 1000
+    private activeCaptures = new Map<string, { data: number[], expectedSamples: number, createdAt: number }>()
 
     /*  node construction  */
     constructor () {
@@ -122,13 +133,21 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
 
         /*  receive start of capturing command  */
         this.port.addEventListener("message", (event: MessageEvent<WorkletMessage>) => {
-            const { type, chunkId } = event.data
+            const { type } = event.data
             if (type === "start-capture") {
+                const chunkId = event.data.chunkId
                 this.activeCaptures.set(chunkId, {
                     data: [],
-                    expectedSamples: event.data.expectedSamples
+                    expectedSamples: event.data.expectedSamples,
+                    createdAt: Date.now()
                 })
             }
+            else if (type === "cancel-capture") {
+                const chunkId = event.data.chunkId
+                this.activeCaptures.delete(chunkId)
+            }
+            else if (type === "cancel-all-captures")
+                this.activeCaptures.clear()
         })
     }
 
@@ -144,6 +163,15 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
             return true
         const frameCount = input[0].length
         const channelCount = input.length
+
+        /*  evict stale captures (TTL safety net)  */
+        const currentTime = Date.now()
+        for (const [ chunkId, capture ] of this.activeCaptures) {
+            if ((currentTime - capture.createdAt) > AudioCaptureProcessor.CAPTURE_TTL)
+                this.activeCaptures.delete(chunkId)
+        }
+        if (this.activeCaptures.size === 0)
+            return true
 
         /*  iterate over all active captures  */
         for (const [ chunkId, capture ] of this.activeCaptures) {

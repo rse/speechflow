@@ -252,6 +252,8 @@ export class WebAudio {
         return new Promise<Int16Array>((resolve, reject) => {
             const timeout = setTimeout(() => {
                 this.pendingPromises.delete(chunkId)
+                if (this.captureNode !== null)
+                    this.captureNode.port.postMessage({ type: "cancel-capture", chunkId })
                 reject(new Error("processing timeout"))
             }, (int16Array.length / this.channels / this.audioContext.sampleRate) * 1000 + 250)
             if (this.captureNode !== null)
@@ -291,6 +293,10 @@ export class WebAudio {
 
     /*  destroy object  */
     public async destroy (): Promise<void> {
+        /*  cancel all worklet captures  */
+        if (this.captureNode !== null)
+            this.captureNode.port.postMessage({ type: "cancel-all-captures" })
+
         /*  reject all pending promises  */
         shield(() => {
             this.pendingPromises.forEach(({ reject, timeout }) => {
