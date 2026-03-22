@@ -80,7 +80,9 @@ export default class SpeechFlowNodeT2AKitten extends SpeechFlowNode {
             }
 
             /*  resample audio samples from PCM/I16/24Khz to PCM/I16/48KHz  */
-            return this.resampler!.processChunk(buffer1)
+            if (this.resampler === null)
+                throw new Error("resampler already destroyed")
+            return this.resampler.processChunk(buffer1)
         }
 
         /*  create transform stream and connect it to the Kitten TTS API  */
