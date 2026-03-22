@@ -185,7 +185,7 @@ export class CLIContext {
         if (this.args.V) {
             process.stderr.write(`SpeechFlow ${pkg["x-stdver"]} (${pkg["x-release"]}) <${pkg.homepage}>\n`)
             process.stderr.write(`${pkg.description}\n`)
-            process.stderr.write(`Copyright (c) 2024-2025 ${pkg.author.name} <${pkg.author.url}>\n`)
+            process.stderr.write(`Copyright (c) 2024-2026 ${pkg.author.name} <${pkg.author.url}>\n`)
             process.stderr.write(`Licensed under ${pkg.license} <http://spdx.org/licenses/${pkg.license}.html>\n`)
             process.exit(0)
         }
