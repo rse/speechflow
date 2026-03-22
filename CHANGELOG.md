@@ -27,6 +27,7 @@ ChangeLog
 - BUGFIX: fix "xio-device" node by shutdown the stream on destruction
 - BUGFIX: fix "a2t-deepgram" chunk kind classification logic
 - BUGFIX: fix StreamWrapper utility class to correctly flush data
+- BUGFIX: fix "a2a-gtcrn" node by short-circuiting procedures in case of shutdown
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages
