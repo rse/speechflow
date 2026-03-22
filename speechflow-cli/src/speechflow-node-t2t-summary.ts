@@ -103,7 +103,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
 
     /*  count sentences in text  */
     private countSentences (text: string): number {
-        const matches = text.match(/[.;?!]/g)
+        const matches = text.match(/[.;?!]+(?:\s|$)/g)
         return matches ? matches.length : 0
     }
 
