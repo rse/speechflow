@@ -305,7 +305,7 @@ export class APIServer {
     }
 
     /*  send information to dashboard on error  */
-    async sendErrorToDashboard (time: number, node: string, level: string, message: string): Promise<void> {
+    sendErrorToDashboard (time: number, node: string, level: string, message: string) {
         const data = JSON.stringify({
             response: "HINT",
             node,
