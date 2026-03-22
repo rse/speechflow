@@ -246,6 +246,8 @@ export class AsyncQueue<T> {
     private resolvers: { resolve: (v: T) => void, reject: (err: Error) => void }[] = []
     public destroyed = false
     write (v: T) {
+        if (this.destroyed)
+            return
         const resolver = this.resolvers.shift()
         if (resolver)
             resolver.resolve(v)
