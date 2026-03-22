@@ -504,7 +504,6 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
                     this.push(chunk, "binary")
                 }).catch((err: Error) => {
                     self.log("warning", `read on chunk queue operation failed: ${err}`)
-                    this.push(null)
                 }))
             }
         })
