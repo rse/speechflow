@@ -44,6 +44,7 @@ hangeLog
 - BUGFIX: fix "a2a-vad" node by avoiding the busy-polling event loop in unplugged mode for consecutive non-speech chunks  
 - BUGFIX: avoid unbounded active captures memory growth in Audio Worklet
 - BUGFIX: do not throw an exception from Stream::read() operations
+- BUGFIX: signal handlers in main graph code discarded returned Promise and this way caused unhandled rejections 
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS

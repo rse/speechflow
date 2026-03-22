@@ -331,13 +331,18 @@ export class NodeGraph {
     /*  setup signal handling for shutdown  */
     setupSignalHandlers (args: CLIOptions, api: APIServer): void {
         /*  internal helper functions  */
-        const shutdownHandler = (signal: string) =>
-            this.shutdown(signal, args, api)
         const logError = (error: Error) => {
             if (this.debug)
                 this.cli.log("error", `${error.message}\n${error.stack}`)
             else
                 this.cli.log("error", error.message)
+        }
+        const shutdownHandler = (signal: string) => {
+            this.shutdown(signal, args, api).catch((err: unknown) => {
+                const error = util.ensureError(err, "shutdown error")
+                logError(error)
+                process.exit(1)
+            })
         }
 
         /*  hook into process signals  */
