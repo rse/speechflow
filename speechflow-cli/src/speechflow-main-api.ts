@@ -253,10 +253,13 @@ export class APIServer {
                         peerInfo.ws.send(data)
                 }
                 for (const n of graph.getGraphNodes()) {
+                    const ac = new AbortController()
                     Promise.race([
                         n.receiveDashboard(info.type, info.id, info.kind, info.value),
-                        util.timeout(10 * 1000)
-                    ]).catch((err: Error) => {
+                        util.timeout(10 * 1000, "timeout", ac.signal)
+                    ]).finally(() => {
+                        ac.abort()
+                    }).catch((err: Error) => {
                         this.cli.log("warning", `sending dashboard info to node <${n.id}> failed: ${err.message}`)
                     })
                 }
