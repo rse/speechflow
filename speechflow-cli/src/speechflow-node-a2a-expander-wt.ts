@@ -118,6 +118,10 @@ class ExpanderProcessor extends AudioWorkletProcessor {
                 gainLin *= util.dB2lin(neededLiftDB)
             }
 
+            /*  guard against IEEE 754 edge case (0 * Infinity = NaN on silence)  */
+            if (!Number.isFinite(gainLin))
+                gainLin = 0
+
             /*  apply gain change to channel  */
             const inp = input[ch]
             const out = output[ch]
