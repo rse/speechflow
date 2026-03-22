@@ -342,9 +342,6 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  indicate closing  */
-        this.closing = true
-
         /*  cleanup tail timer  */
         if (this.tailTimer !== null) {
             clearTimeout(this.tailTimer)
@@ -357,13 +354,7 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
         })
         this.activeEventListeners.clear()
 
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
-        }
-
-        /*  close VAD (before deleting queue pointers, as flush can trigger callbacks)  */
+        /*  flush VAD (before closing, as flush triggers callbacks which need active state)  */
         if (this.vad !== null) {
             try {
                 const flushPromise = this.vad.flush()
@@ -373,6 +364,19 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
             catch (error) {
                 this.log("warning", `VAD flush error during close: ${error}`)
             }
+        }
+
+        /*  indicate closing  */
+        this.closing = true
+
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
+        }
+
+        /*  destroy VAD  */
+        if (this.vad !== null) {
             this.vad.destroy()
             this.vad = null
         }
