@@ -46,7 +46,7 @@ parentPort!.on("message", (msg) => {
         /*  convert back Float32Array to Int16Array  */
         const i16 = new Int16Array(data.length)
         for (let i = 0; i < data.length; i++)
-            i16[i] = Math.round(f32a[i])
+            i16[i] = Math.max(-32768, Math.min(32767, Math.round(f32a[i])))
 
         /*  send processed frame back to parent  */
         parentPort!.postMessage({ type: "process-done", id, data: i16 }, [ i16.buffer ])
