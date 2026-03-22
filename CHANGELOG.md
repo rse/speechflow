@@ -32,6 +32,7 @@ ChangeLog
 - BUGFIX: fix "a2a-expander" node by guarding against IEEE 754 edge case
 - BUGFIX: do not throw an exception from Stream::read() operations
 - UPDATE: upgrade NPM dependencies and patches
+- CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS
 - CLEANUP: update year in all copyright messages
 - CLEANUP: fix version number and rename file

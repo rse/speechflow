@@ -139,10 +139,6 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
         })
 
         /*  hook onto session events  */
-        this.ws.on("open", () => {
-            this.log("info", "WebSocket connection opened")
-            sendMessage({ type: "transcription.create" })
-        })
         this.ws.on("close", () => {
             this.log("info", "WebSocket connection closed")
             if (!this.closing && this.queue !== null)
