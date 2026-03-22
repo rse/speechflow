@@ -171,7 +171,11 @@ export default class SpeechFlowNodeA2AGTCRN extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     /*  resample Buffer from 48KHz (SpeechFlow) to 16KHz (GTCRN)  */
-                    const resampledDown = self.resamplerDown!.processChunk(chunk.payload)
+                    if (self.resamplerDown === null) {
+                        callback(new Error("resamplerDown already destroyed"))
+                        return
+                    }
+                    const resampledDown = self.resamplerDown.processChunk(chunk.payload)
 
                     /*  convert Buffer into Float32Array  */
                     const payload = util.convertBufToF32(resampledDown)
@@ -188,7 +192,11 @@ export default class SpeechFlowNodeA2AGTCRN extends SpeechFlowNode {
                         const buf = util.convertF32ToBuf(result)
 
                         /*  resample Buffer from 16KHz (GTCRN) back to 48KHz (SpeechFlow)  */
-                        const resampledUp = self.resamplerUp!.processChunk(buf)
+                        if (self.resamplerUp === null) {
+                            callback(new Error("resamplerUp already destroyed"))
+                            return
+                        }
+                        const resampledUp = self.resamplerUp.processChunk(buf)
 
                         /*  forward cloned chunk with updated payload  */
                         const chunkNew = chunk.clone()
