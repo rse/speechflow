@@ -295,7 +295,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                 }
                 try {
                     sendMessage({ type: "input_audio_buffer.commit" })
-                    self.ws.close()
+                    self.ws?.close()
                     await new Promise<void>((resolve) => {
                         const timeout = setTimeout(() => { resolve() }, 5000)
                         self.ws?.once("close", () => {
@@ -351,6 +351,12 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             this.connectionTimeout = null
         }
 
+        /*  shutdown stream (first, so its final callback can still use the WebSocket)  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
+        }
+
         /*  signal EOF to any pending read operations  */
         if (this.queue !== null) {
             this.queue.write(null)
@@ -368,11 +374,5 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
 
         /*  close resampler  */
         this.resampler = null
-
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
-        }
     }
 }
