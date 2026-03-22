@@ -310,6 +310,12 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
+        /*  drain and clear chunk queue reference  */
+        if (this.chunkQueue !== null) {
+            this.chunkQueue.destroy()
+            this.chunkQueue = null
+        }
+
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
@@ -320,12 +326,6 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
         if (this.server !== null) {
             await this.server.close()
             this.server = null
-        }
-
-        /*  drain and clear chunk queue reference  */
-        if (this.chunkQueue !== null) {
-            this.chunkQueue.destroy()
-            this.chunkQueue = null
         }
     }
 }
