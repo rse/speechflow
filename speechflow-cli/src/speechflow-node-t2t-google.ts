@@ -125,7 +125,9 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
 
         /*  shutdown Google Translate client  */
         if (this.client !== null) {
-            this.client.close()
+            await this.client.close().catch((error) => {
+                this.log("warning", `error closing Google Translate client: ${error}`)
+            })
             this.client = null
         }
     }
