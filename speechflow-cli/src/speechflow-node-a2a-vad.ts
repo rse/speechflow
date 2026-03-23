@@ -360,14 +360,14 @@ export default class SpeechFlowNodeA2AVAD extends SpeechFlowNode {
             }
         }
 
-        /*  remove all event listeners  */
+        /*  indicate closing  */
+        this.closing = true
+
+        /*  remove all remaining event listeners  */
         this.activeEventListeners.forEach((listener) => {
             this.queue.removeListener("write", listener)
         })
         this.activeEventListeners.clear()
-
-        /*  indicate closing  */
-        this.closing = true
 
         /*  shutdown stream  */
         if (this.stream !== null) {
