@@ -205,7 +205,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                     const element = this.queueAC.peek(pos)
                     if (element === undefined || element.type !== "audio-frame")
                         break
-                    if ((samples + element.data.length) < frameWindowSamples) {
+                    if ((samples + element.data.length) <= frameWindowSamples) {
                         data.set(element.data, samples)
                         samples += element.data.length
                     }
