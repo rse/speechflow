@@ -265,11 +265,11 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
         const resourceId = crypto.randomUUID()
         const { pc, subscription } = this.createPeerConnection(resourceId)
 
-        /*  protocol-specific setup  */
-        const track = setupFn(pc, resourceId)
-
         /*  complete SDP offer/answer exchange and establish connection  */
         try {
+            /*  protocol-specific setup  */
+            const track = setupFn(pc, resourceId)
+
             /*  set remote description (offer from client)  */
             await pc.setRemoteDescription({ type: "offer", sdp: offer })
 
