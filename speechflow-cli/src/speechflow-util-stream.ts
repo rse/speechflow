@@ -59,7 +59,10 @@ export function ensureStreamChunk (type: "audio" | "text", chunk: SpeechFlowChun
 export function createTransformStreamForReadableSide (
     type: "text" | "audio",
     getTimeZero: () => DateTime,
-    writableHighWaterMark?: number
+    writableHighWaterMark?: number,
+    sampleRate?: number,
+    bitDepth?: number,
+    channels?: number
 ) {
     return new Stream.Transform({
         writableObjectMode:    false,
@@ -72,7 +75,8 @@ export function createTransformStreamForReadableSide (
             const start = DateTime.now().diff(timeZero)
             let end = start
             if (type === "audio") {
-                const duration = util.audioBufferDuration(chunk as Buffer)
+                const duration = util.audioBufferDuration(chunk as Buffer,
+                    sampleRate, bitDepth, channels)
                 end = start.plus(duration * 1000)
             }
             const payload = ensureStreamChunk(type, chunk) as Buffer | string

@@ -96,7 +96,8 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     chunker = new Stream.PassThrough({ highWaterMark: highWaterMarkText })
                 }
                 const wrapper = util.createTransformStreamForReadableSide(
-                    this.params.type, () => this.timeZero)
+                    this.params.type, () => this.timeZero, undefined,
+                    this.config.audioSampleRate, this.config.audioBitDepth, this.config.audioChannels)
                 this.stream = Stream.compose(process.stdin, chunker, wrapper)
             }
             else {
@@ -109,7 +110,8 @@ export default class SpeechFlowNodeXIOFile extends SpeechFlowNode {
                     readable = fs.createReadStream(this.params.path,
                         { highWaterMark: highWaterMarkText, encoding: this.config.textEncoding })
                 const wrapper = util.createTransformStreamForReadableSide(
-                    this.params.type, () => this.timeZero)
+                    this.params.type, () => this.timeZero, undefined,
+                    this.config.audioSampleRate, this.config.audioBitDepth, this.config.audioChannels)
                 this.stream = Stream.compose(readable, wrapper)
             }
         }

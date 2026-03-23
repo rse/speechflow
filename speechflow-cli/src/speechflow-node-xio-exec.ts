@@ -129,13 +129,15 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
             })
             const wrapper1 = util.createTransformStreamForWritableSide(this.params.type, highWaterMark)
             const wrapper2 = util.createTransformStreamForReadableSide(
-                this.params.type, () => this.timeZero, highWaterMark)
+                this.params.type, () => this.timeZero, highWaterMark,
+                this.config.audioSampleRate, this.config.audioBitDepth, this.config.audioChannels)
             this.stream = Stream.compose(wrapper1, this.stream, wrapper2)
         }
         else if (this.params.mode === "r") {
             /*  read-only mode: stdout only  */
             const wrapper = util.createTransformStreamForReadableSide(
-                this.params.type, () => this.timeZero, highWaterMark)
+                this.params.type, () => this.timeZero, highWaterMark,
+                this.config.audioSampleRate, this.config.audioBitDepth, this.config.audioChannels)
             this.stream = Stream.compose(this.subprocess.stdout!, wrapper)
         }
         else if (this.params.mode === "w") {

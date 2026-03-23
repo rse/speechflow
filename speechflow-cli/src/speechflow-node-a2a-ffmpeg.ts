@@ -100,7 +100,8 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
 
         /*  wrap streams with conversions for chunk vs plain audio  */
         const wrapper1 = util.createTransformStreamForWritableSide("audio", 1)
-        const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero)
+        const wrapper2 = util.createTransformStreamForReadableSide("audio", () => this.timeZero, undefined,
+            this.config.audioSampleRate, this.config.audioBitDepth, this.config.audioChannels)
         this.stream = Stream.compose(wrapper1, ffmpegStream, wrapper2)
     }
 
