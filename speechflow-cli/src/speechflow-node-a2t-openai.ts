@@ -351,7 +351,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             this.connectionTimeout = null
         }
 
-        /*  shutdown stream (first, so its final callback can still use the WebSocket)  */
+        /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
             this.stream = null
