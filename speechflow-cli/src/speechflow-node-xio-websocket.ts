@@ -125,9 +125,11 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                         callback(new Error("still no WebSocket connections available"))
                     else {
                         const data = util.streamChunkEncode(chunk)
-                        const results: Promise<void>[] = []
+                        const sends:   Promise<void>[] = []
+                        const clients: ws.WebSocket[]  = []
                         for (const websocket of websockets.values()) {
-                            results.push(new Promise<void>((resolve, reject) => {
+                            clients.push(websocket)
+                            sends.push(new Promise<void>((resolve, reject) => {
                                 websocket.send(data, (error) => {
                                     if (error)
                                         reject(error)
@@ -136,10 +138,23 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                                 })
                             }))
                         }
-                        Promise.all(results).then(() => {
-                            callback()
-                        }).catch((error: unknown) => {
-                            callback(util.ensureError(error))
+                        Promise.allSettled(sends).then((results) => {
+                            let lastError: Error | null = null
+                            for (let i = 0; i < results.length; i++) {
+                                if (results[i].status === "rejected") {
+                                    const error = util.ensureError((results[i] as PromiseRejectedResult).reason)
+                                    self.log("warning", `failed to send to WebSocket client: ${error.message}`)
+                                    websockets.delete(clients[i])
+                                    clients[i].terminate()
+                                    lastError = error
+                                }
+                            }
+                            if (lastError !== null && results.every((r) => r.status === "rejected"))
+                                callback(lastError)
+                            else
+                                callback()
+                        }).catch((err: Error) => {
+                            callback(err)
                         })
                     }
                 },
