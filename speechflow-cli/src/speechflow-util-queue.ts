@@ -325,7 +325,7 @@ export class PromiseSet<T> {
             if (deadline > 0)
                 await Promise.race([
                     Promise.all(snapshot),
-                    new Promise((resolve) => setTimeout(resolve, remaining))
+                    new Promise((resolve) => { setTimeout(resolve, remaining) })
                 ])
             else
                 await Promise.all(snapshot)
