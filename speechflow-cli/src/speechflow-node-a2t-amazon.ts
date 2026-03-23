@@ -268,7 +268,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                         this.push(null)
                     }
                     else {
-                        self.log("debug", `received data (${chunk.payload.length} bytes): "${chunk.payload}"`)
+                        self.log("debug", `received data (${chunk.payload.length} bytes)`)
                         this.push(chunk)
                     }
                 }).catch((error: unknown) => {
