@@ -367,7 +367,11 @@ export class NodeGraph {
             })
         }
 
-        /*  hook into process signals  */
+        /*  re-hook into process signals  */
+        process.removeAllListeners("SIGINT")
+        process.removeAllListeners("SIGUSR1")
+        process.removeAllListeners("SIGUSR2")
+        process.removeAllListeners("SIGTERM")
         process.on("SIGINT",  () => { shutdownHandler("SIGINT")   })
         process.on("SIGUSR1", () => { shutdownHandler("SIGUSR1")  })
         process.on("SIGUSR2", () => { shutdownHandler("SIGUSR2")  })
