@@ -149,7 +149,11 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                                     lastError = error
                                 }
                             }
-                            if (lastError !== null && results.every((r) => r.status === "rejected"))
+                            const failures = results.filter((r) => r.status === "rejected").length
+                            if (failures > 0 && failures < results.length)
+                                self.log("warning", `partial broadcast failure: ` +
+                                    `${failures} of ${results.length} WebSocket clients failed`)
+                            if (lastError !== null && failures === results.length)
                                 callback(lastError)
                             else
                                 callback()
