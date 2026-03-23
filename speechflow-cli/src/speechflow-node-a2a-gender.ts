@@ -230,12 +230,13 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
             catch (error) {
                 this.log("error", `gender classification error: ${error}`)
             }
-
-            /*  re-initiate working off round  */
-            workingOff = false
-            if (!this.closing) {
-                this.workingOffTimer = setTimeout(workOffQueue, 100)
-                this.queue.once("write", workOffQueue)
+            finally {
+                /*  re-initiate working off round  */
+                workingOff = false
+                if (!this.closing) {
+                    this.workingOffTimer = setTimeout(workOffQueue, 100)
+                    this.queue.once("write", workOffQueue)
+                }
             }
         }
         this.queue.once("write", workOffQueue)
