@@ -163,6 +163,9 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             }, new Map<string, any>())
         }
 
+        /*  remember opening time to receive time zero offset  */
+        this.timeOpen = DateTime.now()
+
         /*  track transcription text per item  */
         const textByItem = new Map<string, string>()
         this.ws.on("message", (data) => {
@@ -246,9 +249,6 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                     break
             }
         })
-
-        /*  remember opening time to receive time zero offset  */
-        this.timeOpen = DateTime.now()
 
         /*  provide Duplex stream and internally attach to OpenAI API  */
         const self = this
