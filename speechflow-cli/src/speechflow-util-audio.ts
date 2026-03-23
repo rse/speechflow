@@ -18,14 +18,11 @@ export function audioBufferDuration (
     buffer: Buffer,
     sampleRate   = 48000,
     bitDepth     = 16,
-    channels     = 1,
-    littleEndian = true
+    channels     = 1
 ) {
     /*  sanity check parameters  */
     if (!Buffer.isBuffer(buffer))
         throw new Error("invalid input (Buffer expected)")
-    if (littleEndian !== true)
-        throw new Error("only Little Endian supported")
     if (sampleRate <= 0)
         throw new Error("sample rate must be positive")
     if (bitDepth <= 0 || bitDepth % 8 !== 0)
