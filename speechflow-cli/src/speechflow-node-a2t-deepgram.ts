@@ -64,7 +64,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                         balance += balanceResponse.result.balances[0]?.amount ?? 0
                 }
             }
-            else if (response?.error !== null)
+            else if (response !== null && response.error !== null)
                 this.log("warning", `API error fetching projects: ${response.error}`)
         }
         catch (error) {
