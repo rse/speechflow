@@ -245,7 +245,12 @@ export class APIServer {
             const port = Number.parseInt(m[2], 10)
             this.sendOSC = (url: string, ...argList: any[]) => {
                 const msg = new OSC.Message(url, ...argList)
-                osc.send(msg, { host, port })
+                try {
+                    osc.send(msg, { host, port })
+                }
+                catch (err: any) {
+                    this.cli.log("warning", `OSC/UDP send to ${host}:${port} failed: ${err.message}`)
+                }
             }
         }
 
