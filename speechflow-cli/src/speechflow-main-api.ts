@@ -37,6 +37,7 @@ export class APIServer {
     private wsPeers                                                 = new Map<string, WSPeerInfo>()
     private hapi:    HAPI.Server                             | null = null
     private sendOSC: ((url: string, ...args: any[]) => void) | null = null
+    private graph:   NodeGraph                                | null = null
 
     /*  creation  */
     constructor (
@@ -45,6 +46,9 @@ export class APIServer {
 
     /*  start API server service  */
     async start (args: CLIOptions, graph: NodeGraph): Promise<void> {
+        /*  remember graph for later cleanup  */
+        this.graph = graph
+
         /*  define external request/response structure  */
         const requestValidator = arktype.type({
             request: "string",
@@ -279,6 +283,15 @@ export class APIServer {
 
     /*  stop API server service  */
     async stop (args: CLIOptions): Promise<void> {
+        /*  remove event listeners from graph nodes  */
+        if (this.graph) {
+            for (const node of this.graph.getGraphNodes()) {
+                node.removeAllListeners("send-response")
+                node.removeAllListeners("send-dashboard")
+            }
+            this.graph = null
+        }
+
         /*  shutdown HAPI service  */
         if (this.hapi) {
             this.cli.log("info", `HAPI: stopping REST/WebSocket network service: http://${args.a}:${args.p}`)
