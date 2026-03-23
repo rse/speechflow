@@ -318,7 +318,17 @@ export class PromiseSet<T> {
     async awaitAll (timeout = 0) {
         const deadline = timeout > 0 ? Date.now() + timeout : 0
         while (this.promises.size > 0) {
-            await Promise.all(this.promises)
+            const snapshot = [ ...this.promises ]
+            const remaining = deadline > 0 ? deadline - Date.now() : 0
+            if (deadline > 0 && remaining <= 0)
+                break
+            if (deadline > 0)
+                await Promise.race([
+                    Promise.all(snapshot),
+                    new Promise((resolve) => setTimeout(resolve, remaining))
+                ])
+            else
+                await Promise.all(snapshot)
             if (deadline > 0 && Date.now() >= deadline)
                 break
         }
