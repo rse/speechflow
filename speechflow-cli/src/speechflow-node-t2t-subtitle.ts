@@ -112,6 +112,9 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                 /*  produce SRT/VTT blocks  */
                 let output = convertSingle(timestampStart, timestampEnd, chunk.payload)
                 if (this.params.words) {
+                    if (words.length === 0)
+                        this.log("warning", "word-level subtitle highlighting requested but no word-level timing data available")
+
                     /*  produce additional SRT/VTT blocks with each word highlighted  */
                     const occurrences = new Map<string, number>()
                     for (const word of words) {
