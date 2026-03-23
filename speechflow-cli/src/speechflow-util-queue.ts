@@ -75,13 +75,15 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
         if (this.index !== indexOld)
             this.notify("position", { start: this.index })
     }
-    walkForwardUntil (type: T["type"]) {
+    walkForwardUntil (type: T["type"]): boolean {
         while (this.index < this.queue.elements.length
             && this.queue.elements[this.index].type !== type)
             this.index++
         this.notify("position", { start: this.index })
+        return this.index < this.queue.elements.length
+            && this.queue.elements[this.index].type === type
     }
-    walkBackwardUntil (type: T["type"]) {
+    walkBackwardUntil (type: T["type"]): boolean {
         if (this.index === this.queue.elements.length && this.index > 0)
             this.index--
         while (this.index < this.queue.elements.length
@@ -91,18 +93,22 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
             this.index--
         }
         this.notify("position", { start: this.index })
+        return this.index < this.queue.elements.length
+            && this.queue.elements[this.index].type === type
     }
 
     /*  search operations  */
-    searchForward (type: T["type"]) {
+    searchForward (type: T["type"]): number {
         let position = this.index
         while (position < this.queue.elements.length
             && this.queue.elements[position].type !== type)
             position++
-        this.notify("search", { start: this.index, end: position })
-        return position
+        const found = position < this.queue.elements.length
+            && this.queue.elements[position].type === type
+        this.notify("search", { start: this.index, end: found ? position : this.index })
+        return found ? position : -1
     }
-    searchBackward (type: T["type"]) {
+    searchBackward (type: T["type"]): number {
         let position = this.index
         if (position === this.queue.elements.length && position > 0)
             position--
@@ -112,8 +118,10 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
                 break
             position--
         }
-        this.notify("search", { start: position, end: this.index })
-        return position
+        const found = position < this.queue.elements.length
+            && this.queue.elements[position].type === type
+        this.notify("search", { start: found ? position : this.index, end: this.index })
+        return found ? position : -1
     }
 
     /*  reading operations  */
