@@ -248,7 +248,7 @@ export class APIServer {
 
         /*  hook for send-dashboard method of nodes  */
         for (const node of graph.getGraphNodes()) {
-            node.on("send-dashboard", (info: {
+            node.on("send-dashboard", async (info: {
                 type: "audio" | "text",
                 id:   string,
                 kind: "final" | "intermediate",
@@ -264,17 +264,21 @@ export class APIServer {
                     if (peerInfo.ws.readyState === WebSocket.OPEN)
                         peerInfo.ws.send(data)
                 }
+                const promises: Promise<void>[] = []
                 for (const n of graph.getGraphNodes()) {
                     const ac = new AbortController()
-                    Promise.race([
-                        n.receiveDashboard(info.type, info.id, info.kind, info.value),
-                        util.timeout(10 * 1000, "timeout", ac.signal)
-                    ]).finally(() => {
-                        ac.abort()
-                    }).catch((err: Error) => {
-                        this.cli.log("warning", `sending dashboard info to node <${n.id}> failed: ${err.message}`)
-                    })
+                    promises.push(
+                        Promise.race([
+                            n.receiveDashboard(info.type, info.id, info.kind, info.value),
+                            util.timeout(10 * 1000, "timeout", ac.signal)
+                        ]).finally(() => {
+                            ac.abort()
+                        }).catch((err: Error) => {
+                            this.cli.log("warning", `sending dashboard info to node <${n.id}> failed: ${err.message}`)
+                        })
+                    )
                 }
+                await Promise.allSettled(promises)
                 if (args.o !== "" && this.sendOSC)
                     this.sendOSC("/speechflow/dashboard", info.type, info.id, info.kind, info.value)
             })
