@@ -259,7 +259,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.closing || self.ws === null) {
+                if (self.closing || self.ws === null || self.resampler === null) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -273,7 +273,7 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                         if (chunk.meta.size > 0)
                             metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         try {
-                            const payload = self.resampler!.processChunk(chunk.payload)
+                            const payload = self.resampler.processChunk(chunk.payload)
                             const audioB64 = payload.toString("base64")
                             sendMessage({
                                 type: "input_audio_buffer.append",
