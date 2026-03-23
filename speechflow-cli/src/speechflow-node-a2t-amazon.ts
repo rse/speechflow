@@ -203,6 +203,8 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                 }
             })().catch((err: unknown) => {
                 this.log("warning", `failed to establish connectivity to Amazon Transcribe: ${util.ensureError(err).message}`)
+                this.clientStream         = null
+                this.clientStreamStarting = false
             })
         }
 
