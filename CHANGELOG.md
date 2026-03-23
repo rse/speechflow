@@ -62,6 +62,7 @@ hangeLog
 - BUGFIX: In "a2a-speex" and "a2t-deepgram" ensure that Buffer extractions use correct slicing
 - BUGFIX: fix Queue's walkBackwardUntil and searchBackward methods by correctly handling the element at position 0
 - BUGFIX: remove event listeners from graph nodes on stop
+- BUGFIX: honor little endian information in data conversions
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS

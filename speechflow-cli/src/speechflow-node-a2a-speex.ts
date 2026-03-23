@@ -81,7 +81,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     /*  convert Buffer into Int16Array  */
-                    const payload = util.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload, self.config.audioLittleEndian)
 
                     /*  process Int16Array in necessary fixed-size segments  */
                     util.processInt16ArrayInSegments(payload, self.sampleSize, (segment) => {
@@ -96,7 +96,7 @@ export default class SpeechFlowNodeA2ASpeex extends SpeechFlowNode {
                             throw new Error("stream already destroyed")
 
                         /*  convert Int16Array back into Buffer  */
-                        const buf = util.convertI16ToBuf(payload)
+                        const buf = util.convertI16ToBuf(payload, self.config.audioLittleEndian)
 
                         /*  forward cloned chunk with updated payload  */
                         const chunkNew = chunk.clone()

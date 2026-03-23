@@ -168,7 +168,7 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                     callback(new Error("expander not initialized"))
                 else {
                     /*  expand chunk  */
-                    const payload = util.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload, self.config.audioLittleEndian)
                     self.expander.process(payload).then((result) => {
                         if (self.closing) {
                             callback(new Error("stream already destroyed"))
@@ -176,7 +176,7 @@ export default class SpeechFlowNodeA2AExpander extends SpeechFlowNode {
                         }
 
                         /*  take over expanded data  */
-                        const payload = util.convertI16ToBuf(result)
+                        const payload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
                         const chunkNew = chunk.clone()
                         chunkNew.payload = payload
                         this.push(chunkNew)

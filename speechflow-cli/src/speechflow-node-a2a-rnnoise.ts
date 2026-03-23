@@ -126,14 +126,14 @@ export default class SpeechFlowNodeA2ARNNoise extends SpeechFlowNode {
                     callback(new Error("invalid chunk payload type"))
                 else {
                     /*  convert Buffer into Int16Array  */
-                    const payload = util.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload, self.config.audioLittleEndian)
 
                     /*  process Int16Array in necessary segments  */
                     util.processInt16ArrayInSegments(payload, self.sampleSize, (segment) =>
                         workerProcessSegment(segment)
                     ).then((payload: Int16Array<ArrayBuffer>) => {
                         /*  convert Int16Array into Buffer  */
-                        const buf = util.convertI16ToBuf(payload)
+                        const buf = util.convertI16ToBuf(payload, self.config.audioLittleEndian)
 
                         /*  forward cloned chunk with updated payload  */
                         const chunkNew = chunk.clone()

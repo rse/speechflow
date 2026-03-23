@@ -243,7 +243,7 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                     callback(new Error("compressor not initialized"))
                 else {
                     /*  compress chunk  */
-                    const payload = util.convertBufToI16(chunk.payload)
+                    const payload = util.convertBufToI16(chunk.payload, self.config.audioLittleEndian)
                     self.compressor.process(payload).then((result) => {
                         if (self.closing) {
                             callback(new Error("stream already destroyed"))
@@ -252,7 +252,7 @@ export default class SpeechFlowNodeA2ACompressor extends SpeechFlowNode {
                         if ((self.params.type === "standalone" && self.params.mode === "compress")
                             || (self.params.type === "sidechain"  && self.params.mode === "adjust")) {
                             /*  take over compressed data  */
-                            const payload = util.convertI16ToBuf(result)
+                            const payload = util.convertI16ToBuf(result, self.config.audioLittleEndian)
                             const chunkNew = chunk.clone()
                             chunkNew.payload = payload
                             this.push(chunkNew)
