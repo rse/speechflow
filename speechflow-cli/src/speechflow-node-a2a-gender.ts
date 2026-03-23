@@ -319,7 +319,7 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                             else if (element.type === "audio-frame"
                                 && element.gender === undefined)
                                 break
-                            const duration = util.audioArrayDuration(element.data)
+                            const duration = util.audioArrayDuration(element.data, sampleRateTarget)
                             const fmtTime = (t: Duration) => t.toFormat("hh:mm:ss.SSS")
                             const times = `start: ${fmtTime(element.chunk.timestampStart)}, ` +
                                 `end: ${fmtTime(element.chunk.timestampEnd)}`
