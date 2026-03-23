@@ -136,7 +136,7 @@ export class APIServer {
             method: "GET",
             path:   "/api/dashboard",
             handler: (request: HAPI.Request, h: HAPI.ResponseToolkit) => {
-                const config = []
+                const config: { type: string, id: string, name: string }[] = []
                 if (args.d === "")
                     return h.response(config).code(200)
                 for (const block of args.d.split(",")) {
