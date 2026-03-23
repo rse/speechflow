@@ -216,7 +216,7 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                         callback(new Error("write operation on read-only node"))
                     else if (chunk.type !== self.params.type)
                         callback(new Error(`written chunk is not of ${self.params.type} type`))
-                    else if (!self.client!.OPEN)
+                    else if (self.client!.readyState !== ReconnWebSocket.OPEN)
                         callback(new Error("still no WebSocket connection available"))
                     else {
                         const data = util.streamChunkEncode(chunk)
