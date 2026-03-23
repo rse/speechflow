@@ -420,7 +420,10 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
                 const data = JSON.stringify(chunk)
                 for (const info of wsPeers.values())
                     if (info.ws.readyState === WebSocket.OPEN)
-                        info.ws.send(data)
+                        info.ws.send(data, (err) => {
+                            if (err)
+                                this.log("warning", `HAPI: WebSocket: subtitle send failed: ${err.message}`)
+                        })
             }
 
             /*  establish writable stream  */

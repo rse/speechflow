@@ -227,7 +227,10 @@ export class APIServer {
                 for (const [ peer, info ] of this.wsPeers.entries()) {
                     this.cli.log("debug", `HAPI: remote peer ${peer}: sending ${data}`)
                     if (info.ws.readyState === WebSocket.OPEN)
-                        info.ws.send(data)
+                        info.ws.send(data, (err) => {
+                            if (err)
+                                this.cli.log("warning", `HAPI: peer ${peer}: send failed: ${err.message}`)
+                        })
                 }
             })
         }
@@ -262,7 +265,10 @@ export class APIServer {
                 for (const [ peer, peerInfo ] of this.wsPeers.entries()) {
                     this.cli.log("debug", `HAPI: dashboard peer ${peer}: send ${data}`)
                     if (peerInfo.ws.readyState === WebSocket.OPEN)
-                        peerInfo.ws.send(data)
+                        peerInfo.ws.send(data, (err) => {
+                            if (err)
+                                this.cli.log("warning", `HAPI: dashboard peer ${peer}: send failed: ${err.message}`)
+                        })
                 }
                 const promises: Promise<void>[] = []
                 for (const n of graph.getGraphNodes()) {
@@ -345,7 +351,10 @@ export class APIServer {
         for (const [ peer, peerInfo ] of this.wsPeers.entries()) {
             this.cli.log("debug", `HAPI: dashboard peer ${peer}: send ${data}`)
             if (peerInfo.ws.readyState === WebSocket.OPEN)
-                peerInfo.ws.send(data)
+                peerInfo.ws.send(data, (err) => {
+                    if (err)
+                        this.cli.log("warning", `HAPI: dashboard peer ${peer}: send failed: ${err.message}`)
+                })
         }
     }
 }
