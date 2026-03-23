@@ -42,6 +42,7 @@ class AsyncQueue<T> {
             resolve?.({ value: null, done: true })
         }
         this.queue.length = 0
+        this.queue.push(null)
     }
     async * [Symbol.asyncIterator] (): AsyncIterator<T> {
         while (true) {
