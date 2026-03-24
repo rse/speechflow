@@ -31,6 +31,10 @@ interface ChunkStartedMessage {
     type: "chunk-started"
     chunkId: string
 }
+interface CaptureReadyMessage {
+    type: "capture-ready"
+    chunkId: string
+}
 interface CaptureCompleteMessage {
     type: "capture-complete"
     chunkId: string
@@ -141,6 +145,13 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
                     expectedSamples: event.data.expectedSamples,
                     createdAt: Date.now()
                 })
+
+                /*  acknowledge capture registration  */
+                const ready: CaptureReadyMessage = {
+                    type: "capture-ready",
+                    chunkId
+                }
+                this.port.postMessage(ready)
             }
             else if (type === "cancel-capture") {
                 const chunkId = event.data.chunkId

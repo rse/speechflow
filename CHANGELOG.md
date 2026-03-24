@@ -63,6 +63,7 @@ hangeLog
 - BUGFIX: fix Queue's walkBackwardUntil and searchBackward methods by correctly handling the element at position 0
 - BUGFIX: remove event listeners from graph nodes on stop
 - BUGFIX: honor little endian information in data conversions
+- BUGFIX: in WebAudio code use a ready message instead of a time delay to ensure Worker is ready
 - UPDATE: upgrade NPM dependencies and patches
 - CLEANUP: remove second/dead "open" WebSocket handler in "t2a-openai" node
 - CLEANUP: add missing type definitions for Kitten-TTS

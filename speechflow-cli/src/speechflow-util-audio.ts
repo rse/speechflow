@@ -271,15 +271,21 @@ export class WebAudio {
                     })
                 }
 
-                /*  small delay to ensure capture is ready before sending data  */
-                setTimeout(() => {
-                    /*  send input to source node  */
-                    this.sourceNode?.port.postMessage({
-                        type: "input-chunk",
-                        chunkId,
-                        data: { pcmData: float32Data, channels: this.channels }
-                    }, [ float32Data.buffer ])
-                }, 5)
+                /*  wait for capture-ready acknowledgment before sending data  */
+                const readyHandler = (event: MessageEvent) => {
+                    const { type: msgType, chunkId: msgChunkId } = event.data ?? {}
+                    if (msgType === "capture-ready" && msgChunkId === chunkId) {
+                        this.captureNode?.port.removeEventListener("message", readyHandler)
+
+                        /*  send input to source node  */
+                        this.sourceNode?.port.postMessage({
+                            type: "input-chunk",
+                            chunkId,
+                            data: { pcmData: float32Data, channels: this.channels }
+                        }, [ float32Data.buffer ])
+                    }
+                }
+                this.captureNode.port.addEventListener("message", readyHandler)
             }
             catch (error) {
                 clearTimeout(timeout)
