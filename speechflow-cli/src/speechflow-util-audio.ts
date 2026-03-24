@@ -285,7 +285,8 @@ export class WebAudio {
                         }, [ float32Data.buffer ])
                     }
                 }
-                this.captureNode.port.addEventListener("message", readyHandler)
+                if (this.captureNode !== null)
+                    this.captureNode.port.addEventListener("message", readyHandler)
             }
             catch (error) {
                 clearTimeout(timeout)
