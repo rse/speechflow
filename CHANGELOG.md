@@ -26,6 +26,7 @@ hangeLog
 - BUGFIX: fix "t2t-subtitle" buffer handling for "import" mode
 - BUGFIX: fix "t2t-subtitle" node by parsing VTT lines more correctly
 - BUGFIX: fix "t2t-subtitle" node by checking the WebSocket ready state before sending
+- BUGFIX: fix "t2t-subtitle" node by allowing large hours in parsing SRT format
 - BUGFIX: fix "x2x-filter" node by not stumbling over undefined values
 - BUGFIX: fix "x2x-filter" node by matching integer and float numbers more precisely
 - BUGFIX: fix "xio-websocket" node by closing all client connections on destruction

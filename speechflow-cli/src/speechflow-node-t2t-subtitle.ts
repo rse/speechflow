@@ -169,7 +169,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
         else if (this.params.mode === "import") {
             /*  parse timestamp in SRT format ("HH:MM:SS,mmm") or VTT format ("HH:MM:SS.mmm")  */
             const parseTimestamp = (ts: string): Duration => {
-                const match = ts.match(/^(\d{2}):(\d{2}):(\d{2})[,.](\d{3})$/)
+                const match = ts.match(/^(\d{2,}):(\d{2}):(\d{2})[,.](\d{3})$/)
                 if (!match)
                     throw new Error(`invalid timestamp format: "${ts}"`)
                 const hours        = Number.parseInt(match[1], 10)
@@ -205,7 +205,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
 
                     /*  parse timestamp line  */
                     const timeLine  = lines[lineIdx]
-                    const timeMatch = timeLine.match(/^(\d{2}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2},\d{3})/)
+                    const timeMatch = timeLine.match(/^(\d{2,}:\d{2}:\d{2},\d{3})\s*-->\s*(\d{2,}:\d{2}:\d{2},\d{3})/)
                     if (!timeMatch) {
                         this.log("warning", "SRT contains invalid timestamp line")
                         continue
@@ -247,7 +247,7 @@ export default class SpeechFlowNodeT2TSubtitle extends SpeechFlowNode {
 
                     /*  parse timestamp line  */
                     const timeLine  = lines[lineIdx]
-                    const timeMatch = timeLine.match(/^(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})/)
+                    const timeMatch = timeLine.match(/^(\d{2,}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2,}:\d{2}:\d{2}\.\d{3})/)
                     if (!timeMatch) {
                         this.log("warning", "VTT contains invalid timestamp line")
                         continue
