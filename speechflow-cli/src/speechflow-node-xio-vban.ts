@@ -128,6 +128,12 @@ export default class SpeechFlowNodeXIOVBAN extends SpeechFlowNode {
             }
             const data = packet.data
 
+            /*  check sample rate compatibility  */
+            if (packet.sr !== this.config.audioSampleRate) {
+                this.log("warning", `incompatible VBAN sample rate: packet=${packet.sr}Hz, configured=${this.config.audioSampleRate}Hz`)
+                return
+            }
+
             /*  convert audio format if necessary  */
             let audioBuffer: Buffer
             const bitResolution = packet.bitResolution
