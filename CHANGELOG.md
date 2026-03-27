@@ -9,6 +9,7 @@ hangeLog
 - BUGFIX: improve error handling in "xio-websocket" node
 - BUGFIX: improve error handling in "a2t-amazon" node
 - BUGFIX: improve error handling in "a2a-filler" node
+- BUGFIX: improve closing procedure in "a2a-ffmpeg" node
 - BUGFIX: fix "a2a-compressor" node for sidechain mode by correctly connecting to capture node
 - BUGFIX: fix "a2a-compressor" node by using message passing to communicate gain reduction
 - BUGFIX: fix memory leak in "a2t-supertonic" when re-creating the resampler

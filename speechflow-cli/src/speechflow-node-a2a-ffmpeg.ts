@@ -107,18 +107,18 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
 
     /*  close node  */
     async close () {
-        /*  shutdown stream  */
-        if (this.stream !== null) {
-            await util.destroyStream(this.stream)
-            this.stream = null
-        }
-
         /*  shutdown FFmpeg  */
         if (this.ffmpeg !== null) {
             util.run("stopping FFmpeg process",
                 () => this.ffmpeg!.kill(),
                 () => {})
             this.ffmpeg = null
+        }
+
+        /*  shutdown stream  */
+        if (this.stream !== null) {
+            await util.destroyStream(this.stream)
+            this.stream = null
         }
     }
 }
