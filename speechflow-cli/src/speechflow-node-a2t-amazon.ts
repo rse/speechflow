@@ -202,6 +202,7 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                         this.queue?.write(chunk)
                     }
                 }
+                self.queue?.write(null)
             })().catch((err: unknown) => {
                 this.log("warning", `failed to establish connectivity to Amazon Transcribe: ${util.ensureError(err).message}`)
                 this.clientStream         = null
@@ -247,12 +248,18 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
                     callback()
                     return
                 }
-                await reads.awaitAll()
+
+                /*  signal end-of-audio to Amazon Transcribe first  */
+                audioQueue.push(null)
+
+                /*  await all pending read operations (with safety timeout)  */
+                await reads.awaitAll(5000)
+
+                /*  clean up Amazon Transcribe connection and audio queue  */
                 util.run("closing Amazon Transcribe connection",
                     () => self.client!.destroy(),
                     (error: Error) => self.log("warning", `error closing Amazon Transcribe connection: ${error}`)
                 )
-                audioQueue.push(null) /*  do not push null to stream, let Amazon Transcribe do it  */
                 audioQueue.destroy()
                 callback()
             },

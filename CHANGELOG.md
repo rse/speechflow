@@ -7,6 +7,7 @@ hangeLog
 
 - BUGFIX: switch to standard textbook formulas for compressor and expander nodes
 - BUGFIX: improve error handling in "xio-websocket" node
+- BUGFIX: improve error handling in "a2t-amazon" node
 - CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)
