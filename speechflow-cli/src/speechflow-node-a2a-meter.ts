@@ -81,7 +81,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
 
             /*  grab the accumulated chunk data  */
             const chunkData = this.chunkBuffer
-            this.chunkBuffer = chunkData.subarray(samplesPerChunk)
+            this.chunkBuffer = chunkData.slice(samplesPerChunk)
 
             /*  update internal audio sample sliding window for LUFS-M  */
             if (chunkData.length > sampleWindow.length)
