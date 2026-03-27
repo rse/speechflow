@@ -18,6 +18,7 @@ hangeLog
 - BUGFIX: fix "t2a-kokoro" node by correctly disposing the model on closing
 - BUGFIX: fix capturing audio data in WebAudio utility code
 - BUGFIX: fix garbage collection of bufffers in "a2a-meter" node
+- BUGFIX: fix "t2t-sentence" by finally using the "timeout" parameter at all
 - CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)

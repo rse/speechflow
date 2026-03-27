@@ -35,6 +35,10 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     private queueRecv  = this.queue.pointerUse("recv")
     private closing    = false
     private workingOffTimer: ReturnType<typeof setTimeout> | null = null
+    private lastChunkTime = 0
+
+    /*  sentence boundary detection regex  */
+    private static sentenceRE = /^([\s\S]+?[.;?!])(?:\s+([\s\S]+)|\s*)$/
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -100,7 +104,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                 if (element.chunk.kind === "final") {
                     const chunk = element.chunk
                     const payload = chunk.payload as string
-                    const m = payload.match(/^((?:.|\r?\n)+?[.;?!])(?:\s+((?:.|\r?\n)+)|\s*)$/)
+                    const m = payload.match(SpeechFlowNodeT2TSentence.sentenceRE)
                     if (m !== null) {
                         /*  contains a sentence  */
                         const [ , sentence, rest ] = m
@@ -164,8 +168,21 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             else
                                 break
                         }
+                        else if (this.lastChunkTime > 0
+                            && (Date.now() - this.lastChunkTime) >= (this.params.timeout as number)) {
+                            /*  no following chunk yet, but timeout expired:
+                                flush incomplete sentence fragment  */
+                            element.complete = true
+                            this.queue.silent(true)
+                            this.queueSplit.silent(true)
+                            const position = this.queueSplit.position()
+                            this.queueSplit.walk(+1)
+                            this.queue.silent(false)
+                            this.queueSplit.silent(false)
+                            this.queueSplit.touch(position)
+                        }
                         else {
-                            /*  no following chunk yet  */
+                            /*  no following chunk yet, still within timeout  */
                             break
                         }
                     }
@@ -219,6 +236,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     }
                     previewed = false
                     self.queueRecv.append({ type: "text-frame", chunk, complete: false })
+                    self.lastChunkTime = Date.now()
                     callback()
                 }
             },
