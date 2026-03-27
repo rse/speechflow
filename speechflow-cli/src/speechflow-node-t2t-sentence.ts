@@ -53,7 +53,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
     /*  concatenate two payloads with proper whitespacing  */
     private concatPayload (s1: string, s2: string) {
-        if (!(s1.match(/\s+$/) || s2.match(/^\s+/)))
+        if (!(/\s+$/.test(s1) || /^\s+/.test(s2)))
             return `${s1} ${s2}`
         else
             return `${s1}${s2}`
