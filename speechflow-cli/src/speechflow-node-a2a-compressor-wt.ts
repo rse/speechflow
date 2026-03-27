@@ -38,20 +38,19 @@ class CompressorProcessor extends AudioWorkletProcessor {
         if (ratio <= 1.0)
             return 0
 
-        /*  determine thresholds  */
+        /*  determine knee boundaries (symmetric around threshold)  */
         const halfKnee  = kneeDB * 0.5
-        const belowThr  = levelDB < thresholdDB
-        const aboveKnee = levelDB >= (thresholdDB + halfKnee)
+        const belowKnee = levelDB < (thresholdDB - halfKnee)
+        const aboveKnee = levelDB > (thresholdDB + halfKnee)
 
-        /*  short-circuit for no compression (below threshold)  */
-        if (belowThr)
+        /*  short-circuit for no compression (below knee)  */
+        if (belowKnee)
             return 0
 
-        /*  apply soft-knee  */
+        /*  apply soft-knee (standard textbook quadratic)  */
         if (kneeDB > 0 && !aboveKnee) {
-            const x = (levelDB - thresholdDB) / kneeDB
-            const idealGainDB = (thresholdDB + (levelDB - thresholdDB) / ratio) - levelDB
-            return idealGainDB * x * x
+            const d = levelDB - thresholdDB + halfKnee
+            return (1.0 / ratio - 1.0) * d * d / (2.0 * kneeDB)
         }
 
         /*  determine target level  */

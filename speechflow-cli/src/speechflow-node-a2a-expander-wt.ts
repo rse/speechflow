@@ -39,20 +39,19 @@ class ExpanderProcessor extends AudioWorkletProcessor {
         if (ratio <= 1.0)
             return 0
 
-        /*  determine thresholds  */
+        /*  determine knee boundaries (symmetric around threshold)  */
         const halfKnee  = kneeDB * 0.5
         const belowKnee = levelDB < (thresholdDB - halfKnee)
-        const aboveThr  = levelDB >= thresholdDB
+        const aboveKnee = levelDB > (thresholdDB + halfKnee)
 
-        /*  short-circuit for no expansion (above threshold)  */
-        if (aboveThr)
+        /*  short-circuit for no expansion (above knee)  */
+        if (aboveKnee)
             return 0
 
-        /*  apply soft-knee  */
+        /*  apply soft-knee (standard textbook quadratic)  */
         if (kneeDB > 0 && !belowKnee) {
-            const x = (levelDB - (thresholdDB - halfKnee)) / kneeDB
-            const idealGainDB = (thresholdDB + (levelDB - thresholdDB) * ratio) - levelDB
-            return idealGainDB * x * x
+            const d = thresholdDB + halfKnee - levelDB
+            return (1.0 - ratio) * d * d / (2.0 * kneeDB)
         }
 
         /*  determine target level  */

@@ -2,6 +2,11 @@
 hangeLog
 =========
 
+2.3.1 (2026-03-27)
+------------------
+
+- BUGFIX: switch to standard textbook formulas for compressor and expander nodes
+
 2.3.0 (2026-03-27)
 ------------------
 
