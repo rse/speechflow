@@ -196,6 +196,12 @@ export default class SpeechFlowNodeA2AFiller extends SpeechFlowNode {
                     self.filler.done()
                     await util.sleep(10)
 
+                    /*  re-check after await (close() may have run during sleep)  */
+                    if (self.closing || self.sendQueue === null) {
+                        callback()
+                        return
+                    }
+
                     /*  signal end of stream  */
                     self.sendQueue.write(null)
                 }
