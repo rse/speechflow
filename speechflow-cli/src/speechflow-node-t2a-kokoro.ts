@@ -211,8 +211,10 @@ export default class SpeechFlowNodeT2AKokoro extends SpeechFlowNode {
         }
 
         /*  destroy Kokoro API  */
-        if (this.kokoro !== null)
+        if (this.kokoro !== null) {
+            await this.kokoro.model.dispose()
             this.kokoro = null
+        }
     }
 }
 
