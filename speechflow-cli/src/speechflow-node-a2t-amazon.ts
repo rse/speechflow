@@ -139,6 +139,9 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
             }
         })(audioQueue)
 
+        /*  provide a self-reference for use in callbacks below  */
+        const self = this
+
         /*  start streaming  */
         const ensureAudioStreamActive = async () => {
             if (this.clientStream !== null || this.clientStreamStarting || this.closing)
@@ -214,7 +217,6 @@ export default class SpeechFlowNodeA2TAmazon extends SpeechFlowNode {
         this.timeOpen = DateTime.now()
 
         /*  provide Duplex stream and internally attach to Amazon Transcribe API  */
-        const self = this
         const reads = new util.PromiseSet<void>()
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
