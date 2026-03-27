@@ -115,6 +115,10 @@ class CompressorProcessor extends AudioWorkletProcessor {
             for (let i = 0; i < inp.length; i++)
                 out[i] = inp[i] * gainLin
         }
+
+        /*  report reduction to main thread  */
+        this.port.postMessage({ type: "reduction", reduction: this.reduction })
+
         return true
     }
 }

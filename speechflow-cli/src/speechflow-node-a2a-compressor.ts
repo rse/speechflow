@@ -34,6 +34,8 @@ class AudioCompressor extends util.WebAudio {
     private config:            Required<AudioCompressorConfig>
     private compressorNode:    AudioWorkletNode | null = null
     private gainNode:          GainNode | null = null
+    private _reduction:        number = 0
+    private _reductionListener: ((event: MessageEvent) => void) | null = null
 
     /*  construct object  */
     constructor (
@@ -85,6 +87,16 @@ class AudioCompressor extends util.WebAudio {
             })
         }
 
+        /*  listen for reduction updates from compressor worklet  */
+        if (needsCompressor) {
+            this._reductionListener = (event: MessageEvent) => {
+                if (event.data?.type === "reduction")
+                    this._reduction = event.data.reduction
+            }
+            this.compressorNode!.port.addEventListener("message", this._reductionListener)
+            this.compressorNode!.port.start()
+        }
+
         /*  create gain node  */
         if (needsGain)
             this.gainNode = this.audioContext.createGain()
@@ -124,8 +136,7 @@ class AudioCompressor extends util.WebAudio {
 
     /*  get the current gain reduction  */
     public getGainReduction (): number {
-        const processor = (this.compressorNode as any)?.port?.processor
-        return processor?.reduction ?? 0
+        return this._reduction
     }
 
     /*  set the current gain  */
@@ -138,6 +149,10 @@ class AudioCompressor extends util.WebAudio {
     public async destroy (): Promise<void> {
         /*  destroy nodes  */
         if (this.compressorNode !== null) {
+            if (this._reductionListener !== null) {
+                this.compressorNode.port.removeEventListener("message", this._reductionListener)
+                this._reductionListener = null
+            }
             this.compressorNode.disconnect()
             this.compressorNode = null
         }
