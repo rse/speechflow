@@ -46,6 +46,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
     private rtpSequence                                           = 0
     private rtpTimestamp                                          = 0
     private rtpSSRC                                               = 0
+    private rtpMarkerNext                                         = true
     private maxConnections                                        = 10
 
     /*  Opus codec configuration: 48kHz, mono, 16-bit  */
@@ -177,7 +178,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
             padding:        false,
             paddingSize:    0,
             extension:      false,
-            marker:         true,
+            marker:         this.rtpMarkerNext,
             payloadType:    111, /*  Opus payload type  */
             sequenceNumber: this.rtpSequence++ & 0xFFFF,
             timestamp:      this.rtpTimestamp,
@@ -185,6 +186,9 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
             csrc:           [],
             extensions:     []
         })
+
+        /*  clear marker (set only on first packet of a talkspurt per RFC 3551)  */
+        this.rtpMarkerNext = false
 
         /*  build RTP packet  */
         const rtpPacket = new RtpPacket(rtpHeader, opusPacket)
@@ -365,6 +369,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
         this.rtpSequence  = Math.floor(Math.random() * 0x10000)
         this.rtpTimestamp = Math.floor(Math.random() * 0x100000000) >>> 0
         this.rtpSSRC      = Math.floor(Math.random() * 0x100000000) >>> 0
+        this.rtpMarkerNext = true
 
         /*  setup chunk queue for incoming audio  */
         this.chunkQueue = new util.AsyncQueue<SpeechFlowChunk>()
@@ -482,6 +487,7 @@ export default class SpeechFlowNodeXIOWebRTC extends SpeechFlowNode {
                 }
                 if (self.peerConnections.size === 0) {
                     /*  silently drop if no viewers connected  */
+                    self.rtpMarkerNext = true
                     callback()
                     return
                 }
