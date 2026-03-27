@@ -29,12 +29,12 @@ interface AudioCompressorConfig {
 /*  audio compressor class  */
 class AudioCompressor extends util.WebAudio {
     /*  internal state  */
-    private type:              "standalone" | "sidechain"
-    private mode:              "compress" | "measure" | "adjust"
-    private config:            Required<AudioCompressorConfig>
-    private compressorNode:    AudioWorkletNode | null = null
-    private gainNode:          GainNode | null = null
-    private _reduction:        number = 0
+    private type:               "standalone" | "sidechain"
+    private mode:               "compress" | "measure" | "adjust"
+    private config:             Required<AudioCompressorConfig>
+    private compressorNode:     AudioWorkletNode | null = null
+    private gainNode:           GainNode | null = null
+    private _reduction          = 0
     private _reductionListener: ((event: MessageEvent) => void) | null = null
 
     /*  construct object  */

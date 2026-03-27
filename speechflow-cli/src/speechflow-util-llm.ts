@@ -7,6 +7,9 @@
 /*  standard dependencies  */
 import EventEmitter                  from "node:events"
 
+/*  internal dependencies  */
+import * as util                     from "./speechflow-util-misc"
+
 /*  external dependencies  */
 import OpenAI                        from "openai"
 import Anthropic                     from "@anthropic-ai/sdk"
@@ -353,8 +356,16 @@ export class LLM extends EventEmitter {
             this.ollama?.abort()
             this.ollama = null
         }
-        else if (this.config.provider === "transformers") {
-            this.transformer?.dispose()
+        else if (this.config.provider === "transformers" && this.transformer !== null) {
+            const ac = new AbortController()
+            await Promise.race([
+                this.transformer.dispose(),
+                util.timeout(5000, "transformer dispose timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }).catch((error) => {
+                this.log("warning", `error during transformer cleanup: ${error}`)
+            })
             this.transformer = null
         }
         this.initialized = false

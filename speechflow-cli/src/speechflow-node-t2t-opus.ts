@@ -129,7 +129,15 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
 
         /*  shutdown Transformers  */
         if (this.translator !== null) {
-            this.translator.dispose()
+            const ac = new AbortController()
+            await Promise.race([
+                this.translator.dispose(),
+                util.timeout(5000, "translator dispose timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }).catch((error) => {
+                this.log("warning", `error during translator cleanup: ${error}`)
+            })
             this.translator = null
         }
     }
