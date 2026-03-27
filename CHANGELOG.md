@@ -2,7 +2,7 @@
 hangeLog
 =========
 
-2.3.0 (2026-03-21)
+2.3.0 (2026-03-27)
 ------------------
 
 - FEATURE: add a new "t2a-kitten" node which uses Kitten-TTS for text-to-speech
