@@ -262,16 +262,9 @@ export class WebAudio {
                 for (let i = 0; i < int16Array.length; i++)
                     float32Data[i] = int16Array[i] / 32768.0
 
-                /*  start capture first  */
-                if (this.captureNode !== null) {
-                    this.captureNode.port.postMessage({
-                        type: "start-capture",
-                        chunkId,
-                        expectedSamples: int16Array.length
-                    })
-                }
-
-                /*  wait for capture-ready acknowledgment before sending data  */
+                /*  register capture-ready handler first (before posting start-capture,
+                    to avoid a race where capture-ready arrives before the listener
+                    is in place)  */
                 const readyHandler = (event: MessageEvent) => {
                     const { type: msgType, chunkId: msgChunkId } = event.data ?? {}
                     if (msgType === "capture-ready" && msgChunkId === chunkId) {
@@ -287,6 +280,15 @@ export class WebAudio {
                 }
                 if (this.captureNode !== null)
                     this.captureNode.port.addEventListener("message", readyHandler)
+
+                /*  start capture after handler is registered  */
+                if (this.captureNode !== null) {
+                    this.captureNode.port.postMessage({
+                        type: "start-capture",
+                        chunkId,
+                        expectedSamples: int16Array.length
+                    })
+                }
             }
             catch (error) {
                 clearTimeout(timeout)

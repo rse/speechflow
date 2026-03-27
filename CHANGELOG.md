@@ -15,6 +15,7 @@ hangeLog
 - BUGFIX: fix memory leak in "a2t-supertonic" when re-creating the resampler
 - BUGFIX: fix "xio-webrtc" node by using marker only initially
 - BUGFIX: fix "t2a-kokoro" node by correctly disposing the model on closing
+- BUGFIX: fix capturing audio data in WebAudio utility code
 - CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)
