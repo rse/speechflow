@@ -17,7 +17,7 @@
         "vue":                              "3.5.31",
         "luxon":                            "3.7.2",
         "@opensumi/reconnecting-websocket": "4.4.0",
-        "axios":                            "1.13.6",
+        "axios":                            "1.14.0",
         "typopro-web":                      "4.2.8",
         "@fortawesome/fontawesome-free":    "7.2.0",
         "patch-package":                    "8.0.1",
