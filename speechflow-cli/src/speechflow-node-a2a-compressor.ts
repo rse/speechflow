@@ -97,6 +97,7 @@ class AudioCompressor extends util.WebAudio {
         }
         else if (this.type === "sidechain" && this.mode === "measure") {
             this.sourceNode!.connect(this.compressorNode!)
+            this.compressorNode!.connect(this.captureNode!)
         }
         else if (this.type === "sidechain" && this.mode === "adjust") {
             this.sourceNode!.connect(this.gainNode!)
