@@ -311,6 +311,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                                 break
                             previewChunk.payload = self.concatPayload(
                                 previewChunk.payload as string, element2.chunk.payload as string)
+                            previewChunk.timestampEnd = element2.chunk.timestampEnd
                         }
                         this.push(previewChunk)
                         self.log("info", `send text/preview (intermediate): ${JSON.stringify(previewChunk.payload)}`)
