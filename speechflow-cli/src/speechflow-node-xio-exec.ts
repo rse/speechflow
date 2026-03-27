@@ -96,7 +96,7 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         this.subprocess.on("error", (err) => {
             this.log("error", `subprocess error: ${err.message}`)
             this.emit("error", err)
-            if (this.stream !== null)
+            if (this.stream !== null && !this.stream.destroyed)
                 this.stream.emit("error", err)
         })
 
@@ -172,6 +172,10 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
                 })
             }
 
+            /*  remove event listeners to prevent errors during kill sequence  */
+            this.subprocess.removeAllListeners("error")
+            this.subprocess.removeAllListeners("exit")
+
             /*  wait for subprocess to exit gracefully  */
             const ac2 = new AbortController()
             await Promise.race([
@@ -207,10 +211,6 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
             }).catch(() => {
                 this.log("error", "subprocess did not terminate even after SIGKILL")
             })
-
-            /*  remove event listeners to prevent memory leaks  */
-            this.subprocess.removeAllListeners("error")
-            this.subprocess.removeAllListeners("exit")
 
             /*  clear subprocess reference  */
             this.subprocess = null
