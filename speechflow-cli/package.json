@@ -134,7 +134,9 @@
         "!@types/node",
         "!audio-inspect",
         "!@deepgram/sdk",
-        "!sherpa-onnx"
+        "!sherpa-onnx",
+        "!eslint",
+        "!@eslint/js"
     ],
     "engines": {
         "node":                                 ">=22.0.0"
