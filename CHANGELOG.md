@@ -12,6 +12,7 @@ hangeLog
 - BUGFIX: improve closing procedure in "a2a-ffmpeg" node
 - BUGFIX: fix "a2a-compressor" node for sidechain mode by correctly connecting to capture node
 - BUGFIX: fix "a2a-compressor" node by using message passing to communicate gain reduction
+- BUGFIX: fix "a2t-google" node by using better timestamp start calculation
 - BUGFIX: fix memory leak in "a2t-supertonic" when re-creating the resampler
 - BUGFIX: fix "xio-webrtc" node by using marker only initially
 - BUGFIX: fix "t2a-kokoro" node by correctly disposing the model on closing

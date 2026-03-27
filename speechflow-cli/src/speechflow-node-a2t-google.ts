@@ -26,6 +26,7 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
     private recognizeStream: ReturnType<GoogleSpeech.SpeechClient["streamingRecognize"]> | null = null
     private queue:           util.AsyncQueue<SpeechFlowChunk | null>                     | null = null
     private closing                                                                             = false
+    private lastResultEndMs                                                                     = 0
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -61,6 +62,9 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
 
         /*  clear destruction flag  */
         this.closing = false
+
+        /*  reset result end time tracking  */
+        this.lastResultEndMs = 0
 
         /*  create queue for results  */
         this.queue = new util.AsyncQueue<SpeechFlowChunk | null>()
@@ -152,13 +156,16 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
                     /*  fallback: use result timing  */
                     const resultEnd = result.resultEndTime
                     if (resultEnd) {
-                        tsStart = Duration.fromMillis(0).plus(this.timeZeroOffset)
+                        tsStart = Duration.fromMillis(this.lastResultEndMs).plus(this.timeZeroOffset)
                         tsEnd   = Duration.fromMillis(
                             (Number(resultEnd.seconds ?? 0) * 1000) +
                             (Number(resultEnd.nanos ?? 0) / 1000000)
                         ).plus(this.timeZeroOffset)
                     }
                 }
+                /*  track raw end time for next fallback estimation  */
+                this.lastResultEndMs = tsEnd.minus(this.timeZeroOffset).toMillis()
+
                 this.log("info", `text received (start: ${tsStart.toMillis()}ms, ` +
                     `end: ${tsEnd.toMillis()}ms, ` +
                     `kind: ${isFinal ? "final" : "intermediate"}): ` +
