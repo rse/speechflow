@@ -266,7 +266,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             else if (nextElement.type === "text-frame"
                                 && nextElement.complete !== true)
                                 break
-                            self.log("info", `send text 1 (${nextElement.chunk.kind}): ${JSON.stringify(nextElement.chunk.payload)} pos=${self.queueSend.position()}`)
+                            self.log("info", `send text/complete (${nextElement.chunk.kind}): ${JSON.stringify(nextElement.chunk.payload)} pos=${self.queueSend.position()}`)
                             this.push(nextElement.chunk)
                             self.queueSend.walk(+1)
                             self.queue.trim()
@@ -295,7 +295,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                                 previewChunk.payload as string, element2.chunk.payload as string)
                         }
                         this.push(previewChunk)
-                        self.log("info", `send text 2 (intermediate): ${JSON.stringify(previewChunk.payload)}`)
+                        self.log("info", `send text/preview (intermediate): ${JSON.stringify(previewChunk.payload)}`)
                         previewed = true
 
                         /*  wait for more data  */
