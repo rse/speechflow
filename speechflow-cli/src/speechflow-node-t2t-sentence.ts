@@ -321,8 +321,9 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             this.workingOffTimer = null
         }
 
-        /*  remove any pending event listeners  */
+        /*  remove any pending event listeners and clear queue  */
         this.queue.removeAllListeners("write")
+        this.queue.elements.length = 0
 
         /*  shutdown stream  */
         if (this.stream !== null) {
