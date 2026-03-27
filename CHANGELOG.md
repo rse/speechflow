@@ -6,6 +6,7 @@ hangeLog
 ------------------
 
 - BUGFIX: switch to standard textbook formulas for compressor and expander nodes
+- CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)
 ------------------

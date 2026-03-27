@@ -151,15 +151,12 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
 
             /*  classify audio  */
             const ac = new AbortController()
-            const result = await Promise.race([
-                this.classifier(data),
+            const classified = await Promise.race([
+                this.classifier(data) as Promise<Transformers.AudioClassificationOutput>,
                 util.timeout(30 * 1000, "classification timeout", ac.signal)
             ]).finally(() => {
                 ac.abort()
-            }) as Transformers.AudioClassificationOutput | Transformers.AudioClassificationOutput[]
-            const classified = Array.isArray(result) ?
-                result as Transformers.AudioClassificationOutput :
-                [ result ]
+            })
             const c1     = classified.find((c) => c.label === "male")
             const c2     = classified.find((c) => c.label === "female")
             const male   = c1 ? c1.score : 0.0
