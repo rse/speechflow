@@ -9,6 +9,7 @@ hangeLog
 - BUGFIX: improve error handling in "xio-websocket" node
 - BUGFIX: improve error handling in "a2t-amazon" node
 - BUGFIX: improve error handling in "a2a-filler" node
+- BUGFIX: fix memory leak in "a2t-supertonic" when re-creating the resampler
 - CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)

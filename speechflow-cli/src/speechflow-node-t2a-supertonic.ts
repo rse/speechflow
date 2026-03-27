@@ -141,6 +141,7 @@ export default class SpeechFlowNodeT2ASupertonic extends SpeechFlowNode {
             if (outputSampleRate !== this.sampleRate) {
                 this.log("warning", `unexpected sample rate change ${this.sampleRate}Hz -> ${outputSampleRate}Hz (recreating resampler)`)
                 this.sampleRate = outputSampleRate
+                this.resampler?.destroy()
                 this.resampler = new SpeexResampler(1, this.sampleRate, this.config.audioSampleRate, 7)
             }
 
