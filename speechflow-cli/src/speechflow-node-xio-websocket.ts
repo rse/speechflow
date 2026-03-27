@@ -102,8 +102,13 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                         buffer = Buffer.from(data)
                     else
                         buffer = Buffer.concat(data)
-                    const chunk = util.streamChunkDecode(buffer)
-                    this.chunkQueue?.write(chunk)
+                    try {
+                        const chunk = util.streamChunkDecode(buffer)
+                        this.chunkQueue?.write(chunk)
+                    }
+                    catch (_err: unknown) {
+                        this.log("warning", `received invalid CBOR chunk on URL ${this.params.listen} from peer ${peer}`)
+                    }
                 })
             })
             this.server.on("error", (error) => {
@@ -219,8 +224,13 @@ export default class SpeechFlowNodeXIOWebSocket extends SpeechFlowNode {
                     return
                 }
                 const buffer = Buffer.from(ev.data)
-                const chunk = util.streamChunkDecode(buffer)
-                this.chunkQueue?.write(chunk)
+                try {
+                    const chunk = util.streamChunkDecode(buffer)
+                    this.chunkQueue?.write(chunk)
+                }
+                catch (_err: unknown) {
+                    this.log("warning", `received invalid CBOR chunk from URL ${this.params.connect}`)
+                }
             })
             this.client.binaryType = "arraybuffer"
             const self = this
