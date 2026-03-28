@@ -53,7 +53,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                 continue
 
             /*  extract the word preceding the punctuation mark  */
-            let j = Math.min(0, i - 1)
+            let j = Math.max(0, i - 1)
             while (j >= 0 && /[A-Za-z\u00C0-\u024F]/.test(text[j]))
                 j--
             const precedingWord = text.substring(j + 1, i)
