@@ -37,8 +37,47 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     private workingOffTimer: ReturnType<typeof setTimeout> | null = null
     private lastChunkTime = 0
 
-    /*  sentence boundary detection regex  */
-    private static sentenceRE = /^([\s\S]+?[.;?!])(?:\s+([\s\S]+)|\s*)$/
+    /*  known abbreviations from English and German (lowercased),
+        which should NOT be treated as sentence boundaries  */
+    private static abbreviations = new Set([
+        "prof", "dr", "mr", "mrs", "ms", "jr", "sr", "st",
+        "vs", "etc", "ca", "bzw", "bspw", "usw", "sog", "ggf", "evtl"
+    ])
+
+    /*  find the first valid sentence boundary in text  */
+    private static findSentenceBoundary (text: string): { sentence: string, rest: string } | null {
+        for (let i = 0; i < text.length; i++) {
+            /*  skip non-sentence-ending punctuation characters  */
+            const ch = text[i]
+            if (!/^[.;?!]$/.test(ch))
+                continue
+
+            /*  extract the word preceding the punctuation mark  */
+            let j = Math.min(0, i - 1)
+            while (j >= 0 && /[A-Za-z\u00C0-\u024F]/.test(text[j]))
+                j--
+            const precedingWord = text.substring(j + 1, i)
+
+            /*  skip single-letter abbreviations (handles "U.S.", "e.g.", "i.e.", etc.)  */
+            if (precedingWord.length === 1 && /^[A-Za-z]$/.test(precedingWord))
+                continue
+
+            /*  skip known multi-letter abbreviations (case-insensitive matching)  */
+            if (SpeechFlowNodeT2TSentence.abbreviations.has(precedingWord.toLowerCase()))
+                continue
+
+            /*  return what follows the punctuation mark  */
+            const after = text.substring(i + 1)
+            const m = after.match(/^\s+([\s\S]+)$/)
+            if (m !== null)
+                return { sentence: text.substring(0, i + 1), rest: m[1] }
+
+            /*  found a punctuation at end of text (possibly with trailing whitespace)  */
+            if (/^\s*$/.test(after))
+                return { sentence: text.substring(0, i + 1), rest: "" }
+        }
+        return null
+    }
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -95,11 +134,11 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     element.chunk = element.chunk.clone()
                     const chunk = element.chunk
                     const payload = chunk.payload as string
-                    const m = payload.match(SpeechFlowNodeT2TSentence.sentenceRE)
-                    if (m !== null) {
+                    const boundary = SpeechFlowNodeT2TSentence.findSentenceBoundary(payload)
+                    if (boundary !== null) {
                         /*  contains a sentence  */
-                        const [ , sentence, rest ] = m
-                        if (rest !== undefined && rest !== "") {
+                        const { sentence, rest } = boundary
+                        if (rest !== "") {
                             /*  contains more than a sentence  */
                             const chunk2 = chunk.clone()
                             const duration = Duration.fromMillis(
