@@ -85,120 +85,126 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             this.queue.off("write", workOffQueue)
 
             /*  try to work off one or more chunks  */
-            while (!this.closing) {
-                const element = this.queueSplit.peek()
-                if (element === undefined)
-                    break
-                if (element.type === "text-eof") {
-                    this.queueSplit.walk(+1)
-                    break
-                }
-
-                /*  skip elements already completed  */
-                if (element.type === "text-frame" && element.chunk.kind === "final" && element.complete === true) {
-                    this.queueSplit.walk(+1)
-                    continue
-                }
-
-                /*  perform sentence splitting on input chunk  */
-                if (element.chunk.kind === "final") {
-                    element.chunk = element.chunk.clone()
-                    const chunk = element.chunk
-                    const payload = chunk.payload as string
-                    const m = payload.match(SpeechFlowNodeT2TSentence.sentenceRE)
-                    if (m !== null) {
-                        /*  contains a sentence  */
-                        const [ , sentence, rest ] = m
-                        if (rest !== undefined && rest !== "") {
-                            /*  contains more than a sentence  */
-                            const chunk2 = chunk.clone()
-                            const duration = Duration.fromMillis(
-                                chunk.timestampEnd.minus(chunk.timestampStart).toMillis() *
-                                (sentence.length / payload.length))
-                            chunk2.timestampStart = chunk.timestampStart.plus(duration)
-                            chunk.timestampEnd    = chunk2.timestampStart
-                            chunk.payload  = sentence
-                            chunk2.payload = rest
-                            element.complete = true
-                            this.queue.silently(() => { this.queueSplit.touch() })
-                            this.queueSplit.walk(+1)
-                            this.queueSplit.insert({ type: "text-frame", chunk: chunk2, complete: false })
-                        }
-                        else {
-                            /*  contains just the sentence  */
-                            element.complete = true
-                            const position = this.queue.silently(() =>
-                                this.queueSplit.silently(() => {
-                                    const pos = this.queueSplit.position()
-                                    this.queueSplit.walk(+1)
-                                    return pos
-                                })
-                            )
-                            if (position < this.queue.elements.length)
-                                this.queueSplit.touch(position)
-                        }
+            try {
+                while (!this.closing) {
+                    const element = this.queueSplit.peek()
+                    if (element === undefined)
+                        break
+                    if (element.type === "text-eof") {
+                        this.queueSplit.walk(+1)
+                        break
                     }
-                    else {
-                        /*  contains less than a sentence  */
-                        const position = this.queueSplit.position()
-                        if (position < this.queueSplit.maxPosition() - 1) {
-                            /*  merge into following chunk  */
-                            const element2 = this.queueSplit.peek(position + 1)
-                            if (element2 === undefined)
-                                break
-                            if (element2.type === "text-eof") {
-                                /*  no more chunks: output as final
-                                    (perhaps incomplete sentence at end of stream)  */
-                                element.chunk = element.chunk.clone()
+
+                    /*  skip elements already completed  */
+                    if (element.type === "text-frame" && element.chunk.kind === "final" && element.complete === true) {
+                        this.queueSplit.walk(+1)
+                        continue
+                    }
+
+                    /*  perform sentence splitting on input chunk  */
+                    if (element.chunk.kind === "final") {
+                        element.chunk = element.chunk.clone()
+                        const chunk = element.chunk
+                        const payload = chunk.payload as string
+                        const m = payload.match(SpeechFlowNodeT2TSentence.sentenceRE)
+                        if (m !== null) {
+                            /*  contains a sentence  */
+                            const [ , sentence, rest ] = m
+                            if (rest !== undefined && rest !== "") {
+                                /*  contains more than a sentence  */
+                                const chunk2 = chunk.clone()
+                                const duration = Duration.fromMillis(
+                                    chunk.timestampEnd.minus(chunk.timestampStart).toMillis() *
+                                    (sentence.length / payload.length))
+                                chunk2.timestampStart = chunk.timestampStart.plus(duration)
+                                chunk.timestampEnd    = chunk2.timestampStart
+                                chunk.payload  = sentence
+                                chunk2.payload = rest
                                 element.complete = true
+                                this.queue.silently(() => { this.queueSplit.touch() })
                                 this.queueSplit.walk(+1)
-                                this.queueSplit.touch(this.queueSplit.position() - 1)
-                                break
+                                this.queueSplit.insert({ type: "text-frame", chunk: chunk2, complete: false })
                             }
-                            if (element2.chunk.kind === "final") {
-                                /*  merge into following chunk  */
-                                element2.chunk = element2.chunk.clone()
-                                element2.chunk.timestampStart = element.chunk.timestampStart
-                                element2.chunk.payload = this.concatPayload(element.chunk.payload as string,
-                                    element2.chunk.payload as string)
-
-                                /*  remove current element and touch now current element  */
-                                this.queue.silently(() => { this.queueSplit.delete() })
-                                this.queueSplit.touch()
+                            else {
+                                /*  contains just the sentence  */
+                                element.complete = true
+                                const position = this.queue.silently(() =>
+                                    this.queueSplit.silently(() => {
+                                        const pos = this.queueSplit.position()
+                                        this.queueSplit.walk(+1)
+                                        return pos
+                                    })
+                                )
+                                if (position < this.queue.elements.length)
+                                    this.queueSplit.touch(position)
                             }
-                            else
-                                break
-                        }
-                        else if (this.lastChunkTime > 0
-                            && (Date.now() - this.lastChunkTime) >= (this.params.timeout as number)) {
-                            /*  no following chunk yet, but timeout expired:
-                                flush incomplete sentence fragment  */
-                            element.complete = true
-                            const position = this.queue.silently(() =>
-                                this.queueSplit.silently(() => {
-                                    const pos = this.queueSplit.position()
-                                    this.queueSplit.walk(+1)
-                                    return pos
-                                })
-                            )
-                            if (position < this.queue.elements.length)
-                                this.queueSplit.touch(position)
                         }
                         else {
-                            /*  no following chunk yet, still within timeout  */
-                            break
+                            /*  contains less than a sentence  */
+                            const position = this.queueSplit.position()
+                            if (position < this.queueSplit.maxPosition() - 1) {
+                                /*  merge into following chunk  */
+                                const element2 = this.queueSplit.peek(position + 1)
+                                if (element2 === undefined)
+                                    break
+                                if (element2.type === "text-eof") {
+                                    /*  no more chunks: output as final
+                                        (perhaps incomplete sentence at end of stream)  */
+                                    element.chunk = element.chunk.clone()
+                                    element.complete = true
+                                    this.queueSplit.walk(+1)
+                                    this.queueSplit.touch(this.queueSplit.position() - 1)
+                                    break
+                                }
+                                if (element2.chunk.kind === "final") {
+                                    /*  merge into following chunk  */
+                                    element2.chunk = element2.chunk.clone()
+                                    element2.chunk.timestampStart = element.chunk.timestampStart
+                                    element2.chunk.payload = this.concatPayload(element.chunk.payload as string,
+                                        element2.chunk.payload as string)
+
+                                    /*  remove current element and touch now current element  */
+                                    this.queue.silently(() => { this.queueSplit.delete() })
+                                    this.queueSplit.touch()
+                                }
+                                else
+                                    break
+                            }
+                            else if (this.lastChunkTime > 0
+                                && (Date.now() - this.lastChunkTime) >= (this.params.timeout as number)) {
+                                /*  no following chunk yet, but timeout expired:
+                                    flush incomplete sentence fragment  */
+                                element.complete = true
+                                const position = this.queue.silently(() =>
+                                    this.queueSplit.silently(() => {
+                                        const pos = this.queueSplit.position()
+                                        this.queueSplit.walk(+1)
+                                        return pos
+                                    })
+                                )
+                                if (position < this.queue.elements.length)
+                                    this.queueSplit.touch(position)
+                            }
+                            else {
+                                /*  no following chunk yet, still within timeout  */
+                                break
+                            }
                         }
                     }
+                    else
+                        break
                 }
-                else
-                    break
             }
-
-            /*  re-initiate working off round (if still not destroyed)  */
-            workingOff = false
-            if (!this.closing) {
-                this.workingOffTimer = setTimeout(workOffQueue, 100)
-                this.queue.once("write", workOffQueue)
+            catch (error) {
+                this.log("error", `sentence splitting error: ${error}`)
+            }
+            finally {
+                /*  re-initiate working off round (if still not destroyed)  */
+                workingOff = false
+                if (!this.closing) {
+                    this.workingOffTimer = setTimeout(workOffQueue, 100)
+                    this.queue.once("write", workOffQueue)
+                }
             }
         }
         this.queue.once("write", workOffQueue)
