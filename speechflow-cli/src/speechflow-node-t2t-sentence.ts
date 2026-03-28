@@ -47,16 +47,18 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
     /*  find the first valid sentence boundary in text  */
     private static findSentenceBoundary (text: string): { sentence: string, rest: string } | null {
         for (let i = 0; i < text.length; i++) {
-            /*  skip non-sentence-ending punctuation characters  */
-            const ch = text[i]
-            if (!/^[.?!]$/.test(ch))
+            /*  match sentence-ending punctuation (including ellipsis "..." and "…")  */
+            const pm = /^(\.\.\.|\u2026|\.|\?|!)/.exec(text.slice(i, i + 3))
+            if (!pm)
                 continue
+            const firstPunctPos = i
+            i += pm[1].length - 1
 
             /*  extract the word preceding the punctuation mark  */
-            let j = Math.max(0, i - 1)
+            let j = Math.max(0, firstPunctPos - 1)
             while (j >= 0 && /^[A-Za-z\u00C0-\u024F]$/.test(text[j]))
                 j--
-            const precedingWord = text.substring(j + 1, i)
+            const precedingWord = text.substring(j + 1, firstPunctPos)
 
             /*  skip single-letter abbreviations (handles "U.S.", "e.g.", "i.e.", etc.)  */
             if (precedingWord.length === 1 && /^[A-Za-z]$/.test(precedingWord))
@@ -318,6 +320,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         && element.chunk.kind === "intermediate") {
                         element.chunk = element.chunk.clone()
                         element.chunk.kind = "final"
+                    }
                 }
 
                 /*  signal end of file  */
