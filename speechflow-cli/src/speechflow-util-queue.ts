@@ -210,7 +210,11 @@ export class Queue<T extends QueueElement> extends EventEmitter {
         this.pointers.delete(name)
     }
 
-    /*  adjust all sibling pointer positions (after insert/delete splice)  */
+    /*  adjust all sibling pointer positions (after insert/delete splice)
+        NOTICE: for insert, pointers AT the index are shifted forward to preserve
+        their pointer-to-element binding; for delete, pointers AT the index are
+        intentionally NOT adjusted, causing them to silently advance to the next
+        element (which shifted into the deleted position).  */
     adjustPointers (exclude: QueuePointer<T>, index: number, op: "insert" | "delete"): void {
         for (const pointer of this.pointers.values()) {
             if (pointer === exclude)
