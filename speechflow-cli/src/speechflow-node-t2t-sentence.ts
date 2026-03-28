@@ -201,7 +201,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         this.queue.once("write", workOffQueue)
 
         /*  provide Duplex stream and internally attach to classifier  */
-        let previewed = false
+        let previewedPayload = ""
         const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
@@ -234,7 +234,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             }
                         }
                     }
-                    previewed = false
+                    previewedPayload = ""
                     self.queueRecv.append({ type: "text-frame", chunk, complete: false })
                     self.lastChunkTime = Date.now()
                     callback()
@@ -297,7 +297,6 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     else if (element !== undefined
                         && element.type === "text-frame"
                         && element.complete === false
-                        && !previewed
                         && self.params.interim === true) {
                         /*  merge together all still queued elements and
                             send this out as an intermediate chunk as preview  */
@@ -313,9 +312,13 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                                 previewChunk.payload as string, element2.chunk.payload as string)
                             previewChunk.timestampEnd = element2.chunk.timestampEnd
                         }
-                        this.push(previewChunk)
-                        self.log("info", `send text/preview (intermediate): ${JSON.stringify(previewChunk.payload)}`)
-                        previewed = true
+
+                        /*  send preview only if payload actually changed  */
+                        if ((previewChunk.payload as string) !== previewedPayload) {
+                            this.push(previewChunk)
+                            self.log("info", `send text/preview (intermediate): ${JSON.stringify(previewChunk.payload)}`)
+                            previewedPayload = previewChunk.payload as string
+                        }
 
                         /*  wait for more data  */
                         if (!self.closing)

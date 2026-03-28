@@ -20,6 +20,7 @@ hangeLog
 - BUGFIX: fix garbage collection of bufffers in "a2a-meter" node
 - BUGFIX: fix "t2t-sentence" node by finally using the "timeout" parameter at all
 - BUGFIX: fix "t2t-sentence" node by correctly adjusting timestamp end on merged chunks
+- BUGFIX: fix "t2t-sentence" node by doing a more precide decision for preview chunks
 - CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)
