@@ -70,7 +70,10 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
         /*  work off queued text frames (inner processing)  */
         const workOffQueueInner = () => {
-            while (!this.closing) {
+            const maxIterations = 50
+            let iterations = 0
+            while (!this.closing && iterations < maxIterations) {
+                iterations++
                 const element = this.queueSplit.peek()
                 if (element === undefined)
                     break
