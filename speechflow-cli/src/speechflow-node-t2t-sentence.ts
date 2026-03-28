@@ -357,6 +357,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             this.push(nextElement.chunk)
                             self.queueSend.walk(+1)
                         }
+                        previewedPayload = ""
                         self.queue.trim()
 
                         /*  wait for more data (unless end-of-stream was reached)  */
