@@ -149,7 +149,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             const chunk2 = chunk.clone()
                             const duration = Duration.fromMillis(
                                 chunk.timestampEnd.minus(chunk.timestampStart).toMillis() *
-                                (sentence.length / payload.length))
+                                (sentence.length / Math.max(payload.length, 1)))
                             chunk2.timestampStart = chunk.timestampStart.plus(duration)
                             chunk.timestampEnd    = chunk2.timestampStart
                             chunk.payload  = sentence
