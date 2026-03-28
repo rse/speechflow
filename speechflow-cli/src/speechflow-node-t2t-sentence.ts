@@ -56,8 +56,19 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
             /*  extract the word preceding the punctuation mark  */
             let j = Math.max(0, firstPunctPos - 1)
-            while (j >= 0 && /^\p{L}$/u.test(text[j]))
-                j--
+            while (j >= 0) {
+                /*  handle surrogate pairs (for characters outside the BMP)  */
+                if (j > 0 && /[\uDC00-\uDFFF]/.test(text[j])) {
+                    if (!/^\p{L}$/u.test(text[j - 1] + text[j]))
+                        break
+                    j -= 2
+                }
+                else {
+                    if (!/^\p{L}$/u.test(text[j]))
+                        break
+                    j--
+                }
+            }
             const precedingWord = text.substring(j + 1, firstPunctPos)
 
             /*  skip abbreviations (only relevant for periods)  */
