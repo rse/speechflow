@@ -287,8 +287,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             self.log("info", `send text/complete (${nextElement.chunk.kind}): ${JSON.stringify(nextElement.chunk.payload)} pos=${self.queueSend.position()}`)
                             this.push(nextElement.chunk)
                             self.queueSend.walk(+1)
-                            self.queue.trim()
                         }
+                        self.queue.trim()
 
                         /*  wait for more data (unless end-of-stream was reached)  */
                         if (!eofSeen && !self.closing)

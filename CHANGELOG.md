@@ -22,6 +22,7 @@ hangeLog
 - BUGFIX: fix "t2t-sentence" node by correctly adjusting timestamp end on merged chunks
 - BUGFIX: fix "t2t-sentence" node by doing a more precide decision for preview chunks
 - BUGFIX: fix "t2t-sentence" node by fixing Queue class to adjust foreign affected pointers on insert/delete
+- BUGFIX: fix "t2t-sentence" node by reducing spurious events during trimming
 - CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)
