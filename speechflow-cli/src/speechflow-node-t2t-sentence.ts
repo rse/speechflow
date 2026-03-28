@@ -204,6 +204,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
         /*  provide Duplex stream and internally attach to classifier  */
         let previewedPayload = ""
+        let flushListenerRegistered = false
         const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
@@ -258,6 +259,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             read (_size) {
                 /*  flush pending text chunks  */
                 const flushPendingChunks = () => {
+                    flushListenerRegistered = false
                     if (self.closing) {
                         this.push(null)
                         return
@@ -293,8 +295,10 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         self.queue.trim()
 
                         /*  wait for more data (unless end-of-stream was reached)  */
-                        if (!eofSeen && !self.closing)
+                        if (!eofSeen && !self.closing && !flushListenerRegistered) {
+                            flushListenerRegistered = true
                             self.queue.once("write", flushPendingChunks)
+                        }
                     }
                     else if (element !== undefined
                         && element.type === "text-frame"
@@ -323,11 +327,15 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         }
 
                         /*  wait for more data  */
-                        if (!self.closing)
+                        if (!self.closing && !flushListenerRegistered) {
+                            flushListenerRegistered = true
                             self.queue.once("write", flushPendingChunks)
+                        }
                     }
-                    else if (!self.closing)
+                    else if (!self.closing && !flushListenerRegistered) {
+                        flushListenerRegistered = true
                         self.queue.once("write", flushPendingChunks)
+                    }
                 }
                 flushPendingChunks()
             }
