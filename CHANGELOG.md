@@ -25,6 +25,7 @@ hangeLog
 - BUGFIX: fix "t2t-sentence" node by reducing spurious events during trimming
 - BUGFIX: fix "t2t-sentence" node by applying defensive guards for out-of-bound touches in queue
 - BUGFIX: fix "t2t-sentence" node by avoiding listener accumulation and duplicate chunk pushes
+- BUGFIX: fix "t2t-sentence" node by ensuring its workOffQueue does not drop calls on re-registration
 - CLEANUP: cleanup result type of audio classification pipeline in gender node
 
 2.3.0 (2026-03-27)

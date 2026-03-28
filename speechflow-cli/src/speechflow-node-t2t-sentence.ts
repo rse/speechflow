@@ -194,11 +194,11 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             }
 
             /*  re-initiate working off round (if still not destroyed)  */
+            workingOff = false
             if (!this.closing) {
                 this.workingOffTimer = setTimeout(workOffQueue, 100)
                 this.queue.once("write", workOffQueue)
             }
-            workingOff = false
         }
         this.queue.once("write", workOffQueue)
 
