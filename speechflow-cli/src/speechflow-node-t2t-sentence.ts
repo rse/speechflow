@@ -136,7 +136,6 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             if (element2.type === "text-eof") {
                                 /*  no more chunks: output as final
                                     (perhaps incomplete sentence at end of stream)  */
-                                element.chunk = element.chunk.clone()
                                 element.complete = true
                                 this.queueSplit.walk(+1)
                                 this.queueSplit.touch(this.queueSplit.position() - 1)
@@ -283,6 +282,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         && element.type === "text-eof") {
                         this.push(null)
                         self.queueSend.walk(+1)
+                        self.queue.trim()
                     }
                     else if (element !== undefined
                         && element.type === "text-frame"
