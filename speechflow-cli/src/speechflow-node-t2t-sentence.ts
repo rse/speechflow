@@ -54,7 +54,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
             /*  extract the word preceding the punctuation mark  */
             let j = Math.max(0, i - 1)
-            while (j >= 0 && /[A-Za-z\u00C0-\u024F]/.test(text[j]))
+            while (j >= 0 && /^[A-Za-z\u00C0-\u024F]$/.test(text[j]))
                 j--
             const precedingWord = text.substring(j + 1, i)
 
@@ -66,15 +66,16 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             if (SpeechFlowNodeT2TSentence.abbreviations.has(precedingWord.toLowerCase()))
                 continue
 
-            /*  return what follows the punctuation mark  */
+            /*  return what follows the punctuation mark
+                (also skip over optional closing quotes/parentheses/brackets)  */
             const after = text.substring(i + 1)
-            const m = after.match(/^\s+([\s\S]+)$/)
+            const m = after.match(/^(["\u201D\u2019)\]]*)\s+([\s\S]+)$/)
             if (m !== null)
-                return { sentence: text.substring(0, i + 1), rest: m[1] }
+                return { sentence: text.substring(0, i + 1 + m[1].length), rest: m[2] }
 
-            /*  found a punctuation at end of text (possibly with trailing whitespace)  */
-            if (/^\s*$/.test(after))
-                return { sentence: text.substring(0, i + 1), rest: "" }
+            /*  found a punctuation at end of text (possibly with trailing closing chars and whitespace)  */
+            if (/^["\u201D\u2019)\]]*\s*$/.test(after))
+                return { sentence: text.substring(0, i + 1) + after.replace(/\s+$/, ""), rest: "" }
         }
         return null
     }
