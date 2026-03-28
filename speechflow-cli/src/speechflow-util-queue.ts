@@ -48,6 +48,15 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
     silent (silence: boolean) {
         this.silence = silence
     }
+    silently<R> (fn: () => R): R {
+        this.silence = true
+        try {
+            return fn()
+        }
+        finally {
+            this.silence = false
+        }
+    }
 
     /*  notify about operation  */
     notify (event: string, info: any) {
@@ -194,6 +203,15 @@ export class Queue<T extends QueueElement> extends EventEmitter {
     }
     silent (silence: boolean) {
         this.silence = silence
+    }
+    silently<R> (fn: () => R): R {
+        this.silence = true
+        try {
+            return fn()
+        }
+        finally {
+            this.silence = false
+        }
     }
     notify (event: string, info: any) {
         if (!this.silence)

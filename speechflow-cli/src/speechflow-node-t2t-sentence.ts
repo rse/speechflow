@@ -119,21 +119,20 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             chunk.payload  = sentence
                             chunk2.payload = rest
                             element.complete = true
-                            this.queue.silent(true)
-                            this.queueSplit.touch()
-                            this.queue.silent(false)
+                            this.queue.silently(() => { this.queueSplit.touch() })
                             this.queueSplit.walk(+1)
                             this.queueSplit.insert({ type: "text-frame", chunk: chunk2, complete: false })
                         }
                         else {
                             /*  contains just the sentence  */
                             element.complete = true
-                            this.queue.silent(true)
-                            this.queueSplit.silent(true)
-                            const position = this.queueSplit.position()
-                            this.queueSplit.walk(+1)
-                            this.queue.silent(false)
-                            this.queueSplit.silent(false)
+                            const position = this.queue.silently(() =>
+                                this.queueSplit.silently(() => {
+                                    const pos = this.queueSplit.position()
+                                    this.queueSplit.walk(+1)
+                                    return pos
+                                })
+                            )
                             if (position < this.queue.elements.length)
                                 this.queueSplit.touch(position)
                         }
@@ -161,9 +160,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                                     element2.chunk.payload as string)
 
                                 /*  remove current element and touch now current element  */
-                                this.queue.silent(true)
-                                this.queueSplit.delete()
-                                this.queue.silent(false)
+                                this.queue.silently(() => { this.queueSplit.delete() })
                                 this.queueSplit.touch()
                             }
                             else
@@ -174,12 +171,13 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             /*  no following chunk yet, but timeout expired:
                                 flush incomplete sentence fragment  */
                             element.complete = true
-                            this.queue.silent(true)
-                            this.queueSplit.silent(true)
-                            const position = this.queueSplit.position()
-                            this.queueSplit.walk(+1)
-                            this.queue.silent(false)
-                            this.queueSplit.silent(false)
+                            const position = this.queue.silently(() =>
+                                this.queueSplit.silently(() => {
+                                    const pos = this.queueSplit.position()
+                                    this.queueSplit.walk(+1)
+                                    return pos
+                                })
+                            )
                             if (position < this.queue.elements.length)
                                 this.queueSplit.touch(position)
                         }
