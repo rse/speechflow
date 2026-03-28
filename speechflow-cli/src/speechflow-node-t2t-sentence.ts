@@ -56,17 +56,20 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
             /*  extract the word preceding the punctuation mark  */
             let j = Math.max(0, firstPunctPos - 1)
-            while (j >= 0 && /^[A-Za-z\u00C0-\u024F]$/.test(text[j]))
+            while (j >= 0 && /^\p{L}$/u.test(text[j]))
                 j--
             const precedingWord = text.substring(j + 1, firstPunctPos)
 
-            /*  skip single-letter abbreviations (handles "U.S.", "e.g.", "i.e.", etc.)  */
-            if (precedingWord.length === 1 && /^[A-Za-z]$/.test(precedingWord))
-                continue
+            /*  skip abbreviations (only relevant for periods)  */
+            if (pm[1] === ".") {
+                /*  skip single-letter abbreviations (handles "U.S.", "e.g.", "i.e.", etc.)  */
+                if (precedingWord.length === 1 && /^\p{L}$/u.test(precedingWord))
+                    continue
 
-            /*  skip known multi-letter abbreviations (case-insensitive matching)  */
-            if (SpeechFlowNodeT2TSentence.abbreviations.has(precedingWord.toLowerCase()))
-                continue
+                /*  skip known multi-letter abbreviations (case-insensitive matching)  */
+                if (SpeechFlowNodeT2TSentence.abbreviations.has(precedingWord.toLowerCase()))
+                    continue
+            }
 
             /*  return what follows the punctuation mark
                 (also skip over optional closing quotes/parentheses/brackets)  */
