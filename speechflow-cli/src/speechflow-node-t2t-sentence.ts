@@ -111,7 +111,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         this.closing = false
 
         /*  work off queued text frames (inner processing)  */
-        const workOffQueueInner = () => {
+        const workOffQueueInner = (): boolean => {
             const maxIterations = 50
             let iterations = 0
             while (!this.closing && iterations < maxIterations) {
@@ -224,6 +224,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                 else
                     break
             }
+            return (!this.closing && iterations >= maxIterations)
         }
 
         /*  work off queued text frames (outer processing)  */
@@ -243,8 +244,9 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
             this.queue.off("write", workOffQueue)
 
             /*  try to work off one or more chunks  */
+            let hasMore = false
             try {
-                workOffQueueInner()
+                hasMore = workOffQueueInner()
             }
             catch (error) {
                 this.log("error", `sentence splitting error: ${error}`)
@@ -253,7 +255,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                 /*  re-initiate working off round (if still not destroyed)  */
                 workingOff = false
                 if (!this.closing) {
-                    this.workingOffTimer = setTimeout(workOffQueue, 100)
+                    this.workingOffTimer = setTimeout(workOffQueue, hasMore ? 0 : 100)
                     this.queue.once("write", workOffQueue)
                 }
             }
