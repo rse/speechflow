@@ -436,6 +436,10 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                         self.queue.once("write", flushPendingChunks)
                     }
                 }
+                if (flushListenerRegistered) {
+                    self.queue.removeListener("write", flushPendingChunks)
+                    flushListenerRegistered = false
+                }
                 flushPendingChunks()
             }
         })
