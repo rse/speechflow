@@ -134,7 +134,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             this.queueSplit.walk(+1)
                             this.queue.silent(false)
                             this.queueSplit.silent(false)
-                            this.queueSplit.touch(position)
+                            if (position < this.queue.elements.length)
+                                this.queueSplit.touch(position)
                         }
                     }
                     else {
@@ -179,7 +180,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             this.queueSplit.walk(+1)
                             this.queue.silent(false)
                             this.queueSplit.silent(false)
-                            this.queueSplit.touch(position)
+                            if (position < this.queue.elements.length)
+                                this.queueSplit.touch(position)
                         }
                         else {
                             /*  no following chunk yet, still within timeout  */
