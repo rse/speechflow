@@ -315,7 +315,8 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     const element = self.queueRecv.peek(recvPos - 1)
                     if (element
                         && element.type === "text-frame"
-                        && element.chunk.kind === "intermediate")
+                        && element.chunk.kind === "intermediate") {
+                        element.chunk = element.chunk.clone()
                         element.chunk.kind = "final"
                 }
 
