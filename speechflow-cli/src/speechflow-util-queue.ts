@@ -171,12 +171,14 @@ export class QueuePointer<T extends QueueElement> extends EventEmitter {
     }
     insert (element: T) {
         this.queue.elements.splice(this.index, 0, element)
+        this.queue.adjustPointers(this, this.index, "insert")
         this.queue.notify("write", { start: this.index, end: this.index, op: "insert" })
     }
     delete () {
         if (this.index >= this.queue.elements.length)
             throw new Error("cannot delete after last element")
         this.queue.elements.splice(this.index, 1)
+        this.queue.adjustPointers(this, this.index, "delete")
         this.queue.notify("write", { start: this.index, end: this.index, op: "delete" })
     }
 }
@@ -207,6 +209,20 @@ export class Queue<T extends QueueElement> extends EventEmitter {
             throw new Error("pointer does not exist")
         this.pointers.delete(name)
     }
+
+    /*  adjust all sibling pointer positions (after insert/delete splice)  */
+    adjustPointers (exclude: QueuePointer<T>, index: number, op: "insert" | "delete"): void {
+        for (const pointer of this.pointers.values()) {
+            if (pointer === exclude)
+                continue
+            const pos = pointer.position()
+            if (op === "insert" && pos >= index)
+                pointer.position(pos + 1)
+            else if (op === "delete" && pos > index)
+                pointer.position(pos - 1)
+        }
+    }
+
     trim (): void {
         /*  determine minimum pointer position  */
         let min = this.elements.length
