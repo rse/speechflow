@@ -221,6 +221,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         /*  provide Duplex stream and internally attach to classifier  */
         let previewedPayload = ""
         let flushListenerRegistered = false
+        let eofPushed = false
         const self = this
         this.stream = new Stream.Duplex({
             writableObjectMode: true,
@@ -273,17 +274,25 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
             /*  send text chunk(s) (readable side of stream)  */
             read (_size) {
+                /*  idempotently push EOF to readable side  */
+                const pushNull = () => {
+                    if (eofPushed)
+                        return
+                    eofPushed = true
+                    this.push(null)
+                }
+
                 /*  flush pending text chunks  */
                 const flushPendingChunks = () => {
                     flushListenerRegistered = false
                     if (self.closing) {
-                        this.push(null)
+                        pushNull()
                         return
                     }
                     const element = self.queueSend.peek()
                     if (element !== undefined
                         && element.type === "text-eof") {
-                        this.push(null)
+                        pushNull()
                         self.queueSend.walk(+1)
                         self.queue.trim()
                     }
@@ -297,7 +306,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             if (nextElement === undefined)
                                 break
                             else if (nextElement.type === "text-eof") {
-                                this.push(null)
+                                pushNull()
                                 self.queueSend.walk(+1)
                                 eofSeen = true
                                 break
