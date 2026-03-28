@@ -306,6 +306,18 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                     callback()
                     return
                 }
+
+                /*  promote any trailing intermediate chunk to final
+                    (no replacement will ever arrive, so treat it as final)  */
+                const recvPos = self.queueRecv.position()
+                if (recvPos > 0) {
+                    const element = self.queueRecv.peek(recvPos - 1)
+                    if (element
+                        && element.type === "text-frame"
+                        && element.chunk.kind === "intermediate")
+                        element.chunk.kind = "final"
+                }
+
                 /*  signal end of file  */
                 self.queueRecv.append({ type: "text-eof" })
                 callback()
