@@ -102,6 +102,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
 
                 /*  perform sentence splitting on input chunk  */
                 if (element.chunk.kind === "final") {
+                    element.chunk = element.chunk.clone()
                     const chunk = element.chunk
                     const payload = chunk.payload as string
                     const m = payload.match(SpeechFlowNodeT2TSentence.sentenceRE)
@@ -148,6 +149,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             if (element2.type === "text-eof") {
                                 /*  no more chunks: output as final
                                     (perhaps incomplete sentence at end of stream)  */
+                                element.chunk = element.chunk.clone()
                                 element.complete = true
                                 this.queueSplit.walk(+1)
                                 this.queueSplit.touch(this.queueSplit.position() - 1)
@@ -155,6 +157,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                             }
                             if (element2.chunk.kind === "final") {
                                 /*  merge into following chunk  */
+                                element2.chunk = element2.chunk.clone()
                                 element2.chunk.timestampStart = element.chunk.timestampStart
                                 element2.chunk.payload = this.concatPayload(element.chunk.payload as string,
                                     element2.chunk.payload as string)
