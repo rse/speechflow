@@ -49,7 +49,7 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
         for (let i = 0; i < text.length; i++) {
             /*  skip non-sentence-ending punctuation characters  */
             const ch = text[i]
-            if (!/^[.;?!]$/.test(ch))
+            if (!/^[.?!]$/.test(ch))
                 continue
 
             /*  extract the word preceding the punctuation mark  */
