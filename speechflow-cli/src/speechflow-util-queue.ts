@@ -227,6 +227,11 @@ export class Queue<T extends QueueElement> extends EventEmitter {
             this.notify("write", { start: 0, end: min, op: "trim" })
         }
     }
+    clear (): void {
+        this.elements.length = 0
+        for (const pointer of this.pointers.values())
+            pointer.position(0)
+    }
 }
 
 /*  meta store  */
