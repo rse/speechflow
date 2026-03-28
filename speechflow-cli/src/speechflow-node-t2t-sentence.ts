@@ -211,8 +211,25 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                                 this.queue.silently(() => { this.queueSplit.delete() })
                                 this.queueSplit.touch()
                             }
-                            else
-                                break
+                            else {
+                                /*  following chunk is intermediate (speculative):
+                                    check timeout to flush incomplete sentence fragment  */
+                                if (this.lastChunkTime > 0
+                                    && (Date.now() - this.lastChunkTime) >= (this.params.timeout as number)) {
+                                    element.complete = true
+                                    const position2 = this.queue.silently(() =>
+                                        this.queueSplit.silently(() => {
+                                            const pos = this.queueSplit.position()
+                                            this.queueSplit.walk(+1)
+                                            return pos
+                                        })
+                                    )
+                                    if (position2 < this.queue.elements.length)
+                                        this.queueSplit.touch(position2)
+                                }
+                                else
+                                    break
+                            }
                         }
                         else if (this.lastChunkTime > 0
                             && (Date.now() - this.lastChunkTime) >= (this.params.timeout as number)) {
