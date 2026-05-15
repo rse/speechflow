@@ -23,8 +23,11 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     /*  internal state  */
     private dg:                Deepgram.LiveClient                      | null = null
     private closing                                                            = false
+    private reconfiguring                                                      = false
     private connectionTimeout: ReturnType<typeof setTimeout>            | null = null
     private queue:             util.AsyncQueue<SpeechFlowChunk | null>  | null = null
+    private metastore:         util.TimeStore<Map<string, any>>         | null = null
+    private suspended                                                          = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -39,7 +42,8 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             language:    { type: "string",  val: "multi",  pos: 2 },
             interim:     { type: "boolean", val: false,    pos: 3 },
             endpointing: { type: "number",  val: 0,        pos: 4 },
-            keywords:    { type: "string",  val: "",       pos: 5 }
+            keywords:    { type: "string",  val: "",       pos: 5 },
+            suspended:   { type: "boolean", val: false,    pos: 6 }
         })
 
         /*  sanity check parameters  */
@@ -51,43 +55,55 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         this.output = "text"
     }
 
-    /*  one-time status of node  */
-    async status () {
-        let balance = 0
+    /*  receive external request  */
+    async receiveRequest (params: any[]) {
+        if (this.closing)
+            throw new Error("deepgram: node already destroyed")
         try {
-            const deepgram = Deepgram.createClient(this.params.keyAdm)
-            const response = await deepgram.manage.getProjects()
-            if (response !== null && response.error === null && response.result?.projects) {
-                for (const project of response.result.projects) {
-                    const balanceResponse = await deepgram.manage.getProjectBalances(project.project_id)
-                    if (balanceResponse !== null && balanceResponse.error === null && balanceResponse.result?.balances)
-                        balance += balanceResponse.result.balances[0]?.amount ?? 0
-                }
+            if (params.length === 2 && params[0] === "suspended") {
+                if (typeof params[1] !== "boolean")
+                    throw new Error("deepgram: invalid suspended argument in external request")
+                const suspended = params[1]
+                await this.setSuspended(suspended)
+                this.sendResponse([ "deepgram", "suspended", suspended ])
             }
-            else if (response !== null && response.error !== null)
-                this.log("warning", `API error fetching projects: ${response.error}`)
+            else
+                throw new Error("deepgram: invalid arguments in external request")
         }
         catch (error) {
-            this.log("warning", `failed to fetch balance: ${error}`)
+            this.log("error", `receive request error: ${error}`)
+            throw error
         }
-        return { balance: balance.toFixed(2) }
     }
 
-    /*  open node  */
-    async open () {
-        /*  sanity check situation  */
-        if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
-            throw new Error("Deepgram node currently supports PCM-S16LE audio only")
+    /*  change suspended flag  */
+    async setSuspended (suspended: boolean) {
+        if (this.closing) {
+            this.log("warning", "attempted to set suspended flag on destroyed node")
+            return
+        }
+        if (suspended === this.suspended)
+            return
+        this.log("info", `switching to ${suspended ? "SUSPENDED" : "UNSUSPENDED"} operation`)
+        this.suspended = suspended
+        if (suspended) {
+            /*  going suspended -- tear down Deepgram API connection  */
+            this.reconfiguring = true
+            try {
+                await this.closeConnection()
+            }
+            finally {
+                this.reconfiguring = false
+            }
+        }
+        else {
+            /*  going unsuspended -- re-establish Deepgram API connection  */
+            await this.openConnection()
+        }
+    }
 
-        /*  clear destruction flag  */
-        this.closing = false
-
-        /*  create queue for results  */
-        this.queue = new util.AsyncQueue<SpeechFlowChunk | null>()
-
-        /*  create a store for the meta information  */
-        const metastore = new util.TimeStore<Map<string, any>>()
-
+    /*  open Deepgram API connection  */
+    private async openConnection () {
         /*  configure Deepgram connection options  */
         const interim     = this.params.interim as boolean
         const endpointing = this.params.endpointing as number
@@ -138,7 +154,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
 
         /*  hook onto Deepgram API events  */
         this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
-            if (this.closing || this.queue === null)
+            if (this.closing || this.queue === null || this.metastore === null)
                 return
             const text  = (data.channel?.alternatives[0]?.transcript ?? "") as string
             const words = (data.channel?.alternatives[0]?.words ?? []) as
@@ -154,12 +170,12 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     `"${text}"`)
                 const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
                 const end   = start.plus({ seconds: data.duration })
-                const metas = metastore.fetch(start, end)
+                const metas = this.metastore.fetch(start, end)
                 const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
                     curr.forEach((val, key) => { prev.set(key, val) })
                     return prev
                 }, new Map<string, any>())
-                metastore.prune(start)
+                this.metastore.prune(start)
                 meta.set("words", words.map((word) => {
                     const start = Duration.fromMillis(word.start * 1000).plus(this.timeZeroOffset)
                     const end   = Duration.fromMillis(word.end * 1000).plus(this.timeZeroOffset)
@@ -180,7 +196,10 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Close, () => {
             this.log("info", "connection close")
-            if (!this.closing && this.queue !== null)
+            /*  NOTICE: suppress EOF signalling while reconfiguring (mute toggle),
+                since the connection is being torn down deliberately and the
+                graph must keep running  */
+            if (!this.closing && !this.reconfiguring && this.queue !== null)
                 this.queue.write(null)
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Error, (error: Error) => {
@@ -220,6 +239,73 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 reject(err)
             })
         })
+    }
+
+    /*  close Deepgram API connection  */
+    private async closeConnection () {
+        /*  cleanup pending connection timer  */
+        if (this.connectionTimeout !== null) {
+            clearTimeout(this.connectionTimeout)
+            this.connectionTimeout = null
+        }
+
+        /*  close Deepgram connection and remove listeners  */
+        if (this.dg !== null) {
+            try {
+                this.dg.removeAllListeners()
+                this.dg.requestClose()
+                this.log("info", "connection closed")
+            }
+            catch (error) {
+                this.log("warning", `error during Deepgram cleanup: ${error}`)
+            }
+            this.dg = null
+        }
+    }
+
+    /*  one-time status of node  */
+    async status () {
+        let balance = 0
+        try {
+            const deepgram = Deepgram.createClient(this.params.keyAdm)
+            const response = await deepgram.manage.getProjects()
+            if (response !== null && response.error === null && response.result?.projects) {
+                for (const project of response.result.projects) {
+                    const balanceResponse = await deepgram.manage.getProjectBalances(project.project_id)
+                    if (balanceResponse !== null && balanceResponse.error === null && balanceResponse.result?.balances)
+                        balance += balanceResponse.result.balances[0]?.amount ?? 0
+                }
+            }
+            else if (response !== null && response.error !== null)
+                this.log("warning", `API error fetching projects: ${response.error}`)
+        }
+        catch (error) {
+            this.log("warning", `failed to fetch balance: ${error}`)
+        }
+        return { balance: balance.toFixed(2) }
+    }
+
+    /*  open node  */
+    async open () {
+        /*  sanity check situation  */
+        if (this.config.audioBitDepth !== 16 || !this.config.audioLittleEndian)
+            throw new Error("Deepgram node currently supports PCM-S16LE audio only")
+
+        /*  clear destruction flag  */
+        this.closing = false
+
+        /*  create queue for results  */
+        this.queue = new util.AsyncQueue<SpeechFlowChunk | null>()
+
+        /*  create a store for the meta information  */
+        this.metastore = new util.TimeStore<Map<string, any>>()
+
+        /*  determine initial suspended state from configuration  */
+        this.suspended = this.params.suspended as boolean
+
+        /*  establish Deepgram API connection (unless starting suspended)  */
+        if (!this.suspended)
+            await this.openConnection()
 
         /*  remember opening time to receive time zero offset  */
         this.timeOpen = DateTime.now()
@@ -233,7 +319,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             decodeStrings:      false,
             highWaterMark:      1,
             write (chunk: SpeechFlowChunk, encoding, callback) {
-                if (self.closing || self.dg === null) {
+                if (self.closing) {
                     callback(new Error("stream already destroyed"))
                     return
                 }
@@ -241,11 +327,14 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     callback(new Error("expected audio input chunk"))
                 else if (!Buffer.isBuffer(chunk.payload))
                     callback(new Error("expected Buffer input chunk"))
+                else if (self.suspended || self.dg === null)
+                    /*  drop audio entirely -- do not forward to Deepgram  */
+                    callback()
                 else {
                     if (chunk.payload.byteLength > 0) {
                         self.log("debug", `send data (${chunk.payload.byteLength} bytes)`)
-                        if (chunk.meta.size > 0)
-                            metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
+                        if (chunk.meta.size > 0 && self.metastore !== null)
+                            self.metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         try {
                             /*  send buffer (and intentionally discard all time information)  */
                             self.dg.send(chunk.payload.buffer.slice(
@@ -263,17 +352,19 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             },
             async final (callback) {
                 /*  short-circuiting in case of own closing  */
-                if (self.closing || self.dg === null) {
+                if (self.closing) {
                     callback()
                     return
                 }
 
                 /*  close Deepgram API  */
-                try {
-                    self.dg.requestClose()
-                }
-                catch (error) {
-                    self.log("warning", `error closing Deepgram connection: ${error}`)
+                if (self.dg !== null) {
+                    try {
+                        self.dg.requestClose()
+                    }
+                    catch (error) {
+                        self.log("warning", `error closing Deepgram connection: ${error}`)
+                    }
                 }
 
                 /*  await all read operations  */
@@ -313,34 +404,22 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         /*  indicate closing first to stop all async operations  */
         this.closing = true
 
-        /*  cleanup all timers  */
-        if (this.connectionTimeout !== null) {
-            clearTimeout(this.connectionTimeout)
-            this.connectionTimeout = null
-        }
-
         /*  shutdown stream  */
         if (this.stream !== null) {
             await util.destroyStream(this.stream)
             this.stream = null
         }
 
-        /*  close Deepgram connection and remove listeners  */
-        if (this.dg !== null) {
-            try {
-                this.dg.removeAllListeners()
-                this.dg.requestClose()
-            }
-            catch (error) {
-                this.log("warning", `error during Deepgram cleanup: ${error}`)
-            }
-            this.dg = null
-        }
+        /*  close Deepgram API connection  */
+        await this.closeConnection()
 
         /*  signal EOF to any pending read operations  */
         if (this.queue !== null) {
             this.queue.write(null)
             this.queue = null
         }
+
+        /*  discard meta information store  */
+        this.metastore = null
     }
 }

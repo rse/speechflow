@@ -2,9 +2,10 @@
 hangeLog
 =========
 
-2.3.2 (2026-05-15)
+2.4.0 (2026-05-15)
 ------------------
 
+- IMPROVEMENT: add "suspended" option and internal suspended operation mode to "a2t-deepgram" node
 - REFACTOR: merge "spellcheck" and "punctuation" nodes into new all-in-one "proofread" node
 - BUGFIX: make stream graph processing more robust why not emitting errors from nodes directly
 - BUGFIX: fix stream graph management: handle correctly terminal Duplex stream nodes
