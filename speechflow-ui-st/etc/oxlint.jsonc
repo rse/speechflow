@@ -59,7 +59,6 @@
         "no-hex-escape":                      "off",
         "no-labels":                          "off",
         "no-magic-numbers":                   "off",
-        "no-minusminus":                      "off",
         "no-named-as-default-member":         "off",
         "no-namespace":                       "off",
         "no-negated-condition":               "off",
@@ -132,7 +131,8 @@
         "max-statements":                     "off",
         "no-console":                         "off",
         "no-unassigned-import":               "off",
-        "no-shadow":                          "off"
+        "no-shadow":                          "off",
+        "require-unicode-regexp":             "off"
     }
 }
 

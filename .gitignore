@@ -1,4 +1,5 @@
 node_modules
+.ase
 .env
 package-lock.json
 etc/claude.dump.md
