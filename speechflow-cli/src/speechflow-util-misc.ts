@@ -46,35 +46,52 @@ export const deepClone = (value: any): any => {
 }
 
 /*  sleep: wait a duration of time and then resolve  */
-export function sleep (durationMs: number, signal?: AbortSignal) {
+export function sleep (durationMs: number, signal?: AbortSignal): Promise<void> {
     return new Promise<void>((resolve) => {
-        const ac = new AbortController()
-        const timer = setTimeout(() => {
-            ac.abort()
+        const ac: AbortController | undefined =
+            signal !== undefined ? new AbortController() : undefined
+        let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+            timer = null
+            if (signal !== undefined)
+                ac!.abort()
             resolve()
         }, durationMs)
         timer.unref()
-        if (signal !== undefined)
-            signal.addEventListener("abort", () => {
-                clearTimeout(timer)
+        if (signal !== undefined) {
+            if (signal.aborted)
                 resolve()
-            }, { once: true, signal: ac.signal })
+            else
+                signal.addEventListener("abort", () => {
+                    if (timer !== null)
+                        clearTimeout(timer)
+                    resolve()
+                }, { once: true, signal: ac!.signal })
+        }
     })
 }
 
 /*  timeout: wait a duration of time and then reject  */
-export function timeout (durationMs: number, info = "timeout", signal?: AbortSignal) {
+export function timeout (durationMs: number, info = "timeout", signal?: AbortSignal): Promise<never> {
     return new Promise<never>((resolve, reject) => {
-        const ac = new AbortController()
-        const timer = setTimeout(() => {
-            ac.abort()
+        const ac: AbortController | undefined =
+            signal !== undefined ? new AbortController() : undefined
+        let timer: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+            timer = null
+            if (signal !== undefined)
+                ac!.abort()
             reject(new Error(info))
         }, durationMs)
         timer.unref()
-        if (signal !== undefined)
-            signal.addEventListener("abort", () => {
-                clearTimeout(timer)
+        if (signal !== undefined) {
+            if (signal.aborted)
                 resolve(undefined as never)
-            }, { once: true, signal: ac.signal })
+            else
+                signal.addEventListener("abort", () => {
+                    if (timer !== null)
+                        clearTimeout(timer)
+                    resolve(undefined as never)
+                }, { once: true, signal: ac!.signal })
+        }
     })
 }
+
