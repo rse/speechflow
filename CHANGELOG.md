@@ -5,6 +5,7 @@ hangeLog
 2.3.2 (2026-05-15)
 ------------------
 
+- REFACTOR: merge "spellcheck" and "punctuation" nodes into new all-in-one "proofread" node
 - BUGFIX: fix stream graph management: handle correctly terminal Duplex stream nodes
 - UPDATE: update from Gemma 3 to Gemma 4 in four nodes
 - UPDATE: upgrade NPM dependencies and patches
