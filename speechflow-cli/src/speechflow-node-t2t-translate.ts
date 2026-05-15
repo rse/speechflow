@@ -109,7 +109,7 @@ export default class SpeechFlowNodeT2TTranslate extends SpeechFlowNode {
             dst:      { type: "string", pos: 1, val: "en",                     match: /^(?:de|en)$/ },
             provider: { type: "string",         val: "ollama",                 match: /^(?:openai|anthropic|google|ollama|transformers)$/ },
             api:      { type: "string",         val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?(:\d+)?$/ },
-            model:    { type: "string",         val: "gemma3:4b-it-q4_K_M",    match: /^.+$/ },
+            model:    { type: "string",         val: "gemma4:e2b",             match: /^.+$/ },
             key:      { type: "string",         val: "",                       match: /^.*$/ }
         })
 
