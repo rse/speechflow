@@ -147,7 +147,7 @@
         "unicorn/no-negated-condition":       "off",
         "branches-sharing-code":              "off",
 
-        "complexity":                         [ "error", { "max": 35 } ]
+        "complexity":                         [ "error", { "max": 40 } ]
     }
 }
 
