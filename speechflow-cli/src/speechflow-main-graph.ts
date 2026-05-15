@@ -236,14 +236,23 @@ export class NodeGraph {
             })
 
             /*  listen for the semantically correct completion event per stream type:
-                - for Duplex/Transform listen only for "end"
+                - for Duplex/Transform with downstream consumers listen only for "end"
                   (readable-side, fires last, guarantees all output is drained),
+                - for Duplex/Transform without downstream consumers (terminal writers,
+                  e.g. Stream.compose(transform, writable)) listen for "finish",
+                  since the readable side is never consumed and "end" never fires,
                 - for pure Readable listen only for "end"
                 - for pure Writable listen only for "finish"  */
-            if (node.stream instanceof Stream.Duplex)
-                node.stream.on("end", () => {
-                    deactivateNode(node, `readable stream side (output) of node <${node.id}> raised "end" event`)
-                })
+            if (node.stream instanceof Stream.Duplex) {
+                if (node.connectionsOut.size > 0)
+                    node.stream.on("end", () => {
+                        deactivateNode(node, `readable stream side (output) of node <${node.id}> raised "end" event`)
+                    })
+                else
+                    node.stream.on("finish", () => {
+                        deactivateNode(node, `writable stream side (input) of node <${node.id}> raised "finish" event`)
+                    })
+            }
             else if (node.stream instanceof Stream.Readable)
                 node.stream.on("end", () => {
                     deactivateNode(node, `readable stream side (output) of node <${node.id}> raised "end" event`)
