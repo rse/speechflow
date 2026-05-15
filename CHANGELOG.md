@@ -2,6 +2,11 @@
 hangeLog
 =========
 
+2.3.2 (2026-05-15)
+------------------
+
+- UPDATE: upgrade NPM dependencies and patches
+
 2.3.1 (2026-03-27)
 ------------------
 
