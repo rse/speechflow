@@ -31,6 +31,7 @@ export type LLMConfig = {
     temperature?:   number
     maxTokens?:     number
     cacheDir?:      string
+    thinking?:      boolean
 }
 export type LLMCompleteOptions = {
     system?:        string
@@ -64,6 +65,7 @@ export class LLM extends EventEmitter {
             temperature:   0.7,
             maxTokens:     1024,
             cacheDir:      "",
+            thinking:      false,
             ...config
         } as Required<LLMConfig>
 
@@ -255,7 +257,8 @@ export class LLM extends EventEmitter {
                 max_tokens:  this.config.maxTokens,
                 temperature: this.config.temperature,
                 system:      systemMessage?.content,
-                messages:    chatMessages as Anthropic.MessageParam[]
+                messages:    chatMessages as Anthropic.MessageParam[],
+                ...(!this.config.thinking ? { thinking: { type: "disabled" } } : {})
             }).catch((err) => {
                 throw new Error(`failed to perform Anthropic chat completion: ${err}`, { cause: err })
             })
@@ -284,7 +287,8 @@ export class LLM extends EventEmitter {
                 config: {
                     maxOutputTokens: this.config.maxTokens,
                     temperature:     this.config.temperature,
-                    ...(systemInstruction ? { systemInstruction } : {})
+                    ...(systemInstruction ? { systemInstruction } : {}),
+                    ...(!this.config.thinking ? { thinkingConfig: { thinkingBudget: 0 } } : {})
                 }
             }).catch((err) => {
                 throw new Error(`failed to perform Google chat completion: ${err}`, { cause: err })
@@ -303,6 +307,7 @@ export class LLM extends EventEmitter {
                 model:      this.config.model,
                 messages,
                 keep_alive: "10m",
+                think:      this.config.thinking,
                 options: {
                     num_predict: this.config.maxTokens,
                     temperature: this.config.temperature
