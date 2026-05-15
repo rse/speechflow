@@ -374,8 +374,7 @@ First a short overview of the available processing nodes:
   **t2t-opus**,
   **t2t-google**,
   **t2t-translate**,
-  **t2t-spellcheck**,
-  **t2t-punctuation**,
+  **t2t-proofread**,
   **t2t-modify**,
   **t2t-profanity**,
   **t2t-summary**,
@@ -1042,16 +1041,16 @@ The following nodes process text chunks only.
   | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
   | **key**      | *none*    | ""                       | *none*                                   |
 
-- Node: **t2t-spellcheck**<br/>
-  Purpose: **LLM-based Text-to-Text spellchecking**<br/>
-  Example: `t2t-spellcheck(lang: "en")`<br/>
+- Node: **t2t-proofread**<br/>
+  Purpose: **LLM-based Text-to-Text proofreading**<br/>
+  Example: `t2t-proofread(lang: "en")`<br/>
   Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google, or local HuggingFace Transformers)!
 
-  > This node performs spellchecking of English or German text using an
-  > LLM service. It corrects spelling mistakes, adds missing punctuation,
-  > but preserves grammar and word choice. Multiple LLM providers are
-  > supported: local Ollama (default), local HuggingFace Transformers,
-  > or cloud-based OpenAI, Anthropic, or Google.
+  > This node performs proofreading of English or German text using an
+  > LLM service. It corrects spelling, punctuation and grammar in a
+  > single pass. Multiple LLM providers are supported: local Ollama
+  > (default), local HuggingFace Transformers, or cloud-based OpenAI,
+  > Anthropic, or Google.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -1063,33 +1062,7 @@ The following nodes process text chunks only.
   | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`                         |
   | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama\|transformers)$/` |
   | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
-  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
-  | **key**      | *none*    | ""                       | *none*                                   |
-
-- Node: **t2t-punctuation**<br/>
-  Purpose: **LLM-based punctuation restoration**<br/>
-  Example: `t2t-punctuation(lang: "en")`<br/>
-  Notice: this node requires an LLM provider (Ollama by default, or cloud-based OpenAI/Anthropic/Google, or local HuggingFace Transformers)!
-
-  > This node performs punctuation restoration using an LLM service.
-  > It adds missing punctuation marks (periods, commas, question marks,
-  > exclamation marks, colons, semicolons) and capitalizes the first
-  > letters of sentences. It preserves all original words exactly as they
-  > are without spelling corrections or grammar changes. Multiple LLM
-  > providers are supported: local Ollama (default), local HuggingFace
-  > Transformers, or cloud-based OpenAI, Anthropic, or Google.
-
-  | Port    | Payload     |
-  | ------- | ----------- |
-  | input   | text        |
-  | output  | text        |
-
-  | Parameter    | Position  | Default                  | Requirement                              |
-  | ------------ | --------- | ------------------------ | ---------------------------------------- |
-  | **lang**     | 0         | "en"                     | `/^(?:en\|de)$/`                         |
-  | **provider** | *none*    | "ollama"                 | `/^(?:openai\|anthropic\|google\|ollama\|transformers)$/` |
-  | **api**      | *none*    | "http://127.0.0.1:11434" | `/^https?:\/\/.+?(:\d+)?$/`              |
-  | **model**    | *none*    | "gemma3:4b-it-q4\_K\_M"  | *none*                                   |
+  | **model**    | *none*    | "gemma4:e4b"             | *none*                                   |
   | **key**      | *none*    | ""                       | *none*                                   |
 
 - Node: **t2t-modify**<br/>
