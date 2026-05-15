@@ -190,10 +190,16 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
             }
         })
         this.recognizeStream.on("error", (error: Error) => {
-            this.log("error", `error: ${error.message}`)
-            if (!this.closing && this.queue !== null)
-                this.queue.write(null)
-            this.emit("error", error)
+            this.log("warning", `error: ${error.message}`)
+            /*  NOTICE: do not write null to the queue here -- a transient error
+                must not be misinterpreted as end-of-stream by downstream nodes;
+                the subsequent recognize stream end event will signal real EOF.
+                Also do not emit("error") on the node itself, since nothing
+                listens for it and it would become an uncaughtException tearing
+                down the whole graph. Route via the stream instead, where it is
+                downgraded to a warning by the graph supervisor.  */
+            if (!this.closing && this.stream !== null)
+                this.stream.emit("error", error)
         })
         this.recognizeStream.on("end", () => {
             this.log("info", "stream ended")

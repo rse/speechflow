@@ -192,7 +192,10 @@ export default class SpeechFlowNodeXIODevice extends SpeechFlowNode {
 
         /*  pass-through PortAudio errors  */
         this.io!.on("error", (err) => {
-            this.emit("error", err)
+            /*  NOTICE: do not emit("error") on the node itself, since nothing
+                listens for it and it would become an uncaughtException tearing
+                down the whole graph. Route via the stream instead, where it is
+                handled by the graph supervisor.  */
             this.stream?.emit("error", err)
         })
 

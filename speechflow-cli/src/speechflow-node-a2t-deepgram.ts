@@ -184,10 +184,16 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 this.queue.write(null)
         })
         this.dg.on(Deepgram.LiveTranscriptionEvents.Error, (error: Error) => {
-            this.log("error", `error: ${error.message}`)
-            if (!this.closing && this.queue !== null)
-                this.queue.write(null)
-            this.emit("error", error)
+            this.log("warning", `error: ${error.message}`)
+            /*  NOTICE: do not write null to the queue here -- a transient error
+                must not be misinterpreted as end-of-stream by downstream nodes;
+                the subsequent Deepgram Close event will signal real EOF. Also
+                do not emit("error") on the node itself, since nothing listens
+                for it and it would become an uncaughtException tearing down
+                the whole graph. Route via the stream instead, where it is
+                downgraded to a warning by the graph supervisor.  */
+            if (!this.closing && this.stream !== null)
+                this.stream.emit("error", error)
         })
 
         /*  wait for Deepgram API to be available  */

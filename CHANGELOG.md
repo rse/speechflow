@@ -6,6 +6,7 @@ hangeLog
 ------------------
 
 - REFACTOR: merge "spellcheck" and "punctuation" nodes into new all-in-one "proofread" node
+- BUGFIX: make stream graph processing more robust why not emitting errors from nodes directly
 - BUGFIX: fix stream graph management: handle correctly terminal Duplex stream nodes
 - UPDATE: update from Gemma 3 to Gemma 4 in four nodes
 - UPDATE: upgrade NPM dependencies and patches

@@ -145,10 +145,16 @@ export default class SpeechFlowNodeA2TOpenAI extends SpeechFlowNode {
                 this.queue.write(null)
         })
         this.ws.on("error", (err) => {
-            this.log("error", `WebSocket connection error: ${err}`)
-            if (!this.closing && this.queue !== null)
-                this.queue.write(null)
-            this.emit("error", err)
+            this.log("warning", `WebSocket connection error: ${err}`)
+            /*  NOTICE: do not write null to the queue here -- a transient error
+                must not be misinterpreted as end-of-stream by downstream nodes;
+                the subsequent WebSocket close event will signal real EOF. Also
+                do not emit("error") on the node itself, since nothing listens
+                for it and it would become an uncaughtException tearing down
+                the whole graph. Route via the stream instead, where it is
+                downgraded to a warning by the graph supervisor.  */
+            if (!this.closing && this.stream !== null)
+                this.stream.emit("error", err)
         })
 
         /*  track speech timing by item_id (OpenAI provides timestamps via VAD events)  */

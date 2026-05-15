@@ -95,7 +95,10 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         /*  handle subprocess errors  */
         this.subprocess.on("error", (err) => {
             this.log("error", `subprocess error: ${err.message}`)
-            this.emit("error", err)
+            /*  NOTICE: do not emit("error") on the node itself, since nothing
+                listens for it and it would become an uncaughtException tearing
+                down the whole graph. Route via the stream instead, where it is
+                handled by the graph supervisor.  */
             if (this.stream !== null && !this.stream.destroyed)
                 this.stream.emit("error", err)
         })
