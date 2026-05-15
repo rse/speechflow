@@ -6,6 +6,7 @@ hangeLog
 ------------------
 
 - BUGFIX: fix stream graph management: handle correctly terminal Duplex stream nodes
+- UPDATE: update from Gemma 3 to Gemma 4 in four nodes
 - UPDATE: upgrade NPM dependencies and patches
 
 2.3.1 (2026-03-27)
