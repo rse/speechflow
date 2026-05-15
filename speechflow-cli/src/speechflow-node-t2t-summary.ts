@@ -83,7 +83,7 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
         this.configure({
             provider: { type: "string",         val: "ollama",                 match: /^(?:openai|anthropic|google|ollama|transformers)$/ },
             api:      { type: "string",         val: "http://127.0.0.1:11434", match: /^https?:\/\/.+?(:\d+)?$/ },
-            model:    { type: "string",         val: "gemma4:e2b",             match: /^.+$/ },
+            model:    { type: "string",         val: "gemma4:e4b",             match: /^.+$/ },
             key:      { type: "string",         val: "",                       match: /^.*$/ },
             lang:     { type: "string", pos: 0, val: "en",                     match: /^(?:en|de)$/ },
             size:     { type: "number", pos: 1, val: 4,                        match: (n: number) => n >= 1 && n <= 20 },
