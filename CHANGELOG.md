@@ -2,7 +2,7 @@
 hangeLog
 =========
 
-2.4.0 (2026-05-15)
+2.4.0 (2026-05-29)
 ------------------
 
 - IMPROVEMENT: add "suspended" option and internal suspended operation mode to "a2t-deepgram" node
