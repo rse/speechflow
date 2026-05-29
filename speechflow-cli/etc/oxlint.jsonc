@@ -146,6 +146,9 @@
         "require-unicode-regexp":             "off",
         "unicorn/no-negated-condition":       "off",
         "branches-sharing-code":              "off",
+        "callback-return":                    "off",
+        "import-style":                       "off",
+        "no-implicit-globals":                "off",
 
         "complexity":                         [ "error", { "max": 40 } ]
     }
