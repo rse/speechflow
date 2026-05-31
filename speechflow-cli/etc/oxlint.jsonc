@@ -149,6 +149,7 @@
         "callback-return":                    "off",
         "import-style":                       "off",
         "no-implicit-globals":                "off",
+        "no-anonymous-default-export":        "off",
 
         "complexity":                         [ "error", { "max": 40 } ]
     }
