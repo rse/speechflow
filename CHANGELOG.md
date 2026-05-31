@@ -9,6 +9,7 @@ ChangeLog
 - IMPROVEMENT: allow the "muteMode" to be initially configured in "a2a-mute" node
 - IMPROVEMENT: proofread only final chunks for now in "t2t-proofread" node
 - BUGFIX: avoid oscillation in "t2t-sentence" node on duplicate Deepgram interim chunks
+- BUGFIX: fix two more bugs related to intermediate chunk processing in "t2t-sentence" node
 - BUGFIX: change ESLint configuration to avoid problems under Windows
 - BUGFIX: increase LLM timeout to 240s to allow full model downloads
 - UPDATE: upgrade NPM dependencies and patches

@@ -335,12 +335,19 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                                     callback()
                                     return
                                 }
-                                self.queueRecv.walk(-1)
-                                self.queueRecv.delete()
+
+                                /*  remove the trailing intermediate silently, so the
+                                    transient half-mutated queue (intermediate deleted, but
+                                    replacement not yet appended) does NOT emit a "write"
+                                    event and trigger a premature flush that would emit a
+                                    truncated preview and oscillate the dashboard preview  */
+                                self.queue.silently(() => {
+                                    self.queueRecv.walk(-1)
+                                    self.queueRecv.delete()
+                                })
                             }
                         }
                     }
-                    previewedPayload = ""
                     self.queueRecv.append({ type: "text-frame", chunk, complete: false })
                     self.lastChunkTime = Date.now()
                     callback()
