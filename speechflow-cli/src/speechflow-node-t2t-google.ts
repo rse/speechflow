@@ -86,6 +86,7 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
         })
 
         /*  establish a transform stream and connect it to Google Translate  */
+        const self = this
         this.stream = new Stream.Transform({
             readableObjectMode: true,
             writableObjectMode: true,
@@ -99,7 +100,9 @@ export default class SpeechFlowNodeT2TGoogle extends SpeechFlowNode {
                     callback()
                 }
                 else {
+                    self.log("info", `receive text (${chunk.kind}): "${chunk.payload}"`)
                     translate(chunk.payload).then((payload) => {
+                        self.log("info", `send text (${chunk.kind}): "${payload}"`)
                         const chunkNew = chunk.clone()
                         chunkNew.payload = payload
                         this.push(chunkNew)
