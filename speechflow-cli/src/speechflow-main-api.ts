@@ -64,7 +64,14 @@ export class APIServer {
             if (req.request !== "COMMAND")
                 throw new Error("invalid external request (command expected)")
             const name = req.node as string
-            const argList = req.args as any[]
+            const argList = (req.args as any[]).map((arg) => {
+                if (arg === "true" || arg === "false")
+                    return (arg === "true")
+                else if (arg.match(/^\d+$/))
+                    return Number.parseInt(arg, 10)
+                else
+                    return arg
+            })
             const foundNode = graph.findGraphNode(name)
             if (foundNode === undefined) {
                 this.cli.log("warning", `external request failed: no such node <${name}>`)
