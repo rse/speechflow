@@ -143,14 +143,20 @@ export default class SpeechFlowNodeT2TProofread extends SpeechFlowNode {
                     callback()
                 }
                 else {
-                    proofread(chunk.payload).then((payload) => {
-                        const chunkNew = chunk.clone()
-                        chunkNew.payload = payload
-                        this.push(chunkNew)
+                    if (chunk.kind === "final") {
+                        proofread(chunk.payload).then((payload) => {
+                            const chunkNew = chunk.clone()
+                            chunkNew.payload = payload
+                            this.push(chunkNew)
+                            callback()
+                        }).catch((error: unknown) => {
+                            callback(util.ensureError(error))
+                        })
+                    }
+                    else {
+                        this.push(chunk)
                         callback()
-                    }).catch((error: unknown) => {
-                        callback(util.ensureError(error))
-                    })
+                    }
                 }
             },
             final (callback) {
