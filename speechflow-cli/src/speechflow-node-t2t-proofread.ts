@@ -119,12 +119,14 @@ export default class SpeechFlowNodeT2TProofread extends SpeechFlowNode {
             const cfg = this.setup[this.params.lang]
             if (!cfg)
                 throw new Error(`unsupported language: ${this.params.lang}`)
-            this.log("info", `PROMPT "${cfg.systemPrompt}", chat: ${JSON.stringify(cfg.chat)}`)
-            return llm.complete({
+            this.log("info", `input: "${text}"`)
+            const output = await llm.complete({
                 system:   cfg.systemPrompt,
                 messages: cfg.chat,
                 prompt:   text
             })
+            this.log("info", `output: "${output}"`)
+            return output
         }
 
         /*  establish a transform stream and connect it to LLM  */
