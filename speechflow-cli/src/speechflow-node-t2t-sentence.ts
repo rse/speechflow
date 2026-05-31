@@ -324,6 +324,17 @@ export default class SpeechFlowNodeT2TSentence extends SpeechFlowNode {
                                 return
                             }
                             if (element.chunk.kind === "intermediate") {
+                                /*  the trailing element is a (speculative) intermediate chunk:
+                                    if the newly arrived chunk carries the very same intermediate
+                                    payload (Deepgram re-sends identical intermediates), treat it
+                                    as a no-op to avoid churning the queue (delete+append) and
+                                    re-emitting an unchanged preview  */
+                                if (chunk.kind === "intermediate"
+                                    && (element.chunk.payload as string) === (chunk.payload as string)) {
+                                    self.lastChunkTime = Date.now()
+                                    callback()
+                                    return
+                                }
                                 self.queueRecv.walk(-1)
                                 self.queueRecv.delete()
                             }
