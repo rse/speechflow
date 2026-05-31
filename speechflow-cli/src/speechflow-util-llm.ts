@@ -61,7 +61,7 @@ export class LLM extends EventEmitter {
             api:           "",
             model:         "",
             key:           "",
-            timeout:       30 * 1000,
+            timeout:       240 * 1000,
             temperature:   0.7,
             maxTokens:     1024,
             cacheDir:      "",
