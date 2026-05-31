@@ -82,7 +82,7 @@
                         z-index: 20
                         color: #ffffff
                         -webkit-text-stroke: 4px #00000000
-                        font-size: 2.5vw
+                        font-size: 2.75vw
                         font-weight: 600
                         line-height: 1.3
                         padding-left:  0.20vw
@@ -96,7 +96,7 @@
                         position: absolute
                         color: #000000
                         -webkit-text-stroke: 4px #000000c0
-                        font-size: 2.5vw
+                        font-size: 2.75vw
                         font-weight: 600
                         line-height: 1.3
                         padding-left:  0.20vw
