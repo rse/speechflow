@@ -6,6 +6,7 @@ ChangeLog
 ------------------
 
 - UPDATE: upgrade NPM dependencies and patches
+- BUGFIX: change ESLint configuration to avoid problems under Windows
 
 2.4.0 (2026-05-29)
 ------------------
