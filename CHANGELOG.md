@@ -5,8 +5,13 @@ ChangeLog
 2.4.1 (2026-05-31)
 ------------------
 
-- UPDATE: upgrade NPM dependencies and patches
+- IMPROVEMENT: coerce argument values on API GET command requests (boolean/number)
+- IMPROVEMENT: allow the "muteMode" to be initially configured in "a2a-mute" node
+- IMPROVEMENT: proofread only final chunks for now in "t2t-proofread" node
 - BUGFIX: change ESLint configuration to avoid problems under Windows
+- BUGFIX: increase LLM timeout to 240s to allow full model downloads
+- UPDATE: upgrade NPM dependencies and patches
+- CLEANUP: cleanup tracing in "t2t-proofread" node
 
 2.4.0 (2026-05-29)
 ------------------
