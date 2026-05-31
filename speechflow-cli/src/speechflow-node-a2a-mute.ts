@@ -31,7 +31,9 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
         super(id, cfg, opts, args)
 
         /*  declare node configuration parameters  */
-        this.configure({})
+        this.configure({
+            muteMode: { type: "string", val: "none", pos: 0, match: /^(?:none|silenced|unplugged)$/ }
+        })
 
         /*  declare node input/output format  */
         this.input  = "audio"
@@ -74,6 +76,9 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
     async open () {
         /*  clear destruction flag  */
         this.closing = false
+
+        /*  determine initial mute mode  */
+        this.muteMode = this.params.muteMode as MuteMode
 
         /*  establish a transform stream  */
         const self = this
