@@ -150,6 +150,10 @@
         "import-style":                       "off",
         "no-implicit-globals":                "off",
         "no-anonymous-default-export":        "off",
+        "prefer-named-capture-group":         "off",
+        "prefer-number-coercion":             "off",
+        "method-signature-style":             "off",
+        "no-sync":                            "off",
 
         "complexity":                         [ "error", { "max": 40 } ]
     }

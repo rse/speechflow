@@ -93,7 +93,7 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         })
 
         /*  handle subprocess errors  */
-        this.subprocess.on("error", (err) => {
+        this.subprocess.nodeChildProcess.on("error", (err: Error) => {
             this.log("error", `subprocess error: ${err.message}`)
             /*  NOTICE: do not emit("error") on the node itself, since nothing
                 listens for it and it would become an uncaughtException tearing
@@ -104,7 +104,7 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         })
 
         /*  handle subprocess exit  */
-        this.subprocess.on("exit", (code, signal) => {
+        this.subprocess.nodeChildProcess.on("exit", (code: number | null, signal: string | null) => {
             if (code !== 0 && code !== null)
                 this.log("warning", `subprocess exited with code ${code}`)
             else if (signal)
@@ -176,8 +176,8 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
             }
 
             /*  remove event listeners to prevent errors during kill sequence  */
-            this.subprocess.removeAllListeners("error")
-            this.subprocess.removeAllListeners("exit")
+            this.subprocess.nodeChildProcess.removeAllListeners("error")
+            this.subprocess.nodeChildProcess.removeAllListeners("exit")
 
             /*  wait for subprocess to exit gracefully  */
             const ac2 = new AbortController()
