@@ -103,7 +103,7 @@ studio-translation: |
                             xio-file(path: `${env.SPEECHFLOW_DATADIR}/program-de.srt`, mode: "w", type: "text"),
                         x2x-trace(type: "text", dashboard: "text-de-final", mode: "sink") /* DE-Final */
                     },
-                    t2t-deepl(src: "de", dst: "en") | {
+                    t2t-google(src: "de", dst: "en") | {
                         x2x-trace(type: "text", dashboard: "text-en-interim", mode: "sink"),
                         t2t-subtitle(mode: "render", addr: env.SPEECHFLOW_IPADDR, port: 8686),
                         x2x-filter(name: "final", type: "text", var: "kind", op: "==", val: "final") | {
