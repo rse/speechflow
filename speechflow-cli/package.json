@@ -130,13 +130,13 @@
         "neostandard":                          { "eslint": ">=9.0.0" }
     },
     "upd": [
+        "!eslint",
+        "!@eslint/js",
         "!typescript",
         "!onnxruntime-node",
         "!audio-inspect",
         "!@deepgram/sdk",
         "!sherpa-onnx",
-        "!eslint",
-        "!@eslint/js",
         "!@google/genai",
         "!@huggingface/transformers",
         "!@soundtouchjs/audio-worklet"
