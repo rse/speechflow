@@ -79,7 +79,7 @@
         "@2toad/profanity":                     "3.3.0",
         "cli-table3":                           "0.6.5",
         "mkdirp":                               "3.0.1",
-        "@soundtouchjs/audio-worklet":          "1.0.10",
+        "@soundtouchjs/audio-worklet":          "2.1.0",
         "werift":                               "0.23.0",
         "@discordjs/opus":                      "0.10.0",
         "@rse/stx":                             "1.1.6"

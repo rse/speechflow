@@ -18,7 +18,6 @@ import * as util                           from "./speechflow-util"
 /*  parameter configuration  */
 type AudioPitchShifterConfig = {
     rate?:      number
-    tempo?:     number
     pitch?:     number
     semitones?: number
 }
@@ -38,7 +37,6 @@ class AudioPitchShifter extends util.WebAudio {
         super(sampleRate, channels)
         this.config = {
             rate:      config.rate      ?? 1.0,
-            tempo:     config.tempo     ?? 1.0,
             pitch:     config.pitch     ?? 1.0,
             semitones: config.semitones ?? 0.0
         }
@@ -50,10 +48,11 @@ class AudioPitchShifter extends util.WebAudio {
 
         /*  add SoundTouch worklet module  */
         const packagePath = path.join(__dirname, "../node_modules/@soundtouchjs/audio-worklet")
-        const workletPath = path.join(packagePath, "dist/soundtouch-worklet.js")
+        const workletPath = path.join(packagePath, ".dist/soundtouch-processor.js")
         await this.audioContext.audioWorklet.addModule(workletPath)
 
-        /*  create SoundTouch worklet node  */
+        /*  create SoundTouch worklet node (the processor always operates on
+            stereo internally, but mixes down to the requested channel count)  */
         this.pitchNode = new AudioWorkletNode(this.audioContext, "soundtouch-processor", {
             numberOfInputs:  1,
             numberOfOutputs: 1,
@@ -62,10 +61,9 @@ class AudioPitchShifter extends util.WebAudio {
 
         /*  set initial parameter values  */
         const params = this.pitchNode.parameters as Map<string, AudioParam>
-        params.get("rate")!.value           = this.config.rate
-        params.get("tempo")!.value          = this.config.tempo
-        params.get("pitch")!.value          = this.config.pitch
-        params.get("pitchSemitones")!.value = this.config.semitones
+        params.get("playbackRate")!.value    = this.config.rate
+        params.get("pitch")!.value           = this.config.pitch
+        params.get("pitchSemitones")!.value  = this.config.semitones
 
         /*  connect nodes: source -> pitch -> capture  */
         this.sourceNode!.connect(this.pitchNode)
@@ -83,14 +81,10 @@ class AudioPitchShifter extends util.WebAudio {
         this.config[configField] = value
     }
 
-    /*  update rate value  */
+    /*  update rate value (compensates the pitch for an upstream playback
+        rate change, i.e. the resulting pitch is divided by this value)  */
     public setRate (rate: number): void {
-        this.updateParameter("rate", rate, "rate")
-    }
-
-    /*  update tempo value  */
-    public setTempo (tempo: number): void {
-        this.updateParameter("tempo", tempo, "tempo")
+        this.updateParameter("playbackRate", rate, "rate")
     }
 
     /*  update pitch shift value  */
@@ -131,10 +125,9 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            rate:      { type: "number",  val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
-            tempo:     { type: "number",  val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
-            pitch:     { type: "number",  val: 1.0,  match: (n: number) => n >= 0.25 && n <= 4.0 },
-            semitones: { type: "number",  val: 0.0,  match: (n: number) => n >= -24  && n <= 24  }
+            rate:      { type: "number",  val: 1.0,  match: (n: number) => n >= 0.1 && n <= 8.0 },
+            pitch:     { type: "number",  val: 1.0,  match: (n: number) => n >= 0.1 && n <= 8.0 },
+            semitones: { type: "number",  val: 0.0,  match: (n: number) => n >= -24 && n <= 24  }
         })
 
         /*  declare node input/output format  */
@@ -152,7 +145,6 @@ export default class SpeechFlowNodeA2APitch extends SpeechFlowNode {
             this.config.audioSampleRate,
             this.config.audioChannels, {
                 rate:      this.params.rate,
-                tempo:     this.params.tempo,
                 pitch:     this.params.pitch,
                 semitones: this.params.semitones
             }
