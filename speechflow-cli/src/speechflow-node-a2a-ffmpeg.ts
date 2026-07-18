@@ -93,10 +93,12 @@ export default class SpeechFlowNodeA2AFFMPEG extends SpeechFlowNode {
         util.run("starting FFmpeg process", () => this.ffmpeg!.run())
 
         /*  establish a duplex stream and connect it to FFmpeg  */
+        /*  NOTICE: the object form of Stream.Duplex.from() accepts Node streams at
+            run-time, but @types/node types it for Web streams only, so we have to cast  */
         const ffmpegStream = Stream.Duplex.from({
             writable: streamInput,
             readable: streamOutput
-        })
+        } as unknown as Parameters<typeof Stream.Duplex.from>[0])
 
         /*  wrap streams with conversions for chunk vs plain audio  */
         const wrapper1 = util.createTransformStreamForWritableSide("audio", 1)

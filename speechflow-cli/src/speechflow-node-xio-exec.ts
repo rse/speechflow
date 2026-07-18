@@ -126,10 +126,12 @@ export default class SpeechFlowNodeXIOExec extends SpeechFlowNode {
         /*  dispatch according to mode  */
         if (this.params.mode === "rw") {
             /*  bidirectional mode: both stdin and stdout  */
+            /*  NOTICE: the object form of Stream.Duplex.from() accepts Node streams at
+                run-time, but @types/node types it for Web streams only, so we have to cast  */
             this.stream = Stream.Duplex.from({
                 readable: this.subprocess.stdout,
                 writable: this.subprocess.stdin
-            })
+            } as unknown as Parameters<typeof Stream.Duplex.from>[0])
             const wrapper1 = util.createTransformStreamForWritableSide(this.params.type, highWaterMark)
             const wrapper2 = util.createTransformStreamForReadableSide(
                 this.params.type, () => this.timeZero, highWaterMark,
