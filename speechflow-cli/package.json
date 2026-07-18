@@ -154,6 +154,20 @@
             "require":                          { "types": "./dst/speechflow-node.d.ts", "default": "./dst/speechflow-node.js" }
         }
     },
+    "allowScripts": {
+        "@discordjs/opus":                      true,
+        "@google/genai":                        true,
+        "@gpeng/naudiodon":                     true,
+        "@rse/ffmpeg":                          true,
+        "bufferutil":                           true,
+        "es5-ext":                              true,
+        "esbuild":                              true,
+        "node-pty":                             true,
+        "onnxruntime-node":                     true,
+        "protobufjs":                           true,
+        "sharp":                                true,
+        "utf-8-validate":                       true
+    },
     "scripts": {
         "postinstall":                          "npm start patch-apply",
         "start":                                "stx -v4 -c etc/stx.conf"
