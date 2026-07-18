@@ -30,7 +30,7 @@
         "speex-resampler":                      "3.0.1",
         "@sapphi-red/speex-preprocess-wasm":    "0.4.0",
         "@shiguredo/rnnoise-wasm":              "2025.1.5",
-        "sherpa-onnx":                          "1.12.25",
+        "sherpa-onnx":                          "1.13.4",
         "axios":                                "1.18.1",
         "@aws-sdk/client-transcribe-streaming": "3.1090.0",
         "@aws-sdk/client-translate":            "3.1090.0",
@@ -53,7 +53,7 @@
         "ollama":                               "0.6.3",
         "openai":                               "6.48.0",
         "@anthropic-ai/sdk":                    "0.112.3",
-        "@google/genai":                        "1.52.0",
+        "@google/genai":                        "2.12.0",
         "@rse/ffmpeg":                          "1.4.2",
         "ffmpeg-stream":                        "1.0.1",
         "installed-packages":                   "1.0.13",
@@ -65,8 +65,8 @@
         "arktype":                              "2.2.3",
         "pure-uuid":                            "2.0.0",
         "wavefile":                             "11.0.0",
-        "audio-inspect":                        "0.0.4",
-        "@huggingface/transformers":            "3.8.1",
+        "audio-inspect":                        "0.0.8",
+        "@huggingface/transformers":            "4.2.0",
         "@huggingface/hub":                     "2.13.3",
         "kokoro-js":                            "1.2.1",
         "kitten-tts-js":                        "0.1.2",
@@ -119,8 +119,6 @@
         "cross-env":                            "10.1.0"
     },
     "overrides": {
-        "@huggingface/transformers":            { "onnxruntime-node": "1.22.0", "onnxruntime-web": "1.22.0" },
-        "@ericedouard/vad-node-realtime":       { "onnxruntime-node": "1.22.0", "onnxruntime-web": "1.22.0" },
         "typescript-eslint":                    { "typescript": ">=5.0.0" },
         "@typescript-eslint/parser":            { "typescript": ">=5.0.0" },
         "@typescript-eslint/eslint-plugin":     { "typescript": ">=5.0.0" },
@@ -130,16 +128,10 @@
         "neostandard":                          { "eslint": ">=9.0.0" }
     },
     "upd": [
+        "!oxlint",
         "!eslint",
         "!@eslint/js",
-        "!typescript",
-        "!onnxruntime-node",
-        "!audio-inspect",
-        "!@deepgram/sdk",
-        "!sherpa-onnx",
-        "!@google/genai",
-        "!@huggingface/transformers",
-        "!@soundtouchjs/audio-worklet"
+        "!typescript"
     ],
     "engines": {
         "node":                                 ">=22.0.0"

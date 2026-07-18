@@ -86,7 +86,7 @@ export default class SpeechFlowNodeT2TOPUS extends SpeechFlowNode {
         const translate = async (text: string) => {
             const result = await this.translator!(text)
             const single = Array.isArray(result) ? result[0] : result
-            return (single as Transformers.TranslationSingle).translation_text
+            return (single as Transformers.TranslationOutput[number]).translation_text
         }
 
         /*  establish a transform stream and connect it to Transformers  */

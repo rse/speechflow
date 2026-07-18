@@ -5,6 +5,8 @@ ChangeLog
 2.4.2 (2026-07-18)
 ------------------
 
+- UPDATE: upgrade to Google SDK v2.1
+- UPDATE: upgrade to HuggingFace Transformer v4
 - UPDATE: upgrade NPM dependencies and patches
 
 2.4.1 (2026-05-31)

@@ -8,7 +8,7 @@
 import Stream from "node:stream"
 
 /*  external dependencies  */
-import { getLUFS, getRMS, AudioData } from "audio-inspect"
+import { analyze, AudioData } from "audio-inspect"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -69,8 +69,8 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         const samplesPerChunk = Math.floor(this.config.audioSampleRate * chunkDuration)
         this.chunkBuffer = new Float32Array(0)
 
-        /*  setup chunking interval  */
-        this.calcInterval = setInterval(() => {
+        /*  calculate the loudness metrics of the accumulated chunk data  */
+        const calcMeter = async () => {
             /*  short-circuit during destruction  */
             if (this.closing)
                 return
@@ -99,14 +99,19 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 duration:         sampleWindowDuration,
                 length:           sampleWindow.length
             } satisfies AudioData
-            const lufs = getLUFS(audioDataLUFS, {
-                channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
-                calculateShortTerm:     false,
-                calculateMomentary:     true,
-                calculateLoudnessRange: false,
-                calculateTruePeak:      false
+            const analysisLUFS = await analyze(audioDataLUFS, {
+                features: {
+                    lufs: {
+                        channelMode: this.config.audioChannels === 1 ? "mono" : "stereo",
+                        calculateShortTerm:     false,
+                        calculateMomentary:     true,
+                        calculateLoudnessRange: false,
+                        calculateTruePeak:      false
+                    }
+                }
             })
-            lufsm = lufs.momentary ? Math.max(-60, lufs.momentary[0]) : -60
+            const lufs = analysisLUFS.results.lufs
+            lufsm = lufs?.momentary !== undefined ? Math.max(-60, lufs.momentary) : -60
 
             /*  calculate the RMS metric  */
             const totalSamples   = chunkData.length / this.config.audioChannels
@@ -118,9 +123,14 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 duration,
                 length:           chunkData.length
             } satisfies AudioData
-            rms = Math.max(-60, getRMS(audioDataRMS, {
-                asDB: true
-            }))
+            const analysisRMS = await analyze(audioDataRMS, {
+                features: {
+                    rms: {
+                        asDB: true
+                    }
+                }
+            })
+            rms = Math.max(-60, analysisRMS.results.rms ?? -60)
 
             /*  automatically clear measurement (in case no new measurements happen)  */
             if (this.silenceTimer !== null)
@@ -129,6 +139,13 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
                 lufsm = -60
                 rms   = -60
             }, 500)
+        }
+
+        /*  setup chunking interval  */
+        this.calcInterval = setInterval(() => {
+            calcMeter().catch((err: unknown) => {
+                this.log("warning", `meter calculation failed: ${err instanceof Error ? err.message : String(err)}`)
+            })
         }, chunkDuration * 1000)
 
         /*  setup loudness emitting interval  */

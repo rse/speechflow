@@ -333,10 +333,18 @@ export class LLM extends EventEmitter {
                 throw new Error(`failed to perform HuggingFace Transformers text generation: ${err}`, { cause: err })
             })
             const single = Array.isArray(result) ? result[0] : result
-            const generatedText = (single as Transformers.TextGenerationSingle).generated_text
-            const content = typeof generatedText === "string" ?
+            const generatedText = (single as Transformers.TextGenerationOutput[number]).generated_text
+            const messageContent = typeof generatedText === "string" ?
                 generatedText :
                 generatedText.at(-1)?.content
+
+            /*  flatten the potentially multi-modal message content into plain text  */
+            const content = typeof messageContent === "string" ?
+                messageContent :
+                messageContent
+                    ?.filter((part) => part.type === "text")
+                    .map((part) => part.text as string)
+                    .join("")
             if (!content)
                 throw new Error("HuggingFace Transformers API returned empty content")
             return content

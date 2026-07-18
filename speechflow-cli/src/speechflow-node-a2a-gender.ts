@@ -11,7 +11,7 @@ import Stream  from "node:stream"
 /*  external dependencies  */
 import * as Transformers     from "@huggingface/transformers"
 import { WaveFile }          from "wavefile"
-import { getRMS, AudioData } from "audio-inspect"
+import { analyze, AudioData } from "audio-inspect"
 import { Duration }          from "luxon"
 
 /*  internal dependencies  */
@@ -145,7 +145,8 @@ export default class SpeechFlowNodeA2AGender extends SpeechFlowNode {
                 duration:         data.length / sampleRateTarget,
                 length:           data.length
             } satisfies AudioData
-            const rms = getRMS(audioData, { asDB: true })
+            const analysis = await analyze(audioData, { features: { rms: { asDB: true } } })
+            const rms = analysis.results.rms ?? -60
             if (rms < this.params.volumeThreshold)
                 return genderLast
 

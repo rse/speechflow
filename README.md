@@ -34,7 +34,7 @@ speech-to-speech).
 - local audio Speex, RNNoise, and GTCRN noise suppression,
 - local audio compressor and expander dynamics processing,
 - local audio gain adjustment,
-- local audio pitch shifting and time stretching,
+- local audio pitch shifting,
 - local audio gap filler processing,
 - remote-controlable audio muting,
 - cloud-based speech-to-text conversion with
@@ -803,13 +803,15 @@ The following nodes process audio chunks only.
   | **db**    | 0         | 0        | `n >= -60 && n <= 60` |
 
 - Node: **a2a-pitch**<br/>
-  Purpose: **audio pitch shifting and time stretching**<br/>
+  Purpose: **audio pitch shifting**<br/>
   Example: `a2a-pitch(pitch: 1.2, semitones: 3)`
 
-  > This node performs real-time pitch shifting and time stretching on
-  > audio streams using the SoundTouch algorithm. It can adjust pitch
-  > without changing tempo, change tempo without affecting pitch, or
-  > modify both independently.
+  > This node performs real-time pitch shifting on audio streams using
+  > the SoundTouch algorithm. It adjusts the pitch while preserving the
+  > duration of the audio, i.e. the output always has the same length as
+  > the input. The effective pitch factor is `pitch * 2^(semitones/12) /
+  > rate`, so **pitch** and **semitones** combine, while **rate** merely
+  > compensates for an upstream playback rate change.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -818,9 +820,8 @@ The following nodes process audio chunks only.
 
   | Parameter      | Position  | Default  | Requirement              |
   | -------------- | --------- | -------- | ------------------------ |
-  | **rate**       | *none*    | 1.0      | `0.25 <= n <= 4.0`       |
-  | **tempo**      | *none*    | 1.0      | `0.25 <= n <= 4.0`       |
-  | **pitch**      | *none*    | 1.0      | `0.25 <= n <= 4.0`       |
+  | **rate**       | *none*    | 1.0      | `0.1 <= n <= 8.0`        |
+  | **pitch**      | *none*    | 1.0      | `0.1 <= n <= 8.0`        |
   | **semitones**  | *none*    | 0.0      | `-24 <= n <= 24`         |
 
 - Node: **a2a-filler**<br/>
