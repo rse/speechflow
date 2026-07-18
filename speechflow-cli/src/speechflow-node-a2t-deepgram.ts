@@ -9,11 +9,16 @@ import Stream from "node:stream"
 
 /*  external dependencies  */
 import * as Deepgram          from "@deepgram/sdk"
+import { V1Socket }           from "@deepgram/sdk/listen/v1"
 import { DateTime, Duration } from "luxon"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
 import * as util                           from "./speechflow-util"
+
+/*  NOTICE: the connection arguments type is not publicly re-exported by the
+    Deepgram SDK, so derive it structurally from the connect method instead  */
+type DeepgramConnectArgs = Parameters<Deepgram.DeepgramClient["listen"]["v1"]["connect"]>[0]
 
 /*  SpeechFlow node for Deepgram speech-to-text conversion  */
 export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
@@ -21,13 +26,15 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     public static name = "a2t-deepgram"
 
     /*  internal state  */
-    private dg:                Deepgram.LiveClient                      | null = null
+    private dg:                V1Socket                                 | null = null
     private closing                                                            = false
     private reconfiguring                                                      = false
     private connectionTimeout: ReturnType<typeof setTimeout>            | null = null
     private queue:             util.AsyncQueue<SpeechFlowChunk | null>  | null = null
     private metastore:         util.TimeStore<Map<string, any>>         | null = null
     private suspended                                                          = false
+    private opening                                                            = false
+    private openReject:        ((error: Error) => void)                 | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -107,23 +114,32 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         /*  configure Deepgram connection options  */
         const interim     = this.params.interim as boolean
         const endpointing = this.params.endpointing as number
-        const options: Deepgram.LiveSchema = {
+        /*  NOTICE: the Deepgram API v5 SDK expects the boolean flags as their
+            string representations, as they are passed as URL query parameters.
+            The "filler_words" flag is a valid live API parameter, but is not
+            covered by the generated SDK types, so pass it via "queryParams".  */
+        const options: DeepgramConnectArgs = {
+            /*  NOTICE: the Deepgram API v5 SDK applies the client-level "apiKey" only
+                to its REST endpoints -- the WebSocket connect path never consults the
+                authentication provider and instead requires the "Authorization" header
+                to be passed explicitly, or else the server closes the handshake  */
+            Authorization:    `Token ${this.params.key}`,
             mip_opt_out:      true,
             model:            this.params.model,
             version:          this.params.version,
             channels:         this.config.audioChannels,
             sample_rate:      this.config.audioSampleRate,
             encoding:         "linear16",
-            multichannel:     false,
-            endpointing:      endpointing > 0 ? endpointing : false,
-            interim_results:  interim,
-            smart_format:     false,
-            punctuate:        true,
-            filler_words:     true,
-            numerals:         false,
-            diarize:          false,
-            profanity_filter: false,
-            redact:           false
+            multichannel:     "false",
+            endpointing:      endpointing > 0 ? endpointing : "false",
+            interim_results:  interim ? "true" : "false",
+            smart_format:     "false",
+            punctuate:        "true",
+            numerals:         "false",
+            diarize:          "false",
+            profanity_filter: "false",
+            redact:           "false",
+            queryParams:      { filler_words: "true" }
         }
         const model    = this.params.model    as string
         const language = this.params.language as string
@@ -149,52 +165,51 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         }
 
         /*  connect to Deepgram API  */
-        const deepgram = Deepgram.createClient(this.params.key)
-        this.dg = deepgram.listen.live(options)
+        const deepgram = new Deepgram.DeepgramClient({ apiKey: this.params.key })
+        this.dg = await deepgram.listen.v1.connect(options)
 
-        /*  hook onto Deepgram API events  */
-        this.dg.on(Deepgram.LiveTranscriptionEvents.Transcript, async (data) => {
+        /*  hook onto Deepgram API messages  */
+        this.dg.on("message", (message: V1Socket.Response) => {
             if (this.closing || this.queue === null || this.metastore === null)
                 return
-            const text  = (data.channel?.alternatives[0]?.transcript ?? "") as string
-            const words = (data.channel?.alternatives[0]?.words ?? []) as
-                { word: string, punctuated_word?: string, start: number, end: number }[]
-            const isFinal     = (data.is_final     as boolean) ?? false
-            const speechFinal = (data.speech_final as boolean) ?? false
-            const kind = (isFinal || (endpointing > 0 && speechFinal)) ? "final" : "intermediate"
-            if (text === "")
-                this.log("info", `empty/dummy text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s)`)
-            else {
-                this.log("info", `text received (start: ${data.start}s, ` +
-                    `duration: ${data.duration.toFixed(2)}s, kind: ${kind}): ` +
-                    `"${text}"`)
-                const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
-                const end   = start.plus({ seconds: data.duration })
-                const metas = this.metastore.fetch(start, end)
-                const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
-                    curr.forEach((val, key) => { prev.set(key, val) })
-                    return prev
-                }, new Map<string, any>())
-                this.metastore.prune(start)
-                meta.set("words", words.map((word) => {
-                    const start = Duration.fromMillis(word.start * 1000).plus(this.timeZeroOffset)
-                    const end   = Duration.fromMillis(word.end * 1000).plus(this.timeZeroOffset)
-                    return { word: word.punctuated_word ?? word.word, start, end }
-                }))
-                const chunk = new SpeechFlowChunk(start, end, kind, "text", text, meta)
-                this.queue.write(chunk)
+            if (message.type === "SpeechStarted")
+                this.log("info", "speech started", message)
+            else if (message.type === "UtteranceEnd")
+                this.log("info", "utterance end received", message)
+            else if (message.type === "Metadata")
+                this.log("info", "metadata received")
+            else if (message.type === "Results") {
+                const data  = message
+                const text  = data.channel?.alternatives[0]?.transcript ?? ""
+                const words = data.channel?.alternatives[0]?.words ?? []
+                const isFinal     = data.is_final     ?? false
+                const speechFinal = data.speech_final ?? false
+                const kind = (isFinal || (endpointing > 0 && speechFinal)) ? "final" : "intermediate"
+                if (text === "")
+                    this.log("info", `empty/dummy text received (start: ${data.start}s, duration: ${data.duration.toFixed(2)}s)`)
+                else {
+                    this.log("info", `text received (start: ${data.start}s, ` +
+                        `duration: ${data.duration.toFixed(2)}s, kind: ${kind}): ` +
+                        `"${text}"`)
+                    const start = Duration.fromMillis(data.start * 1000).plus(this.timeZeroOffset)
+                    const end   = start.plus({ seconds: data.duration })
+                    const metas = this.metastore.fetch(start, end)
+                    const meta = metas.toReversed().reduce((prev: Map<string, any>, curr: Map<string, any>) => {
+                        curr.forEach((val, key) => { prev.set(key, val) })
+                        return prev
+                    }, new Map<string, any>())
+                    this.metastore.prune(start)
+                    meta.set("words", words.map((word) => {
+                        const start = Duration.fromMillis(word.start * 1000).plus(this.timeZeroOffset)
+                        const end   = Duration.fromMillis(word.end * 1000).plus(this.timeZeroOffset)
+                        return { word: word.punctuated_word ?? word.word, start, end }
+                    }))
+                    const chunk = new SpeechFlowChunk(start, end, kind, "text", text, meta)
+                    this.queue.write(chunk)
+                }
             }
         })
-        this.dg.on(Deepgram.LiveTranscriptionEvents.SpeechStarted, (data) => {
-            this.log("info", "speech started", data)
-        })
-        this.dg.on(Deepgram.LiveTranscriptionEvents.UtteranceEnd, (data) => {
-            this.log("info", "utterance end received", data)
-        })
-        this.dg.on(Deepgram.LiveTranscriptionEvents.Metadata, (data) => {
-            this.log("info", "metadata received")
-        })
-        this.dg.on(Deepgram.LiveTranscriptionEvents.Close, () => {
+        this.dg.on("close", () => {
             this.log("info", "connection close")
             /*  NOTICE: suppress EOF signalling while reconfiguring (mute toggle),
                 since the connection is being torn down deliberately and the
@@ -203,36 +218,18 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 this.queue.write(null)
         })
 
-        /*  wait for Deepgram API to be available  */
-        await new Promise((resolve, reject) => {
-            this.connectionTimeout = setTimeout(() => {
-                if (this.connectionTimeout !== null) {
-                    this.connectionTimeout = null
-                    reject(new Error("Deepgram: timeout waiting for connection open"))
-                }
-            }, 8000)
-            this.dg!.once(Deepgram.LiveTranscriptionEvents.Open, () => {
-                this.log("info", "connection open")
-                if (this.connectionTimeout !== null) {
-                    clearTimeout(this.connectionTimeout)
-                    this.connectionTimeout = null
-                }
-                resolve(true)
-            })
-            this.dg!.once(Deepgram.LiveTranscriptionEvents.Error, (err: Error) => {
-                if (this.connectionTimeout !== null) {
-                    clearTimeout(this.connectionTimeout)
-                    this.connectionTimeout = null
-                }
-                reject(err)
-            })
-        })
-
-        /*  NOTICE: register permanent Error handler only AFTER the open
-            handshake -- during open, the transient .once above is the sole
-            Error listener so the caller's promise rejects without a parallel
-            stream emission tearing down the graph prematurely.  */
-        this.dg.on(Deepgram.LiveTranscriptionEvents.Error, (error: Error) => {
+        /*  NOTICE: the Deepgram API socket supports only a single handler per
+            event, so the open handshake and the permanent error handling must
+            share one error handler which dispatches on the "opening" flag:
+            during open, the error is routed solely into the caller's promise
+            rejection, without a parallel stream emission tearing down the
+            graph prematurely.  */
+        this.dg.on("error", (error: Error) => {
+            if (this.opening) {
+                if (this.openReject !== null)
+                    this.openReject(error)
+                return
+            }
             this.log("warning", `error: ${error.message}`)
             /*  NOTICE: do not write null to the queue here -- a transient error
                 must not be misinterpreted as end-of-stream by downstream nodes;
@@ -244,6 +241,45 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             if (!this.closing && this.stream !== null)
                 this.stream.emit("error", error)
         })
+
+        /*  NOTICE: the Deepgram API v5 SDK returns a socket which has not yet
+            dialed, as it is internally created with the "startClosed" option,
+            so the connection has to be established explicitly -- and only once
+            all event handlers above are registered, as the connect operation
+            re-registers the underlying socket listeners  */
+        this.dg.connect()
+
+        /*  wait for Deepgram API to be available  */
+        this.opening = true
+        try {
+            await new Promise((resolve, reject) => {
+                this.openReject = reject
+                this.connectionTimeout = setTimeout(() => {
+                    if (this.connectionTimeout !== null) {
+                        this.connectionTimeout = null
+                        reject(new Error("Deepgram: timeout waiting for connection open"))
+                    }
+                }, 8000)
+                this.dg!.waitForOpen().then(() => {
+                    this.log("info", "connection open")
+                    if (this.connectionTimeout !== null) {
+                        clearTimeout(this.connectionTimeout)
+                        this.connectionTimeout = null
+                    }
+                    resolve(true)
+                }).catch((error: unknown) => {
+                    if (this.connectionTimeout !== null) {
+                        clearTimeout(this.connectionTimeout)
+                        this.connectionTimeout = null
+                    }
+                    reject(util.ensureError(error, "failed to open Deepgram connection"))
+                })
+            })
+        }
+        finally {
+            this.opening    = false
+            this.openReject = null
+        }
     }
 
     /*  close Deepgram API connection  */
@@ -257,8 +293,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         /*  close Deepgram connection and remove listeners  */
         if (this.dg !== null) {
             try {
-                this.dg.removeAllListeners()
-                this.dg.requestClose()
+                this.dg.close()
                 this.log("info", "connection closed")
             }
             catch (error) {
@@ -272,17 +307,14 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     async status () {
         let balance = 0
         try {
-            const deepgram = Deepgram.createClient(this.params.keyAdm)
-            const response = await deepgram.manage.getProjects()
-            if (response !== null && response.error === null && response.result?.projects) {
-                for (const project of response.result.projects) {
-                    const balanceResponse = await deepgram.manage.getProjectBalances(project.project_id)
-                    if (balanceResponse !== null && balanceResponse.error === null && balanceResponse.result?.balances)
-                        balance += balanceResponse.result.balances[0]?.amount ?? 0
-                }
+            const deepgram = new Deepgram.DeepgramClient({ apiKey: this.params.keyAdm })
+            const response = await deepgram.manage.v1.projects.list()
+            for (const project of response.projects ?? []) {
+                if (project.project_id === undefined)
+                    continue
+                const balanceResponse = await deepgram.manage.v1.projects.billing.balances.list(project.project_id)
+                balance += balanceResponse.balances?.[0]?.amount ?? 0
             }
-            else if (response !== null && response.error !== null)
-                this.log("warning", `API error fetching projects: ${response.error}`)
         }
         catch (error) {
             this.log("warning", `failed to fetch balance: ${error}`)
@@ -342,10 +374,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                             self.metastore.store(chunk.timestampStart, chunk.timestampEnd, chunk.meta)
                         try {
                             /*  send buffer (and intentionally discard all time information)  */
-                            self.dg.send(chunk.payload.buffer.slice(
-                                chunk.payload.byteOffset,
-                                chunk.payload.byteOffset + chunk.payload.byteLength
-                            ))
+                            self.dg.sendMedia(chunk.payload)
                         }
                         catch (error) {
                             callback(util.ensureError(error, "failed to send to Deepgram"))
@@ -365,7 +394,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 /*  close Deepgram API  */
                 if (self.dg !== null) {
                     try {
-                        self.dg.requestClose()
+                        self.dg.close()
                     }
                     catch (error) {
                         self.log("warning", `error closing Deepgram connection: ${error}`)
