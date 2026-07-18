@@ -85,6 +85,10 @@
         "npm":                              ">=10.0.0",
         "node":                             ">=22.0.0"
     },
+    "allowScripts": {
+        "esbuild":                          true,
+        "typopro-web":                      true
+    },
     "scripts": {
         "postinstall":                      "npm start patch-apply",
         "start":                            "stx -v4 -c etc/stx.conf"
