@@ -10,7 +10,7 @@ import YAMLPlugin        from "@rollup/plugin-yaml"
 import { nodePolyfills } from "vite-plugin-node-polyfills"
 import SvgLoader         from "vite-svg-loader"
 
-export default Vite.defineConfig(({ command, mode }) => ({
+export default Vite.defineConfig(({ mode }) => ({
     logLevel: "info",
     base: "",
     root: "src",

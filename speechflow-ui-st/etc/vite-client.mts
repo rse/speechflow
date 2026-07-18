@@ -52,6 +52,12 @@ export default Vite.defineConfig(({ command, mode }) => ({
             onwarn: (entry, next) => {
                 if (entry.message.match(/node_modules.+Use of eval in/))
                     return
+
+                /*  suppress Rolldown (Vite 8) diagnostic for the dual-mode ESM/CommonJS
+                    file of the "outdent" module, a transitive dependency of "vue3-spinners",
+                    whose "module.exports" assignment is guarded and hence never executed  */
+                else if (entry.code === "COMMONJS_VARIABLE_IN_ESM")
+                    return
                 else
                     return next(entry)
             }
