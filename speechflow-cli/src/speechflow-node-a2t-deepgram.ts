@@ -455,6 +455,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         /*  signal EOF to any pending read operations  */
         if (this.queue !== null) {
             this.queue.write(null)
+            this.queue.destroy()
             this.queue = null
         }
 
