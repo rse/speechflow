@@ -404,14 +404,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 }
 
                 /*  close Deepgram API  */
-                if (self.dg !== null) {
-                    try {
-                        self.dg.close()
-                    }
-                    catch (error) {
-                        self.log("warning", `error closing Deepgram connection: ${error}`)
-                    }
-                }
+                await self.closeConnection()
 
                 /*  await all read operations  */
                 await reads.awaitAll()
