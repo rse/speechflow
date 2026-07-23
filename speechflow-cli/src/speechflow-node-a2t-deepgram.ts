@@ -92,9 +92,9 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         if (suspended === this.suspended)
             return
         this.log("info", `switching to ${suspended ? "SUSPENDED" : "UNSUSPENDED"} operation`)
-        this.suspended = suspended
         if (suspended) {
             /*  going suspended -- tear down Deepgram API connection  */
+            this.suspended = true
             this.reconfiguring = true
             try {
                 await this.closeConnection()
@@ -106,6 +106,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
         else {
             /*  going unsuspended -- re-establish Deepgram API connection  */
             await this.openConnection()
+            this.suspended = false
         }
     }
 
