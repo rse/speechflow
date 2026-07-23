@@ -2,6 +2,11 @@
 ChangeLog
 =========
 
+2.4.3 (2026-07-23)
+------------------
+
+- UPDATE: upgrade NPM dependencies and patches
+
 2.4.2 (2026-07-23)
 ------------------
 
