@@ -249,6 +249,14 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             re-registers the underlying socket listeners  */
         this.dg.connect()
 
+        /*  clear pending connection timer (idempotent)  */
+        const clearConnectionTimeout = () => {
+            if (this.connectionTimeout !== null) {
+                clearTimeout(this.connectionTimeout)
+                this.connectionTimeout = null
+            }
+        }
+
         /*  wait for Deepgram API to be available  */
         this.opening = true
         try {
@@ -262,16 +270,10 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                 }, 8000)
                 this.dg!.waitForOpen().then(() => {
                     this.log("info", "connection open")
-                    if (this.connectionTimeout !== null) {
-                        clearTimeout(this.connectionTimeout)
-                        this.connectionTimeout = null
-                    }
+                    clearConnectionTimeout()
                     resolve(true)
                 }).catch((error: unknown) => {
-                    if (this.connectionTimeout !== null) {
-                        clearTimeout(this.connectionTimeout)
-                        this.connectionTimeout = null
-                    }
+                    clearConnectionTimeout()
                     reject(util.ensureError(error, "failed to open Deepgram connection"))
                 })
             })
