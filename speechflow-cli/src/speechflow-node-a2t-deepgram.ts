@@ -259,6 +259,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
 
         /*  wait for Deepgram API to be available  */
         this.opening = true
+        let opened = false
         try {
             await new Promise((resolve, reject) => {
                 this.openReject = reject
@@ -277,10 +278,15 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     reject(util.ensureError(error, "failed to open Deepgram connection"))
                 })
             })
+            opened = true
         }
         finally {
             this.opening    = false
             this.openReject = null
+
+            /*  discard half-established connection on failure  */
+            if (!opened)
+                await this.closeConnection()
         }
     }
 
