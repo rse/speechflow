@@ -5,6 +5,7 @@ ChangeLog
 2.4.2 (2026-07-18)
 ------------------
 
+- IMPROVEMENT: re-emit last intermediate chunk as final when suspending "a2t-deepgram" node
 - BUGFIX: in "a2t-deepgram", mark node as no longer suspended only once the connection was re-opened
 - UPDATE: upgrade to Deepgram SDK v5
 - UPDATE: upgrade to Google SDK v2.1

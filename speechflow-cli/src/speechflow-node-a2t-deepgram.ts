@@ -35,6 +35,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     private suspended                                                          = false
     private opening                                                            = false
     private openReject:        ((error: Error) => void)                 | null = null
+    private lastChunk:         SpeechFlowChunk                          | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -101,6 +102,19 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
             }
             finally {
                 this.reconfiguring = false
+            }
+
+            /*  re-emit last intermediate chunk as final one, as its regular
+                finalization will never arrive anymore -- with an appended
+                ellipsis as truncation marker (and sentence boundary for
+                downstream sentence splitting)  */
+            if (this.lastChunk !== null && this.lastChunk.kind === "intermediate" && this.queue !== null) {
+                this.log("info", "sending last non-final chunk as final chunk")
+                const chunk = this.lastChunk.clone()
+                chunk.kind = "final"
+                chunk.payload = `${chunk.payload}…`
+                this.queue.write(chunk)
+                this.lastChunk = chunk
             }
         }
         else {
@@ -207,6 +221,7 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     }))
                     const chunk = new SpeechFlowChunk(start, end, kind, "text", text, meta)
                     this.queue.write(chunk)
+                    this.lastChunk = chunk
                 }
             }
         })
@@ -349,6 +364,9 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
 
         /*  create a store for the meta information  */
         this.metastore = new util.TimeStore<Map<string, any>>()
+
+        /*  reset last emitted text chunk  */
+        this.lastChunk = null
 
         /*  determine initial suspended state from configuration  */
         this.suspended = this.params.suspended as boolean
