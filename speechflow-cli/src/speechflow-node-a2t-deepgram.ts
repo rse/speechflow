@@ -200,9 +200,9 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
                     }, new Map<string, any>())
                     this.metastore.prune(start)
                     meta.set("words", words.map((word) => {
-                        const start = Duration.fromMillis(word.start * 1000).plus(this.timeZeroOffset)
-                        const end   = Duration.fromMillis(word.end * 1000).plus(this.timeZeroOffset)
-                        return { word: word.punctuated_word ?? word.word, start, end }
+                        const wordStart = Duration.fromMillis(word.start * 1000).plus(this.timeZeroOffset)
+                        const wordEnd   = Duration.fromMillis(word.end   * 1000).plus(this.timeZeroOffset)
+                        return { word: word.punctuated_word ?? word.word, start: wordStart, end: wordEnd }
                     }))
                     const chunk = new SpeechFlowChunk(start, end, kind, "text", text, meta)
                     this.queue.write(chunk)
