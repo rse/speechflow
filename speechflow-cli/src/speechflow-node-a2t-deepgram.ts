@@ -314,6 +314,10 @@ export default class SpeechFlowNodeA2TDeepgram extends SpeechFlowNode {
     /*  one-time status of node  */
     async status () {
         let balance = 0
+        if (!this.params.keyAdm) {
+            this.log("info", "no Deepgram admin API key configured -- skipping balance fetch")
+            return { balance: balance.toFixed(2) }
+        }
         try {
             const deepgram = new Deepgram.DeepgramClient({ apiKey: this.params.keyAdm })
             const response = await deepgram.manage.v1.projects.list()
