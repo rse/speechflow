@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-2.4.2 (2026-07-18)
+2.4.2 (2026-07-23)
 ------------------
 
 - IMPROVEMENT: re-emit last intermediate chunk as final when suspending "a2t-deepgram" node
