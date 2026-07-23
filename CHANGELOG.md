@@ -6,11 +6,18 @@ ChangeLog
 ------------------
 
 - IMPROVEMENT: re-emit last intermediate chunk as final when suspending "a2t-deepgram" node
+- IMPROVEMENT: skip balance fetch in "a2t-deepgram" status if no admin API key is configured
 - BUGFIX: in "a2t-deepgram", mark node as no longer suspended only once the connection was re-opened
+- BUGFIX: discard half-established connection on open failure in "a2t-deepgram" node
+- BUGFIX: correctly destroy internal queue and avoid stale callback state in "a2t-deepgram" node
 - UPDATE: upgrade to Deepgram SDK v5
 - UPDATE: upgrade to Google SDK v2.1
 - UPDATE: upgrade to HuggingFace Transformer v4
+- UPDATE: upgrade SoundTouch audio worklet in "a2a-pitch" node
+- UPDATE: switch sample configuration "etc/speechflow.yaml" to the msg Filmstudio variant
+- UPDATE: explicitly allow NPM dependency install scripts via "allowScripts"
 - UPDATE: upgrade NPM dependencies and patches
+- CLEANUP: cleanup "a2t-deepgram" node (redundancies, naming, connection close reuse)
 
 2.4.1 (2026-05-31)
 ------------------
