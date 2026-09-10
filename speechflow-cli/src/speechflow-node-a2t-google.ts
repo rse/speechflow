@@ -122,8 +122,8 @@ export default class SpeechFlowNodeA2TGoogle extends SpeechFlowNode {
                     continue
 
                 /*  calculate timestamps  */
-                let tsStart = Duration.fromMillis(0)
-                let tsEnd   = Duration.fromMillis(0)
+                let tsStart: Duration = Duration.fromMillis(0)
+                let tsEnd:   Duration = Duration.fromMillis(0)
 
                 /*  extract word timing information if available  */
                 const words: { word: string, start: Duration, end: Duration }[] = []

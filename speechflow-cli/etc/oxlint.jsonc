@@ -154,6 +154,7 @@
         "prefer-number-coercion":             "off",
         "method-signature-style":             "off",
         "no-sync":                            "off",
+        "one-var":                            "off",
 
         "complexity":                         [ "error", { "max": 40 } ]
     }

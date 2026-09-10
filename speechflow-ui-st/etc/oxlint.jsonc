@@ -132,7 +132,8 @@
         "no-console":                         "off",
         "no-unassigned-import":               "off",
         "no-shadow":                          "off",
-        "require-unicode-regexp":             "off"
+        "require-unicode-regexp":             "off",
+        "one-var":                            "off"
     }
 }
 
