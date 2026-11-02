@@ -156,18 +156,38 @@ export class NodeGraph {
         }
     }
 
-    /*  graph establishment: PASS 3: open nodes  */
-    async openNodes (): Promise<void> {
-        this.timeZero = DateTime.now()
+    /*  graph establishment: PASS 3: prepare nodes  */
+    async prepareNodes (): Promise<void> {
+        /*  connect node events  */
         for (const node of this.graphNodes) {
-            /*  connect node events  */
             node.on("log", (level: string, msg: string, data?: any) => {
                 let str = `<${node.id}>: ${msg}`
                 if (data !== undefined)
                     str += ` (${JSON.stringify(data)})`
                 this.cli.log(level, str)
             })
+        }
 
+        /*  prepare all nodes in parallel (without timeout, as preparation can take long)  */
+        const results = await Promise.allSettled(Array.from(this.graphNodes).map((node) => {
+            this.cli.log("info", `prepare node <${node.id}>`)
+            return node.prepare().catch((err: Error) => {
+                this.cli.log("error", `<${node.id}>: failed to prepare node <${node.id}>: ${err.message}`)
+                throw new Error(`failed to prepare node <${node.id}>: ${err.message}`, { cause: err })
+            })
+        }))
+        const failed = results.find((result): result is PromiseRejectedResult => result.status === "rejected")
+        if (failed !== undefined) {
+            /*  immediately dispose all (prepared or partially prepared) nodes again  */
+            await this.disposeNodes()
+            throw util.ensureError(failed.reason)
+        }
+    }
+
+    /*  graph establishment: PASS 4: open nodes  */
+    async openNodes (): Promise<void> {
+        this.timeZero = DateTime.now()
+        for (const node of this.graphNodes) {
             /*  open node  */
             this.cli.log("info", `open node <${node.id}>`)
             node.setTimeZero(this.timeZero)
@@ -184,7 +204,7 @@ export class NodeGraph {
         }
     }
 
-    /*  graph establishment: PASS 4: connect node streams  */
+    /*  graph establishment: PASS 5: connect node streams  */
     async connectStreams () {
         for (const node of this.graphNodes) {
             if (node.stream === null)
@@ -204,7 +224,7 @@ export class NodeGraph {
         }
     }
 
-    /*  graph establishment: PASS 5: track stream finishing  */
+    /*  graph establishment: PASS 6: track stream finishing  */
     trackFinishing (args: CLIOptions, api: APIServer): void {
         this.finishEvents.removeAllListeners()
         this.finishEvents.setMaxListeners(this.graphNodes.size + 10)
@@ -341,7 +361,23 @@ export class NodeGraph {
         }
     }
 
-    /*  graph destruction: PASS 4: disconnect nodes  */
+    /*  graph destruction: PASS 4: dispose nodes  */
+    async disposeNodes (): Promise<void> {
+        await Promise.all(Array.from(this.graphNodes).map((node) => {
+            this.cli.log("info", `dispose node <${node.id}>`)
+            const ac = new AbortController()
+            return Promise.race([
+                node.dispose(),
+                util.timeout(10 * 1000, "timeout", ac.signal)
+            ]).finally(() => {
+                ac.abort()
+            }).catch((err: Error) => {
+                this.cli.log("warning", `node <${node.id}> failed to dispose: ${err.message}`)
+            })
+        }))
+    }
+
+    /*  graph destruction: PASS 5: disconnect nodes  */
     disconnectNodes (): void {
         for (const node of this.graphNodes) {
             this.cli.log("info", `disconnect node <${node.id}>`)
@@ -352,7 +388,7 @@ export class NodeGraph {
         }
     }
 
-    /*  graph destruction: PASS 5: destroy nodes  */
+    /*  graph destruction: PASS 6: destroy nodes  */
     destroyNodes (): void {
         for (const node of this.graphNodes)
             this.cli.log("info", `destroy node <${node.id}>`)
@@ -418,10 +454,11 @@ export class NodeGraph {
         /*  shutdown API service  */
         await api.stop(args)
 
-        /*  gracefully end, disconnect, close and destroy nodes  */
+        /*  gracefully end, disconnect, close, dispose and destroy nodes  */
         await this.endStreams()
         await this.disconnectStreams()
         await this.closeNodes()
+        await this.disposeNodes()
         this.disconnectNodes()
         this.destroyNodes()
 

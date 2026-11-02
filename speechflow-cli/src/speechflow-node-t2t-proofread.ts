@@ -94,12 +94,8 @@ export default class SpeechFlowNodeT2TProofread extends SpeechFlowNode {
         this.output = "text"
     }
 
-    /*  open node  */
-    async open () {
-        /*  tell effective mode  */
-        this.log("info", `proofreading language "${this.params.lang}" ` +
-            `via ${this.params.provider} LLM (model: ${this.params.model})`)
-
+    /*  prepare node  */
+    async prepare () {
         /*  instantiate LLM  */
         this.llm = new LLM({
             provider:    this.params.provider,
@@ -112,6 +108,17 @@ export default class SpeechFlowNodeT2TProofread extends SpeechFlowNode {
             this.log(level as "info" | "warning" | "error", message)
         })
         await this.llm.open()
+    }
+
+    /*  open node  */
+    async open () {
+        /*  tell effective mode  */
+        this.log("info", `proofreading language "${this.params.lang}" ` +
+            `via ${this.params.provider} LLM (model: ${this.params.model})`)
+
+        /*  sanity check prepared LLM  */
+        if (this.llm === null)
+            throw new Error("LLM still not prepared")
 
         /*  provide text-to-text proofreading  */
         const llm = this.llm
@@ -172,7 +179,10 @@ export default class SpeechFlowNodeT2TProofread extends SpeechFlowNode {
             await util.destroyStream(this.stream)
             this.stream = null
         }
+    }
 
+    /*  dispose node  */
+    async dispose () {
         /*  shutdown LLM  */
         if (this.llm !== null) {
             await this.llm.close()

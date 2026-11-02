@@ -196,8 +196,10 @@ export default class SpeechFlowNode extends Events.EventEmitter {
         return {}
     }
 
-    /*  default implementation for open/close operations  */
-    async open  () {}
-    async close () {}
+    /*  default implementation for prepare/open/close/dispose operations  */
+    async prepare () {}
+    async open    () {}
+    async close   () {}
+    async dispose () {}
 }
 

@@ -107,12 +107,8 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
         return matches ? matches.length : 0
     }
 
-    /*  open node  */
-    async open () {
-        /*  reset internal state  */
-        this.accumulatedText = ""
-        this.sentencesSinceLastSummary = 0
-
+    /*  prepare node  */
+    async prepare () {
         /*  instantiate LLM  */
         this.llm = new LLM({
             provider:    this.params.provider,
@@ -125,6 +121,17 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
             this.log(level as "info" | "warning" | "error", message)
         })
         await this.llm.open()
+    }
+
+    /*  open node  */
+    async open () {
+        /*  reset internal state  */
+        this.accumulatedText = ""
+        this.sentencesSinceLastSummary = 0
+
+        /*  sanity check prepared LLM  */
+        if (this.llm === null)
+            throw new Error("LLM still not prepared")
 
         /*  provide text summarization  */
         const llm = this.llm
@@ -218,7 +225,10 @@ export default class SpeechFlowNodeT2TSummary extends SpeechFlowNode {
             await util.destroyStream(this.stream)
             this.stream = null
         }
+    }
 
+    /*  dispose node  */
+    async dispose () {
         /*  shutdown LLM  */
         if (this.llm !== null) {
             await this.llm.close()

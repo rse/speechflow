@@ -95,7 +95,8 @@ export default class Main {
         await graph.createAndConnectNodes(config, nodes.nodes, cfg, variables, accessBus)
         await graph.pruneConnections()
 
-        /*  open nodes and connect streams  */
+        /*  prepare and open nodes and connect streams  */
+        await graph.prepareNodes()
         await graph.openNodes()
         await graph.connectStreams()
 
