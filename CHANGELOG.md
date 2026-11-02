@@ -16,6 +16,7 @@ ChangeLog
 - BUGFIX: avoid ever-growing latency and duplicate sample processing in "a2a-meter" node
 - BUGFIX: explicitly unload the Ollama model from memory on LLM close
 - BUGFIX: abort all in-flight (not only streamed) Ollama requests on LLM close
+- BUGFIX: force a single "onnxruntime-node" version to avoid ORT API version conflicts on Windows
 
 2.4.4 (2026-09-10)
 ------------------

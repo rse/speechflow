@@ -274,13 +274,13 @@ export class LLM extends EventEmitter {
             const systemMessage = messages.find((m) => m.role === "system")
             const chatMessages  = messages.filter((m) => m.role !== "system")
 
-            /*  perform Anthropic chat completion  */
+            /*  perform Anthropic chat completion
+                (NOTICE: no "temperature" as it was removed with API version 2026-10-21)  */
             const message = await this.anthropic.messages.create({
-                model:       this.config.model,
-                max_tokens:  this.config.maxTokens,
-                temperature: this.config.temperature,
-                system:      systemMessage?.content,
-                messages:    chatMessages as Anthropic.MessageParam[],
+                model:      this.config.model,
+                max_tokens: this.config.maxTokens,
+                system:     systemMessage?.content,
+                messages:   chatMessages as Anthropic.MessageParam[],
                 ...(!this.config.thinking ? { thinking: { type: "disabled" } } : {})
             }).catch((err) => {
                 throw new Error(`failed to perform Anthropic chat completion: ${err}`, { cause: err })

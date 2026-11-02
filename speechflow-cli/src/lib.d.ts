@@ -4,8 +4,6 @@
 **  Licensed under GPL 3.0 <https://spdx.org/licenses/GPL-3.0-only>
 */
 
-/* eslint-disable no-unused-vars */
-
 /*  type definitions for Stream.compose  */
 declare module "node:stream" {
     import { Stream, Duplex } from "node:stream"
@@ -85,6 +83,4 @@ declare module "kitten-tts-js" {
         release (): void
     }
 }
-
-/* eslint-enable no-unused-vars */
 

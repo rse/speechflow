@@ -5,7 +5,7 @@
 */
 
 import pluginJs      from "@eslint/js"
-import pluginStd     from "neostandard"
+import * as pluginStd from "neostandard"
 import pluginN       from "eslint-plugin-n"
 import pluginImport  from "eslint-plugin-import"
 import pluginPromise from "eslint-plugin-promise"
@@ -18,14 +18,15 @@ export default [
     pluginJs.configs.recommended,
     ...pluginTS.configs.strict,
     ...pluginTS.configs.stylistic,
-    ...pluginStd({
+    ...pluginStd.neostandard({
         ignores: pluginStd.resolveIgnoresFromGitignore()
     }),
     {
         plugins: {
-            "n":       pluginN,
-            "import":  pluginImport,
-            "promise": pluginPromise
+            "n":          pluginN,
+            "import":     pluginImport,
+            "promise":    pluginPromise,
+            "@stylistic": pluginStd.plugins["@stylistic"]
         },
         files:   [ "**/*.ts" ],
         ignores: [ "dst/" ],
