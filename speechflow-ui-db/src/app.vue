@@ -191,14 +191,18 @@ import * as anime            from "animejs"
 </script>
 
 <script lang="ts">
-/*  LUFS value with timestamp for temporal averaging  */
+/*  LUFS value with timestamp for display ballistics  */
 interface LufsEntry {
     value: number,
     time:  number
 }
 
-/*  duration for LUFS-M display averaging window (ms)  */
+/*  duration after which received LUFS-M values are considered stale (ms)  */
 const lufsWindowMs = 400
+
+/*  LUFS-M display update interval (ms) and release rate (dB/s) for "fast attack, slow release"  */
+const lufsTickMs        = 50
+const lufsReleaseDbPerS = 20
 
 /*  type of a single text or audio block  */
 type Info = {
@@ -260,7 +264,7 @@ export default defineComponent({
         /*  start timer to update LUFS display values from buffered entries  */
         this.lufsTimer = setInterval(() => {
             this.updateLufsDisplayValues()
-        }, 50)
+        }, lufsTickMs)
 
         /*  start timer to remove expired popups  */
         this.popupTimer = setInterval(() => {
@@ -414,13 +418,13 @@ export default defineComponent({
                 while (buffer.length > 0 && (now - buffer[0].time) > lufsWindowMs)
                     buffer.shift()
 
-                /*  calculate average of remaining entries or fall back to silence  */
-                if (buffer.length > 0) {
-                    const sum = buffer.reduce((acc, entry) => acc + entry.value, 0)
-                    block.value = sum / buffer.length
-                }
-                else
-                    block.value = -60
+                /*  apply meter ballistics on newest entry (or silence):
+                    rise immediately (fast attack), but fall with limited rate (slow release)  */
+                const target  = buffer.length > 0 ? buffer[buffer.length - 1].value : -60
+                const current = block.value as number
+                block.value = target >= current ?
+                    target :
+                    Math.max(target, current - lufsReleaseDbPerS * (lufsTickMs / 1000))
             }
         },
 

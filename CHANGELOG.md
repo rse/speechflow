@@ -12,6 +12,8 @@ ChangeLog
 - IMPROVEMENT: show dashboard meter of "a2a-meter" in grey while a "bus"-paired "a2a-mute" mutes
 - IMPROVEMENT: explicitly load the Ollama model into memory on LLM open
 - IMPROVEMENT: make Ollama model keep-alive configurable and raise its default from 10m to 8h
+- IMPROVEMENT: use "fast attack, slow release" meter ballistics instead of averaging in dashboard
+- BUGFIX: avoid ever-growing latency and duplicate sample processing in "a2a-meter" node
 - BUGFIX: explicitly unload the Ollama model from memory on LLM close
 - BUGFIX: abort all in-flight (not only streamed) Ollama requests on LLM close
 

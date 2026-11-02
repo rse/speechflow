@@ -97,13 +97,13 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             if (this.chunkBuffer.length < samplesPerChunk)
                 return
 
-            /*  grab the accumulated chunk data  */
+            /*  grab all accumulated chunk data (to never build up a backlog behind real-time)  */
             const chunkData = this.chunkBuffer
-            this.chunkBuffer = chunkData.slice(samplesPerChunk)
+            this.chunkBuffer = new Float32Array(0)
 
-            /*  update internal audio sample sliding window for LUFS-M  */
+            /*  update internal audio sample sliding window for LUFS-M (with newest samples only)  */
             if (chunkData.length > sampleWindow.length)
-                sampleWindow.set(chunkData.subarray(0, sampleWindow.length), 0)
+                sampleWindow.set(chunkData.subarray(chunkData.length - sampleWindow.length), 0)
             else {
                 sampleWindow.set(sampleWindow.subarray(chunkData.length), 0)
                 sampleWindow.set(chunkData, sampleWindow.length - chunkData.length)
@@ -159,9 +159,15 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             }, 500)
         }
 
-        /*  setup chunking interval  */
+        /*  setup chunking interval (without overlapping calculations, as they share the sliding window)  */
+        let calculating = false
         this.calcInterval = setInterval(() => {
-            calcMeter().catch((err: unknown) => {
+            if (calculating)
+                return
+            calculating = true
+            calcMeter().finally(() => {
+                calculating = false
+            }).catch((err: unknown) => {
                 this.log("warning", `meter calculation failed: ${err instanceof Error ? err.message : String(err)}`)
             })
         }, chunkDuration * 1000)
