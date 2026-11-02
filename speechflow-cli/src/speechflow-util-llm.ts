@@ -32,6 +32,7 @@ export type LLMConfig = {
     maxTokens?:     number
     cacheDir?:      string
     thinking?:      boolean
+    keepAlive?:     string | number
 }
 export type LLMCompleteOptions = {
     system?:        string
@@ -47,6 +48,7 @@ export class LLM extends EventEmitter {
     private anthropic:   Anthropic                           | null = null
     private google:      GoogleGenAI                         | null = null
     private ollama:      Ollama                              | null = null
+    private ollamaAbort: AbortController                     | null = null
     private transformer: Transformers.TextGenerationPipeline | null = null
     private initialized                                             = false
 
@@ -66,6 +68,7 @@ export class LLM extends EventEmitter {
             maxTokens:     1024,
             cacheDir:      "",
             thinking:      false,
+            keepAlive:     "8h",
             ...config
         } as Required<LLMConfig>
 
@@ -122,8 +125,16 @@ export class LLM extends EventEmitter {
             })
         }
         else if (this.config.provider === "ollama") {
-            /*  instantiate Ollama API  */
-            this.ollama = new Ollama({ host: this.config.api })
+            /*  instantiate Ollama API (with all requests abortable, as Ollama.abort() covers streams only)  */
+            const ac = new AbortController()
+            this.ollamaAbort = ac
+            this.ollama = new Ollama({
+                host:  this.config.api,
+                fetch: (input, init) => fetch(input, {
+                    ...init,
+                    signal: init?.signal ? AbortSignal.any([ init.signal, ac.signal ]) : ac.signal
+                })
+            })
 
             /*  ensure the model is available  */
             let models: ListResponse
@@ -159,6 +170,18 @@ export class LLM extends EventEmitter {
                     clearInterval(interval)
                 }
             }
+
+            /*  explicitly load the model into Ollama server memory (empty chat messages)  */
+            this.log("info", `LLM: loading model "${this.config.model}" into Ollama memory`)
+            const response = await this.ollama.chat({
+                model:      this.config.model,
+                messages:   [],
+                keep_alive: this.config.keepAlive
+            }).catch((err) => {
+                throw new Error(`failed to load model "${this.config.model}" into Ollama: ${err}`, { cause: err })
+            })
+            if (response.done_reason !== "load")
+                this.log("warning", `LLM: unexpected Ollama model load response: "${response.done_reason}"`)
         }
         else if (this.config.provider === "transformers") {
             /*  track download progress when instantiating Transformers pipeline  */
@@ -306,7 +329,7 @@ export class LLM extends EventEmitter {
             const response = await this.ollama.chat({
                 model:      this.config.model,
                 messages,
-                keep_alive: "10m",
+                keep_alive: this.config.keepAlive,
                 think:      this.config.thinking,
                 options: {
                     num_predict: this.config.maxTokens,
@@ -365,8 +388,19 @@ export class LLM extends EventEmitter {
             this.anthropic = null
         else if (this.config.provider === "google")
             this.google = null
-        else if (this.config.provider === "ollama") {
-            this.ollama?.abort()
+        else if (this.config.provider === "ollama" && this.ollama !== null) {
+            /*  abort all in-flight requests  */
+            this.ollamaAbort?.abort()
+            this.ollamaAbort = null
+
+            /*  explicitly unload the model from Ollama server memory (via fresh client)  */
+            const ollama = new Ollama({
+                host:  this.config.api,
+                fetch: (input, init) => fetch(input, { ...init, signal: AbortSignal.timeout(5000) })
+            })
+            await ollama.chat({ model: this.config.model, messages: [], keep_alive: 0 }).catch((error) => {
+                this.log("warning", `error during Ollama model unload: ${error}`)
+            })
             this.ollama = null
         }
         else if (this.config.provider === "transformers" && this.transformer !== null) {

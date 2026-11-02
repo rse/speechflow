@@ -2,6 +2,14 @@
 ChangeLog
 =========
 
+2.4.5 (2026-11-02)
+------------------
+
+- IMPROVEMENT: explicitly load the Ollama model into memory on LLM open
+- IMPROVEMENT: make Ollama model keep-alive configurable and raise its default from 10m to 8h
+- BUGFIX: explicitly unload the Ollama model from memory on LLM close
+- BUGFIX: abort all in-flight (not only streamed) Ollama requests on LLM close
+
 2.4.4 (2026-09-10)
 ------------------
 
