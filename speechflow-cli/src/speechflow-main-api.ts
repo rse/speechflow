@@ -267,12 +267,13 @@ export class APIServer {
                 type: "audio" | "text",
                 id:   string,
                 kind: "final" | "intermediate",
-                value: string | number
+                value: string | number,
+                muted: boolean
             }) => {
                 const data = JSON.stringify({
                     response: "DASHBOARD",
                     node:     "",
-                    args:     [ info.type, info.id, info.kind, info.value ]
+                    args:     [ info.type, info.id, info.kind, info.value, info.muted ]
                 })
                 for (const [ peer, peerInfo ] of this.wsPeers.entries()) {
                     this.cli.log("debug", `HAPI: dashboard peer ${peer}: send ${data}`)

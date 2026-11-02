@@ -615,14 +615,19 @@ The following nodes process audio chunks only.
 
   > This node allows muting the audio stream by either silencing or even
   > unplugging. It has to be externally controlled via REST/WebSocket (see below).
+  > It can optionally announce its mute mode on an internal **bus**,
+  > e.g., for a preceding **a2a-meter** node with the same **bus** to
+  > show its dashboard meter in grey while muted.
 
   | Port    | Payload     |
   | ------- | ----------- |
   | input   | audio       |
   | output  | audio       |
 
-  | Parameter | Position  | Default  | Requirement              |
-  | --------- | --------- | -------- | ------------------------ |
+  | Parameter    | Position  | Default  | Requirement                         |
+  | ------------ | --------- | -------- | ----------------------------------- |
+  | **muteMode** | 0         | "none"   | `/^(?:none\|silenced\|unplugged)$/` |
+  | **bus**      |           | *none*   | *none*                              |
 
 - Node: **a2a-meter**<br/>
   Purpose: **Loudness metering node**<br/>
@@ -631,7 +636,9 @@ The following nodes process audio chunks only.
   > This node allows measuring the loudness of the audio stream. The
   > results are emitted to both the logfile of **SpeechFlow** and the
   > WebSockets API (see below). It can optionally send the meter
-  > information to the dashboard.
+  > information to the dashboard. With an optional **bus**, it listens for
+  > mute mode announcements of an **a2a-mute** node with the same **bus**
+  > and then shows its dashboard meter in grey while muted.
 
   | Port    | Payload     |
   | ------- | ----------- |
@@ -643,6 +650,7 @@ The following nodes process audio chunks only.
   | **interval**  | 0         | 100      | *none*                 |
   | **mode**      | 1         | "filter" | `/^(?:filter\|sink)$/` |
   | **dashboard** |           | *none*   | *none*                 |
+  | **bus**       |           | *none*   | *none*                 |
 
 - Node: **a2a-vad**<br/>
   Purpose: **Voice Audio Detection (VAD) node**<br/>

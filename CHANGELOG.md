@@ -9,6 +9,7 @@ ChangeLog
 - IMPROVEMENT: introduce optional node "dispose" phase, run for all nodes in parallel after "close"
 - IMPROVEMENT: immediately dispose all nodes again in case a node fails in its "prepare" phase
 - IMPROVEMENT: establish/release LLM in "prepare"/"dispose" phases of LLM-based "t2t-*" nodes
+- IMPROVEMENT: show dashboard meter of "a2a-meter" in grey while a "bus"-paired "a2a-mute" mutes
 - IMPROVEMENT: explicitly load the Ollama model into memory on LLM open
 - IMPROVEMENT: make Ollama model keep-alive configurable and raise its default from 10m to 8h
 - BUGFIX: explicitly unload the Ollama model from memory on LLM close

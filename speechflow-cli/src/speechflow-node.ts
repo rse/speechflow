@@ -106,10 +106,10 @@ export default class SpeechFlowNode extends Events.EventEmitter {
     }
 
     /*  send dashboard information  */
-    sendDashboard (type: "audio", id: string, kind: "final" | "intermediate", value: number): void
+    sendDashboard (type: "audio", id: string, kind: "final" | "intermediate", value: number, muted?: boolean): void
     sendDashboard (type: "text", id: string, kind: "final" | "intermediate", value: string): void
-    sendDashboard (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string): void {
-        this.emit("send-dashboard", { type, id, kind, value })
+    sendDashboard (type: "audio" | "text", id: string, kind: "final" | "intermediate", value: number | string, muted = false): void {
+        this.emit("send-dashboard", { type, id, kind, value, muted })
     }
 
     /*  access communication bus  */

@@ -5,7 +5,8 @@
 */
 
 /*  standard dependencies  */
-import Stream from "node:stream"
+import Stream           from "node:stream"
+import { EventEmitter } from "node:events"
 
 /*  external dependencies  */
 import { analyze, AudioData } from "audio-inspect"
@@ -23,8 +24,11 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
     private emitInterval: ReturnType<typeof setInterval> | null = null
     private calcInterval: ReturnType<typeof setInterval> | null = null
     private silenceTimer: ReturnType<typeof setTimeout>  | null = null
+    private bus:          EventEmitter                   | null = null
+    private muteHandler:  ((mode: string) => void)       | null = null
     private chunkBuffer = new Float32Array(0)
     private closing = false
+    private muted = false
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -34,7 +38,8 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
         this.configure({
             interval:  { type: "number", pos: 0, val: 100 },
             mode:      { type: "string", pos: 1, val: "filter", match: /^(?:filter|sink)$/ },
-            dashboard: { type: "string",         val: "" }
+            dashboard: { type: "string",         val: "" },
+            bus:       { type: "string",         val: "" }
         })
 
         /*  declare node input/output format  */
@@ -43,6 +48,19 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             this.output = "audio"
         else if (this.params.mode === "sink")
             this.output = "none"
+    }
+
+    /*  prepare node  */
+    async prepare () {
+        /*  listen on optional bus for mute mode announcements (e.g. of mute nodes)  */
+        this.muted = false
+        if (this.params.bus !== "") {
+            this.bus = this.accessBus(this.params.bus)
+            this.muteHandler = (mode: string) => {
+                this.muted = (mode !== "none")
+            }
+            this.bus.on("mute-mode", this.muteHandler)
+        }
     }
 
     /*  open node  */
@@ -156,7 +174,7 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             this.sendResponse([ "meter", "LUFS-M", lufsm ])
             this.sendResponse([ "meter", "RMS", rms ])
             if (this.params.dashboard !== "")
-                this.sendDashboard("audio", this.params.dashboard, "final", lufsm)
+                this.sendDashboard("audio", this.params.dashboard, "final", lufsm, this.muted)
         }, this.params.interval)
 
         /*  provide Duplex stream and internally attach to meter  */
@@ -234,5 +252,14 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             await util.destroyStream(this.stream)
             this.stream = null
         }
+    }
+
+    /*  dispose node  */
+    async dispose () {
+        /*  detach from bus (removing our own listener only, as the bus is shared)  */
+        if (this.bus !== null && this.muteHandler !== null)
+            this.bus.off("mute-mode", this.muteHandler)
+        this.bus         = null
+        this.muteHandler = null
     }
 }

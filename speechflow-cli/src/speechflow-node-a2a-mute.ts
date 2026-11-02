@@ -5,7 +5,8 @@
 */
 
 /*  standard dependencies  */
-import Stream from "node:stream"
+import Stream           from "node:stream"
+import { EventEmitter } from "node:events"
 
 /*  internal dependencies  */
 import SpeechFlowNode, { SpeechFlowChunk } from "./speechflow-node"
@@ -25,6 +26,7 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
     /*  internal state  */
     private muteMode: MuteMode = "none"
     private closing = false
+    private bus: EventEmitter | null = null
 
     /*  construct node  */
     constructor (id: string, cfg: { [ id: string ]: any }, opts: { [ id: string ]: any }, args: any[]) {
@@ -32,7 +34,8 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
 
         /*  declare node configuration parameters  */
         this.configure({
-            muteMode: { type: "string", val: "none", pos: 0, match: /^(?:none|silenced|unplugged)$/ }
+            muteMode: { type: "string", val: "none", pos: 0, match: /^(?:none|silenced|unplugged)$/ },
+            bus:      { type: "string", val: "" }
         })
 
         /*  declare node input/output format  */
@@ -70,6 +73,14 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
         }
         this.log("info", `setting mute mode to "${mode}"`)
         this.muteMode = mode
+        this.bus?.emit("mute-mode", mode)
+    }
+
+    /*  prepare node  */
+    async prepare () {
+        /*  attach to optional bus for announcing the mute mode (e.g. to meter nodes)  */
+        if (this.params.bus !== "")
+            this.bus = this.accessBus(this.params.bus)
     }
 
     /*  open node  */
@@ -77,8 +88,9 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
         /*  clear destruction flag  */
         this.closing = false
 
-        /*  determine initial mute mode  */
+        /*  determine and announce initial mute mode  */
         this.muteMode = this.params.muteMode as MuteMode
+        this.bus?.emit("mute-mode", this.muteMode)
 
         /*  establish a transform stream  */
         const self = this
@@ -127,6 +139,12 @@ export default class SpeechFlowNodeA2AMute extends SpeechFlowNode {
             await util.destroyStream(this.stream)
             this.stream = null
         }
+    }
+
+    /*  dispose node  */
+    async dispose () {
+        /*  detach from bus (without removing listeners, as they are owned by others)  */
+        this.bus = null
     }
 }
 

@@ -12,7 +12,7 @@
             <div v-bind:key="block.id" v-for="block of info" class="block">
                 <div class="block-content">
                     <div v-if="block.type === 'audio'" class="audio-col">
-                        <div class="audio-meter" v-bind:style="{
+                        <div class="audio-meter" v-bind:class="{ muted: block.muted }" v-bind:style="{
                             height: (100 * (1 - ((block.value as number) / - 60.0))) + '%'
                         }">
                             <div class="audio-value">
@@ -116,6 +116,8 @@
                         align-items: flex-end
                         justify-content: flex-end
                         background-color: var(--color-acc-bg-5)
+                        &.muted
+                            background-color: var(--color-std-fg-0)
                         .audio-value
                             width: 100%
                             font-size: 2.5vw
@@ -205,7 +207,8 @@ type Info = {
     name:        string,
     value:       number | string[],
     lastKind:    string,
-    lufsBuffer?: LufsEntry[]
+    lufsBuffer?: LufsEntry[],
+    muted?:      boolean
 }
 
 /*  type of a popup entry  */
@@ -222,7 +225,7 @@ type Popup = {
 type WebSocketEvent = {
     response: "DASHBOARD",
     node:     string,
-    args:     [ string, string, string, number | string ]
+    args:     [ string, string, string, number | string, boolean? ]
 } | {
     response: "HINT",
     node:     string,
@@ -249,7 +252,7 @@ export default defineComponent({
         const response = await axios.get(`${urlHTTP.toString()}/dashboard`)
         for (const block of response.data) {
             if (block.type === "audio")
-                this.info.push({ type: block.type, id: block.id, name: block.name, value: -60, lastKind: "", lufsBuffer: [] })
+                this.info.push({ type: block.type, id: block.id, name: block.name, value: -60, lastKind: "", lufsBuffer: [], muted: false })
             else if (block.type === "text")
                 this.info.push({ type: block.type, id: block.id, name: block.name, value: [], lastKind: "" })
         }
@@ -310,6 +313,7 @@ export default defineComponent({
                 if (block.type === "audio" && block.lufsBuffer !== undefined) {
                     block.value = -60
                     block.lufsBuffer.length = 0
+                    block.muted = false
                 }
             }
 
@@ -336,14 +340,15 @@ export default defineComponent({
                 return
             }
             if (event.response === "DASHBOARD") {
-                /*  extract dashboard update parameters: [ type, id, kind, value ]  */
-                const [ type, id, kind, value ] = event.args
+                /*  extract dashboard update parameters: [ type, id, kind, value, muted ]  */
+                const [ type, id, kind, value, muted ] = event.args
                 for (const block of this.info) {
                     if (block.type === type && block.id === id) {
                         if (block.type === "audio" && block.lufsBuffer !== undefined) {
                             /*  buffer LUFS values for temporal averaging  */
                             if (kind === "final" && typeof value === "number")
                                 block.lufsBuffer.push({ value, time: Date.now() })
+                            block.muted = (muted === true)
                         }
                         else {
                             if (typeof value === "string") {
