@@ -2,7 +2,7 @@
 ChangeLog
 =========
 
-2.4.5 (2026-11-02)
+2.5.0 (2026-11-02)
 ------------------
 
 - IMPROVEMENT: introduce optional node "prepare" phase, run for all nodes in parallel before "open"
