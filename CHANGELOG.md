@@ -2,6 +2,13 @@
 ChangeLog
 =========
 
+2.5.1 (2026-11-03)
+------------------
+
+- FEATURE [infr, othr]: add "t2t-numbers" node for spelling out numbers as words (de/en/fr/it)
+- IMPROVEMENT [othr]: add German voice "Mark Smidt" to "t2a-elevenlabs" node
+- IMPROVEMENT [othr]: meter bursty audio (e.g. TTS sentences) at real-time pace in "a2a-meter" node
+
 2.5.0 (2026-11-02)
 ------------------
 
