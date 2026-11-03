@@ -34,7 +34,7 @@ export default class SpeechFlowNodeT2AElevenlabs extends SpeechFlowNode {
         /*  declare node configuration parameters  */
         this.configure({
             key:        { type: "string", val: process.env.SPEECHFLOW_ELEVENLABS_KEY },
-            voice:      { type: "string", val: "Brian",   pos: 0, match: /^(?:Brittney|Cassidy|Leonie|Mark|Brian)$/ },
+            voice:      { type: "string", val: "Brian",   pos: 0, match: /^(?:Mark Smidt|Brittney|Cassidy|Leonie|Mark|Brian)$/ },
             language:   { type: "string", val: "en",      pos: 1, match: /^(?:de|en)$/ },
             speed:      { type: "number", val: 1.00,      pos: 2, match: (n: number) => n >= 0.7 && n <= 1.2 },
             stability:  { type: "number", val: 0.5,       pos: 3, match: (n: number) => n >= 0.0 && n <= 1.0 },
