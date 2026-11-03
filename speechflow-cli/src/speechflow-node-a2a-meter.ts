@@ -84,8 +84,17 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
 
         /*  chunk processing state for RMS  */
         const chunkDuration = 0.050 /* meter update frequency is about 50ms */
-        const samplesPerChunk = Math.floor(this.config.audioSampleRate * chunkDuration)
         this.chunkBuffer = new Float32Array(0)
+
+        /*  chunk consumption state: audio is consumed at (slightly faster than)
+            real-time pace, based on the wall-clock, so that bursty input (e.g. a
+            whole TTS sentence delivered at once) is metered while it is played back,
+            but the meter still never falls permanently behind real-time  */
+        const samplesPerSecond = this.config.audioSampleRate * this.config.audioChannels
+        const consumeRate      = 1.01 /* slightly faster than real-time to compensate clock skew */
+        const maxBacklog       = 60 * samplesPerSecond
+        let   consumeBudget    = 0
+        let   consumeLast      = performance.now()
 
         /*  calculate the loudness metrics of the accumulated chunk data  */
         const calcMeter = async () => {
@@ -93,13 +102,30 @@ export default class SpeechFlowNodeA2AMeter extends SpeechFlowNode {
             if (this.closing)
                 return
 
-            /*  short-circuit if still not enough chunk data  */
-            if (this.chunkBuffer.length < samplesPerChunk)
+            /*  determine how many samples to consume, according to the elapsed wall-clock time  */
+            const now = performance.now()
+            consumeBudget += ((now - consumeLast) / 1000) * samplesPerSecond * consumeRate
+            consumeLast = now
+            if (this.chunkBuffer.length > maxBacklog)
+                this.chunkBuffer = this.chunkBuffer.subarray(this.chunkBuffer.length - maxBacklog)
+            let consume: number
+            if (this.chunkBuffer.length <= consumeBudget) {
+                /*  consume everything, but do not save up budget for later bursts  */
+                consume       = this.chunkBuffer.length
+                consumeBudget = 0
+            }
+            else {
+                consume        = Math.floor(consumeBudget)
+                consumeBudget -= consume
+            }
+
+            /*  short-circuit if no chunk data to consume  */
+            if (consume === 0)
                 return
 
-            /*  grab all accumulated chunk data (to never build up a backlog behind real-time)  */
-            const chunkData = this.chunkBuffer
-            this.chunkBuffer = new Float32Array(0)
+            /*  grab the chunk data to consume  */
+            const chunkData = this.chunkBuffer.subarray(0, consume)
+            this.chunkBuffer = this.chunkBuffer.subarray(consume)
 
             /*  update internal audio sample sliding window for LUFS-M (with newest samples only)  */
             if (chunkData.length > sampleWindow.length)
