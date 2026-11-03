@@ -376,6 +376,7 @@ First a short overview of the available processing nodes:
   **t2t-translate**,
   **t2t-proofread**,
   **t2t-modify**,
+  **t2t-numbers**,
   **t2t-profanity**,
   **t2t-summary**,
   **t2t-subtitle**,
@@ -1091,6 +1092,25 @@ The following nodes process text chunks only.
   | ------------ | --------- | -------- | ------------------ |
   | **match**    | *none*    | ""       | *required*         |
   | **replace**  | *none*    | ""       | *none*             |
+
+- Node: **t2t-numbers**<br/>
+  Purpose: **spell out numbers as words**<br/>
+  Example: `t2t-numbers(lang: "de")`<br/>
+
+  > This node spells out numbers in the text stream as words (e.g. "7600"
+  > becomes "siebentausendsechshundert"), honoring the language-specific
+  > thousands and decimal separators. It is primarily intended to be placed
+  > in front of Text-to-Audio nodes which mispronounce digits. German
+  > ordinals (e.g. "3. Oktober") are left untouched.
+
+  | Port    | Payload     |
+  | ------- | ----------- |
+  | input   | text        |
+  | output  | text        |
+
+  | Parameter    | Position  | Default  | Requirement              |
+  | ------------ | --------- | -------- | ------------------------ |
+  | **lang**     | 0         | "en"     | `/^(?:de\|en\|fr\|it)$/` |
 
 - Node: **t2t-profanity**<br/>
   Purpose: **profanity filtering**<br/>

@@ -24,7 +24,7 @@ SpeechFlow uses a modular node-based architecture with three main components:
 - **Input/Output (xio)**: file, device, websocket, mqtt, vban, webrtc, exec
 - **Audio-to-Audio (a2a)**: ffmpeg, wav, mute, meter, vad, gender, gain, filler, compressor, expander, rnnoise, gtcrn, speex, pitch
 - **Audio-to-Text (a2t)**: deepgram, amazon, openai, google
-- **Text-to-Text (t2t)**: deepl, google, amazon, subtitle, format, sentence, modify, profanity, opus, translate, proofread, summary
+- **Text-to-Text (t2t)**: deepl, google, amazon, subtitle, format, sentence, modify, numbers, profanity, opus, translate, proofread, summary
 - **Text-to-Audio (t2a)**: elevenlabs, kokoro, kitten, amazon, supertonic, openai, google
 - **Any-to-Any (x2x)**: filter, trace
 
